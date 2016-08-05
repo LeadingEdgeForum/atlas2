@@ -1,16 +1,40 @@
 {
-	"name": "NodejsStarterApp",
-	"version": "0.0.1",
-	"private": true,
-	"scripts": {
-		"start": "node app.js"
-	},
-	"dependencies": {
-		"express": "4.13.x",
-		"cfenv": "1.0.x"
-	},
-	"repository": {},
-	"engines": {
-		"node": "4.x"
-	} 
+  "name": "Atlas2",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "babel-core": "^6.11.4",
+    "babel-loader": "^6.2.4",
+    "babel-plugin-react-transform": "^2.0.2",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.11.1",
+    "babel-preset-stage-0": "^6.5.0",
+    "babel-runtime": "^6.9.2",
+    "body-parser": "^1.15.2",
+    "bootstrap": "^3.3.7",
+    "cfenv": "1.0.x",
+    "express": "^4.14.0",
+    "express-stormpath": "^3.1.3",
+    "globals": "^9.9.0",
+    "history": "^3.0.0",
+    "morgan": "^1.7.0",
+    "path": "*",
+    "react": "^15.3.0",
+    "react-bootstrap": "^0.30.2",
+    "react-document-title": "^2.0.2",
+    "react-dom": "^15.3.0",
+    "react-router": "^2.6.0",
+    "react-stormpath": "^1.2.2",
+    "webpack": "*"
+  },
+  "devDependencies": {
+    "webpack-dev-middleware": "^1.6.1"
+  },
+  "repository": {},
+  "engines": {
+    "node": "5.x"
+  }
 }
