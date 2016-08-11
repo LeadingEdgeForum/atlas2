@@ -34,6 +34,13 @@ app.get('/img/LEF_logo.png', function (req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/img/LEF_logo.png'));
 });
 
+app.get('/app.js', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build-ui/js/app.js'));
+});
+app.get('*', function (req, res) {
+    res.sendFile(path.join(__dirname, 'build-ui/index.html'));
+});
+
 app.use(require('webpack-dev-middleware')(compiler));
 
 app.use(stormpath.init(app, {
@@ -98,12 +105,8 @@ app.post('/me', bodyParser.json(), stormpath.loginRequired, function (req, res) 
       saveAccount();
     }
   });
-app.get('/app.js', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build-ui/js/app.js'));
-});
-app.get('*', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build-ui/index.html'));
-});
+
+
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
