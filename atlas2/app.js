@@ -41,6 +41,11 @@ app.use(stormpath.init(app, {
       produces: ['application/json'],
       login: {
         nextUri: '/profile'
+      },
+      logout : {
+          enabled : true,
+          uri : '/logout',
+          nextUri: '/'
       }
     },
     client: {
