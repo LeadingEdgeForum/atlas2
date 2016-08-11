@@ -14,7 +14,7 @@ var compiler = webpack(config);
 
 app.use(morgan('combined'));
 
-app.use(require('webpack-dev-middleware')(compiler));
+
 
 
 // cfenv provides access to your Cloud Foundry environment
@@ -23,8 +23,18 @@ var cfenv = require('cfenv');
 
 
 app.get('/css/bootstrap.min.css', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build-ui/css/bootstrap.min.css'));
+    res.sendFile(path.join(__dirname, '/build-ui/css/bootstrap.min.css'));
 });
+
+app.get('/fonts/glyphicons-halflings-regular.woff2', function (req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.woff2'));
+});
+
+app.get('/img/LEF_logo.png', function (req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/img/LEF_logo.png'));
+});
+
+app.use(require('webpack-dev-middleware')(compiler));
 
 app.use(stormpath.init(app, {
     web: {
@@ -40,7 +50,7 @@ app.use(stormpath.init(app, {
         }
      },
     application: {
-        href: process.env.WM_STORMPATH_APPLICATION 
+        href: process.env.WM_STORMPATH_APPLICATION
     }
 }));
 
@@ -84,7 +94,7 @@ app.post('/me', bodyParser.json(), stormpath.loginRequired, function (req, res) 
     }
   });
 app.get('/app.js', function (req, res) {
-    res.sendFile(path.join(__dirname, 'js-ui/app.js'));
+    res.sendFile(path.join(__dirname, 'build-ui/js/app.js'));
 });
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, 'build-ui/index.html'));
@@ -102,4 +112,3 @@ app.on('stormpath.ready', function () {
         console.log("server starting on " + appEnv.url);
       });
     });
-

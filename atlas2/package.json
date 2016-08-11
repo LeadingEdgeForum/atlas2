@@ -28,7 +28,8 @@
     "react-dom": "^15.3.0",
     "react-router": "^2.6.0",
     "react-stormpath": "^1.2.2",
-    "webpack": "*"
+    "react-router-bootstrap" : "*",
+    "webpack": "1.13.1"
   },
   "devDependencies": {
     "webpack-dev-middleware": "^1.6.1"

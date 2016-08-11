@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 import React from 'react';
 import DocumentTitle from 'react-document-title';
 import { ChangePasswordForm } from 'react-stormpath';
