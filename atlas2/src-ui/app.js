@@ -11,7 +11,7 @@ ReactStormpath.init();
 ReactDOM.render(
   <Router history={browserHistory}>
     <HomeRoute path='/' component={MasterPage}>
-      <IndexRoute component={IndexPage} />
+      <IndexRoute components={ {navMenu:null, mainContent:IndexPage} } />
       <LoginRoute path='/login' component={LoginPage} />
       <Route path='/verify' component={VerifyEmailPage} />
       <Route path='/register' component={RegisterPage} />

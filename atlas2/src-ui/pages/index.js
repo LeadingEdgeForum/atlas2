@@ -1,3 +1,4 @@
+/*jshint esversion: 6 */
 export MasterPage from './MasterPage'
 export IndexPage from './IndexPage'
 export LoginPage from './LoginPage'
