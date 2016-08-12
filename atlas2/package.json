@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node src-server/app.js"
   },
   "dependencies": {
     "babel-core": "^6.11.4",
