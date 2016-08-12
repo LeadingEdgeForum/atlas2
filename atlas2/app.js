@@ -11,9 +11,9 @@ var config = require('./webpack.config');
 
 var app = express();
 var compiler = webpack(config);
+app.use(require('webpack-dev-middleware')(compiler));
 
 app.use(morgan('combined'));
-
 
 
 
@@ -35,13 +35,14 @@ app.get('/img/LEF_logo.png', function (req, res) {
 });
 
 app.get('/app.js', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build-ui/js/app.js'));
-});
-app.get('*', function (req, res) {
-    res.sendFile(path.join(__dirname, 'build-ui/index.html'));
+    res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
 });
 
-app.use(require('webpack-dev-middleware')(compiler));
+//app.use('/api', stormpath.authenticationRequired, require('./src-server/workspace/workspace-router.js')().router);
+
+
+
+
 
 app.use(stormpath.init(app, {
     web: {
@@ -65,6 +66,10 @@ app.use(stormpath.init(app, {
         href: process.env.WM_STORMPATH_APPLICATION
     }
 }));
+
+app.get('*', function (req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/index.html'));
+});
 
 app.post('/me', bodyParser.json(), stormpath.loginRequired, function (req, res) {
     function writeError(message) {

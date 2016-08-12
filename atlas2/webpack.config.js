@@ -13,7 +13,7 @@ module.exports = {
     output : {
         path : path.join(__dirname, 'build-ui/js'),
         filename : 'app.js',
-        publicPath : '/js/'
+        publicPath : '/js'
     },
     module : {
         loaders : [ {
