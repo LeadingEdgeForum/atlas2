@@ -29,7 +29,11 @@
     "react-router": "^2.6.0",
     "react-stormpath": "^1.2.2",
     "react-router-bootstrap" : "*",
-    "webpack": "1.13.1"
+    "webpack": "1.13.1",
+    "jquery":"*",
+    "keymirror":"*",
+    "flux" : "*",
+    "mongoose" : "*"
   },
   "devDependencies": {
     "webpack-dev-middleware": "^1.6.1"

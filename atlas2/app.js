@@ -38,17 +38,13 @@ app.get('/app.js', function (req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
 });
 
-//app.use('/api', stormpath.authenticationRequired, require('./src-server/workspace/workspace-router.js')().router);
-
-
-
-
 
 app.use(stormpath.init(app, {
+    debug:'debug',
     web: {
       produces: ['application/json'],
       login: {
-        nextUri: '/profile'
+        nextUri: '/wrong'
       },
       logout : {
           enabled : true,
@@ -66,6 +62,8 @@ app.use(stormpath.init(app, {
         href: process.env.WM_STORMPATH_APPLICATION
     }
 }));
+
+app.use('/api', require('./src-server/workspace/workspace-router.js')(stormpath).router);
 
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/index.html'));
