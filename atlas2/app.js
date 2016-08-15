@@ -62,14 +62,17 @@ app.use(stormpath.init(app, {
         href: process.env.WM_STORMPATH_APPLICATION
     }
 }));
-
+app.use(bodyParser.json());       // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+  extended: true
+}));
 app.use('/api', require('./src-server/workspace/workspace-router.js')(stormpath).router);
 
 app.get('*', function (req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/index.html'));
 });
 
-app.post('/me', bodyParser.json(), stormpath.loginRequired, function (req, res) {
+app.post('/me', stormpath.loginRequired, function (req, res) {
     function writeError(message) {
       res.status(400);
       res.json({ message: message, status: 400 });

@@ -11,13 +11,12 @@ import {
   Table,
   ListGroup
 } from 'react-bootstrap';
-import {NotAuthenticated, Authenticated} from 'react-stormpath';
-import WorkspaceStore from './workspace-store';
-import WorkspaceListElement from './workspace-list-element.js';
-import WorkspaceListElementNew from './workspace-list-element-new.js';
-var CreateNewWorkspaceDialog = require('./create-new-workspace-dialog');
+import WorkspaceStore from '../workspace-store';
+import MapListElement from './map-list-element.js';
+import MapListElementNew from './map-list-element-new.js';
+var CreateNewMapDialog = require('./create-new-map-dialog');
 
-export default class WorkspaceList extends React.Component {
+export default class MapList extends React.Component {
   constructor(props) {
     super(props);
     this.state = WorkspaceStore.getWorkspaces();
@@ -39,7 +38,7 @@ export default class WorkspaceList extends React.Component {
   render() {
     var _workspacesToShow = [];
     if (this.state && this.state.workspaces && Array.isArray(this.state.workspaces)) {
-      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} description={item.workspace.description}></WorkspaceListElement>);
+      _workspacesToShow = this.state.workspaces.map(item => <MapListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} description={item.workspace.description}></MapListElement>);
     }
     return (
       <Grid fluid={true}>
@@ -47,11 +46,11 @@ export default class WorkspaceList extends React.Component {
           <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
             <ListGroup>
               {_workspacesToShow}
-              <WorkspaceListElementNew></WorkspaceListElementNew>
+              <MapListElementNew></MapListElementNew>
             </ListGroup>
           </Col>
         </Row>
-        <CreateNewWorkspaceDialog/>
+        <CreateNewMapDialog/>
       </Grid>
     );
   }

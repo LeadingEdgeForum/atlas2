@@ -19,8 +19,30 @@ var Schema = mongoose.Schema;
 
 mongoose.connect('mongodb://localhost:27017/workspaces');
 
-var _WorkspaceSchema = new Schema({name: Schema.Types.String, owner: Schema.Types.String});
-var WorkspaceModel = mongoose.model('Blog', _WorkspaceSchema);
+var _WorkspaceSchema = new Schema({
+  name: Schema.Types.String,
+  description: Schema.Types.String,
+  owner: Schema.Types.String,
+  maps: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: 'WMap'
+    }
+  ]
+});
+
+var _MapSchema = new Schema({
+  name: Schema.Types.String,
+  description: Schema.Types.String,
+  owner: Schema.Types.String,
+  workspace: {
+    type: Schema.Types.ObjectId,
+    ref: 'Workspace'
+  }
+});
+
+var WorkspaceModel = mongoose.model('Workspace', _WorkspaceSchema);
+var WMap = mongoose.model('Workspace', _MapSchema);
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -47,12 +69,38 @@ module.exports = function(stormpath) {
         workspaces: []
       };
       results.forEach(workspace => responseObject.workspaces.push({workspace: workspace}));
-      console.log(responseObject);
       res.json(responseObject);
     });
   });
 
-  module.router.post('/workspace', stormpath.authenticationRequired, function(req, res) {});
+  module.router.post('/workspace/', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var name = req.body.name;
+    if (!name) {
+      name = "Anonymous workspace";
+    }
+    var description = req.body.description;
+    if (!description) {
+      description = "I am too lazy to fill this field even when I know it causes organizational mess";
+    }
+    var wkspc = new WorkspaceModel({name: name, description: description, owner: owner});
+    wkspc.save(function(err, result) {
+      if (err) {
+        res.json(err);
+      }
+      res.json(result);
+    });
+  });
+
+  module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
+    console.log({owner: getStormpathUserIdFromReq(req), id: req.params.workspaceID});
+    WorkspaceModel.findOne({
+      owner: getStormpathUserIdFromReq(req),
+      _id: req.params.workspaceID
+    }, function(err, result) {
+      res.json({workspace: result});
+    });
+  });
 
   return module;
 };

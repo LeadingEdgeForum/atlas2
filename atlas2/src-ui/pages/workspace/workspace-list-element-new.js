@@ -7,7 +7,7 @@ import Actions from './../../actions.js';
 export default class WorskpaceListElementNew extends React.Component {
   render() {
     return (
-      <ListGroupItem header="Create new workspace" onClick={Actions.openNewWorkspaceDialog}>
+      <ListGroupItem header="Create a new workspace" onClick={Actions.openNewWorkspaceDialog}>
         Just click
       </ListGroupItem>
     );

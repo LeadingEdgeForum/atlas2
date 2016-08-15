@@ -5,7 +5,15 @@ import Dispatcher from '../../dispatcher';
 import Constants from '../../constants';
 import $ from 'jquery';
 
-let appState = {};
+let appState = {
+  newWorkspaceDialog: {
+    open: false
+  },
+  workspaces: {},
+  singleWorkspace: {}
+};
+
+var workspacesQueriedForFirstTime = false;
 class WorkspaceStore extends Store {
 
   constructor() {
@@ -22,27 +30,25 @@ class WorkspaceStore extends Store {
   emitChange() {
     super.emitChange();
   }
-
+  updateWorkspaces() {
+    this.serverRequest = $.get('/api/workspaces', function(result) {
+      appState.workspaces = result;
+      this.emitChange();
+    }.bind(this));
+  }
+  fetchSingleWorkspaceInfo(workspaceID) {
+    this.serverRequest = $.get('/api/workspace/' + workspaceID, function(result) {
+      console.log('result', result);
+      appState.singleWorkspace[workspaceID] = result;
+      this.emitChange();
+    }.bind(this));
+  }
   getWorkspaces() {
-    if (appState && appState.workspaces) {
-      return appState.workspaces;
-    } else {
-      //load
-      this.serverRequest = $.get('/api/workspaces', function(result) {
-        appState.workspaces = result;
-        this.emitChange();
-      }.bind(this));
-      return {
-        workspaces: [
-          {
-            workspace: {
-              id: "w1",
-              name: "testworkspace"
-            }
-          }
-        ]
-      };
+    if (!workspacesQueriedForFirstTime) {
+      this.updateWorkspaces();
+      workspacesQueriedForFirstTime = true;
     }
+    return appState.workspaces;
   }
 
   isWorkspaceNewDialogOpen() {
@@ -51,6 +57,40 @@ class WorkspaceStore extends Store {
     } else {
       return {open: false};
     }
+  }
+
+  submitNewWorkspaceDialog(data) {
+    $.ajax({
+      type: 'POST',
+      url: '/api/workspace/',
+      dataType: 'json',
+      data: data,
+      success: function(data) {
+        appState.newWorkspaceDialog.open = false;
+        this.updateWorkspaces();
+      }.bind(this)
+    });
+  }
+
+  getWorkspaceInfo(workspaceID) {
+    if (!workspaceID) {
+      console.error('No worksapceId in getWorkspaceInfo');
+    }
+
+    for (var i = 0; i < appState.workspaces.length; i++) {
+      if (appState.workspaces[i].workspace._id === workspaceID) {
+        return appState.workspaces[i];
+      }
+    }
+    if (appState.singleWorkspace[workspaceID]) {
+      return appState.singleWorkspace[workspaceID];
+    }
+    this.fetchSingleWorkspaceInfo(workspaceID);
+    return {
+      workspace: {
+        name: "Loading..."
+      }
+    };
   }
 
 }
@@ -62,20 +102,19 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
   console.log('act', action);
   switch (action.actionType) {
     case ActionTypes.WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG:
-      appState.newWorkspaceDialog = {
-        open: true
-      };
+      appState.newWorkspaceDialog.open = true;
+      workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.WORKSPACE_CLOSE_NEW_WORKSPACE_DIALOG:
-      appState.newWorkspaceDialog = {
-        open: false
-      };
+      appState.newWorkspaceDialog.open = false;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG:
+      workspaceStoreInstance.submitNewWorkspaceDialog(action.data);
       break;
     default:
       return;
   }
-
-  workspaceStoreInstance.emitChange();
 
 });
 

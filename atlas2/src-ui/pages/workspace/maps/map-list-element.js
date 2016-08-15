@@ -2,8 +2,8 @@
 
 import React, {PropTypes} from 'react';
 import {ListGroupItem} from 'react-bootstrap';
-import LinkContainer from 'react-router-bootstrap';
-export default class WorkspaceListElement extends React.Component {
+
+export default class MapListElement extends React.Component {
   render() {
     var href = 'workspace/' + this.props.id;
     return (

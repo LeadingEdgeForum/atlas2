@@ -16,6 +16,8 @@ import {
 } from './pages';
 import WelcomePage from './pages/WelcomePage.js';
 import WorkspaceList from './pages/workspace/workspace-list';
+import MapList from './pages/workspace/maps/map-list.js';
+import WorkspaceNavInfo from './pages/workspace/workspace-navbar-info.js';
 
 ReactStormpath.init();
 console.log(WelcomePage);
@@ -46,6 +48,10 @@ ReactDOM.render(
     }}/>
     <AuthenticatedRoute path='profile' components={{
       mainContent: ProfilePage
+    }}/>
+    <AuthenticatedRoute path='workspace/:workspaceID' components={{
+      mainContent: MapList,
+      navMenu: WorkspaceNavInfo
     }}/>
   </HomeRoute>
 </Router>, document.getElementById('app-container'));

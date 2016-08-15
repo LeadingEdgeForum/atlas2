@@ -11,4 +11,8 @@ export default class Actions {
   static closeNewWorkspaceDialog() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_CLOSE_NEW_WORKSPACE_DIALOG});
   }
+
+  static submitNewWorkspaceDialog(newWorkspaceData) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG, data: newWorkspaceData});
+  }
 }
