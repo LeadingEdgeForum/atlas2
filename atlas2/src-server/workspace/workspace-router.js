@@ -14,35 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-
-mongoose.connect('mongodb://localhost:27017/workspaces');
-
-var _WorkspaceSchema = new Schema({
-  name: Schema.Types.String,
-  description: Schema.Types.String,
-  owner: Schema.Types.String,
-  maps: [
-    {
-      type: Schema.Types.ObjectId,
-      ref: 'WMap'
-    }
-  ]
-});
-
-var _MapSchema = new Schema({
-  name: Schema.Types.String,
-  description: Schema.Types.String,
-  owner: Schema.Types.String,
-  workspace: {
-    type: Schema.Types.ObjectId,
-    ref: 'Workspace'
-  }
-});
-
-var WorkspaceModel = mongoose.model('Workspace', _WorkspaceSchema);
-var WMap = mongoose.model('Workspace', _MapSchema);
+var Model = require('./model');
+var WardleyMap = Model.WardleyMap;
+var Workspace = Model.Workspace;
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -61,7 +35,7 @@ module.exports = function(stormpath) {
 
   module.router.get('/workspaces/', stormpath.authenticationRequired, function(req, res) {
 
-    WorkspaceModel.find({
+    Workspace.find({
       owner: getStormpathUserIdFromReq(req)
     }, function(err, results) {
       console.error(err);
@@ -83,7 +57,7 @@ module.exports = function(stormpath) {
     if (!description) {
       description = "I am too lazy to fill this field even when I know it causes organizational mess";
     }
-    var wkspc = new WorkspaceModel({name: name, description: description, owner: owner});
+    var wkspc = new Workspace({name: name, description: description, owner: owner});
     wkspc.save(function(err, result) {
       if (err) {
         res.json(err);
@@ -94,11 +68,57 @@ module.exports = function(stormpath) {
 
   module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
     console.log({owner: getStormpathUserIdFromReq(req), id: req.params.workspaceID});
-    WorkspaceModel.findOne({
+    Workspace.findOne({
       owner: getStormpathUserIdFromReq(req),
       _id: req.params.workspaceID
     }, function(err, result) {
       res.json({workspace: result});
+    });
+  });
+
+  module.router.post('/map/', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var name = req.body.name;
+    if (!name) {
+      name = "Anonymous workspace";
+    }
+    var description = req.body.description;
+    if (!description) {
+      description = "I am too lazy to fill this field even when I know it causes organizational mess";
+    }
+    var workspaceID = req.body.workspaceID;
+    if (!workspaceID) {
+      res.send('Missing workspaceID');
+      return;
+    }
+
+    Workspace.findOne({ //this is check that the person logged in can actually write to workspace
+      _id: workspaceID,
+      owner: owner
+    }, function(err, result) {
+      console.log('workspace found', err, result);
+      if (err) {
+        res.send(err);
+        console.error(err);
+        return;
+      }
+      if (!result) {
+        res.send("workspace not found");
+        return;
+      }
+      var wm = new WardleyMap({name: name, description: description, owner: owner, workspace: result._id});
+      wm.save(function(err, savedMap) {
+        console.log('map saved', err, savedMap);
+        if (err) {
+          res.send(err);
+          return;
+        }
+        result.maps.push(savedMap._id);
+        result.save(function(err, saveResult) {
+          console.log('workspace saved', err, saveResult);
+          res.json(savedMap);
+        });
+      });
     });
   });
 

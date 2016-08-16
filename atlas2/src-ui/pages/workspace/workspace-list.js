@@ -45,6 +45,11 @@ export default class WorkspaceList extends React.Component {
       <Grid fluid={true}>
         <Row className="show-grid">
           <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
+            <h4>A list of your workspaces:</h4>
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
             <ListGroup>
               {_workspacesToShow}
               <WorkspaceListElementNew></WorkspaceListElementNew>

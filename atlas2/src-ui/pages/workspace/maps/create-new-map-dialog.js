@@ -36,18 +36,18 @@ var CreateNewMapDialog = React.createClass({
   },
   internalState: {},
   _onChange: function() {
-    this.setState(WorkspaceStore.isWorkspaceNewDialogOpen());
+    this.setState(WorkspaceStore.isMapNewDialogOpen());
   },
   _close: function() {
-    Actions.closeNewWorkspaceDialog();
+    Actions.closeNewMapDialog();
   },
   _submit: function() {
-    Actions.submitNewWorkspaceDialog(this.internalState);
+    this.internalState.workspaceID = this.props.workspaceID;
+    Actions.submitEditNewMapDialog(this.internalState);
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
-    console.log(this.internalState);
   },
   render: function() {
     var show = this.state.open;
@@ -56,13 +56,10 @@ var CreateNewMapDialog = React.createClass({
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Create a new workspace
+              Create a new map
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p>
-              Workspace is a place where maps can be analized together.
-            </p>
             <Form horizontal>
               <FormGroup controlId="name">
                 <Col sm={2}>
@@ -70,7 +67,7 @@ var CreateNewMapDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')}/>
-                  <HelpBlock>Name of the workspace</HelpBlock>
+                  <HelpBlock>Name of your map</HelpBlock>
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">
@@ -79,7 +76,7 @@ var CreateNewMapDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')}/>
-                  <HelpBlock>Description of the workspace</HelpBlock>
+                  <HelpBlock>Description of your map</HelpBlock>
                 </Col>
               </FormGroup>
             </Form>

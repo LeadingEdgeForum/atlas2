@@ -9,6 +9,9 @@ let appState = {
   newWorkspaceDialog: {
     open: false
   },
+  newMapDialog: {
+    open: false
+  },
   workspaces: {},
   singleWorkspace: {}
 };
@@ -58,6 +61,13 @@ class WorkspaceStore extends Store {
       return {open: false};
     }
   }
+  isMapNewDialogOpen() {
+    if (appState && appState.newMapDialog) {
+      return appState.newMapDialog;
+    } else {
+      return {open: false};
+    }
+  }
 
   submitNewWorkspaceDialog(data) {
     $.ajax({
@@ -72,23 +82,34 @@ class WorkspaceStore extends Store {
     });
   }
 
+  submitNewMapDialog(data) {
+    $.ajax({
+      type: 'POST',
+      url: '/api/map/',
+      dataType: 'json',
+      data: data,
+      success: function(data2) {
+        appState.newMapDialog.open = false;
+        this.fetchSingleWorkspaceInfo(data.workspaceID);
+      }.bind(this)
+    });
+  }
+
   getWorkspaceInfo(workspaceID) {
     if (!workspaceID) {
       console.error('No worksapceId in getWorkspaceInfo');
     }
 
-    for (var i = 0; i < appState.workspaces.length; i++) {
-      if (appState.workspaces[i].workspace._id === workspaceID) {
-        return appState.workspaces[i];
-      }
-    }
     if (appState.singleWorkspace[workspaceID]) {
       return appState.singleWorkspace[workspaceID];
     }
+
     this.fetchSingleWorkspaceInfo(workspaceID);
+
     return {
       workspace: {
-        name: "Loading..."
+        name: "Loading...",
+        maps: []
       }
     };
   }
@@ -99,7 +120,6 @@ let workspaceStoreInstance = new WorkspaceStore();
 let ActionTypes = Constants.ACTION_TYPES;
 
 workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
-  console.log('act', action);
   switch (action.actionType) {
     case ActionTypes.WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG:
       appState.newWorkspaceDialog.open = true;
@@ -111,6 +131,18 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG:
       workspaceStoreInstance.submitNewWorkspaceDialog(action.data);
+      //no change, because it will go only after the submission is successful
+      break;
+    case ActionTypes.MAP_OPEN_NEW_WORKSPACE_DIALOG:
+      appState.newMapDialog.open = true;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_NEW_WORKSPACE_DIALOG:
+      appState.newMapDialog.open = false;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_WORKSPACE_DIALOG:
+      workspaceStoreInstance.submitNewMapDialog(action.data);
       break;
     default:
       return;

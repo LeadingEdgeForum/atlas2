@@ -19,8 +19,10 @@ var CreateNewMapDialog = require('./create-new-map-dialog');
 export default class MapList extends React.Component {
   constructor(props) {
     super(props);
-    this.state = WorkspaceStore.getWorkspaces();
+    this.state = WorkspaceStore.getWorkspaceInfo(props.params.workspaceID);
     this.render = this.render.bind(this);
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
   }
 
   componentDidMount() {
@@ -36,21 +38,31 @@ export default class MapList extends React.Component {
   }
 
   render() {
-    var _workspacesToShow = [];
-    if (this.state && this.state.workspaces && Array.isArray(this.state.workspaces)) {
-      _workspacesToShow = this.state.workspaces.map(item => <MapListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} description={item.workspace.description}></MapListElement>);
+    var _mapsToShow = [];
+    var workspaceID = this.props.params.workspaceID;
+    if (this.state && this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
+      _mapsToShow = this.state.workspace.maps.map(item => <MapListElement key={item.wardleymap._id} id={item.wardleymap._id} name={item.wardleymap.name} description={item.wardleymap.description}></MapListElement>);
+    } else {
+      return (
+        <p>Something went really wrong :-(</p>
+      );
     }
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
           <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
+            <h4>Your list of maps in current workspace:</h4>
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
             <ListGroup>
-              {_workspacesToShow}
+              {_mapsToShow}
               <MapListElementNew></MapListElementNew>
             </ListGroup>
           </Col>
         </Row>
-        <CreateNewMapDialog/>
+        <CreateNewMapDialog workspaceID={workspaceID}/>
       </Grid>
     );
   }
