@@ -34,14 +34,14 @@ export default class MapList extends React.Component {
   }
 
   _onChange() {
-    this.setState(WorkspaceStore.getWorkspaces());
+    this.setState(WorkspaceStore.getWorkspaceInfo(this.props.params.workspaceID));
   }
 
   render() {
     var _mapsToShow = [];
     var workspaceID = this.props.params.workspaceID;
     if (this.state && this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
-      _mapsToShow = this.state.workspace.maps.map(item => <MapListElement key={item.wardleymap._id} id={item.wardleymap._id} name={item.wardleymap.name} description={item.wardleymap.description}></MapListElement>);
+      _mapsToShow = this.state.workspace.maps.map(item => <MapListElement key={item._id} id={item._id} name={item.name} description={item.description}></MapListElement>);
     } else {
       return (
         <p>Something went really wrong :-(</p>

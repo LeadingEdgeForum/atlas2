@@ -68,10 +68,7 @@ module.exports = function(stormpath) {
 
   module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
     console.log({owner: getStormpathUserIdFromReq(req), id: req.params.workspaceID});
-    Workspace.findOne({
-      owner: getStormpathUserIdFromReq(req),
-      _id: req.params.workspaceID
-    }, function(err, result) {
+    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID}).populate('maps').exec(function(err, result) {
       res.json({workspace: result});
     });
   });
