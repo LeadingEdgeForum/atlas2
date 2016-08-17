@@ -27,4 +27,11 @@ export default class Actions {
   static submitEditNewMapDialog(data) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_WORKSPACE_DIALOG, data: data});
   }
+
+  static palletteDragStarted() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STARTED});
+  }
+  static palletteDragStopped() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED});
+  }
 }

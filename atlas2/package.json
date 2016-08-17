@@ -18,8 +18,14 @@
     "cfenv": "1.0.x",
     "express": "^4.14.0",
     "express-stormpath": "^3.1.3",
+    "flux": "*",
     "globals": "^9.9.0",
     "history": "^3.0.0",
+    "imports-loader": "^0.6.5",
+    "jquery": "*",
+    "jsplumb": "2.1.5",
+    "keymirror": "*",
+    "mongoose": "*",
     "morgan": "^1.7.0",
     "path": "*",
     "react": "^15.3.0",
@@ -27,13 +33,11 @@
     "react-document-title": "^2.0.2",
     "react-dom": "^15.3.0",
     "react-router": "^2.6.0",
+    "react-router-bootstrap": "*",
     "react-stormpath": "^1.2.2",
-    "react-router-bootstrap" : "*",
-    "webpack": "1.13.1",
-    "jquery":"*",
-    "keymirror":"*",
-    "flux" : "*",
-    "mongoose" : "*"
+    "script-loader": "^0.7.0",
+    "underscore": "*",
+    "webpack": "1.13.1"
   },
   "devDependencies": {
     "webpack-dev-middleware": "^1.6.1"

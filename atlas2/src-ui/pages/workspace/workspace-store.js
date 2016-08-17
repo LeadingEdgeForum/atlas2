@@ -13,7 +13,11 @@ let appState = {
     open: false
   },
   workspaces: {},
-  singleWorkspace: {}
+  singleWorkspace: {},
+  canvasHighlight: {
+    highlight: false
+  }
+
 };
 
 var workspacesQueriedForFirstTime = false;
@@ -22,7 +26,9 @@ class WorkspaceStore extends Store {
   constructor() {
     super();
   }
-
+  getCanvasHighlight() {
+    return appState.canvasHighlight;
+  }
   getState() {
     return appState;
   }
@@ -143,6 +149,14 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_WORKSPACE_DIALOG:
       workspaceStoreInstance.submitNewMapDialog(action.data);
+      break;
+    case ActionTypes.PALETTE_DRAG_STARTED:
+      appState.canvasHighlight.highlight = true;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.PALETTE_DRAG_STOPPED:
+      appState.canvasHighlight.highlight = false;
+      workspaceStoreInstance.emitChange();
       break;
     default:
       return;

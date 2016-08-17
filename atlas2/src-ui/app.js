@@ -18,6 +18,7 @@ import WelcomePage from './pages/WelcomePage.js';
 import WorkspaceList from './pages/workspace/workspace-list';
 import MapList from './pages/workspace/maps/map-list.js';
 import WorkspaceNavInfo from './pages/workspace/workspace-navbar-info.js';
+import MapEditor from './pages/workspace/maps/editor/map-editor.js';
 
 ReactStormpath.init();
 console.log(WelcomePage);
@@ -52,6 +53,9 @@ ReactDOM.render(
     <AuthenticatedRoute path='workspace/:workspaceID' components={{
       mainContent: MapList,
       navMenu: WorkspaceNavInfo
+    }}/>
+    <AuthenticatedRoute path='map/:mapID' components={{
+      mainContent: MapEditor
     }}/>
   </HomeRoute>
 </Router>, document.getElementById('app-container'));
