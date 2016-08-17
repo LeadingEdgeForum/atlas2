@@ -31,10 +31,17 @@ export default class Actions {
   static palletteDragStarted() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STARTED});
   }
-  static palletteDragStopped(data) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED, data: data});
+  static palletteDragStopped(type, data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED, type: type, data: data});
   }
   static canvasResized(data) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_RESIZED, data: data});
+  }
+
+  static closeNewNodeDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_NODE_DIALOG});
+  }
+  static newNodeCreated(data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG, data: data});
   }
 }

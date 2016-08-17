@@ -17,8 +17,10 @@ let appState = {
   canvasState: {
     highlight: false,
     coords: null
+  },
+  newNodeDialog: {
+    open: false
   }
-
 };
 
 var workspacesQueriedForFirstTime = false;
@@ -27,14 +29,25 @@ class WorkspaceStore extends Store {
   constructor() {
     super();
   }
-  recordNewComponent(params) {
+
+  recordNewComponent(type, params) {
     var relativeToCanvasPosX = params.pos[0]/*absolute pos of drop*/ - appState.canvasState.coords.offset.left/*absolute pos of canvas*/;
     var relativeToCanvasPosY = params.pos[1]/*absolute pos of drop*/ - appState.canvasState.coords.offset.top/*absolute pos of canvas*/;
 
     var universalCoordX = relativeToCanvasPosX / appState.canvasState.coords.size.width;
     var universalCoordY = relativeToCanvasPosY / appState.canvasState.coords.size.height;
-    console.log(universalCoordX, universalCoordY);
+    appState.newNodeDialog.open = true;
+    appState.newNodeDialog.type = type;
+    appState.newNodeDialog.coords = {
+      x: universalCoordX,
+      y: universalCoordY
+    };
   }
+
+  getNewNodeDialogState() {
+    return appState.newNodeDialog;
+  }
+
   getCanvasState() {
     return appState.canvasState;
   }
@@ -129,6 +142,13 @@ class WorkspaceStore extends Store {
     };
   }
 
+  newNodeCreated(data) {
+    console.log('newNodeCreated', data);
+    console.log(data.name);
+    console.log(data.type);
+    console.log(data.coords);
+  }
+
 }
 let workspaceStoreInstance = new WorkspaceStore();
 
@@ -165,12 +185,24 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.PALETTE_DRAG_STOPPED:
       appState.canvasState.highlight = false;
-      workspaceStoreInstance.recordNewComponent(action.data);
+      workspaceStoreInstance.recordNewComponent(action.type, action.data);
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.CANVAS_RESIZED:
       appState.canvasState.coords = action.data;
       workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_NEW_NODE_DIALOG:
+      appState.newNodeDialog = { //cleans up by overwriting any current data
+        open: false
+      };
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG:
+      workspaceStoreInstance.newNodeCreated(action.data);
+      appState.newNodeDialog = { //cleans up by overwriting any current data
+        open: false
+      };
       break;
     default:
       return;

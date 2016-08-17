@@ -14,6 +14,7 @@ import {
 import WorkspaceStore from '../../workspace-store';
 import Palette from './palette';
 import MapCanvas from './canvas';
+import CreateNewNodeDialog from './create-new-node-dialog';
 
 var _ = require('underscore');
 
@@ -174,6 +175,7 @@ export default class MapEditor extends React.Component {
                 <div style={axisSupport3}/>
               </div>
             </div>
+            <CreateNewNodeDialog/>
           </Col>
         </Row>
       </Grid>

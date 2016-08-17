@@ -13,6 +13,7 @@ import {
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
 import Actions from '../../../../actions';
+import Constants from '../../../../constants';
 var _ = require('underscore');
 import {userNeedStyle, externalStyle, internalStyle} from './component-styles';
 
@@ -22,7 +23,7 @@ require('jsplumb');
 var jsPlumb = window.jsPlumb;
 /*jshint -W117 */
 
-var makeDraggable = function(input) {
+var makeDraggable = function(type, input) {
   if (input === null) {
     //noop - component was destroyed, no need to worry about draggable
     return;
@@ -38,7 +39,7 @@ var makeDraggable = function(input) {
     },
     drag: function(params) {},
     stop: function(params) {
-      Actions.palletteDragStopped(params);
+      Actions.palletteDragStopped(type, params);
     }
   });
 };
@@ -69,7 +70,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.USERNEED)} style={HigherMargins}>
                 <div style={userNeedStyle}></div>&nbsp;User need
               </div>
             </Button>
@@ -78,7 +79,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.INTERNAL)} style={HigherMargins}>
                 <div style={internalStyle}></div>&nbsp;Internal
               </div>
             </Button>
@@ -87,7 +88,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.EXTERNAL)} style={HigherMargins}>
                 <div style={externalStyle}></div>&nbsp;External
               </div>
             </Button>
