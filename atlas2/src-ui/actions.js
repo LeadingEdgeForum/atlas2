@@ -31,8 +31,8 @@ export default class Actions {
   static palletteDragStarted() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STARTED});
   }
-  static palletteDragStopped() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED});
+  static palletteDragStopped(data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED, data: data});
   }
   static canvasResized(data) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_RESIZED, data: data});

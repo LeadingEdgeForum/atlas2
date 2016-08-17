@@ -128,7 +128,7 @@ var commodityStyle = {
 export default class MapEditor extends React.Component {
   constructor(props) {
     super(props);
-    this.state = WorkspaceStore.getWorkspaceInfo(props.params.workspaceID);
+    // this.state = WorkspaceStore.getWorkspaceInfo(props.params.workspaceID);
     this.render = this.render.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
@@ -143,7 +143,7 @@ export default class MapEditor extends React.Component {
   }
 
   _onChange() {
-    this.setState(WorkspaceStore.getWorkspaceInfo(this.props.params.workspaceID));
+    // this.setState(WorkspaceStore.getWorkspaceInfo(this.props.params.workspaceID));
   }
 
   render() {

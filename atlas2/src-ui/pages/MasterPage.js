@@ -36,7 +36,6 @@ export default class MasterPage extends React.Component {
   render() {
     this.navMenu = this.props.navMenu;
     this.mainContent = this.props.mainContent;
-    console.log(this.mainContent);
     return (
       <DocumentTitle title='Atlas2, the new, revamped Mapping Tool'>
         <Grid fluid={true}>

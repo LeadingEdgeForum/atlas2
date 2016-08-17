@@ -27,6 +27,14 @@ class WorkspaceStore extends Store {
   constructor() {
     super();
   }
+  recordNewComponent(params) {
+    var relativeToCanvasPosX = params.pos[0]/*absolute pos of drop*/ - appState.canvasState.coords.offset.left/*absolute pos of canvas*/;
+    var relativeToCanvasPosY = params.pos[1]/*absolute pos of drop*/ - appState.canvasState.coords.offset.top/*absolute pos of canvas*/;
+
+    var universalCoordX = relativeToCanvasPosX / appState.canvasState.coords.size.width;
+    var universalCoordY = relativeToCanvasPosY / appState.canvasState.coords.size.height;
+    console.log(universalCoordX, universalCoordY);
+  }
   getCanvasState() {
     return appState.canvasState;
   }
@@ -157,6 +165,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.PALETTE_DRAG_STOPPED:
       appState.canvasState.highlight = false;
+      workspaceStoreInstance.recordNewComponent(action.data);
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.CANVAS_RESIZED:

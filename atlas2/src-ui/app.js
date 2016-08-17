@@ -21,7 +21,6 @@ import WorkspaceNavInfo from './pages/workspace/workspace-navbar-info.js';
 import MapEditor from './pages/workspace/maps/editor/map-editor.js';
 
 ReactStormpath.init();
-console.log(WelcomePage);
 
 ReactDOM.render(
   <Router history={browserHistory}>
