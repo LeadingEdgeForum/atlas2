@@ -14,6 +14,7 @@ import {
 import WorkspaceStore from '../../workspace-store';
 import Actions from '../../../../actions';
 var _ = require('underscore');
+import {userNeedStyle, externalStyle, internalStyle} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -21,26 +22,11 @@ require('jsplumb');
 var jsPlumb = window.jsPlumb;
 /*jshint -W117 */
 
-var mapComponentStyle = {
-  minHeight: 20,
-  minWidth: 20,
-  maxWidth: 20,
-  maxHeight: 20,
-  borderRadius: 10,
-  zIndex: 2,
-  border: '3px solid black',
-  backgroundColor: 'silver',
-  float: 'left'
-
-};
-
 var makeDraggable = function(input) {
-  console.log('input', input);
   if (input === null) {
     //noop - component was destroyed, no need to worry about draggable
     return;
   }
-  console.log('calling draggable', jsPlumb.draggable);
   var d = jsPlumb.draggable(input, {
     clone: 'true',
     ignoreZoom: true,
@@ -50,22 +36,21 @@ var makeDraggable = function(input) {
     start: function(params) {
       Actions.palletteDragStarted();
     },
-    drag: function(params) {
-      // if (params.screenX > 500) {
-      //   return false;
-      // }
-      // console.log('drag', params);
-    },
+    drag: function(params) {},
     stop: function(params) {
       Actions.palletteDragStopped(params);
-      console.log(params);
     }
   });
-  console.log(d);
 };
 
 var buttonStyle = {
-  position: 'relative'
+  position: 'relative',
+  padding: 0
+};
+
+var HigherMargins = {
+  marginBottom: '6px',
+  marginTop: '6px'
 };
 
 export default class Palette extends React.Component {
@@ -84,20 +69,28 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable}>
-                <div style={mapComponentStyle}></div>&nbsp;User need
+              <div ref={makeDraggable} style={HigherMargins}>
+                <div style={userNeedStyle}></div>&nbsp;User need
               </div>
             </Button>
           </Col>
         </Row>
         <Row className="show-grid">
           <Col xs={12}>
-            <Button href="#" style={buttonStyle} bsStyle={null}>&nbsp;Internal</Button>
+            <Button href="#" style={buttonStyle} bsStyle={null}>
+              <div ref={makeDraggable} style={HigherMargins}>
+                <div style={internalStyle}></div>&nbsp;Internal
+              </div>
+            </Button>
           </Col>
         </Row>
         <Row className="show-grid">
           <Col xs={12}>
-            <Button href="#" style={buttonStyle} bsStyle={null}>&nbsp;External</Button>
+            <Button href="#" style={buttonStyle} bsStyle={null}>
+              <div ref={makeDraggable} style={HigherMargins}>
+                <div style={externalStyle}></div>&nbsp;External
+              </div>
+            </Button>
           </Col>
         </Row>
       </Grid>
