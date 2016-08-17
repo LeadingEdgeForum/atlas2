@@ -34,4 +34,7 @@ export default class Actions {
   static palletteDragStopped() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED});
   }
+  static canvasResized(data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_RESIZED, data: data});
+  }
 }

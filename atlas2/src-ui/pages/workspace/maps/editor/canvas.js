@@ -13,6 +13,8 @@ import {
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
 var _ = require('underscore');
+import $ from 'jquery';
+import Actions from '../../../../actions';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -42,20 +44,51 @@ var setContainer = function(input) {
 export default class MapCanvas extends React.Component {
   constructor(props) {
     super(props);
-    this.state = WorkspaceStore.getCanvasHighlight();
+    this.state = WorkspaceStore.getCanvasState();
+    this.handleResize = this.handleResize.bind(this);
+    this.setConainer = this.setContainer.bind(this);
+  }
+
+  setContainer(input) {
+    this.input = input;
+    if (input === null) {
+      //noop - component was destroyed, no need to worry about draggable
+      return;
+    }
+    jsPlumb.setContainer(input);
+  }
+
+  handleResize() {
+    if (!this.input) {
+      return;
+    }
+    var coord = {
+      offset: {
+        top: $(this.input).offset().top,
+        left: $(this.input).offset().left
+      },
+      size: {
+        width: $(this.input).width(),
+        height: $(this.input).height()
+      }
+    };
+    Actions.canvasResized(coord);
+    //repaint (if necessary)
   }
 
   componentDidMount() {
     WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
   }
 
   componentWillUnmount() {
     WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    window.removeEventListener('resize', this.handleResize);
   }
 
   _onChange() {
-    console.log(WorkspaceStore.getCanvasHighlight());
-    this.setState(WorkspaceStore.getCanvasHighlight());
+    this.setState(WorkspaceStore.getCanvasState());
   }
 
   render() {
@@ -68,7 +101,7 @@ export default class MapCanvas extends React.Component {
       });
     }
     return (
-      <div style={style} ref={input => setContainer(input)}></div>
+      <div style={style} ref={input => this.setContainer(input)}></div>
     );
   }
 }

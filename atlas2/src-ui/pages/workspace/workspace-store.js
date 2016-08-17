@@ -14,8 +14,9 @@ let appState = {
   },
   workspaces: {},
   singleWorkspace: {},
-  canvasHighlight: {
-    highlight: false
+  canvasState: {
+    highlight: false,
+    coords: null
   }
 
 };
@@ -26,8 +27,8 @@ class WorkspaceStore extends Store {
   constructor() {
     super();
   }
-  getCanvasHighlight() {
-    return appState.canvasHighlight;
+  getCanvasState() {
+    return appState.canvasState;
   }
   getState() {
     return appState;
@@ -151,11 +152,15 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.submitNewMapDialog(action.data);
       break;
     case ActionTypes.PALETTE_DRAG_STARTED:
-      appState.canvasHighlight.highlight = true;
+      appState.canvasState.highlight = true;
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.PALETTE_DRAG_STOPPED:
-      appState.canvasHighlight.highlight = false;
+      appState.canvasState.highlight = false;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.CANVAS_RESIZED:
+      appState.canvasState.coords = action.data;
       workspaceStoreInstance.emitChange();
       break;
     default:
