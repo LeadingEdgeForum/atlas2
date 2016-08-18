@@ -100,8 +100,12 @@ export default class MapCanvas extends React.Component {
         border: '1px solid #00789b'
       });
     }
+    var children = this.props.children;
+    console.log(children);
     return (
-      <div style={style} ref={input => this.setContainer(input)}></div>
+      <div style={style} ref={input => this.setContainer(input)}>
+        {children}
+      </div>
     );
   }
 }

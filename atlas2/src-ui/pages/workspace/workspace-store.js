@@ -228,10 +228,11 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG:
       console.log("action", action);
-      workspaceStoreInstance.newNodeCreated(action.data);
       appState.newNodeDialog = { //cleans up by overwriting any current data
         open: false
       };
+      workspaceStoreInstance.newNodeCreated(action.data);
+      workspaceStoreInstance.emitChange(); //TODO: emit this by save
       break;
     default:
       return;
