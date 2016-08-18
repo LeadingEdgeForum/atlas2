@@ -12,7 +12,9 @@ module.exports  = keyMirror({
       MAP_CLOSE_SUBMIT_EDIT_WORKSPACE_DIALOG : null,
       PALETTE_DRAG_STARTED : null,
       PALETTE_DRAG_STOPPED : null,
-      CANVAS_RESIZED : null
+      CANVAS_RESIZED : null,
+      MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG : null,
+      MAP_CLOSE_NEW_NODE_DIALOG : null
   },
   USERNEED : null,
   EXTERNAL : null,

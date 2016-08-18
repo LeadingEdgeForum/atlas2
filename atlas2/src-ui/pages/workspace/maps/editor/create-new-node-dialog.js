@@ -43,12 +43,12 @@ var CreateNewNodeDialog = React.createClass({
     Actions.closeNewNodeDialog();
   },
   _submit: function() {
+    this.internalState.mapID = this.props.mapID;
     Actions.newNodeCreated(_.extend(this.state, this.internalState));
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
-    console.log(this.internalState);
   },
   render: function() {
     var show = this.state.open;

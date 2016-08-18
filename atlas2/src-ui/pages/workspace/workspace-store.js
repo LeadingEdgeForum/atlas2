@@ -20,7 +20,8 @@ let appState = {
   },
   newNodeDialog: {
     open: false
-  }
+  },
+  w_maps: {}
 };
 
 var workspacesQueriedForFirstTime = false;
@@ -29,8 +30,15 @@ class WorkspaceStore extends Store {
   constructor() {
     super();
   }
+  getMapInfo(mapID) {
+    //TODO: loading
+    if (!appState.w_maps[mapID]) {
+      return {};
+    }
+    return appState.w_maps[mapID];
+  }
 
-  recordNewComponent(type, params) {
+  recordNewComponent(type, params) { //normalizes the drop and opens the new node dialog
     var relativeToCanvasPosX = params.pos[0]/*absolute pos of drop*/ - appState.canvasState.coords.offset.left/*absolute pos of canvas*/;
     var relativeToCanvasPosY = params.pos[1]/*absolute pos of drop*/ - appState.canvasState.coords.offset.top/*absolute pos of canvas*/;
 
@@ -42,6 +50,13 @@ class WorkspaceStore extends Store {
       x: universalCoordX,
       y: universalCoordY
     };
+  }
+
+  newNodeCreated(data) { // the new map dialog confirms the component creation
+    console.log('new node to be created', data);
+    console.log(data.name);
+    console.log(data.type);
+    console.log(data.coords);
   }
 
   getNewNodeDialogState() {
@@ -142,19 +157,13 @@ class WorkspaceStore extends Store {
     };
   }
 
-  newNodeCreated(data) {
-    console.log('newNodeCreated', data);
-    console.log(data.name);
-    console.log(data.type);
-    console.log(data.coords);
-  }
-
 }
 let workspaceStoreInstance = new WorkspaceStore();
 
 let ActionTypes = Constants.ACTION_TYPES;
 
 workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
+  console.log(action);
   switch (action.actionType) {
     case ActionTypes.WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG:
       appState.newWorkspaceDialog.open = true;
@@ -199,6 +208,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG:
+      console.log("action", action);
       workspaceStoreInstance.newNodeCreated(action.data);
       appState.newNodeDialog = { //cleans up by overwriting any current data
         open: false
