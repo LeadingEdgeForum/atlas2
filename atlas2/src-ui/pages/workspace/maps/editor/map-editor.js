@@ -15,7 +15,6 @@ import WorkspaceStore from '../../workspace-store';
 import Palette from './palette';
 import MapCanvas from './canvas';
 import CreateNewNodeDialog from './create-new-node-dialog';
-var MapComponent = require('./map-component');
 var _ = require('underscore');
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
@@ -148,12 +147,7 @@ export default class MapEditor extends React.Component {
   }
 
   render() {
-    var components = null;
-    if (this.state.nodes) {
-      components = this.state.nodes.map(function(component) {
-        return <MapComponent node={component}/>;
-      });
-    }
+    var nodes = this.state.map.nodes;
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
@@ -163,9 +157,7 @@ export default class MapEditor extends React.Component {
           <Col xs={9}>
             <h4>{this.state.map.name}</h4>
             <div style={outerStyle}>
-              <MapCanvas>
-                {components}
-              </MapCanvas>
+              <MapCanvas nodes={nodes}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>

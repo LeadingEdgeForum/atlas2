@@ -71,7 +71,7 @@ class WorkspaceStore extends Store {
     if (!appState.w_maps[mapID]) {
       appState.w_maps[mapID] = {};
     }
-    var currentMap = appState.w_maps[mapID];
+    var currentMap = appState.w_maps[mapID].map;
     if (!currentMap.nodes) {
       currentMap.nodes = [];
     }

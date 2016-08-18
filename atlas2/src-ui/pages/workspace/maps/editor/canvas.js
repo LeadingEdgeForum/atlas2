@@ -15,6 +15,7 @@ import WorkspaceStore from '../../workspace-store';
 var _ = require('underscore');
 import $ from 'jquery';
 import Actions from '../../../../actions';
+var MapComponent = require('./map-component');
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -100,11 +101,25 @@ export default class MapCanvas extends React.Component {
         border: '1px solid #00789b'
       });
     }
-    var children = this.props.children;
-    console.log(children);
+    console.log('coords', this.state.coords);
+    var size = {
+      width: 0,
+      height: 0
+    };
+    if (this.state.coords && this.state.coords.size) {
+      size = this.state.coords.size;
+    }
+    console.log('canvas size', size);
+    var components = null;
+    console.log('nodes', this.props.nodes);
+    if (this.props.nodes) {
+      components = this.props.nodes.map(function(component) {
+        return <MapComponent node={component} size={size}/>;
+      });
+    }
     return (
       <div style={style} ref={input => this.setContainer(input)}>
-        {children}
+        {components}
       </div>
     );
   }

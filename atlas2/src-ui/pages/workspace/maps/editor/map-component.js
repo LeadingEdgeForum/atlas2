@@ -246,7 +246,8 @@ var MapComponent = React.createClass({
   // },
 
   render: function() {
-    console.log("trying to render", this.props);
+    console.log("trying to render", this.props.node);
+    var node = this.props.node;
     // var that = this;
     //
     // var styleToSet = _.clone(mapComponentStyle);
@@ -281,9 +282,30 @@ var MapComponent = React.createClass({
     //     </div>
     //   </div>
     // );
+    var style = null;
+    switch (node.type) {
+      case Constants.USERNEED:
+        style = userNeedStyle;
+        break;
+      case Constants.INTERNAL:
+        style = internalStyle;
+        break;
+      case Constants.EXTERNAL:
+        style = externalStyle;
+        break;
+    }
+    var left = node.x * this.props.size.width;
+    var top = node.y * this.props.size.height;
+    style = _.extend(_.clone(style), {
+      left: left,
+      top: top,
+      position: 'absolute',
+      cursor: 'pointer'
+    });
+    var name = node.name;
     return (
-      <div>
-        whoaaa!
+      <div style={style}>
+        {name}
       </div>
     );
   }
