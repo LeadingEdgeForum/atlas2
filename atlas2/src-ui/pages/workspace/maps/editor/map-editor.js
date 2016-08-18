@@ -155,7 +155,7 @@ export default class MapEditor extends React.Component {
             <Palette></Palette>
           </Col>
           <Col xs={9}>
-            <h4>Editor to be here</h4>
+            <h4>{this.state.map.name}</h4>
             <div style={outerStyle}>
               <MapCanvas/>
               <div>

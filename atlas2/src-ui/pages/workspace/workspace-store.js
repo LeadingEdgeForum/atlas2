@@ -31,9 +31,17 @@ class WorkspaceStore extends Store {
     super();
   }
   getMapInfo(mapID) {
-    //TODO: loading
     if (!appState.w_maps[mapID]) {
-      return {};
+      this.serverRequest = $.get('/api/map/' + mapID, function(result) {
+        console.log('map loaded', result);
+        appState.w_maps[mapID] = result;
+        this.emitChange();
+      }.bind(this));
+      return {
+        map: {
+          name: 'Loading...'
+        }
+      };
     }
     return appState.w_maps[mapID];
   }
@@ -53,10 +61,21 @@ class WorkspaceStore extends Store {
   }
 
   newNodeCreated(data) { // the new map dialog confirms the component creation
-    console.log('new node to be created', data);
-    console.log(data.name);
-    console.log(data.type);
-    console.log(data.coords);
+    var mapID = data.mapID;
+    if (!mapID) {
+      console.error('No mapID while creating a node');
+    }
+    if (!(data.name && data.type && data.coords)) {
+      console.error('Insufficient data', data);
+    }
+    if (!appState.w_maps[mapID]) {
+      appState.w_maps[mapID] = {};
+    }
+    var currentMap = appState.w_maps[mapID];
+    if (!currentMap.nodes) {
+      currentMap.nodes = [];
+    }
+    currentMap.nodes.push({name: data.name, type: data.type, x: data.coords.x, y: data.coords.y});
   }
 
   getNewNodeDialogState() {

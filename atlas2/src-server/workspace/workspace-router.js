@@ -73,6 +73,14 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.get('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
+    console.log({owner: getStormpathUserIdFromReq(req), id: req.params.mapID});
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID}).exec(function(err, result) {
+      console.log(err);
+      res.json({map: result});
+    });
+  });
+
   module.router.post('/map/', stormpath.authenticationRequired, function(req, res) {
     var owner = getStormpathUserIdFromReq(req);
     var name = req.body.name;
