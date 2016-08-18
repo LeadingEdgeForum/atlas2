@@ -17,6 +17,7 @@ limitations under the License.*/
 var Model = require('./model');
 var WardleyMap = Model.WardleyMap;
 var Workspace = Model.Workspace;
+var _ = require('underscore');
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -78,6 +79,22 @@ module.exports = function(stormpath) {
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID}).exec(function(err, result) {
       console.log(err);
       res.json({map: result});
+    });
+  });
+
+  module.router.put('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID}).exec(function(err, result) {
+      console.log('map found', err, result, req.body.map);
+      //check that we actually own the map, and if yes
+      if (result) {
+        _.extend(result, req.body.map);
+        _.extend(result.nodes, req.body.map.nodes);
+        console.log('saving', result);
+        result.save(function(err2, result2) {
+          console.log(err2, result2);
+          res.json(result2);
+        });
+      }
     });
   });
 

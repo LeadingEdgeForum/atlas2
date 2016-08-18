@@ -76,6 +76,7 @@ class WorkspaceStore extends Store {
       currentMap.nodes = [];
     }
     currentMap.nodes.push({name: data.name, type: data.type, x: data.coords.x, y: data.coords.y});
+    this.saveMap(mapID);
   }
 
   getNewNodeDialogState() {
@@ -141,6 +142,15 @@ class WorkspaceStore extends Store {
         appState.newWorkspaceDialog.open = false;
         this.updateWorkspaces();
       }.bind(this)
+    });
+  }
+
+  saveMap(mapID) {
+    $.ajax({
+      type: 'PUT',
+      url: '/api/map/' + mapID,
+      dataType: 'json',
+      data: appState.w_maps[mapID]
     });
   }
 

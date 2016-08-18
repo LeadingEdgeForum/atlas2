@@ -30,7 +30,12 @@ var _WorkspaceSchema = new Schema({
     }
   ]
 });
-
+var _NodeSchema = new Schema({
+  name: Schema.Types.String,
+  x : Schema.Types.Number,
+  y : Schema.Types.Number,
+  type : Schema.Types.String
+});
 var _MapSchema = new Schema({
   name: Schema.Types.String,
   description: Schema.Types.String,
@@ -38,8 +43,11 @@ var _MapSchema = new Schema({
   workspace: {
     type: Schema.Types.ObjectId,
     ref: 'Workspace'
-  }
+  },
+  nodes : [_NodeSchema]
 });
+
+
 
 var Workspace = mongoose.model('Workspace', _WorkspaceSchema);
 var WardleyMap = mongoose.model('WardleyMap', _MapSchema);
