@@ -44,4 +44,12 @@ export default class Actions {
   static newNodeCreated(data) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG, data: data});
   }
+
+  static deduplicatorUnassignedComponentDragStarted() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STARTED});
+  }
+
+  static deduplicatorUnassignedComponentDragStopped() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED});
+  }
 }

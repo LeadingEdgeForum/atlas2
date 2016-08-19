@@ -16,6 +16,9 @@ import MapListElement from './map-list-element.js';
 import MapListElementNew from './map-list-element-new.js';
 var CreateNewMapDialog = require('./create-new-map-dialog');
 import {getStyleForType} from './editor/component-styles';
+var Constants = require('./../../../constants');
+import Actions from './../../../actions.js';
+import _ from "underscore";
 
 var draggableComponentStyle = {
   borderWidth: '1px',
@@ -37,6 +40,9 @@ var acceptorStyle = {
   textAlign: "center",
   verticalAlign: "middle"
 };
+
+var dragStarted = false;
+
 export default class Deduplicator extends React.Component {
   constructor(props) {
     super(props);
@@ -57,34 +63,64 @@ export default class Deduplicator extends React.Component {
   _onChange() {
     this.setState(WorkspaceStore.getWorkspaceInfo(this.props.params.workspaceID));
   }
+
   handleDragStart(node, e) {
-    console.log(node, e);
     var target = e.target;
     e.dataTransfer.effectAllowed = 'copy';
-    e.dataTransfer.setData('text/plain', target.dataset.item);
+    e.dataTransfer.setData('json', JSON.stringify(node));
+    dragStarted = true;
+    // Actions.deduplicatorUnassignedComponentDragStarted();
+    this.forceUpdate();
+  }
+  handleDragStop(node, e) {
+    dragStarted = false;
+    this.forceUpdate();
+  }
+  handleDrop(e) {
+    // console.log('drop', e);
+    e.stopPropagation();
+    var item = JSON.parse(e.dataTransfer.getData('json'));
+    console.log('item', item);
+    dragStarted = false;
+    // Actions.deduplicatorUnassignedComponentDragStarted();
+    this.forceUpdate();
+  }
+  handleDragOver(e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    e.dataTransfer.dropEffect = 'copy';
   }
   render() {
     var _components = [];
     var workspaceID = this.props.params.workspaceID;
     if (this.state && this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
       this.state.workspace.maps.map(item => {
-        console.log(item);
         _components = _components.concat(item.nodes);
       });
     }
-    console.log(_components);
-    var _toDisplayComponents = _components.map(node => <div draggable="true" style={draggableComponentStyle} onDragStart={this.handleDragStart.bind(this, node)}>
-      <div style={getStyleForType(node.type)}></div>{node.name}</div>);
+    var acceptorStyleToSet = _.clone(acceptorStyle);
+    if (dragStarted) {
+      acceptorStyleToSet = _.extend(acceptorStyleToSet, {
+        borderColor: "#00789b",
+        boxShadow: "0 0 10px #00789b",
+        border: '1px solid #00789b'
+      });
+    }
+    var _toDisplayComponents = _components.map(node => <div data-item={node} draggable="true" style={draggableComponentStyle} onDragEnd={this.handleDragStop.bind(this, node)} onDragStart={this.handleDragStart.bind(this, node)}>
+      <div style={getStyleForType(node.type)}></div>
+      {node.name}
+    </div>);
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
-          <Col xs={4} lgOffset={1}>
+          <Col xs={3}>
             <h4>Your list of components in the workspace:</h4>
             {_toDisplayComponents}
           </Col>
-          <Col xs={8} lg={7}>
+          <Col xs={9}>
             <h4>Categories</h4>
-            <div style={acceptorStyle}>Nothing duplicates this component</div>
+            <div style={acceptorStyleToSet} onDrop={this.handleDrop.bind(this)} onDragOver={this.handleDragOver.bind(this)}>Nothing duplicates this component</div>
           </Col>
         </Row>
       </Grid>
