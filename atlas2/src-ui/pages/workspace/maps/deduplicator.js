@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes, Popover, OverlayTrigger} from 'react';
+import React, {PropTypes} from 'react';
 import DocumentTitle from 'react-document-title';
 import {
   Grid,
@@ -9,7 +9,8 @@ import {
   Jumbotron,
   Button,
   Table,
-  ListGroup
+  ListGroup,
+  Popover, OverlayTrigger
 } from 'react-bootstrap';
 import WorkspaceStore from '../workspace-store';
 import MapListElement from './map-list-element.js';
@@ -104,9 +105,11 @@ export default class Deduplicator extends React.Component {
     style.position = 'absolute';
     style.top = "10px";
 
-    // var popover = <Popover title="Component details">Name: {node.name}</Popover>;
-//<OverlayTrigger trigger="click" placement="right" overlay={popover}></OverlayTrigger>
-    return <div style={style}></div>;
+    var _popover = (<Popover id={node.name} title="Component details"><span>Name: {node.name}</span></Popover>);
+//
+    return (<OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
+      <div style={style}></div>
+    </OverlayTrigger>);
   }
   renderCategory(category){
     var itemsInACategory = category.nodes;
@@ -122,7 +125,7 @@ export default class Deduplicator extends React.Component {
         border: '1px solid #00789b'
       });
     }
-    console.log('items', _itemsToDisplay);
+
     return <div key={category.description} style={acceptorStyleToSet} onDrop={this.handleDrop.bind(this, category)} onDragOver={this.handleDragOver.bind(this)}>
       <Col xs={3}>{category.description}</Col>
       <Col xs={6}>
@@ -132,6 +135,7 @@ export default class Deduplicator extends React.Component {
       </Col>
     </div>;
   }
+
   render() {
     var acceptorStyleToSet = _.clone(acceptorStyle);
     if (dragStarted) {
@@ -155,8 +159,6 @@ export default class Deduplicator extends React.Component {
     if(this.state.categories){
       _categoriesToShow = this.state.categories.map(category => this.renderCategory(category));
     }
-    console.log('compoennts', _toDisplayComponents);
-    console.log('categories', _categoriesToShow);
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
@@ -166,8 +168,8 @@ export default class Deduplicator extends React.Component {
           </Col>
           <Col xs={9}>
             <h4>Categories</h4>
-            <div style={acceptorStyleToSet} onDrop={this.handleDrop.bind(this)} onDragOver={this.handleDragOver.bind(this)}>Nothing duplicates this component</div>
             {_categoriesToShow}
+            <div style={acceptorStyleToSet} onDrop={this.handleDrop.bind(this)} onDragOver={this.handleDragOver.bind(this)}>Nothing duplicates this component</div>
           </Col>
         </Row>
       </Grid>

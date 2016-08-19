@@ -189,8 +189,10 @@ class WorkspaceStore extends Store {
   getAvailableCategories(workspaceID) {
     var _categories = [];
     // var components = getAvailableComponents(workspaceID).components;
-    _categories.push({description:'manage communication with customers'});
-    _categories.push({description:'manage tasks'});
+    _categories.push({description:'category for user needs'});
+    _categories.push({description:'category for 1s'});
+    _categories.push({description:'category for 2s'});
+    _categories.push({description:'category for 3s'});
     return {categories: _categories};
   }
 
