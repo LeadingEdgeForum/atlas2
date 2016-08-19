@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 
 var _ = require('underscore');
+var Constants = require('./../../../../constants');
 
 var _diameter = 10;
 var mapComponentStyle = {
@@ -28,4 +29,20 @@ var internalStyle = _.extend(_.clone(mapComponentStyle), {
   backgroundColor: 'white'
 });
 
-export {userNeedStyle, externalStyle, internalStyle};
+var getStyleForType = function(type) {
+  var style = null;
+  switch (type) {
+    case Constants.USERNEED:
+      style = userNeedStyle;
+      break;
+    case Constants.INTERNAL:
+      style = internalStyle;
+      break;
+    case Constants.EXTERNAL:
+      style = externalStyle;
+      break;
+  }
+  return _.clone(style);
+};
+
+export {userNeedStyle, externalStyle, internalStyle, getStyleForType};

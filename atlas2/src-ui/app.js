@@ -17,6 +17,7 @@ import {
 import WelcomePage from './pages/WelcomePage.js';
 import WorkspaceList from './pages/workspace/workspace-list';
 import MapList from './pages/workspace/maps/map-list.js';
+import Deduplicator from './pages/workspace/maps/deduplicator.js';
 import WorkspaceNavInfo from './pages/workspace/workspace-navbar-info.js';
 import MapEditor from './pages/workspace/maps/editor/map-editor.js';
 
@@ -53,8 +54,12 @@ ReactDOM.render(
       mainContent: MapList,
       navMenu: WorkspaceNavInfo
     }}/>
+    <AuthenticatedRoute path='deduplicate/:workspaceID' components={{
+      mainContent: Deduplicator
+    }}/>
     <AuthenticatedRoute path='map/:mapID' components={{
       mainContent: MapEditor
     }}/>
+
   </HomeRoute>
 </Router>, document.getElementById('app-container'));

@@ -4,7 +4,7 @@ var React = require('react');
 var _ = require('underscore');
 var Constants = require('./../../../../constants');
 import Actions from '../../../../actions';
-import {userNeedStyle, externalStyle, internalStyle} from './component-styles';
+import {getStyleForType} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -282,21 +282,10 @@ var MapComponent = React.createClass({
     //     </div>
     //   </div>
     // );
-    var style = null;
-    switch (node.type) {
-      case Constants.USERNEED:
-        style = userNeedStyle;
-        break;
-      case Constants.INTERNAL:
-        style = internalStyle;
-        break;
-      case Constants.EXTERNAL:
-        style = externalStyle;
-        break;
-    }
+    var style = getStyleForType(node.type);
     var left = node.x * this.props.size.width;
     var top = node.y * this.props.size.height;
-    style = _.extend(_.clone(style), {
+    style = _.extend(style, {
       left: left,
       top: top,
       position: 'absolute',
