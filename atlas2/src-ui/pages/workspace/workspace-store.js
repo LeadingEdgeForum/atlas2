@@ -186,6 +186,25 @@ class WorkspaceStore extends Store {
     };
   }
 
+  getAvailableCategories(workspaceID) {
+    var _categories = [];
+    // var components = getAvailableComponents(workspaceID).components;
+    _categories.push({description:'manage communication with customers'});
+    _categories.push({description:'manage tasks'});
+    return {categories: _categories};
+  }
+
+  getAvailableComponents(workspaceID) {
+    var _components = [];
+    var workspaceInfo = this.getWorkspaceInfo(workspaceID);
+    if (workspaceInfo && workspaceInfo.workspace && workspaceInfo.workspace.maps && Array.isArray(workspaceInfo.workspace.maps)) {
+      workspaceInfo.workspace.maps.map(item => {
+        _components = _components.concat(item.nodes);
+      });
+    }
+    return {components: _components};
+  }
+
 }
 let workspaceStoreInstance = new WorkspaceStore();
 
