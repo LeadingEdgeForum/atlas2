@@ -9,3 +9,4 @@ applications:
   services:
   - mongodb-atlas2main
   - performance-monitoring-auto
+  - atlas2-stormpath-credentials
