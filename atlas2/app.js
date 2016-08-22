@@ -1,4 +1,5 @@
 /*eslint-env node*/
+/*jshint esversion: 6 */
 
 
 var stormpath = require('express-stormpath');
@@ -21,6 +22,7 @@ app.use(morgan('combined'));
 // for more info, see: https://www.npmjs.com/package/cfenv
 var cfenv = require('cfenv');
 
+var StormpathHelper = require('./src-server/stormpath-helper');
 
 app.get('/css/bootstrap.min.css', function (req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/css/bootstrap.min.css'));
@@ -43,9 +45,6 @@ app.use(stormpath.init(app, {
     debug:'debug',
     web: {
       produces: ['application/json'],
-      login: {
-        nextUri: '/wrong'
-      },
       logout : {
           enabled : true,
           uri : '/logout',
@@ -54,12 +53,12 @@ app.use(stormpath.init(app, {
     },
     client: {
         apiKey: {
-          id: process.env.WM_STORMPATH_API_KEY_ID,
-          secret: process.env.WM_STORMPATH_API_KEY_SECRET
+          id: StormpathHelper.stormpathId,
+          secret: StormpathHelper.stormpathKey
         }
      },
     application: {
-        href: process.env.WM_STORMPATH_APPLICATION
+        href: StormpathHelper.stormpathApplication
     }
 }));
 app.use(bodyParser.json());       // to support JSON-encoded bodies

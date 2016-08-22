@@ -37,7 +37,9 @@
     "react-stormpath": "^1.2.2",
     "script-loader": "^0.7.0",
     "underscore": "*",
-    "webpack": "1.13.1"
+    "webpack": "1.13.1",
+    "log4js" : "*",
+    "fs" :"*"
   },
   "devDependencies": {
     "key-mirror-nested": "^1.2.4",
