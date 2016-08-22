@@ -6,3 +6,6 @@ applications:
   name: main
   host: main
   disk_quota: 1024M
+  services:
+  - mongodb-atlas2main
+  - performance-monitoring-auto
