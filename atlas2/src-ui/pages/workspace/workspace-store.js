@@ -150,7 +150,11 @@ class WorkspaceStore extends Store {
       type: 'PUT',
       url: '/api/map/' + mapID,
       dataType: 'json',
-      data: appState.w_maps[mapID]
+      data: appState.w_maps[mapID],
+      /*better do not be too fast with editing*/
+      success: function(data2) {
+        appState.w_maps[mapID] = data2;
+      }
     });
   }
 
