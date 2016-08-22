@@ -28,6 +28,7 @@ describe('Workspaces & maps', function() {
     var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
     var workspaceID;
     var mapID;
+    var copyOfMap;
 
     before(function(done) {
         this.timeout(2 * 60 * 1000);
@@ -134,6 +135,7 @@ describe('Workspaces & maps', function() {
                 if (res.body.map.workspace !== workspaceID) {
                     throw new Error('workspace not assigned properly, should be' + workspaceID + " but was " + res.body.map.workspace);
                 }
+                copyOfMap = res.body.map;
             })
             .end(function(err, res) {
                 done(err);
@@ -148,15 +150,18 @@ describe('Workspaces & maps', function() {
             .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
-                var found = false;
+                var found = null;
                 for (var i = 0; i < res.body.workspace.maps.length; i++) {
                     var _map = res.body.workspace.maps[i];
                     if (_map._id === mapID) {
-                        found = true;
+                        found = _map;
                     }
                 }
                 if (!found) {
                     throw new Error("Map " + mapID + " was not correctly attached to workspace " + workspaceID);
+                }
+                if(!found.nodes){
+                    throw new Error("Map " + mapID + " should have nodes array");
                 }
             })
             .end(function(err, res) {
@@ -164,7 +169,43 @@ describe('Workspaces & maps', function() {
             });
     });
 
+    it('create a node in a map', function(done) {
+        var node = {name:"name",x:0.5,y:0.5,type:"INTERNAL"};
+        copyOfMap.nodes.push(node);
+        console.log({map:copyOfMap});
+        request(app).
+        put('/api/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({map:copyOfMap})
+            .expect(200)
+            .expect(function(res) {
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
 
+    it('create a second node in a map', function(done) {
+        var node = {name:"name1",x:0.7,y:0.5,type:"INTERNAL"};
+        copyOfMap.nodes.push(node);
+        console.log({map:copyOfMap});
+        request(app).
+        put('/api/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({map:copyOfMap})
+            .expect(200)
+            .expect(function(res) {
+                // console.log(res);
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
 
 
 });

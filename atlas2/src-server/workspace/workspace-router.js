@@ -85,17 +85,21 @@ module.exports = function(stormpath) {
 
   module.router.put('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID}).exec(function(err, result) {
-      console.log('map found', err, result, req.body.map);
+      // console.log('map found', err, result, req.body.map);
       //check that we actually own the map, and if yes
       if (result) {
         _.extend(result, req.body.map);
         _.extend(result.nodes, req.body.map.nodes);
-        console.log('saving', result);
         result.save(function(err2, result2) {
           console.log(err2, result2);
-          res.json(err
-            ? err // jshint ignore:line
-            : result2);
+          if (err2) {
+            res.status(500);
+          }
+          res.json(err2
+            ? err2 // jshint ignore:line
+            : {
+              map: result2
+            });
         });
       }
     });
@@ -121,26 +125,26 @@ module.exports = function(stormpath) {
       _id: workspaceID,
       owner: owner
     }, function(err, result) {
-      console.log('workspace found', err, result);
+      // console.log('workspace found', err, result);
       if (err) {
         res.send(err);
-        console.error(err);
+        // console.error(err);
         return;
       }
       if (!result) {
-        res.send("workspace not found");
+        // res.send("workspace not found");
         return;
       }
       var wm = new WardleyMap({name: name, description: description, owner: owner, workspace: result._id});
       wm.save(function(err, savedMap) {
-        console.log('map saved', err, savedMap);
+        // console.log('map saved', err, savedMap);
         if (err) {
           res.send(err);
           return;
         }
         result.maps.push(savedMap._id);
         result.save(function(err, saveResult) {
-          console.log('workspace saved', err, saveResult);
+          // console.log('workspace saved', err, saveResult);
           res.json({map: savedMap});
         });
       });
