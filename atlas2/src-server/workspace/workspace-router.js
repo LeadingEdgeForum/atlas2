@@ -105,7 +105,7 @@ module.exports = function(stormpath) {
     var owner = getStormpathUserIdFromReq(req);
     var name = req.body.name;
     if (!name) {
-      name = "Anonymous workspace";
+      name = "Anonymous map";
     }
     var description = req.body.description;
     if (!description) {
@@ -141,7 +141,7 @@ module.exports = function(stormpath) {
         result.maps.push(savedMap._id);
         result.save(function(err, saveResult) {
           console.log('workspace saved', err, saveResult);
-          res.json(savedMap);
+          res.json({map: savedMap});
         });
       });
     });
