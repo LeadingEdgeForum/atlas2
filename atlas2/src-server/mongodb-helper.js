@@ -4,7 +4,7 @@ var logger = require('./log.js').getLogger('mongodb-helper');
 var cfenv = require('cfenv');
 var appEnv = cfenv.getAppEnv();
 
-var mongoDBService = appEnv.getService("mongodb");
+var mongoDBService = appEnv.getService("mongodb-atlas2main");
 
 var connectionURL = null;
 if(mongoDBService && mongoDBService.credentials && mongoDBService.credentials.url){
@@ -15,6 +15,6 @@ if(mongoDBService && mongoDBService.credentials && mongoDBService.credentials.ur
   }
 } else {
     logger.warn('mongoDB service not configured (or configured improperly), defaulting to local database');
-    connectionURL = 'mongodb://localhost:27017/atls2';
+    connectionURL = 'mongodb://localhost:27017/atlas2';
 }
 module.exports = connectionURL;

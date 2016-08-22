@@ -1,11 +1,12 @@
 applications:
 - path: .
-  memory: 256M
+  memory: 512M
   instances: 1
   domain: eu-gb.mybluemix.net
   name: main
   host: main
-  disk_quota: 1024M
+  disk_quota: 512M
+  timeout: 60
   services:
   - mongodb-atlas2main
   - performance-monitoring-auto

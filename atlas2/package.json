@@ -39,11 +39,13 @@
     "underscore": "*",
     "webpack": "1.13.1",
     "log4js" : "*",
-    "fs" :"*"
-  },
-  "devDependencies": {
+    "fs" :"*",
     "key-mirror-nested": "^1.2.4",
     "webpack-dev-middleware": "^1.6.1"
+  },
+  "devDependencies": {
+    
+    
   },
   "repository": {},
   "engines": {

@@ -9,11 +9,11 @@ var stormpathId = null;
 var stormpathKey = null;
 var getStormpathData = function(appEnv) {
     var stormpathCredService = appEnv.getService("atlas2-stormpath-credentials");
-    if (stormpathCredService) {
+    if (stormpathCredService && stormpathCredService.credentials) {
         logger.trace("found configured credential service");
-        stormpathApplication = stormpathCredService.href;
-        stormpathId = stormpathCredService["apiKey.id"];
-        stormpathKey = stormpathCredService["apiKey.secret"];
+        stormpathApplication = stormpathCredService.credentials.href;
+        stormpathId = stormpathCredService.credentials["apiKey.id"];
+        stormpathKey = stormpathCredService.credentials["apiKey.secret"];
         return;
     }
     if (!(stormpathCredService && stormpathApplication && stormpathId && stormpathKey)) {
