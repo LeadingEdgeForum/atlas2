@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "mocha server-tests/tests*"
   },
   "dependencies": {
     "babel-core": "^6.11.4",
@@ -41,11 +42,13 @@
     "log4js" : "*",
     "fs" :"*",
     "key-mirror-nested": "^1.2.4",
-    "webpack-dev-middleware": "^1.6.1"
+    "webpack-dev-middleware": "^1.6.1",
+    "q" : "*"
   },
   "devDependencies": {
-    
-    
+      "mocha": "*",
+      "should": "10.0.0",
+      "supertest": "*"
   },
   "repository": {},
   "engines": {

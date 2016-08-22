@@ -18,6 +18,7 @@ var Model = require('./model');
 var WardleyMap = Model.WardleyMap;
 var Workspace = Model.Workspace;
 var _ = require('underscore');
+var logger = require('./../log');
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -92,7 +93,9 @@ module.exports = function(stormpath) {
         console.log('saving', result);
         result.save(function(err2, result2) {
           console.log(err2, result2);
-          res.json(result2);
+          res.json(err
+            ? err // jshint ignore:line
+            : result2);
         });
       }
     });
