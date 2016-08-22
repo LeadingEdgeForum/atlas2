@@ -16,8 +16,8 @@ limitations under the License.*/
 
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
-
-mongoose.connect('mongodb://localhost:27017/workspaces');
+var MongoDBConnectionURL = require('./../mongodb-helper');
+mongoose.connect(MongoDBConnectionURL);
 
 var _WorkspaceSchema = new Schema({
   name: Schema.Types.String,
