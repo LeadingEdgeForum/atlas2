@@ -20,6 +20,7 @@ import MapList from './pages/workspace/maps/map-list.js';
 import Deduplicator from './pages/workspace/maps/deduplicator.js';
 import WorkspaceNavInfo from './pages/workspace/workspace-navbar-info.js';
 import MapEditor from './pages/workspace/maps/editor/map-editor.js';
+import BackToWorkspace from './pages/workspace/maps/back-to-workspace.js';
 
 ReactStormpath.init();
 
@@ -55,10 +56,12 @@ ReactDOM.render(
       navMenu: WorkspaceNavInfo
     }}/>
     <AuthenticatedRoute path='deduplicate/:workspaceID' components={{
-      mainContent: Deduplicator
+      mainContent: Deduplicator,
+      navMenu: BackToWorkspace
     }}/>
     <AuthenticatedRoute path='map/:mapID' components={{
-      mainContent: MapEditor
+      mainContent: MapEditor,
+      navMenu: BackToWorkspace
     }}/>
 
   </HomeRoute>

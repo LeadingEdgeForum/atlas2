@@ -53,6 +53,8 @@ export default class MapCanvas extends React.Component {
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
     this.reconcileDependencies = this.reconcileDependencies.bind(this);
+    this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    this._onChange = this._onChange.bind(this);
   }
 
   beforeDropListener(connection) {
@@ -113,9 +115,8 @@ export default class MapCanvas extends React.Component {
 
   componentWillUnmount() {
     WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    jsPlumb.reset();
     window.removeEventListener('resize', this.handleResize);
-    jsPlumb.detachAllConnections();
-    jsPlumb.removeAllEndpoints();
   }
 
   _onChange() {
