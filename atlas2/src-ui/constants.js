@@ -19,7 +19,8 @@ module.exports  = keyMirror({
       DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED : null,
       CANVAS_FOCUS_NODE : null,
       CANVAS_BLUR_NODES : null,
-      CANVAS_NODE_DRAGGED : null
+      CANVAS_NODE_DRAGGED : null,
+      CANVAS_CONNECTION_CREATED : null
   },
   USERNEED : null,
   EXTERNAL : null,

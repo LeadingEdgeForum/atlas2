@@ -45,4 +45,26 @@ var getStyleForType = function(type) {
   return _.clone(style);
 };
 
-export {userNeedStyle, externalStyle, internalStyle, getStyleForType};
+var endpointOptions = {
+  paintStyle: {
+    fillStyle: "transparent",
+    outlineColor: 'transparent'
+  },
+  allowLoopback: false,
+  connector: "Straight",
+  connectorStyle: {
+    lineWidth: 1,
+    strokeStyle: 'silver',
+    outlineColor: "transparent",
+    outlineWidth: 10
+  },
+  endpoint: [
+    "Dot", {
+      radius: 1
+    }
+  ],
+  deleteEndpointsOnDetach: false,
+  uniqueEndpoints: true
+};
+
+export {userNeedStyle, externalStyle, internalStyle, getStyleForType, endpointOptions};

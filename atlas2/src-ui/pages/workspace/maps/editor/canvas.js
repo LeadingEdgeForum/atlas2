@@ -16,6 +16,7 @@ var _ = require('underscore');
 import $ from 'jquery';
 import Actions from '../../../../actions';
 var MapComponent = require('./map-component');
+import {endpointOptions} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -47,7 +48,30 @@ export default class MapCanvas extends React.Component {
     super(props);
     this.state = WorkspaceStore.getCanvasState();
     this.handleResize = this.handleResize.bind(this);
-    this.setConainer = this.setContainer.bind(this);
+    this.setContainer = this.setContainer.bind(this);
+    this.beforeDropListener = this.beforeDropListener.bind(this);
+    this.componentDidUpdate = this.componentDidUpdate.bind(this);
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.reconcileDependencies = this.reconcileDependencies.bind(this);
+  }
+
+  beforeDropListener(connection) {
+    var scope = connection.scope;
+    // no connection to self
+    if (connection.sourceId === connection.targetId) {
+      return false;
+    }
+    // no duplicate connections - TODO: check that in app state
+    if (jsPlumb.getConnections({
+      scope: scope,
+      source: connection.sourceId,
+      target: connection.targetId
+    }, true).length > 0) {
+      //connection already exists, so do not do anything
+      return false;
+    }
+    Actions.recordConnection(this.props.mapID, scope, connection.sourceId, connection.targetId);
+    return true;
   }
 
   setContainer(input) {
@@ -57,6 +81,9 @@ export default class MapCanvas extends React.Component {
       return;
     }
     jsPlumb.setContainer(input);
+    //this method is called multiple times, and we want to have only one listener attached at every point of time
+    jsPlumb.unbind("beforeDrop", this.beforeDropListener);
+    jsPlumb.bind("beforeDrop", this.beforeDropListener);
   }
 
   handleResize() {
@@ -74,7 +101,6 @@ export default class MapCanvas extends React.Component {
       }
     };
     Actions.canvasResized(coord);
-    //repaint (if necessary)
     jsPlumb.repaintEverything();
   }
 
@@ -82,15 +108,63 @@ export default class MapCanvas extends React.Component {
     WorkspaceStore.addChangeListener(this._onChange.bind(this));
     this.handleResize();
     window.addEventListener('resize', this.handleResize);
+    this.reconcileDependencies();
   }
 
   componentWillUnmount() {
     WorkspaceStore.removeChangeListener(this._onChange.bind(this));
     window.removeEventListener('resize', this.handleResize);
+    jsPlumb.detachAllConnections();
+    jsPlumb.removeAllEndpoints();
   }
 
   _onChange() {
     this.setState(WorkspaceStore.getCanvasState());
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    this.reconcileDependencies();
+  }
+
+  reconcileDependencies() {
+    var modelConnections = this.props.connections; // connections that should be visible
+    if (!modelConnections) {
+      return;
+    }
+    var canvasConnections = jsPlumb.getConnections();
+    var modelIterator = modelConnections.length;
+    while (modelIterator--) {
+      var isCurrentModelConnectionInTheCanvas = false;
+      var canvasIterator = canvasConnections.length;
+      var currentModel = modelConnections[modelIterator];
+      while (canvasIterator--) {
+        var currentCanvas = canvasConnections[canvasIterator];
+        if ((currentModel.source === currentCanvas.sourceId) && (currentModel.target === currentCanvas.targetId) && currentModel.scope === currentCanvas.scope) {
+          isCurrentModelConnectionInTheCanvas = true;
+          //we found graphic equivalent, so we ignore further processing of this element
+          canvasConnections.splice(canvasIterator, 1);
+        }
+      }
+      // model connection not found on canvas, create it
+      if (!isCurrentModelConnectionInTheCanvas) {
+        jsPlumb.connect({
+          source: currentModel.source,
+          target: currentModel.target,
+          scope: currentModel.scope,
+          anchors: [
+            "BottomCenter", "TopCenter"
+          ],
+          paintStyle: endpointOptions.connectorStyle,
+          endpoint: endpointOptions.endpoint,
+          connector: endpointOptions.connector,
+          endpointStyles: [endpointOptions.paintStyle, endpointOptions.paintStyle]
+        });
+      }
+    }
+    //clean up unnecessary canvas connection (no counterpart in model)
+    for (var i = 0; i < canvasConnections.length; i++) {
+      jsPlumb.detach(canvasConnections[i]);
+    }
   }
 
   render() {

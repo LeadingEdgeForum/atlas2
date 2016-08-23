@@ -148,6 +148,7 @@ export default class MapEditor extends React.Component {
 
   render() {
     var nodes = this.state.map.nodes;
+    var connections = this.state.map.connections;
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
@@ -157,7 +158,7 @@ export default class MapEditor extends React.Component {
           <Col xs={9}>
             <h4>{this.state.map.name}</h4>
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} mapID={this.props.params.mapID}></MapCanvas>
+              <MapCanvas nodes={nodes} connections={connections} mapID={this.props.params.mapID}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>

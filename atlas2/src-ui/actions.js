@@ -71,4 +71,16 @@ export default class Actions {
       }
     });
   }
+
+  static recordConnection(mapID, scope, sourceId, targetId) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_CONNECTION_CREATED,
+      data: {
+        mapID: mapID,
+        scope: scope,
+        source: sourceId,
+        target: targetId
+      }
+    });
+  }
 }

@@ -36,6 +36,14 @@ var _NodeSchema = new Schema({
   y : Schema.Types.Number,
   type : Schema.Types.String
 });
+
+/* Connection should have references to nodes. Maybe later */
+var _ConnectionSchema = new Schema({
+  scope: Schema.Types.String,
+  source: Schema.Types.String,
+  target: Schema.Types.String,
+});
+
 var _MapSchema = new Schema({
   name: Schema.Types.String,
   description: Schema.Types.String,
@@ -44,7 +52,8 @@ var _MapSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Workspace'
   },
-  nodes : [_NodeSchema]
+  nodes : [_NodeSchema],
+  connections: [_ConnectionSchema]
 });
 
 
