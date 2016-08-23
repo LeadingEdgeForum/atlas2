@@ -105,7 +105,7 @@ class WorkspaceStore extends Store {
   }
   fetchSingleWorkspaceInfo(workspaceID) {
     this.serverRequest = $.get('/api/workspace/' + workspaceID, function(result) {
-      console.log('result', result);
+      //      console.log('result', result);
       appState.singleWorkspace[workspaceID] = result;
       this.emitChange();
     }.bind(this));
@@ -220,7 +220,7 @@ let workspaceStoreInstance = new WorkspaceStore();
 let ActionTypes = Constants.ACTION_TYPES;
 
 workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
-  console.log(action);
+  //  console.log(action);
   switch (action.actionType) {
     case ActionTypes.WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG:
       appState.newWorkspaceDialog.open = true;

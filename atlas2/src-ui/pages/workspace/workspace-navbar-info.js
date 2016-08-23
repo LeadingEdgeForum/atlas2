@@ -7,9 +7,7 @@ import WorkspaceStore from './workspace-store';
 export default class WorkspaceNavbarInfo extends React.Component {
   constructor(props) {
     super(props);
-    console.log(props.params);
     this.state = WorkspaceStore.getWorkspaceInfo(props.params.workspaceID);
-    console.log('state', this.state);
     this.render = this.render.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);

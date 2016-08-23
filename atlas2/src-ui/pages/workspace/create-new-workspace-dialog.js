@@ -47,7 +47,6 @@ var CreateNewWorkspaceDialog = React.createClass({
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
-    console.log(this.internalState);
   },
   render: function() {
     var show = this.state.open;

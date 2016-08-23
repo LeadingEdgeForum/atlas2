@@ -29,7 +29,7 @@ var CreateNewNodeDialog = React.createClass({
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
