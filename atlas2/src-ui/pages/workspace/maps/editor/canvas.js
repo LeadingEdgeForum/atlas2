@@ -75,6 +75,7 @@ export default class MapCanvas extends React.Component {
     };
     Actions.canvasResized(coord);
     //repaint (if necessary)
+    jsPlumb.repaintEverything();
   }
 
   componentDidMount() {
