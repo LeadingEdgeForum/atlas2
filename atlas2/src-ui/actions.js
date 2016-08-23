@@ -93,4 +93,12 @@ export default class Actions {
       }
     });
   }
+
+  static archiveMap(mapID) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_ARCHIVE, data: mapID});
+  }
+
+  static archiveWorkspace(workspaceID) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_ARCHIVE, data: workspaceID});
+  }
 }

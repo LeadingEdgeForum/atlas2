@@ -318,6 +318,15 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       }
       workspaceStoreInstance.saveMap(action.data.mapID);
       break;
+    case ActionTypes.WORKSPACE_ARCHIVE:
+      $.ajax({
+        type: 'DELETE',
+        url: '/api/workspace/' + action.data,
+        success: function(data2) {
+          workspaceStoreInstance.updateWorkspaces(); // this emits change
+        }.bind(this)
+      });
+      break;
     default:
       return;
   }
