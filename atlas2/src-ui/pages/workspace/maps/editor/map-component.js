@@ -13,58 +13,32 @@ require('jsplumb');
 var jsPlumb = window.jsPlumb;
 /*jshint -W117 */
 
-// var endpointOptions = {
-//   paintStyle: {
-//     fillStyle: "transparent",
-//     outlineColor: 'transparent'
-//   },
-//   allowLoopback: false,
-//   connector: "Straight",
-//   connectorStyle: {
-//     lineWidth: 2,
-//     strokeStyle: 'silver',
-//     outlineColor: "transparent",
-//     outlineWidth: 10
-//   },
-//   endpoint: [
-//     "Dot", {
-//       radius: 1
-//     }
-//   ],
-//   deleteEndpointsOnDetach: false,
-//   uniqueEndpoints: true
-// };
-//
-// var actionEndpointOptions = {
-//   paintStyle: {
-//     fillStyle: "transparent",
-//     outlineColor: 'transparent'
-//   },
-//   allowLoopback: false,
-//   connector: "Straight",
-//   connectorStyle: {
-//     lineWidth: 2,
-//     strokeStyle: '#339933',
-//     outlineColor: "transparent",
-//     outlineWidth: 10
-//   },
-//   endpoint: [
-//     "Dot", {
-//       radius: 1
-//     }
-//   ],
-//   connectorOverlays: [
-//     [
-//       "Arrow", {
-//         location: 1.0,
-//         width: 8,
-//         height: 3
-//       }
-//     ]
-//   ],
-//   deleteEndpointsOnDetach: false,
-//   uniqueEndpoints: true
-// };
+var endpointOptions = {
+  paintStyle: {
+    fillStyle: "transparent",
+    outlineColor: 'transparent'
+  },
+  allowLoopback: false,
+  connector: "Straight",
+  connectorStyle: {
+    lineWidth: 1,
+    strokeStyle: 'silver',
+    outlineColor: "transparent",
+    outlineWidth: 10
+  },
+  endpoint: [
+    "Dot", {
+      radius: 1
+    }
+  ],
+  deleteEndpointsOnDetach: false,
+  uniqueEndpoints: true
+};
+
+var activeStyle = {
+  boxShadow: "0 0 10px #00789b",
+  color: "#00789b"
+};
 
 var nonInlinedStyle = {
   position: 'absolute'
@@ -257,36 +231,88 @@ var MapComponent = React.createClass({
     }
   },
 
+  mouseOver: function(target) {
+    this.setState({hover: target});
+  },
+
+  mouseOut: function(target) {
+    this.setState({hover: null});
+  },
+
   renderMenu() {
     if (!this.props.focused) {
+      if (this.input) {
+        jsPlumb.unmakeSource(this.input);
+        jsPlumb.makeTarget(this.input, endpointOptions, {anchor: "TopCenter"});
+      }
       return null;
+    }
+    var pencilStyle = {
+      position: "absolute",
+      fontSize: "20px",
+      top: "-20px",
+      left: "-20px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "pencil") {
+      pencilStyle = _.extend(pencilStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
+      }
+    }
+    var removeStyle = {
+      position: "absolute",
+      top: "-20px",
+      fontSize: "20px",
+      left: "10px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "remove") {
+      removeStyle = _.extend(removeStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
+      }
+    }
+    var linkStyle = {
+      position: "absolute",
+      top: "10px",
+      left: "10px",
+      fontSize: "20px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "link") {
+      linkStyle = _.extend(linkStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.makeSource(this.input, endpointOptions, {anchor: "BottomCenter"});
+      }
+    }
+    var moveStyle = {
+      position: "absolute",
+      top: "10px",
+      left: "-20px",
+      fontSize: "20px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "move") {
+      moveStyle = _.extend(moveStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, true);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
+      }
     }
     return (
       <div>
-        <Glyphicon glyph="pencil" style={{
-          position: "absolute",
-          top: "-15px",
-          left: "-15px",
-          zIndex: "30"
-        }}></Glyphicon>
-        <Glyphicon glyph="remove" style={{
-          position: "absolute",
-          top: "-15px",
-          left: "10px",
-          zIndex: "30"
-        }}></Glyphicon>
-        <Glyphicon glyph="link" style={{
-          position: "absolute",
-          top: "10px",
-          left: "10px",
-          zIndex: "30"
-        }}></Glyphicon>
-        <Glyphicon glyph="move" style={{
-          position: "absolute",
-          top: "10px",
-          left: "-15px",
-          zIndex: "30"
-        }}></Glyphicon>
+        <Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>
+        <Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>
+        <Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>
+        <Glyphicon glyph="move" onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} style={moveStyle}></Glyphicon>
       </div>
     );
   },
@@ -308,8 +334,12 @@ var MapComponent = React.createClass({
     var _this = this;
     var id = this.props.id;
     var mapID = this.props.mapID;
+    var focused = this.props.focused;
     return (
       <div style={style} onClick={this.onClickHandler} ref={input => {
+        if (input) {
+          this.input = input;
+        }
         if (!input) {
           return;
         }
@@ -322,7 +352,6 @@ var MapComponent = React.createClass({
             Actions.nodeDragged(mapID, id, event.finalPos);
           }
         });
-        jsPlumb.setDraggable(input, shouldBeDraggable);
       }}>
         <div style={itemCaptionStyle}>{name}</div>
         {menu}
