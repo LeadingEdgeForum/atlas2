@@ -23,6 +23,7 @@ var _WorkspaceSchema = new Schema({
   name: Schema.Types.String,
   description: Schema.Types.String,
   owner: Schema.Types.String,
+  archived: Schema.Types.Boolean,
   maps: [
     {
       type: Schema.Types.ObjectId,
@@ -48,6 +49,7 @@ var _MapSchema = new Schema({
   name: Schema.Types.String,
   description: Schema.Types.String,
   owner: Schema.Types.String,
+  archived: Schema.Types.Boolean,
   workspace: {
     type: Schema.Types.ObjectId,
     ref: 'Workspace'

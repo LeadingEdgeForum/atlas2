@@ -38,7 +38,8 @@ module.exports = function(stormpath) {
   module.router.get('/workspaces/', stormpath.authenticationRequired, function(req, res) {
 
     Workspace.find({
-      owner: getStormpathUserIdFromReq(req)
+      owner: getStormpathUserIdFromReq(req),
+      archived: false
     }, function(err, results) {
       console.error(err);
       var responseObject = {
@@ -59,10 +60,10 @@ module.exports = function(stormpath) {
     if (!description) {
       description = "I am too lazy to fill this field even when I know it causes organizational mess";
     }
-    var wkspc = new Workspace({name: name, description: description, owner: owner});
+    var wkspc = new Workspace({name: name, description: description, owner: owner, archived: false});
     wkspc.save(function(err, result) {
       if (err) {
-        res.json(err);
+        res.status(500).json(err);
       }
       res.json(result);
     });
@@ -70,26 +71,28 @@ module.exports = function(stormpath) {
 
   module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
     console.log({owner: getStormpathUserIdFromReq(req), id: req.params.workspaceID});
-    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID}).populate('maps').exec(function(err, result) {
+    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps').exec(function(err, result) {
       res.json({workspace: result});
     });
   });
 
   module.router.get('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     console.log({owner: getStormpathUserIdFromReq(req), id: req.params.mapID});
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID}).exec(function(err, result) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       console.log(err);
       res.json({map: result});
     });
   });
 
   module.router.put('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID}).exec(function(err, result) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       // console.log('map found', err, result, req.body.map);
       //check that we actually own the map, and if yes
       if (result) {
         _.extend(result, req.body.map);
         _.extend(result.nodes, req.body.map.nodes);
+        _.extend(result.connections, req.body.map.connections);
+        _.extend(result.archived, false);
         result.save(function(err2, result2) {
           console.log(err2, result2);
           if (err2) {
@@ -100,6 +103,62 @@ module.exports = function(stormpath) {
             : {
               map: result2
             });
+        });
+      }
+    });
+  });
+
+  module.router.delete('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
+      //check that we actually own the map, and if yes
+      if (err) {
+        res.status(500).json(err);
+      }
+      if (result) {
+        result.archived = true;
+        result.save(function(err2, result2) {
+          if (err2) {
+            res.status(500).json(err2);
+          }
+          Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: result2.workspace, archived: false}).exec(function(err3, result3) {
+            //check that we actually own the workspace, and if yes
+            if (err3) {
+              res.status(500).json(err3);
+            }
+            if (result3) {
+              for (var i = 0; i < result3.maps.length; i++) {
+                if (("" + result3.maps[i]) === req.params.mapID) {
+                  result3.maps.splice(i, 1); //hide the map from workspace
+                }
+              }
+              result3.save(function(err4, result4) {
+                if (err4) {
+                  res.status(500).json(err4);
+                }
+                res.json({map: null});
+              });
+            }
+          });
+
+        });
+      }
+    });
+  });
+
+  module.router.delete('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
+    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
+      //check that we actually own the map, and if yes
+      if (err) {
+        res.status(500).json(err);
+        return;
+      }
+      if (result) {
+        result.archived = true;
+        result.save(function(err2, result2) {
+          if (err2) {
+            res.status(500).json(err2);
+          }
+          res.json({workspace: null});
         });
       }
     });
@@ -123,7 +182,8 @@ module.exports = function(stormpath) {
 
     Workspace.findOne({ //this is check that the person logged in can actually write to workspace
       _id: workspaceID,
-      owner: owner
+      owner: owner,
+      archived: false
     }, function(err, result) {
       // console.log('workspace found', err, result);
       if (err) {
@@ -135,7 +195,7 @@ module.exports = function(stormpath) {
         // res.send("workspace not found");
         return;
       }
-      var wm = new WardleyMap({name: name, description: description, owner: owner, workspace: result._id});
+      var wm = new WardleyMap({name: name, description: description, owner: owner, workspace: result._id, archived: false});
       wm.save(function(err, savedMap) {
         // console.log('map saved', err, savedMap);
         if (err) {

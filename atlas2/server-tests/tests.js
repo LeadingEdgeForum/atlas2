@@ -130,7 +130,7 @@ describe('Workspaces & maps', function() {
             .expect(200)
             .expect(function(res) {
                 if (!(res.body.map && res.body.map._id)) {
-                    throw new Error('map not loaded properly' + res.body.map);
+                    throw new Error('map not loaded properly ' + res.body.map);
                 }
                 if (res.body.map.workspace !== workspaceID) {
                     throw new Error('workspace not assigned properly, should be' + workspaceID + " but was " + res.body.map.workspace);
@@ -201,6 +201,59 @@ describe('Workspaces & maps', function() {
             .expect(200)
             .expect(function(res) {
                 // console.log(res);
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('archive a map (/api/map/mapID)', function(done) {
+        request(app).
+        del('/api/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('verify map does not exist (map)', function(done) {
+        request(app).
+        get('/api/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                if (res.body.map) {
+                    throw new Error('map should not be visible after archive' + res.body.map);
+                }
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('verify map does not exist (workspace)', function(done) {
+        request(app).
+        get('/api/workspace/' + workspaceID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                var found = null;
+                for (var i = 0; i < res.body.workspace.maps.length; i++) {
+                    var _map = res.body.workspace.maps[i];
+                    if (_map._id === mapID) {
+                        found = _map;
+                    }
+                }
+                if (found) {
+                    throw new Error("Map " + mapID + " was not correctly removed from workspace " + workspaceID);
+                }
             })
             .end(function(err, res) {
                 done(err);
