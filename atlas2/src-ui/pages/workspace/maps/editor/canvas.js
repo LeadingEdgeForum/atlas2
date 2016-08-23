@@ -118,7 +118,7 @@ export default class MapCanvas extends React.Component {
       });
     }
     return (
-      <div style={style} ref={input => this.setContainer(input)}>
+      <div style={style} ref={input => this.setContainer(input)} onClick={Actions.blurNodes}>
         {components}
       </div>
     );

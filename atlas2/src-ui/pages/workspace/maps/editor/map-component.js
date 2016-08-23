@@ -224,6 +224,8 @@ var MapComponent = React.createClass({
   // },
 
   onClickHandler: function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     if (this.props.focused) {
       Actions.blurNodes();
     } else {
@@ -250,6 +252,7 @@ var MapComponent = React.createClass({
     var pencilStyle = {
       position: "absolute",
       fontSize: "20px",
+      color: "silver",
       top: "-20px",
       left: "-20px",
       zIndex: "30"
@@ -264,6 +267,7 @@ var MapComponent = React.createClass({
     }
     var removeStyle = {
       position: "absolute",
+      color: "silver",
       top: "-20px",
       fontSize: "20px",
       left: "10px",
@@ -280,6 +284,7 @@ var MapComponent = React.createClass({
     var linkStyle = {
       position: "absolute",
       top: "10px",
+      color: "silver",
       left: "10px",
       fontSize: "20px",
       zIndex: "30"
@@ -295,6 +300,7 @@ var MapComponent = React.createClass({
     var moveStyle = {
       position: "absolute",
       top: "10px",
+      color: "silver",
       left: "-20px",
       fontSize: "20px",
       zIndex: "30"
@@ -312,7 +318,7 @@ var MapComponent = React.createClass({
         <Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>
         <Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>
         <Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>
-        <Glyphicon glyph="move" onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} style={moveStyle}></Glyphicon>
+        <Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>
       </div>
     );
   },
