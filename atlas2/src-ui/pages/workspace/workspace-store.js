@@ -16,7 +16,8 @@ let appState = {
   singleWorkspace: {},
   canvasState: {
     highlight: false,
-    coords: null
+    coords: null,
+    focusedNodeID: null
   },
   newNodeDialog: {
     open: false
@@ -146,6 +147,7 @@ class WorkspaceStore extends Store {
   }
 
   saveMap(mapID) {
+    var that = this;
     $.ajax({
       type: 'PUT',
       url: '/api/map/' + mapID,
@@ -154,6 +156,7 @@ class WorkspaceStore extends Store {
       /*better do not be too fast with editing*/
       success: function(data2) {
         appState.w_maps[mapID] = data2;
+        that.emitChange();
       }
     });
   }
@@ -262,12 +265,32 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG:
-      console.log("action", action);
+      //      console.log("action", action);
       appState.newNodeDialog = { //cleans up by overwriting any current data
         open: false
       };
       workspaceStoreInstance.newNodeCreated(action.data);
       workspaceStoreInstance.emitChange(); //TODO: emit this by save
+      break;
+    case ActionTypes.CANVAS_FOCUS_NODE:
+      appState.canvasState.focusedNodeID = action.data;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.CANVAS_BLUR_NODES:
+      appState.canvasState.focusedNodeID = null;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.CANVAS_NODE_DRAGGED:
+      var _map = appState.w_maps[action.data.mapID].map;
+      for (var i = 0; i < _map.nodes.length; i++) {
+        if (_map.nodes[i]._id === action.data.nodeID) {
+          //normalize staff
+          _map.nodes[i].x = action.data.newPos[0] / appState.canvasState.coords.size.width;
+          _map.nodes[i].y = action.data.newPos[1] / appState.canvasState.coords.size.height;
+          console.log(_map.nodes[i]);
+        }
+      }
+      workspaceStoreInstance.saveMap(action.data.mapID);
       break;
     default:
       return;

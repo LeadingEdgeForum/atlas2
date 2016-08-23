@@ -101,7 +101,6 @@ export default class MapCanvas extends React.Component {
         border: '1px solid #00789b'
       });
     }
-    console.log('coords', this.state.coords);
     var size = {
       width: 0,
       height: 0
@@ -109,12 +108,13 @@ export default class MapCanvas extends React.Component {
     if (this.state.coords && this.state.coords.size) {
       size = this.state.coords.size;
     }
-    console.log('canvas size', size);
     var components = null;
-    console.log('nodes', this.props.nodes);
+    var focusedNodeID = this.state.focusedNodeID;
+    var mapID = this.props.mapID;
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
-        return <MapComponent node={component} size={size}/>;
+        var focused = focusedNodeID === component._id;
+        return <MapComponent mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused}/>;
       });
     }
     return (

@@ -5,6 +5,7 @@ var _ = require('underscore');
 var Constants = require('./../../../../constants');
 import Actions from '../../../../actions';
 import {getStyleForType} from './component-styles';
+import {Button, Glyphicon} from 'react-bootstrap';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -69,22 +70,25 @@ var nonInlinedStyle = {
   position: 'absolute'
 };
 
-// var itemCaptionStyle = {
-//   top: -10,
-//   left: 23,
-//   position: 'absolute',
-//   zIndex: 2,
-//   textShadow: '2px 2px white',
-//   width: 100,
-//   height: 22,
-//   maxWidth: 100,
-//   maxHeight: 22,
-//   marginBottom: -20,
-//   fontSize: 10,
-//   lineHeight: '11px'
-// };
+var itemCaptionStyle = {
+  top: -10,
+  left: 10,
+  position: 'absolute',
+  zIndex: 20,
+  textShadow: '2px 2px white',
+  width: 100,
+  height: 22,
+  maxWidth: 100,
+  maxHeight: 22,
+  marginBottom: -20,
+  fontSize: 10,
+  lineHeight: '11px'
+};
 
 var MapComponent = React.createClass({
+  getInitialState: function() {
+    return {focus: false};
+  },
   // id: null, left: 0, top: 0, positioned: false,
   // relatedConnections: [],
   // relatedConnectionListeners: [],
@@ -245,43 +249,50 @@ var MapComponent = React.createClass({
   //   MapActions.editNode(this.id);
   // },
 
+  onClickHandler: function(e) {
+    if (this.props.focused) {
+      Actions.blurNodes();
+    } else {
+      Actions.focusNode(this.props.id);
+    }
+  },
+
+  renderMenu() {
+    if (!this.props.focused) {
+      return null;
+    }
+    return (
+      <div>
+        <Glyphicon glyph="pencil" style={{
+          position: "absolute",
+          top: "-15px",
+          left: "-15px",
+          zIndex: "30"
+        }}></Glyphicon>
+        <Glyphicon glyph="remove" style={{
+          position: "absolute",
+          top: "-15px",
+          left: "10px",
+          zIndex: "30"
+        }}></Glyphicon>
+        <Glyphicon glyph="link" style={{
+          position: "absolute",
+          top: "10px",
+          left: "10px",
+          zIndex: "30"
+        }}></Glyphicon>
+        <Glyphicon glyph="move" style={{
+          position: "absolute",
+          top: "10px",
+          left: "-15px",
+          zIndex: "30"
+        }}></Glyphicon>
+      </div>
+    );
+  },
   render: function() {
-    console.log("trying to render", this.props.node);
     var node = this.props.node;
-    // var that = this;
-    //
-    // var styleToSet = _.clone(mapComponentStyle);
-    // if (that.props.inline) {
-    //   styleToSet = _.extend(styleToSet, inlinedStyle);
-    // } else {
-    //   styleToSet = _.extend(styleToSet, nonInlinedStyle);
-    // }
-    // styleToSet = _.extend(styleToSet, that.props.styleOverride);
-    //
-    // if (that.props.position) {
-    //   this.left = this.props.position.positionX * this.props.canvasSize.width;
-    //   styleToSet.left = this.left;
-    //   this.top = this.props.position.positionY * this.props.canvasSize.height;
-    //   styleToSet.top = this.top;
-    //   this.positioned = true;
-    // }
-    //
-    // that.id = this.props.id;
-    // var name = this.props.name;
-    // // var onClickHandler = null;
-    // // onClickHandler = this.props.mapMode === MapConstants.MAP_EDITOR_DELETE_MODE
-    // //   ? this.delete
-    // //   : null;
-    // // if (this.props.mapMode === MapConstants.MAP_EDITOR_EDIT_MODE) {
-    // //   onClickHandler = this.editNode;
-    // // }
-    // return (
-    //   <div style={styleToSet} id={this.props.id} onClick={onClickHandler}>
-    //     <div style={itemCaptionStyle}>
-    //       {name}
-    //     </div>
-    //   </div>
-    // );
+
     var style = getStyleForType(node.type);
     var left = node.x * this.props.size.width;
     var top = node.y * this.props.size.height;
@@ -292,9 +303,29 @@ var MapComponent = React.createClass({
       cursor: 'pointer'
     });
     var name = node.name;
+    var menu = this.renderMenu();
+    var shouldBeDraggable = this.props.focused;
+    var _this = this;
+    var id = this.props.id;
+    var mapID = this.props.mapID;
     return (
-      <div style={style}>
-        {name}
+      <div style={style} onClick={this.onClickHandler} ref={input => {
+        if (!input) {
+          return;
+        }
+        jsPlumb.draggable(input, {
+          containment: true,
+          grid: [
+            50, 50
+          ],
+          stop: function(event) {
+            Actions.nodeDragged(mapID, id, event.finalPos);
+          }
+        });
+        jsPlumb.setDraggable(input, shouldBeDraggable);
+      }}>
+        <div style={itemCaptionStyle}>{name}</div>
+        {menu}
       </div>
     );
   }

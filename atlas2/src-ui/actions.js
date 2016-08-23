@@ -52,4 +52,23 @@ export default class Actions {
   static deduplicatorUnassignedComponentDragStopped() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED});
   }
+
+  static focusNode(nodeID) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_NODE, data: nodeID});
+  }
+
+  static blurNodes(nodeID) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_BLUR_NODES});
+  }
+
+  static nodeDragged(mapID, nodeID, newPos) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_NODE_DRAGGED,
+      data: {
+        mapID: mapID,
+        nodeID: nodeID,
+        newPos: newPos
+      }
+    });
+  }
 }
