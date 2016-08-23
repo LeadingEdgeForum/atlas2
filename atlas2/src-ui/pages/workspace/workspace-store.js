@@ -287,7 +287,33 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           //normalize staff
           _map.nodes[i].x = action.data.newPos[0] / appState.canvasState.coords.size.width;
           _map.nodes[i].y = action.data.newPos[1] / appState.canvasState.coords.size.height;
-          console.log(_map.nodes[i]);
+        }
+      }
+      appState.canvasState.focusedNodeID = null;
+      workspaceStoreInstance.saveMap(action.data.mapID);
+      break;
+    case ActionTypes.CANVAS_CONNECTION_CREATED:
+      var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
+      _map.connections.push({source: action.data.source, target: action.data.target, scope: action.data.scope});
+      workspaceStoreInstance.saveMap(action.data.mapID);
+      break;
+    case ActionTypes.CANVAS_REMOVE_NODE:
+      var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
+      for (var i = 0; i < _map.nodes.length; i++) { // jshint ignore:line
+        if (_map.nodes[i]._id === action.data.nodeID) {
+          _map.nodes.splice(i, 1);
+          break;
+        }
+      }
+      var connectionsCount = _map.connections.length;
+      while (connectionsCount--) {
+        if ((_map.connections[connectionsCount].source === action.data.nodeID) || (_map.connections[connectionsCount].target === action.data.nodeID)) {
+          _map.connections.splice(connectionsCount, 1);
+        }
+      }
+      for (var i = 0; i < _map.connections.length; i++) { // jshint ignore:line
+        if (_map.nodes[i] === action.data.nodeID) {
+          _map.splice(i, 1);
         }
       }
       workspaceStoreInstance.saveMap(action.data.mapID);

@@ -83,4 +83,14 @@ export default class Actions {
       }
     });
   }
+
+  static removeNode(mapID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_REMOVE_NODE,
+      data: {
+        mapID: mapID,
+        nodeID: nodeID
+      }
+    });
+  }
 }

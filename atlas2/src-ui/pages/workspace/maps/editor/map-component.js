@@ -91,6 +91,11 @@ var MapComponent = React.createClass({
   onClickHandler: function(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (this.state.hover === "remove") {
+      var id = this.props.id;
+      var mapID = this.props.mapID;
+      Actions.removeNode(mapID, id);
+    }
     if (this.props.focused) {
       Actions.blurNodes();
     } else {
