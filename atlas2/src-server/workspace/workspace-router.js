@@ -108,6 +108,25 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.put('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
+    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
+      //check that we actually own the workspace, and if yes
+      if (err) {
+        res.status(500).json(err);
+      }
+      if (result) {
+        result.name = req.body.name;
+        result.description = req.body.description;
+        result.save(function(err2, result2) {
+          if (err2) {
+            res.status(500).json(err2);
+          }
+          res.json({map: result2});
+        });
+      }
+    });
+  });
+
   module.router.delete('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       //check that we actually own the map, and if yes

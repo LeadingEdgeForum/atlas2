@@ -22,6 +22,9 @@ let appState = {
   newNodeDialog: {
     open: false
   },
+  editWorkspaceDialog: {
+    open: false
+  },
   w_maps: {}
 };
 
@@ -125,6 +128,15 @@ class WorkspaceStore extends Store {
       return {open: false};
     }
   }
+
+  isWorkspaceEditDialogOpen() {
+    if (appState && appState.editWorkspaceDialog) {
+      return appState.editWorkspaceDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
   isMapNewDialogOpen() {
     if (appState && appState.newMapDialog) {
       return appState.newMapDialog;
@@ -141,6 +153,23 @@ class WorkspaceStore extends Store {
       data: data,
       success: function(data) {
         appState.newWorkspaceDialog.open = false;
+        this.updateWorkspaces();
+      }.bind(this)
+    });
+  }
+
+  submitEditWorkspaceDialog(data) {
+    var workspace = appState.singleWorkspace[data.workspaceID].workspace;
+    workspace.name = data.newWorkspaceData.name;
+    workspace.description = data.newWorkspaceData.description;
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + data.workspaceID,
+      dataType: 'json',
+      data: workspace,
+      success: function(data) {
+        appState.editWorkspaceDialog.open = false;
+        appState.editWorkspaceDialog.editedWorkspace = null;
         this.updateWorkspaces();
       }.bind(this)
     });
@@ -232,6 +261,20 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG:
       workspaceStoreInstance.submitNewWorkspaceDialog(action.data);
+      //no change, because it will go only after the submission is successful
+      break;
+    case ActionTypes.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG:
+      appState.editWorkspaceDialog.open = true;
+      appState.editWorkspaceDialog.editedWorkspace = action.data;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.WORKSPACE_CLOSE_EDIT_WORKSPACE_DIALOG:
+      appState.editWorkspaceDialog.open = false;
+      appState.editWorkspaceDialog.editedWorkspace = null;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG:
+      workspaceStoreInstance.submitEditWorkspaceDialog(action.data);
       //no change, because it will go only after the submission is successful
       break;
     case ActionTypes.MAP_OPEN_NEW_WORKSPACE_DIALOG:

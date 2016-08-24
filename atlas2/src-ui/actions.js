@@ -16,6 +16,24 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG, data: newWorkspaceData});
   }
 
+  static openEditWorkspaceDialog(workspaceID) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG, data: workspaceID});
+  }
+
+  static closeEditWorkspaceDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_CLOSE_EDIT_WORKSPACE_DIALOG});
+  }
+
+  static submitEditWorkspaceDialog(workspaceID, newWorkspaceData) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG,
+      data: {
+        workspaceID: workspaceID,
+        newWorkspaceData: newWorkspaceData
+      }
+    });
+  }
+
   static openNewMapDialog() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_NEW_WORKSPACE_DIALOG});
   }
@@ -106,5 +124,9 @@ export default class Actions {
 
   static archiveWorkspace(workspaceID) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_ARCHIVE, data: workspaceID});
+  }
+
+  static triggerEditingWorkspace(workspaceID) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.TRIGGER_WORKSPACE_EDIT, data: workspaceID});
   }
 }

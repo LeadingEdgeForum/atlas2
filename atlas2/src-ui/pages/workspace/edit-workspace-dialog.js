@@ -21,54 +21,68 @@ import WorkspaceStore from './workspace-store';
 
 //TODO: validation of the workspace dialog
 
-var CreateNewWorkspaceDialog = React.createClass({
+var EditWorkspaceDialog = React.createClass({
   getInitialState: function() {
     return {open: false};
   },
 
   componentDidMount: function() {
-    this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {
-    this.setState(WorkspaceStore.isWorkspaceNewDialogOpen());
+    var newState = WorkspaceStore.isWorkspaceEditDialogOpen();
+    var workspace = WorkspaceStore.getWorkspaceInfo(newState.editedWorkspace);
+    //load the workspace only once after it is loadeds
+    if (!this.internalState.workspace && workspace && workspace.workspace && !workspace.loading) {
+      this.internalState.workspace = workspace.workspace;
+      this.internalState.name = this.internalState.workspace.name;
+      this.internalState.description = this.internalState.workspace.description;
+    }
+    //dialog is going to be closed, clean internal state
+    if (!newState.open) {
+      this.internalState = {};
+    }
+    this.setState(newState);
   },
   _close: function() {
-    Actions.closeNewWorkspaceDialog();
+    Actions.closeEditWorkspaceDialog();
   },
   _submit: function() {
-    Actions.submitNewWorkspaceDialog(this.internalState);
+    Actions.submitEditWorkspaceDialog(this.state.editedWorkspace, this.internalState);
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
+    this.forceUpdate();
   },
   render: function() {
     var show = this.state.open;
+    if (!show) {
+      return null;
+    }
+    var currentName = this.internalState.name;
+    var currentDescription = this.internalState.description;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Create a new workspace
+              Edit existing workspace
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p>
-              Workspace is a place where maps can be analized together.
-            </p>
             <Form horizontal>
               <FormGroup controlId="name">
                 <Col sm={2}>
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')}/>
+                  <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')} value={currentName}/>
                   <HelpBlock>Name of the workspace</HelpBlock>
                 </Col>
               </FormGroup>
@@ -77,7 +91,7 @@ var CreateNewWorkspaceDialog = React.createClass({
                   <ControlLabel>Description</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')}/>
+                  <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')} value={currentDescription}/>
                   <HelpBlock>Description of the workspace</HelpBlock>
                 </Col>
               </FormGroup>
@@ -85,7 +99,7 @@ var CreateNewWorkspaceDialog = React.createClass({
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Change</Button>
           </Modal.Footer>
         </Modal>
       </div>
@@ -93,4 +107,4 @@ var CreateNewWorkspaceDialog = React.createClass({
   }
 });
 
-module.exports = CreateNewWorkspaceDialog;
+module.exports = EditWorkspaceDialog;

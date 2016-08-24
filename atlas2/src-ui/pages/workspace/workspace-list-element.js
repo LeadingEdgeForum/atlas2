@@ -7,6 +7,7 @@ import {
   Col,
   Jumbotron,
   Button,
+  ButtonGroup,
   Table,
   ListGroup,
   ListGroupItem,
@@ -19,6 +20,9 @@ export default class WorkspaceListElement extends React.Component {
   archive(id) {
     Actions.archiveWorkspace(id);
   }
+  openEditWorkspaceDialog(id) {
+    Actions.openEditWorkspaceDialog(id);
+  }
   render() {
     var workspaceID = this.props.id;
     var hrefOpen = 'workspace/' + workspaceID;
@@ -28,16 +32,24 @@ export default class WorkspaceListElement extends React.Component {
         <Grid fluid={true}>
           <Row className="show-grid">
             <Col xs={8}>{this.props.description}</Col>
-            <Col xs={1}>
-              <Button bsStyle="default" href={hrefOpen}>Open</Button>
-            </Col>
-            <Col xs={2}>
-              <Button bsStyle="default" href={hrefDeduplicate}>Deduplicate</Button>
-            </Col>
-            <Col xs={1}>
-              <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID)}>
-                <Glyphicon glyph="remove"></Glyphicon>
-              </Button>
+            <Col xs={4}>
+              <ButtonGroup>
+                <Button bsStyle="default" href="#" onClick={this.openEditWorkspaceDialog.bind(this, workspaceID)}>
+                  <Glyphicon glyph="edit"></Glyphicon>
+                </Button>
+                <Button bsStyle="default" href={hrefOpen}>
+                  <Glyphicon glyph="open"></Glyphicon>
+                </Button>
+                <Button bsStyle="default" href={hrefDeduplicate}>
+                  <Glyphicon glyph="pawn"></Glyphicon>
+                  <Glyphicon glyph="pawn" style={{
+                    color: "silver"
+                  }}></Glyphicon>
+                </Button>
+                <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID)}>
+                  <Glyphicon glyph="remove"></Glyphicon>
+                </Button>
+              </ButtonGroup>
             </Col>
           </Row>
         </Grid>
