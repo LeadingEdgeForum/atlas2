@@ -25,6 +25,9 @@ let appState = {
   editWorkspaceDialog: {
     open: false
   },
+  editMapDialog: {
+    open: false
+  },
   w_maps: {}
 };
 
@@ -33,17 +36,24 @@ class WorkspaceStore extends Store {
 
   constructor() {
     super();
+    this._categories = [];
+    this._categories.push({description: 'category for user needs'});
   }
   getMapInfo(mapID) {
+    if (!mapID) {
+      console.log('no mapId supplied to getMapInfo');
+      return null;
+    }
     if (!appState.w_maps[mapID]) {
       this.serverRequest = $.get('/api/map/' + mapID, function(result) {
-        console.log('map loaded', result);
+        //        console.log('map loaded', result);
         appState.w_maps[mapID] = result;
         this.emitChange();
       }.bind(this));
       return {
         map: {
-          name: 'Loading...'
+          name: 'Loading...',
+          loading: true
         }
       };
     }
@@ -145,6 +155,14 @@ class WorkspaceStore extends Store {
     }
   }
 
+  isMapEditDialogOpen() {
+    if (appState && appState.editMapDialog) {
+      return appState.editMapDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
   submitNewWorkspaceDialog(data) {
     $.ajax({
       type: 'POST',
@@ -175,7 +193,7 @@ class WorkspaceStore extends Store {
     });
   }
 
-  saveMap(mapID) {
+  saveMap(mapID, interceptor) {
     var that = this;
     $.ajax({
       type: 'PUT',
@@ -185,6 +203,9 @@ class WorkspaceStore extends Store {
       /*better do not be too fast with editing*/
       success: function(data2) {
         appState.w_maps[mapID] = data2;
+        if (interceptor) {
+          interceptor();
+        }
         that.emitChange();
       }
     });
@@ -277,16 +298,35 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.submitEditWorkspaceDialog(action.data);
       //no change, because it will go only after the submission is successful
       break;
-    case ActionTypes.MAP_OPEN_NEW_WORKSPACE_DIALOG:
+    case ActionTypes.MAP_OPEN_NEW_MAP_DIALOG:
       appState.newMapDialog.open = true;
       workspaceStoreInstance.emitChange();
       break;
-    case ActionTypes.MAP_CLOSE_NEW_WORKSPACE_DIALOG:
+    case ActionTypes.MAP_CLOSE_NEW_MAP_DIALOG:
       appState.newMapDialog.open = false;
       workspaceStoreInstance.emitChange();
       break;
-    case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_WORKSPACE_DIALOG:
+    case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
       workspaceStoreInstance.submitNewMapDialog(action.data);
+      break;
+    case ActionTypes.MAP_OPEN_EDIT_MAP_DIALOG:
+      appState.editMapDialog.open = true;
+      appState.editMapDialog.mapID = (action.data);
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_EDIT_MAP_DIALOG:
+      appState.editMapDialog.open = false;
+      appState.editMapDialog.mapID = null;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG:
+      appState.w_maps[action.data.mapID].map.name = action.data.mapNameAndDescription.name;
+      appState.w_maps[action.data.mapID].map.description = action.data.mapNameAndDescription.description;
+      workspaceStoreInstance.saveMap(action.data.mapID, function() {
+        appState.editMapDialog.open = false;
+        appState.editMapDialog.mapID = null;
+        workspaceStoreInstance.fetchSingleWorkspaceInfo(appState.w_maps[action.data.mapID].map.workspace);
+      });
       break;
     case ActionTypes.PALETTE_DRAG_STARTED:
       appState.canvasState.highlight = true;

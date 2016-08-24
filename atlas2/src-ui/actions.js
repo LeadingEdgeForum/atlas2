@@ -35,15 +35,36 @@ export default class Actions {
   }
 
   static openNewMapDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_NEW_WORKSPACE_DIALOG});
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_NEW_MAP_DIALOG});
   }
 
   static closeNewMapDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_WORKSPACE_DIALOG});
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_MAP_DIALOG});
   }
 
-  static submitEditNewMapDialog(data) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_WORKSPACE_DIALOG, data: data});
+  static submitNewMapDialog(data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG, data: data});
+  }
+
+  static openEditMapDialog(mapid) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_MAP_DIALOG, data: mapid});
+  }
+
+  static closeEditMapDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_EDIT_MAP_DIALOG});
+  }
+
+  static submitEditMapDialog(data) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG,
+      data: {
+        mapID: data.map._id,
+        mapNameAndDescription: {
+          name: data.name,
+          description: data.description
+        }
+      }
+    });
   }
 
   static palletteDragStarted() {
