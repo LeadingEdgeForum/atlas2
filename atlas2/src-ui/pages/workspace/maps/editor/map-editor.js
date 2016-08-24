@@ -15,6 +15,7 @@ import WorkspaceStore from '../../workspace-store';
 import Palette from './palette';
 import MapCanvas from './canvas';
 import CreateNewNodeDialog from './create-new-node-dialog';
+import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
@@ -177,6 +178,7 @@ export default class MapEditor extends React.Component {
               </div>
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID}/>
+            <EditNodeDialog mapID={this.props.params.mapID}/>
           </Col>
         </Row>
       </Grid>

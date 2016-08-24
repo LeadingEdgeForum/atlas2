@@ -41,48 +41,9 @@ var MapComponent = React.createClass({
   getInitialState: function() {
     return {focus: false};
   },
-  //
 
-  //
-  // getOverlays: function(scope) {
-  //   if (scope === jsPlumb.getDefaultScope()) {
-  //     return [];
-  //   }
-  //   if (scope === 'Actions') {
-  //     return actionEndpointOptions.connectorOverlays;
-  //   }
-  // },
-  //
+  componentWillUnmount: function() {},
 
-  //       connector: this.getConnector(_conn.scope),
-  //       endpointStyles: [
-  //         endpointOptions.paintStyle, endpointOptions.paintStyle
-  //       ],
-  //       overlays: this.getOverlays(_conn.scope)
-  //     };
-  //     this.relatedConnections[k].conn = jsPlumb.connect(connectionData);
-  //   }
-  // },
-  // connectionDelete: function(_conn) {
-  //   jsPlumb.detach(_conn); //remove from jsPlumb
-  //   MapActions.deleteConnection(_conn); //update the state
-  // },
-
-  componentWillUnmount: function() {
-    // if (this === undefined || this.id === undefined) {
-    //   return;
-    // }
-    // jsPlumb.detachAllConnections(this.id);
-    // jsPlumb.removeAllEndpoints(this.id);
-    // jsPlumb.detach(this.id);
-  },
-
-  // delete: function() {
-  //   jsPlumb.detachAllConnections(this.id);
-  //   jsPlumb.removeAllEndpoints(this.id);
-  //   jsPlumb.detach(this.id);
-  //   MapActions.deleteNode(this.id);
-  // },
   //
   // editNode: function() {
   //   MapActions.editNode(this.id);
@@ -95,6 +56,11 @@ var MapComponent = React.createClass({
       var id = this.props.id;
       var mapID = this.props.mapID;
       Actions.removeNode(mapID, id);
+    }
+    if (this.state.hover === "pencil") {
+      var nodeID = this.props.id; //jshint ignore:line
+      var mapID = this.props.mapID; //jshint ignore:line
+      Actions.openEditNodeDialog(mapID, nodeID);
     }
     if (this.props.focused) {
       Actions.blurNodes();
@@ -124,8 +90,8 @@ var MapComponent = React.createClass({
       position: "absolute",
       fontSize: "20px",
       color: "silver",
-      top: "-20px",
-      left: "-20px",
+      top: "-25px",
+      left: "-25px",
       zIndex: "30"
     };
     if (this.state.hover === "pencil") {
@@ -139,9 +105,9 @@ var MapComponent = React.createClass({
     var removeStyle = {
       position: "absolute",
       color: "silver",
-      top: "-20px",
+      top: "-25px",
       fontSize: "20px",
-      left: "10px",
+      left: "15px",
       zIndex: "30"
     };
     if (this.state.hover === "remove") {
@@ -154,9 +120,9 @@ var MapComponent = React.createClass({
     }
     var linkStyle = {
       position: "absolute",
-      top: "10px",
+      top: "15px",
       color: "silver",
-      left: "10px",
+      left: "15px",
       fontSize: "20px",
       zIndex: "30"
     };
@@ -170,9 +136,9 @@ var MapComponent = React.createClass({
     }
     var moveStyle = {
       position: "absolute",
-      top: "10px",
+      top: "15px",
       color: "silver",
-      left: "-20px",
+      left: "-25px",
       fontSize: "20px",
       zIndex: "30"
     };

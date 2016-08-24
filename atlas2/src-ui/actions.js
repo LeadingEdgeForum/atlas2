@@ -67,6 +67,34 @@ export default class Actions {
     });
   }
 
+  static openEditNodeDialog(mapID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_NODE_DIALOG,
+      data: {
+        mapID: mapID,
+        nodeID: nodeID
+      }
+    });
+  }
+
+  static closeEditNodeDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_EDIT_NODE_DIALOG});
+  }
+
+  static submitEditNodeDialog(data) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_NODE_DIALOG,
+      data: {
+        mapID: data.map._id,
+        nodeID: data.nodeID,
+        params: {
+          name: data.name,
+          type: data.type
+        }
+      }
+    });
+  }
+
   static palletteDragStarted() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STARTED});
   }

@@ -28,6 +28,9 @@ let appState = {
   editMapDialog: {
     open: false
   },
+  editNodeDialog: {
+    open: false
+  },
   w_maps: {}
 };
 
@@ -36,8 +39,6 @@ class WorkspaceStore extends Store {
 
   constructor() {
     super();
-    this._categories = [];
-    this._categories.push({description: 'category for user needs'});
   }
   getMapInfo(mapID) {
     if (!mapID) {
@@ -163,6 +164,14 @@ class WorkspaceStore extends Store {
     }
   }
 
+  isNodeEditDialogOpen() {
+    if (appState && appState.editNodeDialog) {
+      return appState.editNodeDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
   submitNewWorkspaceDialog(data) {
     $.ajax({
       type: 'POST',
@@ -239,18 +248,9 @@ class WorkspaceStore extends Store {
       workspace: {
         name: "Loading...",
         maps: []
-      }
+      },
+      loading: true
     };
-  }
-
-  getAvailableCategories(workspaceID) {
-    var _categories = [];
-    // var components = getAvailableComponents(workspaceID).components;
-    _categories.push({description:'category for user needs'});
-    _categories.push({description:'category for 1s'});
-    _categories.push({description:'category for 2s'});
-    _categories.push({description:'category for 3s'});
-    return {categories: _categories};
   }
 
   getAvailableComponents(workspaceID) {
@@ -328,6 +328,35 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         workspaceStoreInstance.fetchSingleWorkspaceInfo(appState.w_maps[action.data.mapID].map.workspace);
       });
       break;
+    case ActionTypes.MAP_OPEN_EDIT_NODE_DIALOG:
+      console.log(action.data);
+      appState.editNodeDialog.open = true;
+      appState.editNodeDialog.mapID = action.data.mapID;
+      appState.editNodeDialog.nodeID = action.data.nodeID;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_EDIT_NODE_DIALOG:
+      appState.editNodeDialog.open = false;
+      appState.editNodeDialog.mapID = null;
+      appState.editNodeDialog.nodeID = null;
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_NODE_DIALOG:
+      console.log(action.data);
+      for (var i = 0; i < appState.w_maps[action.data.mapID].map.nodes.length; i++) {
+        var _tempNode = appState.w_maps[action.data.mapID].map.nodes[i];
+        if (action.data.nodeID === _tempNode._id) {
+          _tempNode.name = action.data.params.name;
+          _tempNode.type = action.data.params.type;
+          break;
+        }
+      }
+      workspaceStoreInstance.saveMap(action.data.mapID, function() {
+        appState.editNodeDialog.open = false;
+        appState.editNodeDialog.mapID = null;
+        appState.editNodeDialog.nodeID = null;
+      });
+      break;
     case ActionTypes.PALETTE_DRAG_STARTED:
       appState.canvasState.highlight = true;
       workspaceStoreInstance.emitChange();
@@ -365,7 +394,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.CANVAS_NODE_DRAGGED:
       var _map = appState.w_maps[action.data.mapID].map;
-      for (var i = 0; i < _map.nodes.length; i++) {
+      for (var i = 0; i < _map.nodes.length; i++) { // jshint ignore:line
         if (_map.nodes[i]._id === action.data.nodeID) {
           //normalize staff
           _map.nodes[i].x = action.data.newPos[0] / appState.canvasState.coords.size.width;
