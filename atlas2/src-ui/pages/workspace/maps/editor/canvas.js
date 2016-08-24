@@ -55,6 +55,7 @@ export default class MapCanvas extends React.Component {
     this.reconcileDependencies = this.reconcileDependencies.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this._onChange = this._onChange.bind(this);
+    this.overlayClickHandler = this.overlayClickHandler.bind(this);
   }
 
   beforeDropListener(connection) {
@@ -73,7 +74,8 @@ export default class MapCanvas extends React.Component {
       return false;
     }
     Actions.recordConnection(this.props.mapID, scope, connection.sourceId, connection.targetId);
-    return true;
+    //never create connection as they will be reconciled
+    return false;
   }
 
   setContainer(input) {
@@ -127,6 +129,30 @@ export default class MapCanvas extends React.Component {
     this.reconcileDependencies();
   }
 
+  getOverlays() {
+    return [
+      [
+        "Custom", {
+          create: function(component) {
+            return $("<div><span class='glyphicon glyphicon-remove' style='color: silver;z-index: 30;cursor: pointer'></span></div>");
+          },
+          location: 0.5,
+          id: "deleteOverlay"
+        }
+      ]
+    ];
+  }
+  overlayClickHandler(obj) {
+    if (obj.component) {
+      //hurray, overlay clicked. So far there is only one, so it is not an issue
+      Actions.deleteConnection(this.props.mapID, obj.component.scope, obj.component.sourceId, obj.component.targetId);
+      return;
+    }
+    // we got pure connection
+    var conn = obj;
+    conn.___overlayVisible = !conn.___overlayVisible;
+    conn.getOverlay("deleteOverlay").setVisible(conn.___overlayVisible);
+  }
   reconcileDependencies() {
     var modelConnections = this.props.connections; // connections that should be visible
     if (!modelConnections) {
@@ -148,7 +174,7 @@ export default class MapCanvas extends React.Component {
       }
       // model connection not found on canvas, create it
       if (!isCurrentModelConnectionInTheCanvas) {
-        jsPlumb.connect({
+        var connection = jsPlumb.connect({
           source: currentModel.source,
           target: currentModel.target,
           scope: currentModel.scope,
@@ -158,8 +184,14 @@ export default class MapCanvas extends React.Component {
           paintStyle: endpointOptions.connectorStyle,
           endpoint: endpointOptions.endpoint,
           connector: endpointOptions.connector,
-          endpointStyles: [endpointOptions.paintStyle, endpointOptions.paintStyle]
+          endpointStyles: [
+            endpointOptions.paintStyle, endpointOptions.paintStyle
+          ],
+          overlays: this.getOverlays()
         });
+        connection.___overlayVisible = false;
+        connection.getOverlay("deleteOverlay").hide();
+        connection.bind('click', this.overlayClickHandler);
       }
     }
     //clean up unnecessary canvas connection (no counterpart in model)

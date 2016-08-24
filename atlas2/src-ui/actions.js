@@ -123,6 +123,18 @@ export default class Actions {
     });
   }
 
+  static deleteConnection(mapID, scope, sourceId, targetId) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_CONNECTION_DELETE,
+      data: {
+        mapID: mapID,
+        scope: scope,
+        source: sourceId,
+        target: targetId
+      }
+    });
+  }
+
   static removeNode(mapID, nodeID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_REMOVE_NODE,

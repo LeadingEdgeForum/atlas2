@@ -380,6 +380,17 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       _map.connections.push({source: action.data.source, target: action.data.target, scope: action.data.scope});
       workspaceStoreInstance.saveMap(action.data.mapID);
       break;
+    case ActionTypes.CANVAS_CONNECTION_DELETE:
+      var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
+      for (var i = 0; i < _map.connections.length; i++) { // jshint ignore:line
+        var connection = _map.connections[i];
+        if ((connection.source = action.data.source) && (connection.target = action.data.target) && (connection.scope = action.data.scope)) {
+          _map.connections.splice(i, 1);
+          break;
+        }
+      }
+      workspaceStoreInstance.saveMap(action.data.mapID);
+      break;
     case ActionTypes.CANVAS_REMOVE_NODE:
       var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
       for (var i = 0; i < _map.nodes.length; i++) { // jshint ignore:line
