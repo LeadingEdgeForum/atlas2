@@ -253,17 +253,6 @@ class WorkspaceStore extends Store {
     };
   }
 
-  getAvailableComponents(workspaceID) {
-    var _components = [];
-    var workspaceInfo = this.getWorkspaceInfo(workspaceID);
-    if (workspaceInfo && workspaceInfo.workspace && workspaceInfo.workspace.maps && Array.isArray(workspaceInfo.workspace.maps)) {
-      workspaceInfo.workspace.maps.map(item => {
-        _components = _components.concat(item.nodes);
-      });
-    }
-    return {components: _components};
-  }
-
 }
 let workspaceStoreInstance = new WorkspaceStore();
 
@@ -454,6 +443,45 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       $.ajax({
         type: 'DELETE',
         url: '/api/map/' + action.data.mapID,
+        success: function(data2) {
+          workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+          workspaceStoreInstance.updateWorkspaces(); // this emits change
+        }.bind(this)
+      });
+      break;
+    case Constants.ACTION_TYPES.NEW_CAPABILITY_WITH_ASSIGN:
+      $.ajax({
+        type: 'PUT',
+        url: '/api/workspace/' + action.data.workspaceID + '/capabilityCategory/' + action.data.capabilityCategoryID,
+        data: {
+          name: action.data.capabilityName,
+          mapID: action.data.mapID,
+          nodeID: action.data.nodeID
+        },
+        success: function(data2) {
+          workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+          workspaceStoreInstance.updateWorkspaces(); // this emits change
+        }.bind(this)
+      });
+      break;
+    case Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY:
+      $.ajax({
+        type: 'PUT',
+        url: '/api/workspace/' + action.data.workspaceID + '/capabilityCategory/' + action.data.capabilityCategoryID + '/capability/' + action.data.capabilityID,
+        data: {
+          mapID: action.data.mapID,
+          nodeID: action.data.nodeID
+        },
+        success: function(data2) {
+          workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+          workspaceStoreInstance.updateWorkspaces(); // this emits change
+        }.bind(this)
+      });
+      break;
+    case Constants.ACTION_TYPES.CLEAR_NODE_ASSIGNEMENT:
+      $.ajax({
+        type: 'DELETE',
+        url: '/api/map/' + action.data.mapID + '/node/' + action.data.nodeID + '/capability/',
         success: function(data2) {
           workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
           workspaceStoreInstance.updateWorkspaces(); // this emits change

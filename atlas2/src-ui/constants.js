@@ -33,7 +33,10 @@ module.exports  = keyMirror({
       CANVAS_CONNECTION_DELETE : null,
       CANVAS_REMOVE_NODE : null,
       WORKSPACE_ARCHIVE : null,
-      MAP_ARCHIVE : null
+      MAP_ARCHIVE : null,
+      NEW_CAPABILITY_WITH_ASSIGN : null,
+      ASSIGN_NODE_TO_CAPABILITY : null,
+      CLEAR_NODE_ASSIGNEMENT : null
   },
   USERNEED : null,
   EXTERNAL : null,

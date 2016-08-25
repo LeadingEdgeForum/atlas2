@@ -60,7 +60,25 @@ module.exports = function(stormpath) {
     if (!description) {
       description = "I am too lazy to fill this field even when I know it causes organizational mess";
     }
-    var wkspc = new Workspace({name: name, description: description, owner: owner, archived: false});
+    var wkspc = new Workspace({
+      name: name,
+      description: description,
+      owner: owner,
+      archived: false,
+      capabilityCategories: [
+        {
+          name: 'Customer Service'
+        }, {
+          name: 'Product'
+        }, {
+          name: 'Administrative'
+        }, {
+          name: 'Quality'
+        }, {
+          name: 'Operational'
+        }
+      ]
+    });
     wkspc.save(function(err, result) {
       if (err) {
         res.status(500).json(err);
@@ -103,6 +121,92 @@ module.exports = function(stormpath) {
             : {
               map: result2
             });
+        });
+      }
+    });
+  });
+
+  var assignComponentToCapability = function(initialResponse, mapID, nodeID, capabilityID) {
+    WardleyMap.findOne({_id: mapID, archived: false}).exec(function(err, result) {
+      //check that we actually own the map, and if yes
+      if (err) {
+        initialResponse.status(500).json(err);
+      }
+      if (result) {
+        for (var i = 0; i < result.nodes.length; i++) {
+          var _node = result.nodes[i];
+          if (nodeID == _node._id) { //jshint ignore:line
+            _node.categorized = true;
+            _node.category = capabilityID;
+          }
+        }
+        result.save(function(err2, result2) {
+          if (err2) {
+            initialResponse.status(500).json(err2);
+          } else {
+            initialResponse.status(200).end();
+          }
+        });
+      }
+    });
+  };
+
+  module.router.delete('/map/:mapID/node/:nodeID/capability', stormpath.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
+      // console.log('map found', err, result, req.body.map);
+      //check that we actually own the map, and if yes
+      if (result) {
+        for (var i = 0; i < result.nodes.length; i++) {
+          var _node = result.nodes[i];
+          // this compare is intentional as _node.id is object and nodeID is string from URL
+          if (_node.id == req.params.nodeID) { //jshint ignore:line
+            _node.categorized = false;
+            _node.category = null;
+          }
+        }
+        result.save(function(err2, result2) {
+          console.log(err2, result2);
+          if (err2) {
+            res.status(500);
+          }
+          res.json(err2
+            ? err2 // jshint ignore:line
+            : {
+              map: result2
+            });
+        });
+      }
+    });
+  });
+
+  // assign node to existing capability
+  module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/capability/:capabilityID', stormpath.authenticationRequired, function(req, res) {
+    assignComponentToCapability(res, req.body.mapID, req.body.nodeID, req.params.capabilityID);
+  });
+
+  // create new capability and assign node to it
+  module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/', stormpath.authenticationRequired, function(req, res) {
+    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
+      //check that we actually own the workspace, and if yes
+      if (err) {
+        res.status(500).json(err);
+      }
+      if (result) {
+        var i = -1;
+        var capabilityIndex = -1;
+        for (i = 0; i < result.capabilityCategories.length; i++) {
+          var capabilityCategory = result.capabilityCategories[i];
+          if (capabilityCategory._id == req.params.capabilityCategoryID) { //jshint ignore:line
+            capabilityCategory.capabilities.push({name: req.body.name});
+            capabilityIndex = capabilityCategory.capabilities.length - 1;
+            break;
+          }
+        }
+        result.save(function(err2, result2) {
+          if (err2) {
+            res.status(500).json(err2);
+          }
+          assignComponentToCapability(res, req.body.mapID, req.body.nodeID, result2.capabilityCategories[i].capabilities[capabilityIndex]._id);
         });
       }
     });

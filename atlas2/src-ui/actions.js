@@ -190,4 +190,41 @@ export default class Actions {
   static triggerEditingWorkspace(workspaceID) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.TRIGGER_WORKSPACE_EDIT, data: workspaceID});
   }
+
+  static createNewCapabilityAndAssingNodeToIt(workspaceID, capabilityCategoryID, capabilityName, mapID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.NEW_CAPABILITY_WITH_ASSIGN,
+      data: {
+        workspaceID: workspaceID,
+        capabilityCategoryID: capabilityCategoryID,
+        capabilityName: capabilityName,
+        mapID: mapID,
+        nodeID: nodeID
+      }
+    });
+  }
+
+  static assignNodeToCapability(workspaceID, capabilityCategoryID, capabilityID, mapID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY,
+      data: {
+        workspaceID: workspaceID,
+        capabilityCategoryID: capabilityCategoryID,
+        capabilityID: capabilityID,
+        mapID: mapID,
+        nodeID: nodeID
+      }
+    });
+  }
+
+  static clearNodeAssignement(workspaceID, mapID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CLEAR_NODE_ASSIGNEMENT,
+      data: {
+        workspaceID: workspaceID,
+        mapID: mapID,
+        nodeID: nodeID
+      }
+    });
+  }
 }

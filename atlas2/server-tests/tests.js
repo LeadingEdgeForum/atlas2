@@ -29,6 +29,7 @@ describe('Workspaces & maps', function() {
     var workspaceID;
     var mapID;
     var copyOfMap;
+    var copyOfWorkspace;
 
     before(function(done) {
         this.timeout(2 * 60 * 1000);
@@ -87,11 +88,13 @@ describe('Workspaces & maps', function() {
                 for (var i = 0; i < res.body.workspaces.length; i++) {
                     if (res.body.workspaces[i].workspace._id === workspaceID) {
                         found = true;
+                        copyOfWorkspace = res.body.workspaces[i];
                     }
                 }
                 if (!found) {
                     throw new Error('Workspace ' + workspaceID + ' not present on the list');
                 }
+
             })
             .end(function(err, res) {
                 done(err);
@@ -201,6 +204,29 @@ describe('Workspaces & maps', function() {
             .expect(200)
             .expect(function(res) {
                 // console.log(res);
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('create a category', function(done) {
+      console.log('categories', copyOfWorkspace);
+      var capabilityCategoryID = copyOfWorkspace.workspace.capabilityCategories[0]._id;
+      var testName = 'testcapability';
+        request(app).
+        put('/api/workspace/' + workspaceID + '/capabilityCategory/' + capabilityCategoryID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({name:testName})
+            .expect(200)
+            .expect(function(res) {
+              var actualName = res.body.workspace.capabilityCategories[0].capabilities[0].name;
+                if(actualName  !== testName){
+                  console.log(testName, actualName);
+                  throw new Error('Capability not created properly');
+                }
             })
             .end(function(err, res) {
                 done(err);

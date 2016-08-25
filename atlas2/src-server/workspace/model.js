@@ -29,13 +29,23 @@ var _WorkspaceSchema = new Schema({
       type: Schema.Types.ObjectId,
       ref: 'WardleyMap'
     }
+  ],
+  capabilityCategories : [
+    {
+      name: Schema.Types.String,
+      capabilities :[
+        {name: Schema.Types.String}
+      ]
+    }
   ]
 });
 var _NodeSchema = new Schema({
   name: Schema.Types.String,
   x : Schema.Types.Number,
   y : Schema.Types.Number,
-  type : Schema.Types.String
+  type : Schema.Types.String,
+  categorized: Schema.Types.Boolean,
+  category: Schema.Types.String
 });
 
 /* Connection should have references to nodes. Maybe later */
