@@ -152,28 +152,38 @@ module.exports = function(stormpath) {
   };
 
   module.router.delete('/map/:mapID/node/:nodeID/capability', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
       // console.log('map found', err, result, req.body.map);
       //check that we actually own the map, and if yes
-      if (result) {
-        for (var i = 0; i < result.nodes.length; i++) {
-          var _node = result.nodes[i];
+      if (mainAffectedMap) {
+        var mainAffectedNode = null;
+        for (var i = 0; i < mainAffectedMap.nodes.length; i++) {
+          var _node = mainAffectedMap.nodes[i];
           // this compare is intentional as _node.id is object and nodeID is string from URL
           if (_node.id == req.params.nodeID) { //jshint ignore:line
             _node.categorized = false;
             _node.category = null;
+            mainAffectedNode = _node;
+            break;
           }
         }
-        result.save(function(err2, result2) {
-          console.log(err2, result2);
+        var referencedNodes = [mainAffectedNode._id];
+        for (var j = 0; j < mainAffectedNode.referencedNodes.length; j++) {
+          referencedNodes.push(mainAffectedNode.referencedNodes[j].nodeID);
+        }
+        var query = WardleyMap.find().where('nodes._id'). in(referencedNodes);
+        WardleyMap.update(query, {
+          '$set': {
+            'nodes.$.referencedNodes': [],
+            'nodes.$.categorized': false,
+            'nodes.$.category': null
+          }
+        }).exec(function(err2, doc) {
           if (err2) {
             res.status(500);
+            return;
           }
-          res.json(err2
-            ? err2 // jshint ignore:line
-            : {
-              map: result2
-            });
+          res.json(doc);
         });
       }
     });

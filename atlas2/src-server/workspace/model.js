@@ -45,7 +45,11 @@ var _NodeSchema = new Schema({
   y : Schema.Types.Number,
   type : Schema.Types.String,
   categorized: Schema.Types.Boolean,
-  category: Schema.Types.String
+  category: Schema.Types.String,
+  referencedNodes : [ {
+    nodeID : Schema.Types.String,
+    mapID :Schema.Types.String
+  }]
 });
 
 /* Connection should have references to nodes. Maybe later */
