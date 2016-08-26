@@ -5,12 +5,10 @@ import {Nav, NavItem, Navbar} from 'react-bootstrap';
 import WorkspaceStore from './../workspace-store';
 import {LinkContainer} from 'react-router-bootstrap';
 
-
-
 export default class BackToWorkspace extends React.Component {
   constructor(props) {
     super(props);
-    if(this.props.params.mapID){
+    if (this.props.params.mapID) {
       this.state = WorkspaceStore.getMapInfo(props.params.mapID);
     } else {
       this.state = WorkspaceStore.getWorkspaceInfo(props.params.workspaceID);
@@ -23,24 +21,42 @@ export default class BackToWorkspace extends React.Component {
   render() {
     var name = null;
     var workspaceID = null;
-    if(this.props.params.mapID){
+    var mapSupplied = this.props.params.mapID;
+    if (this.props.params.mapID) {
       //we have only map, so after it is loaded...
       workspaceID = this.state.map.workspace;
-    } else {
+    } else if (this.props.params.workspaceID && this.state.workspace) {
       //we have workspace, nice
       name = this.state.workspace.name;
       workspaceID = this.props.params.workspaceID;
+    } else {
+      return null;
     }
     var href = '/workspace/' + workspaceID;
+    var deduplicateHref = '/deduplicate/' + workspaceID;
+
+    var deduplicatorLink = [];
+    if (mapSupplied) {
+      deduplicatorLink.push((
+        <LinkContainer to={{
+          pathname: deduplicateHref
+        }}>
+          <NavItem eventKey={2} href={deduplicateHref} key="2">
+            Deduplicate
+          </NavItem>
+        </LinkContainer>
+      ));
+    }
     return (
       <Nav>
         <LinkContainer to={{
           pathname: href
         }}>
-          <NavItem eventKey={1} href={href}>
+          <NavItem eventKey={1} href={href} key="1">
             Back to workspace {name}
           </NavItem>
         </LinkContainer>
+        {deduplicatorLink}
       </Nav>
     );
   }
@@ -53,7 +69,7 @@ export default class BackToWorkspace extends React.Component {
   }
 
   _onChange() {
-    if(this.props.params.mapID){
+    if (this.props.params.mapID) {
       this.setState(WorkspaceStore.getMapInfo(this.props.params.mapID));
     } else {
       this.setState(WorkspaceStore.getWorkspaceInfo(this.props.params.workspaceID));
