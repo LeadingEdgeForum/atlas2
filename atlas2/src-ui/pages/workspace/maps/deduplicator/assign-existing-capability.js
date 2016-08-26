@@ -10,7 +10,9 @@ import {
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  ListGroup,
+  ListGroupItem
 } from 'react-bootstrap';
 var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./../../../../constants');
@@ -25,45 +27,59 @@ var AssignExistingCapabilityDialog = React.createClass({
 
   internalState: {},
 
-  _submit: function() {
-    this.props.submitDialog(this.props.capabilityCategory, this.internalState.description, this.props.nodeBeingAssigned);
+  submit: function(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
+    this.props.submitAssignDialog(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID);
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
   },
+  renderExistingItems: function(nodes) {
+    var submit = this.submit;
+    var result = [];
+    var nodeBeingAssigned = this.props.nodeBeingAssigned;
+    nodes.map(node => {
+      console.log(node);
+      result.push(
+        <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned.mapID, nodeBeingAssigned._id, node._id, node.mapID)}>
+          <b>{node.name}</b>&nbsp;from map &nbsp;
+          <b>{node.mapName}</b>
+        </ListGroupItem>
+      );
+    });
+    return result;
+  },
   render: function() {
+    console.log(this.props);
     var show = this.props.open;
-    var nodeName = this.props.nodeBeingAssigned
-      ? (this.props.nodeBeingAssigned.name) //jshint ignore:line
-      : '';
+    var nodeBeingAssigned = this.props.nodeBeingAssigned;
+    if (!nodeBeingAssigned) {
+      return null;
+    }
     var cancel = this.props.cancel;
+    var existingItems = this.renderExistingItems(this.props.otherNodes);
+    var submit = this.submit;
     return (
       <div>
         <Modal show={show} onHide={cancel}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Describe a new capability
+              Assign the component component from map
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <h6>Node&nbsp;
-              <b>{nodeName}</b>&nbsp;will be assigned to this capability</h6>
-            <Form horizontal>
-              <FormGroup controlId="description">
-                <Col sm={2}>
-                  <ControlLabel>Description</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter description here" onChange={this._handleDialogChange.bind(this, 'description')}/>
-                  <HelpBlock>Describe what this component actually does.</HelpBlock>
-                </Col>
-              </FormGroup>
-            </Form>
+            Choose whether
+            <b>&nbsp;{nodeBeingAssigned.name}&nbsp;</b>
+            from map
+            <b>&nbsp;{nodeBeingAssigned.mapName}</b>&nbsp; is the same as:
+            <br/><br/>
+            <ListGroup>
+              {existingItems}
+              <ListGroupItem bsStyle="danger" onClick={submit.bind(this, nodeBeingAssigned.mapID, nodeBeingAssigned._id)}>No, this is separate component</ListGroupItem>
+            </ListGroup>
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={cancel}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit.bind(this)}>Create</Button>
           </Modal.Footer>
         </Modal>
       </div>

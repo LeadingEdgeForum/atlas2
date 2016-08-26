@@ -61,21 +61,24 @@ export default class CapabilitiesView extends React.Component {
     e.dataTransfer.dropEffect = 'copy';
   }
   handleDropExistingCapability(categoryId, capabilityID, existingItems, e) {
-
-    e.stopPropagation();
     var copyOfNode = JSON.parse(e.dataTransfer.getData('json'));
-    // console.log(copyOfNode, existingItems);
+    e.stopPropagation();
+    if ((!existingItems) || (existingItems.length === 0)) {
+      //easy part, no other components in the category, so just assign the node
+      Actions.assignNodeToCapability(this.props.workspace._id, categoryId, capabilityID, copyOfNode.mapID, copyOfNode._id);
+    }
+
+    //otherwise launch deduplication dialog
     var newState = {
       assignExistingCapabilityDialog: {
         open: true,
         nodeBeingAssigned: copyOfNode,
         otherNodes: existingItems,
-        capabilityID: capabilityID
+        capabilityID: capabilityID,
+        categoryId: categoryId
       }
     };
     this.setState(newState);
-    // console.log('drop', e, capabilityID, categoryId, item);
-    //Actions.assignNodeToCapability(this.props.workspace._id, categoryId, capabilityID, copyOfNode.mapID, copyOfNode._id);
   }
 
   handleDropNewCapability(cat, e) {
@@ -106,6 +109,20 @@ export default class CapabilitiesView extends React.Component {
       }
     };
     this.setState(newState);
+  }
+
+  submitAssignDialog(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
+    if (!(referenceNodeID && referenceNodemapID)) {
+      //again, easy part as it is just a new component in the category
+      Actions.assignNodeToCapability(this.props.workspace._id, this.state.newCapabilityDialog.categoryId, this.state.newCapabilityDialog.capabilityID, nodeBeingAssignedMapID, nodeBeingAssignedID);
+      var newState = {
+        assignExistingCapabilityDialog: {
+          open: false
+        }
+      };
+      this.setState(newState);
+    }
+    Actions.makeNodesReferenced(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID);
   }
 
   clearNodeAssignement(mapID, nodeID, e) {
@@ -236,7 +253,7 @@ export default class CapabilitiesView extends React.Component {
       <Grid fluid={true}>
         {categories}
         <CreateNewCapabilityDialog open={dialogOpen} nodeBeingAssigned={nodeBeingAssigned} capabilityCategory={capabilityCategory} cancel={this.cancelDialog.bind(this, "newCapabilityDialog")} submitDialog={this.submitDialog.bind(this)}/>
-        <AssignExistingCapabilityDialog open={assignDialogOpen} nodeBeingAssigned={assignNodeBeingAssigned} capabilityID={assignCapabilityId} otherNodes={assignItems} cancel={this.cancelDialog.bind(this, "assignExistingCapabilityDialog")}/>
+        <AssignExistingCapabilityDialog open={assignDialogOpen} nodeBeingAssigned={assignNodeBeingAssigned} capabilityID={assignCapabilityId} otherNodes={assignItems} cancel={this.cancelDialog.bind(this, "assignExistingCapabilityDialog")} submitAssignDialog={this.submitAssignDialog.bind(this)}/>
       </Grid>
     );
   }
