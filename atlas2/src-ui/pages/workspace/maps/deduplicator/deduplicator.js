@@ -92,6 +92,24 @@ export default class Deduplicator extends React.Component {
     return _components;
   }
 
+  renderComponentToDrag(node) {
+    var linkToMap = "/map/" + node.mapID;
+    var _popover = (
+      <Popover id={node.name} title="Component details">
+        <p>Name: {node.name}</p>
+        <p>Map:
+          <a href={linkToMap}>{node.mapName}</a>
+        </p>
+      </Popover>
+    );
+    return <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
+      <div data-item={node} draggable="true" style={draggableComponentStyle} onDragEnd={this.handleDragStop.bind(this, node)} onDragStart={this.handleDragStart.bind(this, node)}>
+        <div style={getStyleForType(node.type)}></div>
+        {node.name}
+      </div>
+    </OverlayTrigger>;
+  }
+
   render() {
     var components = this.getAvailableComponents();
 
@@ -109,10 +127,7 @@ export default class Deduplicator extends React.Component {
         }
       }
 
-      _toDisplayComponents = uncategorizedComponents.map(node => <div data-item={node} draggable="true" style={draggableComponentStyle} onDragEnd={this.handleDragStop.bind(this, node)} onDragStart={this.handleDragStart.bind(this, node)}>
-        <div style={getStyleForType(node.type)}></div>
-        {node.name}
-      </div>);
+      _toDisplayComponents = uncategorizedComponents.map(node => this.renderComponentToDrag(node));
     }
     var workspace = this.state.workspace;
     if (_toDisplayComponents && _toDisplayComponents.length > 0) {

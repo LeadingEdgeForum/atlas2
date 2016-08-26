@@ -110,7 +110,7 @@ export default class CapabilitiesView extends React.Component {
     style.left = node.x * 100 + '%';
     style.position = 'absolute';
     style.top = "10px";
-    var linkToMap = "/map/node.mapID";
+    var linkToMap = "/map/" + node.mapID;
     var _popover = (
       <Popover id={node.name} title="Component details">
         <p>Name: {node.name}</p>
