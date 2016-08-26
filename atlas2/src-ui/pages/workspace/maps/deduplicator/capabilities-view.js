@@ -110,10 +110,13 @@ export default class CapabilitiesView extends React.Component {
     style.left = node.x * 100 + '%';
     style.position = 'absolute';
     style.top = "10px";
-
+    var linkToMap = "/map/node.mapID";
     var _popover = (
       <Popover id={node.name} title="Component details">
         <p>Name: {node.name}</p>
+        <p>Map:
+          <a href={linkToMap}>{node.mapName}</a>
+        </p>
         <p>
           <a href="#" onClick={this.clearNodeAssignement.bind(this, node.mapID, node._id)}>Remove from this capability
           </a>

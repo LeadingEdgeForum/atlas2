@@ -80,6 +80,7 @@ export default class Deduplicator extends React.Component {
             name: _node.name,
             type: _node.type,
             mapID: _map._id,
+            mapName: _map.name,
             x: _node.x,
             y: _node.y,
             category: _node.category,
