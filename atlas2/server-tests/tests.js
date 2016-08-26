@@ -203,15 +203,34 @@ describe('Workspaces & maps', function() {
             .send({map:copyOfMap})
             .expect(200)
             .expect(function(res) {
-                // console.log(res);
+                copyOfMap = res.body.map;
             })
             .end(function(err, res) {
                 done(err);
             });
     });
 
-    it('create a category', function(done) {
-      console.log('categories', copyOfWorkspace);
+    it('create a third node in a map', function(done) {
+        var node = {name:"name1",x:0.7,y:0.7,type:"INTERNAL"};
+        copyOfMap.nodes.push(node);
+        console.log({map:copyOfMap});
+        request(app).
+        put('/api/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({map:copyOfMap})
+            .expect(200)
+            .expect(function(res) {
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+
+    it('create a capability', function(done) {
       var capabilityCategoryID = copyOfWorkspace.workspace.capabilityCategories[0]._id;
       var testName = 'testcapability';
         request(app).
@@ -219,14 +238,27 @@ describe('Workspaces & maps', function() {
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
             .set('Authorization', authorizationHeader)
-            .send({name:testName})
+            .send({name:testName,
+              mapID:copyOfMap._id,
+              nodeID:copyOfMap.nodes[1]._id})
             .expect(200)
             .expect(function(res) {
-              var actualName = res.body.workspace.capabilityCategories[0].capabilities[0].name;
-                if(actualName  !== testName){
-                  console.log(testName, actualName);
-                  throw new Error('Capability not created properly');
-                }
+              //TODO: additional check in addition to status code
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('referencedNodes', function(done) {
+        request(app).
+        put('/api/reference/' + mapID +"/" + copyOfMap.nodes[0]._id + "/" + mapID + "/" + copyOfMap.nodes[1]._id)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                console.log(res.body);
             })
             .end(function(err, res) {
                 done(err);

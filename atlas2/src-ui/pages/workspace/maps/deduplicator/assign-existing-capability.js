@@ -28,6 +28,7 @@ var AssignExistingCapabilityDialog = React.createClass({
   internalState: {},
 
   submit: function(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
+    console.log('submit 1');
     this.props.submitAssignDialog(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID);
   },
 

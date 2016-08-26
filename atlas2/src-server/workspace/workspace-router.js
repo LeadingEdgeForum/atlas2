@@ -171,19 +171,49 @@ module.exports = function(stormpath) {
         for (var j = 0; j < mainAffectedNode.referencedNodes.length; j++) {
           referencedNodes.push(mainAffectedNode.referencedNodes[j].nodeID);
         }
+        console.log('nodes for category removal', referencedNodes);
         var query = WardleyMap.find().where('nodes._id'). in(referencedNodes);
-        WardleyMap.update(query, {
-          '$set': {
-            'nodes.$.referencedNodes': [],
-            'nodes.$.categorized': false,
-            'nodes.$.category': null
-          }
-        }).exec(function(err2, doc) {
+        query.exec(function(err2, affectedMapsArray) {
           if (err2) {
-            res.status(500);
+            res.json(err2);
             return;
           }
-          res.json(doc);
+          affectedMapsArray.map(map => {
+            map.nodes.map(node => {
+              referencedNodes.map(referencedNode => {
+                console.log('tetsing', node._id, referencedNode, node._id == referencedNode);
+                if ("" + node._id == "" + referencedNode) {
+                  console.log('clean up', node);
+                  node.categorized = false;
+                  node.category = null;
+                  node.referencedNodes = [];
+                }
+              });
+            });
+          });
+          // and the tricky part - save all maps
+          var limit = affectedMapsArray.length;
+          var counter = 0;
+          var errors = [];
+          var results = [];
+          affectedMapsArray.map(map => {
+            map.save(function(err3, result3) {
+              if (err3) {
+                errors.push(err3);
+                counter++;
+              } else {
+                results.push(result3);
+                counter++;
+              }
+              if (counter === limit) {
+                if (errors.length !== 0) {
+                  res.status(500).json(errors);
+                } else {
+                  res.json(results);
+                }
+              }
+            });
+          });
         });
       }
     });
@@ -194,7 +224,7 @@ module.exports = function(stormpath) {
     assignComponentToCapability(res, req.body.mapID, req.body.nodeID, req.params.capabilityID);
   });
 
-  // create new capability and assign node to it
+  // create a new capability and assign node to it
   module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/', stormpath.authenticationRequired, function(req, res) {
     Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
       //check that we actually own the workspace, and if yes
@@ -294,6 +324,89 @@ module.exports = function(stormpath) {
           res.json({workspace: null});
         });
       }
+    });
+  });
+
+  module.router.put('/reference/:mapID1/:nodeID1/:mapID2/:nodeID2', stormpath.authenticationRequired, function(req, res) {
+    var query = WardleyMap.find({owner: getStormpathUserIdFromReq(req)}).where("nodes._id"). in([req.params.nodeID1, req.params.nodeID2]);
+
+    query.exec(function(err, arrayOfMaps) {
+      //so we have two maps that have all the nodes, let's build a nodes referenced cluster, that is all nodes that should be point at each other
+      var cluster = [];
+      var targetCategory = null;
+      arrayOfMaps.map(map => {
+        map.nodes.map(node => {
+          if (node._id == req.params.nodeID1 || node._id == req.params.nodeID2) {
+            cluster.concat(node.referencedNodes);
+          }
+          if (node._id == req.params.nodeID2) {
+            targetCategory = node.category;
+          }
+        });
+      });
+      cluster.push({nodeID: req.params.nodeID1, mapID: req.params.mapID1});
+      cluster.push({nodeID: req.params.nodeID2, mapID: req.params.mapID2});
+
+      var referencedMaps = [];
+      cluster.map(item => {
+        referencedMaps.push(item.mapID);
+      });
+      //so right now we have a list of all maps that fit into the cluster.
+      // we load all of them, and then modify their nodes so the referenced nodes are correctly set up
+
+      var allAffectedMapsQuery = WardleyMap.find({owner: getStormpathUserIdFromReq(req)}).where("_id"). in(referencedMaps);
+      allAffectedMapsQuery.exec(function(err, allReferencedMapsArray) {
+        if (err) {
+          res.status(500).json(err);
+          return;
+        }
+        allReferencedMapsArray.map(map => {
+          map.nodes.map(node => {
+            var nodeForProcessing = false;
+            cluster.map(item => {
+              if (item.nodeID == node._id) {
+                nodeForProcessing = true;
+              }
+            });
+            if (!nodeForProcessing) {
+              return;
+            }
+            node.referencedNodes = [];
+            node.categorized = true;
+            node.category = targetCategory;
+            cluster.map(referencedNode => {
+              if (referencedNode.nodeID != node._id) {
+                //TODO: check for existince of the reference node on the list
+                node.referencedNodes.push(referencedNode);
+              }
+            });
+          });
+        });
+
+        // and the tricky part - save all maps
+        var limit = allReferencedMapsArray.length;
+        var counter = 0;
+        var errors = [];
+        var results = [];
+        allReferencedMapsArray.map(map => {
+          map.save(function(err, result) {
+            if (err) {
+              errors.push(err);
+              counter++;
+            } else {
+              results.push(result);
+              counter++;
+            }
+            if (counter === limit) {
+              if (errors.length !== 0) {
+                res.status(500).json(errors);
+              } else {
+                res.json(results);
+              }
+            }
+          });
+        });
+      });
     });
   });
 

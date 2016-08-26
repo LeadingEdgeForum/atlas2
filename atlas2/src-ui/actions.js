@@ -227,4 +227,17 @@ export default class Actions {
       }
     });
   }
+
+  static makeNodesReferenced(workspaceID, nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAKE_NODES_REFERENCED,
+      data: {
+        workspaceID: workspaceID,
+        nodeBeingAssignedMapID: nodeBeingAssignedMapID,
+        nodeBeingAssignedID: nodeBeingAssignedID,
+        referenceNodeID: referenceNodeID,
+        referenceMapID: referenceNodemapID
+      }
+    });
+  }
 }

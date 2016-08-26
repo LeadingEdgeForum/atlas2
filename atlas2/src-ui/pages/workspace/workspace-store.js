@@ -488,6 +488,16 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         }.bind(this)
       });
       break;
+    case Constants.ACTION_TYPES.MAKE_NODES_REFERENCED:
+      $.ajax({
+        type: 'PUT',
+        url: '/api/reference/' + action.data.nodeBeingAssignedMapID + '/' + action.data.nodeBeingAssignedID + '/' + action.data.referenceMapID + '/' + action.data.referenceNodeID,
+        success: function(data2) {
+          workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+          workspaceStoreInstance.updateWorkspaces(); // this emits change
+        }.bind(this)
+      });
+      break;
     default:
       return;
   }

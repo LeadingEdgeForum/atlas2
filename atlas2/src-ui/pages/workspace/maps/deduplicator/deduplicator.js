@@ -84,7 +84,8 @@ export default class Deduplicator extends React.Component {
             x: _node.x,
             y: _node.y,
             category: _node.category,
-            categorized: _node.categorized
+            categorized: _node.categorized,
+            referencedNodes: _node.referencedNodes
           });
         });
       });

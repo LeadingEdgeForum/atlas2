@@ -61,11 +61,16 @@ export default class CapabilitiesView extends React.Component {
     e.dataTransfer.dropEffect = 'copy';
   }
   handleDropExistingCapability(categoryId, capabilityID, existingItems, e) {
+    if (!(categoryId && capabilityID && existingItems && e)) {
+      console.error(categoryId, capabilityID, existingItems, e);
+      return;
+    }
     var copyOfNode = JSON.parse(e.dataTransfer.getData('json'));
     e.stopPropagation();
     if ((!existingItems) || (existingItems.length === 0)) {
       //easy part, no other components in the category, so just assign the node
       Actions.assignNodeToCapability(this.props.workspace._id, categoryId, capabilityID, copyOfNode.mapID, copyOfNode._id);
+      return;
     }
 
     //otherwise launch deduplication dialog
@@ -82,7 +87,6 @@ export default class CapabilitiesView extends React.Component {
   }
 
   handleDropNewCapability(cat, e) {
-    console.log('new capability', e, cat);
     var newState = {
       newCapabilityDialog: {
         open: true,
@@ -92,6 +96,7 @@ export default class CapabilitiesView extends React.Component {
     };
     this.setState(newState);
   }
+
   cancelDialog(dialogParametersName) {
     var newState = {};
     newState[dialogParametersName] = {
@@ -99,6 +104,7 @@ export default class CapabilitiesView extends React.Component {
     };
     this.setState(newState);
   }
+
   submitDialog(capabilityCategory, newCapabilityName, copyOfNode) {
     Actions.createNewCapabilityAndAssingNodeToIt(this.props.workspace._id, capabilityCategory, newCapabilityName, copyOfNode.mapID, copyOfNode._id);
     var newState = {
@@ -112,17 +118,28 @@ export default class CapabilitiesView extends React.Component {
   }
 
   submitAssignDialog(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
+    console.log('submit 2');
     if (!(referenceNodeID && referenceNodemapID)) {
       //again, easy part as it is just a new component in the category
-      Actions.assignNodeToCapability(this.props.workspace._id, this.state.newCapabilityDialog.categoryId, this.state.newCapabilityDialog.capabilityID, nodeBeingAssignedMapID, nodeBeingAssignedID);
+      Actions.assignNodeToCapability(this.props.workspace._id, this.state.assignExistingCapabilityDialog.categoryId, this.state.assignExistingCapabilityDialog.capabilityID, nodeBeingAssignedMapID, nodeBeingAssignedID);
       var newState = {
         assignExistingCapabilityDialog: {
           open: false
         }
       };
       this.setState(newState);
+      console.log('submit 3');
+      return;
     }
-    Actions.makeNodesReferenced(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID);
+    console.log('submit 4');
+    Actions.makeNodesReferenced(this.props.workspace._id, nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID);
+    //definitely not happy with this, as closing the dialog should be an answer to data refresh
+    var newState = { //jshint ignore:line
+      assignExistingCapabilityDialog: {
+        open: false
+      }
+    };
+    this.setState(newState);
   }
 
   clearNodeAssignement(mapID, nodeID, e) {
@@ -146,6 +163,10 @@ export default class CapabilitiesView extends React.Component {
           <a href={linkToMap}>{node.mapName}</a>
         </p>
         <p>
+          Appears also on other {node.referencedNodes.length}
+          &nbsp; map(s).
+        </p>
+        <p>
           <a href="#" onClick={this.clearNodeAssignement.bind(this, node.mapID, node._id)}>Remove from this capability
           </a>
         </p>
@@ -167,7 +188,18 @@ export default class CapabilitiesView extends React.Component {
     }
     components.map(node => {
       if (node.category === capabilityID) {
-        foundNodes.push(node);
+        var alreadyReferenced = false;
+        var toAdd = node;
+        foundNodes.map(foundNode => {
+          foundNode.referencedNodes.map(referencedNode => {
+            if (referencedNode.nodeID == node._id) {
+              alreadyReferenced = true;
+            }
+          });
+        });
+        if (!alreadyReferenced) {
+          foundNodes.push(toAdd);
+        }
       }
     });
     return foundNodes;
