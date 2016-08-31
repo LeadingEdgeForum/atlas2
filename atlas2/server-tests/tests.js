@@ -145,6 +145,23 @@ describe('Workspaces & maps', function() {
             });
     });
 
+    it('verify map name (/api/map/mapID/name)', function(done) {
+        request(app).
+        get('/api/map/' + mapID + '/name')
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                if (res.body.map.name !== "Sample map") {
+                    throw new Error('map name not loaded properly, should be Sample map, but was ' + res.body.map.name);
+                }
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
     it('verify map created (/api/workspace/workspaceID)', function(done) {
         request(app).
         get('/api/workspace/' + workspaceID)

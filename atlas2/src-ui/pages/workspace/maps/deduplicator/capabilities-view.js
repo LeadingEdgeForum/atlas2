@@ -18,6 +18,7 @@ import _ from "underscore";
 var CreateNewCapabilityDialog = require('./create-new-capability');
 var AssignExistingCapabilityDialog = require('./assign-existing-capability');
 import {getStyleForType} from './../editor/component-styles';
+import MapLink from './maplink.js';
 
 var acceptorStyle = {
   width: "100%",
@@ -163,8 +164,11 @@ export default class CapabilitiesView extends React.Component {
           <a href={linkToMap}>{node.mapName}</a>
         </p>
         <p>
-          Appears also on other {node.referencedNodes.length}
-          &nbsp; map(s).
+          Appears also on following map(s):
+          <ul>
+            {node.referencedNodes.map(node => <li>
+              <MapLink mapID={node.mapID}></MapLink>
+            </li>)}</ul>
         </p>
         <p>
           <a href="#" onClick={this.clearNodeAssignement.bind(this, node.mapID, node._id)}>Remove from this capability

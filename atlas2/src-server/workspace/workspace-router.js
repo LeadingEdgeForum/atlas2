@@ -94,6 +94,13 @@ module.exports = function(stormpath) {
     });
   });
 
+  // get map name
+  module.router.get('/map/:mapID/name', stormpath.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('name').exec(function(err, result) {
+      res.json({map: result});
+    });
+  });
+
   module.router.get('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     console.log({owner: getStormpathUserIdFromReq(req), id: req.params.mapID});
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
