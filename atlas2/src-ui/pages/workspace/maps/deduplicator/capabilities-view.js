@@ -192,7 +192,8 @@ export default class CapabilitiesView extends React.Component {
         var toAdd = node;
         foundNodes.map(foundNode => {
           foundNode.referencedNodes.map(referencedNode => {
-            if (referencedNode.nodeID == node._id) {
+            //this comparison is intentional as it might be String vs Object
+            if (referencedNode.nodeID == node._id) { //jshint ignore:line
               alreadyReferenced = true;
             }
           });
