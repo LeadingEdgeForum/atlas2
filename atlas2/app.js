@@ -28,6 +28,26 @@ app.get('/css/bootstrap.min.css', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/css/bootstrap.min.css'));
 });
 
+app.get('/css/bootstrap.min.css.map', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/css/bootstrap.min.css.map'));
+});
+
+app.get('/fonts/glyphicons-halflings-regular.eot', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.eot'));
+});
+
+app.get('/fonts/glyphicons-halflings-regular.svg', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.svg'));
+});
+
+app.get('/fonts/glyphicons-halflings-regular.ttf', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.ttf'));
+});
+
+app.get('/fonts/glyphicons-halflings-regular.woff', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.woff'));
+});
+
 app.get('/fonts/glyphicons-halflings-regular.woff2', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.woff2'));
 });
