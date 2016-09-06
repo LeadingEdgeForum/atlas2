@@ -40,7 +40,7 @@ export default class WorkspaceList extends React.Component {
   render() {
     var _workspacesToShow = [];
     if (this.state && this.state.workspaces && Array.isArray(this.state.workspaces)) {
-      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} description={item.workspace.description}></WorkspaceListElement>);
+      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} description={item.workspace.description} maps={item.workspace.maps}></WorkspaceListElement>);
     }
     return (
       <Grid fluid={true}>

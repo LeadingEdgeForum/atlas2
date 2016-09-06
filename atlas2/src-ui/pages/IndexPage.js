@@ -18,7 +18,7 @@ export default class IndexPage extends React.Component {
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
-          <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
+          <Col xs={12}>
             <NotAuthenticated>
               <Jumbotron>
                 <h1>

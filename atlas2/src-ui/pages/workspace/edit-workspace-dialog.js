@@ -83,7 +83,6 @@ var EditWorkspaceDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')} value={currentName}/>
-                  <HelpBlock>Name of the workspace</HelpBlock>
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">
@@ -92,7 +91,6 @@ var EditWorkspaceDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')} value={currentDescription}/>
-                  <HelpBlock>Description of the workspace</HelpBlock>
                 </Col>
               </FormGroup>
             </Form>

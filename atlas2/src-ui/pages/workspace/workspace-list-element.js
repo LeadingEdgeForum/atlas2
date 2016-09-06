@@ -27,8 +27,17 @@ export default class WorkspaceListElement extends React.Component {
     var workspaceID = this.props.id;
     var hrefOpen = 'workspace/' + workspaceID;
     var hrefDeduplicate = 'deduplicate/' + workspaceID;
+    var mapsCount = this.props.maps.length;
+    var mapsCountInfo = "";
+    if(mapsCount === 0){
+      mapsCountInfo = "(empty)";
+    } else if(mapsCount == 1){
+      mapsCountInfo = "(1 map)";
+    } else {
+      mapsCountInfo = "(" + mapsCount + " maps)";
+    }
     return (
-      <ListGroupItem header={this.props.name}>
+      <ListGroupItem header={this.props.name + "  " + mapsCountInfo}>
         <Grid fluid={true}>
           <Row className="show-grid">
             <Col xs={8}>{this.props.description}</Col>
