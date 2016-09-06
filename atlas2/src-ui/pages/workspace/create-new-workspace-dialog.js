@@ -59,17 +59,28 @@ var CreateNewWorkspaceDialog = React.createClass({
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <p>
-              Workspace is a place where maps can be analized together.
-            </p>
             <Form horizontal>
               <FormGroup controlId="name">
                 <Col sm={2}>
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')}/>
-                  <HelpBlock>Name of the workspace</HelpBlock>
+                  <FormControl type="text" placeholder="Enter name (at least 3 characters)" onChange={this._handleDialogChange.bind(this, 'name')}/>
+                  <HelpBlock>This should be a name of the company you are trying to analyse. It might be wise to include a date, for example 'FooCompany 2016'</HelpBlock>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="purpose">
+                <Col sm={2}>
+                  <ControlLabel>Purpose</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" placeholder="Enter purpose (this is very recommended)" onChange={this._handleDialogChange.bind(this, 'purpose')}/>
+                  <HelpBlock>Purpose consists of scope (f.e. 'We do electric cars') and moral imperative (f.e. 'because we want to speed up migration to renewable energy sources').
+                  Examples include:
+                  <ul>
+                  <li>Transportation as reliable as running water, everywhere, for everyone. (Uber)</li>
+                  <li>We accelerate world’s transition to sustainable energy. (Tesla)</li>
+                  </ul></HelpBlock>
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">
@@ -78,7 +89,11 @@ var CreateNewWorkspaceDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')}/>
-                  <HelpBlock>Description of the workspace</HelpBlock>
+                  <HelpBlock>This should express why you analyse certain unit. It may be f.e. <ul>
+                  <li>I want to find a meaningful strategy for this company.</li>
+                  <li>I want to find out if I can disrupt them.</li>
+                  <li>I want to look for sources of inertia.</li>
+                  </ul></HelpBlock>
                 </Col>
               </FormGroup>
             </Form>

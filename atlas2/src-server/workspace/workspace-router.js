@@ -60,9 +60,14 @@ module.exports = function(stormpath) {
     if (!description) {
       description = "I am too lazy to fill this field even when I know it causes organizational mess";
     }
+    var purpose = req.body.purpose;
+    if (!purpose) {
+      purpose = "No apparent purpose";
+    }
     var wkspc = new Workspace({
       name: name,
       description: description,
+      purpose:purpose,
       owner: owner,
       archived: false,
       capabilityCategories: [
@@ -268,6 +273,7 @@ module.exports = function(stormpath) {
       if (result) {
         result.name = req.body.name;
         result.description = req.body.description;
+        result.purpose = req.body.purpose;
         result.save(function(err2, result2) {
           if (err2) {
             res.status(500).json(err2);

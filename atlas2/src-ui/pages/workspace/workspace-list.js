@@ -9,14 +9,14 @@ import {
   Jumbotron,
   Button,
   Table,
-  ListGroup
+  ListGroup,
+  Breadcrumb
 } from 'react-bootstrap';
 import {NotAuthenticated, Authenticated} from 'react-stormpath';
 import WorkspaceStore from './workspace-store';
 import WorkspaceListElement from './workspace-list-element.js';
 import WorkspaceListElementNew from './workspace-list-element-new.js';
 var CreateNewWorkspaceDialog = require('./create-new-workspace-dialog');
-var EditWorkspaceDialog = require('./edit-workspace-dialog');
 
 export default class WorkspaceList extends React.Component {
   constructor(props) {
@@ -40,15 +40,13 @@ export default class WorkspaceList extends React.Component {
   render() {
     var _workspacesToShow = [];
     if (this.state && this.state.workspaces && Array.isArray(this.state.workspaces)) {
-      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} description={item.workspace.description}></WorkspaceListElement>);
+      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} purpose={item.workspace.purpose} description={item.workspace.description} maps={item.workspace.maps}></WorkspaceListElement>);
     }
     return (
       <Grid fluid={true}>
-        <Row className="show-grid">
-          <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
-            <h4>A list of your workspaces:</h4>
-          </Col>
-        </Row>
+      <Breadcrumb>
+        <Breadcrumb.Item href="/" active>Home</Breadcrumb.Item>
+      </Breadcrumb>
         <Row className="show-grid">
           <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
             <ListGroup>
@@ -58,7 +56,6 @@ export default class WorkspaceList extends React.Component {
           </Col>
         </Row>
         <CreateNewWorkspaceDialog/>
-        <EditWorkspaceDialog/>
       </Grid>
     );
   }

@@ -16,10 +16,6 @@ export default class MapListElement extends React.Component {
   archive(workspace, id) {
     Actions.archiveMap(workspace, id);
   }
-  openEditMapDialog(mapid) {
-    Actions.openEditMapDialog(mapid);
-  }
-
   render() {
     var mapid = this.props.id;
     var workspaceID = this.props.workspaceID;
@@ -28,17 +24,14 @@ export default class MapListElement extends React.Component {
       <ListGroupItem header={this.props.name}>
         <Grid fluid={true}>
           <Row className="show-grid">
-            <Col xs={10}>{this.props.description}</Col>
-            <Col xs={2}>
+            <Col xs={9}>{this.props.description}</Col>
+            <Col xs={3}>
               <ButtonGroup>
-                <Button bsStyle="default" href="#" onClick={this.openEditMapDialog.bind(this, mapid)}>
-                  <Glyphicon glyph="edit"></Glyphicon>
-                </Button>
                 <Button bsStyle="default" href={href}>
-                  <Glyphicon glyph="open"></Glyphicon>
+                  <Glyphicon glyph="edit"></Glyphicon> Edit
                 </Button>
                 <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
-                  <Glyphicon glyph="remove"></Glyphicon>
+                  <Glyphicon glyph="remove"></Glyphicon> Delete
                 </Button>
               </ButtonGroup>
             </Col>

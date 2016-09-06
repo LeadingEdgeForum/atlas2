@@ -9,7 +9,8 @@ import {
   Jumbotron,
   Button,
   Table,
-  ListGroup
+  ListGroup,
+  Breadcrumb
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
 import Palette from './palette';
@@ -17,6 +18,7 @@ import MapCanvas from './canvas';
 import CreateNewNodeDialog from './create-new-node-dialog';
 import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
+var EditMapDialog = require('./../edit-map-dialog');
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
   width: 'auto',
@@ -145,19 +147,32 @@ export default class MapEditor extends React.Component {
 
   _onChange() {
     this.setState(WorkspaceStore.getMapInfo(this.props.params.mapID));
+    this.setState(WorkspaceStore.getWorkspaceInfo(this.state.map.workspace));
   }
 
   render() {
     var nodes = this.state.map.nodes;
     var connections = this.state.map.connections;
+    var name = this.state.workspace ? this.state.workspace.name : "no name";
+    var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
+    var workspaceID = this.state.map.workspace || "";
+    var mapName = this.state.map.name;
     return (
       <Grid fluid={true}>
+      <Breadcrumb>
+        <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
+        <Breadcrumb.Item href={"/workspace/"+workspaceID}>
+          {name} - {purpose}
+        </Breadcrumb.Item>
+        <Breadcrumb.Item active>
+          {mapName}
+        </Breadcrumb.Item>
+      </Breadcrumb>
         <Row className="show-grid">
           <Col xs={1}>
             <Palette></Palette>
           </Col>
           <Col xs={9}>
-            <h4>{this.state.map.name}</h4>
             <div style={outerStyle}>
               <MapCanvas nodes={nodes} connections={connections} mapID={this.props.params.mapID}></MapCanvas>
               <div>
@@ -181,6 +196,7 @@ export default class MapEditor extends React.Component {
             <EditNodeDialog mapID={this.props.params.mapID}/>
           </Col>
         </Row>
+        <EditMapDialog/>
       </Grid>
     );
   }
