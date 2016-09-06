@@ -34,10 +34,10 @@ export default class WorkspaceListElement extends React.Component {
       mapsCountInfo = "(" + mapsCount + " maps)";
     }
     return (
-      <ListGroupItem header={this.props.name + " - " + this.props.purpose + "  " + mapsCountInfo}>
+      <ListGroupItem header={this.props.name + " - " + this.props.purpose}>
         <Grid fluid={true}>
           <Row className="show-grid">
-            <Col xs={9}>{this.props.description}</Col>
+            <Col xs={9}>{this.props.description} {mapsCountInfo}.</Col>
             <Col xs={3}>
               <ButtonGroup>
                 <Button bsStyle="default" href={hrefOpen}>
