@@ -9,7 +9,8 @@ import {
   Jumbotron,
   Button,
   Table,
-  ListGroup
+  ListGroup,
+  Breadcrumb
 } from 'react-bootstrap';
 import {NotAuthenticated, Authenticated} from 'react-stormpath';
 import WorkspaceStore from './workspace-store';
@@ -43,11 +44,9 @@ export default class WorkspaceList extends React.Component {
     }
     return (
       <Grid fluid={true}>
-        <Row className="show-grid">
-          <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
-            <h4>A list of your workspaces:</h4>
-          </Col>
-        </Row>
+      <Breadcrumb>
+        <Breadcrumb.Item href="/" active>Home</Breadcrumb.Item>
+      </Breadcrumb>
         <Row className="show-grid">
           <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
             <ListGroup>
