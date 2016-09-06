@@ -20,9 +20,6 @@ export default class WorkspaceListElement extends React.Component {
   archive(id) {
     Actions.archiveWorkspace(id);
   }
-  openEditWorkspaceDialog(id) {
-    Actions.openEditWorkspaceDialog(id);
-  }
   render() {
     var workspaceID = this.props.id;
     var hrefOpen = 'workspace/' + workspaceID;
@@ -40,23 +37,14 @@ export default class WorkspaceListElement extends React.Component {
       <ListGroupItem header={this.props.name + " - " + this.props.purpose + "  " + mapsCountInfo}>
         <Grid fluid={true}>
           <Row className="show-grid">
-            <Col xs={8}>{this.props.description}</Col>
-            <Col xs={4}>
+            <Col xs={9}>{this.props.description}</Col>
+            <Col xs={3}>
               <ButtonGroup>
-                <Button bsStyle="default" href="#" onClick={this.openEditWorkspaceDialog.bind(this, workspaceID)}>
-                  <Glyphicon glyph="edit"></Glyphicon>
-                </Button>
                 <Button bsStyle="default" href={hrefOpen}>
-                  <Glyphicon glyph="open"></Glyphicon>
-                </Button>
-                <Button bsStyle="default" href={hrefDeduplicate}>
-                  <Glyphicon glyph="pawn"></Glyphicon>
-                  <Glyphicon glyph="pawn" style={{
-                    color: "silver"
-                  }}></Glyphicon>
+                  <Glyphicon glyph="edit"></Glyphicon> Edit
                 </Button>
                 <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID)}>
-                  <Glyphicon glyph="remove"></Glyphicon>
+                  <Glyphicon glyph="remove"></Glyphicon> Remove
                 </Button>
               </ButtonGroup>
             </Col>

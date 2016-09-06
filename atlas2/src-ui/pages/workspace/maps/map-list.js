@@ -17,6 +17,7 @@ import MapListElement from './map-list-element.js';
 import MapListElementNew from './map-list-element-new.js';
 var CreateNewMapDialog = require('./create-new-map-dialog');
 var EditMapDialog = require('./edit-map-dialog');
+var EditWorkspaceDialog = require('./../edit-workspace-dialog');
 
 export default class MapList extends React.Component {
   constructor(props) {
@@ -77,6 +78,7 @@ export default class MapList extends React.Component {
         </Row>
         <CreateNewMapDialog workspaceID={workspaceID}/>
         <EditMapDialog></EditMapDialog>
+        <EditWorkspaceDialog/>
       </Grid>
     );
   }

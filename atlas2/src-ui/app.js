@@ -18,7 +18,7 @@ import WelcomePage from './pages/WelcomePage.js';
 import WorkspaceList from './pages/workspace/workspace-list';
 import MapList from './pages/workspace/maps/map-list.js';
 import Deduplicator from './pages/workspace/maps/deduplicator/deduplicator.js';
-import WorkspaceNavInfo from './pages/workspace/workspace-navbar-info.js';
+import WorkspaceMenu from './pages/workspace/workspace-menu.js';
 import MapEditor from './pages/workspace/maps/editor/map-editor.js';
 
 ReactStormpath.init();
@@ -51,7 +51,8 @@ ReactDOM.render(
       mainContent: ProfilePage
     }}/>
     <AuthenticatedRoute path='workspace/:workspaceID' components={{
-      mainContent: MapList
+      mainContent: MapList,
+      navMenu: WorkspaceMenu
     }}/>
     <AuthenticatedRoute path='deduplicate/:workspaceID' components={{
       mainContent: Deduplicator

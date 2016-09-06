@@ -16,7 +16,6 @@ import WorkspaceStore from './workspace-store';
 import WorkspaceListElement from './workspace-list-element.js';
 import WorkspaceListElementNew from './workspace-list-element-new.js';
 var CreateNewWorkspaceDialog = require('./create-new-workspace-dialog');
-var EditWorkspaceDialog = require('./edit-workspace-dialog');
 
 export default class WorkspaceList extends React.Component {
   constructor(props) {
@@ -58,7 +57,6 @@ export default class WorkspaceList extends React.Component {
           </Col>
         </Row>
         <CreateNewWorkspaceDialog/>
-        <EditWorkspaceDialog/>
       </Grid>
     );
   }
