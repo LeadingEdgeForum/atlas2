@@ -42,6 +42,7 @@ var EditWorkspaceDialog = React.createClass({
       this.internalState.workspace = workspace.workspace;
       this.internalState.name = this.internalState.workspace.name;
       this.internalState.description = this.internalState.workspace.description;
+      this.internalState.purpose = this.internalState.workspace.purpose;
     }
     //dialog is going to be closed, clean internal state
     if (!newState.open) {
@@ -67,6 +68,7 @@ var EditWorkspaceDialog = React.createClass({
     }
     var currentName = this.internalState.name;
     var currentDescription = this.internalState.description;
+    var currentPurpose = this.internalState.purpose;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -85,6 +87,14 @@ var EditWorkspaceDialog = React.createClass({
                   <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')} value={currentName}/>
                 </Col>
               </FormGroup>
+              <FormGroup controlId="purpose">
+                <Col sm={2}>
+                  <ControlLabel>Purpose</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" placeholder="Enter purpose (this is very recommended)" onChange={this._handleDialogChange.bind(this, 'purpose')} value={currentPurpose}/>
+                </Col>
+              </FormGroup>
               <FormGroup controlId="description">
                 <Col sm={2}>
                   <ControlLabel>Description</ControlLabel>
@@ -97,7 +107,7 @@ var EditWorkspaceDialog = React.createClass({
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Change</Button>
+            <Button type="submit" bsStyle="primary" value="Save" onClick={this._submit}>Save</Button>
           </Modal.Footer>
         </Modal>
       </div>

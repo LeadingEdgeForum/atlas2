@@ -21,6 +21,7 @@ mongoose.connect(MongoDBConnectionURL);
 
 var _WorkspaceSchema = new Schema({
   name: Schema.Types.String,
+  purpose: Schema.Types.String,
   description: Schema.Types.String,
   owner: Schema.Types.String,
   archived: Schema.Types.Boolean,

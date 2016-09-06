@@ -30,14 +30,14 @@ export default class WorkspaceListElement extends React.Component {
     var mapsCount = this.props.maps.length;
     var mapsCountInfo = "";
     if(mapsCount === 0){
-      mapsCountInfo = "(empty)";
+      mapsCountInfo = "(no maps)";
     } else if(mapsCount == 1){
       mapsCountInfo = "(1 map)";
     } else {
       mapsCountInfo = "(" + mapsCount + " maps)";
     }
     return (
-      <ListGroupItem header={this.props.name + "  " + mapsCountInfo}>
+      <ListGroupItem header={this.props.name + " - " + this.props.purpose + "  " + mapsCountInfo}>
         <Grid fluid={true}>
           <Row className="show-grid">
             <Col xs={8}>{this.props.description}</Col>

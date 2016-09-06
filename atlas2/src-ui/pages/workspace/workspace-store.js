@@ -189,6 +189,7 @@ class WorkspaceStore extends Store {
     var workspace = appState.singleWorkspace[data.workspaceID].workspace;
     workspace.name = data.newWorkspaceData.name;
     workspace.description = data.newWorkspaceData.description;
+    workspace.purpose = data.newWorkspaceData.purpose;
     $.ajax({
       type: 'PUT',
       url: '/api/workspace/' + data.workspaceID,

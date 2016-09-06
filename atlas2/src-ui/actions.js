@@ -61,7 +61,8 @@ export default class Actions {
         mapID: data.map._id,
         mapNameAndDescription: {
           name: data.name,
-          description: data.description
+          description: data.description,
+          purpose: data.purpose
         }
       }
     });
