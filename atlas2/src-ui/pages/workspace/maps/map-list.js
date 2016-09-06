@@ -9,7 +9,8 @@ import {
   Jumbotron,
   Button,
   Table,
-  ListGroup
+  ListGroup,
+  Breadcrumb
 } from 'react-bootstrap';
 import WorkspaceStore from '../workspace-store';
 import MapListElement from './map-list-element.js';
@@ -41,18 +42,29 @@ export default class MapList extends React.Component {
   render() {
     var _mapsToShow = [];
     var workspaceID = this.props.params.workspaceID;
+    var purpose = "";
+    var name = null;
     if (this.state && this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
       _mapsToShow = this.state.workspace.maps.map(item => <MapListElement workspaceID={workspaceID} key={item._id} id={item._id} name={item.name} description={item.description}></MapListElement>);
+      purpose = this.state.workspace.purpose;
+      name = this.state.workspace.name;
     } else {
       return (
         <p>Something went really wrong :-(</p>
       );
     }
+
     return (
       <Grid fluid={true}>
+      <Breadcrumb>
+        <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
+        <Breadcrumb.Item href={"/workspace/"+workspaceID} active>
+          {name} - {purpose}
+        </Breadcrumb.Item>
+      </Breadcrumb>
         <Row className="show-grid">
           <Col xs={12} sm={12} md={12} lg={8} lgOffset={2}>
-            <h4>Your list of maps in current workspace:</h4>
+            <h4>Your maps</h4>
           </Col>
         </Row>
         <Row className="show-grid">

@@ -11,7 +11,8 @@ import {
   Table,
   ListGroup,
   Popover,
-  OverlayTrigger
+  OverlayTrigger,
+  Breadcrumb
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
 import {getStyleForType} from './../editor/component-styles';
@@ -131,9 +132,22 @@ export default class Deduplicator extends React.Component {
       _toDisplayComponents = uncategorizedComponents.map(node => this.renderComponentToDrag(node));
     }
     var workspace = this.state.workspace;
+
+    var name = this.state.workspace ? this.state.workspace.name : "no name";
+    var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
+
     if (_toDisplayComponents && _toDisplayComponents.length > 0) {
       return (
         <Grid fluid={true}>
+        <Breadcrumb>
+          <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
+          <Breadcrumb.Item href={"/workspace/"+workspace._id}>
+            {name} - {purpose}
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>
+            Removing duplicates
+          </Breadcrumb.Item>
+        </Breadcrumb>
           <Row className="show-grid">
             <Col xs={3}>
               <h4>Unprocessed components:</h4>
@@ -148,6 +162,15 @@ export default class Deduplicator extends React.Component {
     } else {
       return (
         <Grid fluid={true}>
+        <Breadcrumb>
+          <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
+          <Breadcrumb.Item href={"/workspace/"+workspace._id}>
+            {name} - {purpose}
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>
+            Removing duplicates
+          </Breadcrumb.Item>
+        </Breadcrumb>
           <Row className="show-grid">
             <Col xs={12}>
               <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categorizedComponents={categorizedComponents}/>
