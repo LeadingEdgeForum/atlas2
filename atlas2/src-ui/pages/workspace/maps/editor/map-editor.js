@@ -18,6 +18,7 @@ import MapCanvas from './canvas';
 import CreateNewNodeDialog from './create-new-node-dialog';
 import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
+var EditMapDialog = require('./../edit-map-dialog');
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
   width: 'auto',
@@ -195,6 +196,7 @@ export default class MapEditor extends React.Component {
             <EditNodeDialog mapID={this.props.params.mapID}/>
           </Col>
         </Row>
+        <EditMapDialog/>
       </Grid>
     );
   }
