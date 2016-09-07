@@ -29,7 +29,7 @@ export default class MapMenu extends React.Component {
       <Nav>
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this, mapID)}>
       <Glyphicon glyph="edit"></Glyphicon>&nbsp;
-        Edit info
+        Edit map info
       </NavItem>
         <LinkContainer to={{
           pathname: deduplicateHref
