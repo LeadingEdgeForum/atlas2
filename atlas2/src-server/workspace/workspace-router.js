@@ -101,7 +101,7 @@ module.exports = function(stormpath) {
 
   // get map name
   module.router.get('/map/:mapID/name', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('name').exec(function(err, result) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('user need').exec(function(err, result) {
       res.json({map: result});
     });
   });
@@ -425,13 +425,13 @@ module.exports = function(stormpath) {
 
   module.router.post('/map/', stormpath.authenticationRequired, function(req, res) {
     var owner = getStormpathUserIdFromReq(req);
-    var name = req.body.name;
-    if (!name) {
-      name = "Anonymous map";
+    var user = req.body.user;
+    if (!user) {
+      user = "your competitor";
     }
-    var description = req.body.description;
-    if (!description) {
-      description = "I am too lazy to fill this field even when I know it causes organizational mess";
+    var purpose = req.body.purpose;
+    if (!purpose) {
+      purpose = "be busy with nothing";
     }
     var workspaceID = req.body.workspaceID;
     if (!workspaceID) {
@@ -454,7 +454,7 @@ module.exports = function(stormpath) {
         // res.send("workspace not found");
         return;
       }
-      var wm = new WardleyMap({name: name, description: description, owner: owner, workspace: result._id, archived: false});
+      var wm = new WardleyMap({user: user, purpose: purpose, owner: owner, workspace: result._id, archived: false});
       wm.save(function(err, savedMap) {
         // console.log('map saved', err, savedMap);
         if (err) {

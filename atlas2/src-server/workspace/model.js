@@ -61,8 +61,8 @@ var _ConnectionSchema = new Schema({
 });
 
 var _MapSchema = new Schema({
-  name: Schema.Types.String,
-  description: Schema.Types.String,
+  user: Schema.Types.String,
+  goal: Schema.Types.String,
   owner: Schema.Types.String,
   archived: Schema.Types.Boolean,
   workspace: {
