@@ -18,7 +18,7 @@ import Actions from './../../../actions.js';
 var $ = require('jquery');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from '../workspace-store';
-
+import {calculateMapName} from './map-name-calculator';
 //TODO: validation of the workspace dialog
 
 var CreateNewMapDialog = React.createClass({
@@ -52,16 +52,7 @@ var CreateNewMapDialog = React.createClass({
   },
 
   _summary: function(){
-    var initialSummary = "Create a new map"
-    if(this.internalState.user && this.internalState.user.length > 0){
-      initialSummary = "As " + this.internalState.user + ", I want to ";
-      if(this.internalState.purpose && this.internalState.purpose.length > 0){
-        initialSummary += this.internalState.purpose + ".";
-      } else {
-        initialSummary += "...";
-      }
-    }
-    return initialSummary;
+    return calculateMapName(this.internalState.user, this.internalState.purpose);
   },
   render: function() {
     var show = this.state.open;
