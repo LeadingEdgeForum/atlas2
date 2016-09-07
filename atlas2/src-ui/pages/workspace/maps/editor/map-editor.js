@@ -20,6 +20,7 @@ import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
 import CustomerJourneyEditor from './customer-journey-editor';
+import {calculateMapName} from './../map-name-calculator';
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
   width: 'auto',
@@ -157,7 +158,7 @@ export default class MapEditor extends React.Component {
     var name = this.state.workspace ? this.state.workspace.name : "no name";
     var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
     var workspaceID = this.state.map.workspace || "";
-    var mapName = this.state.map.name;
+    var mapName = calculateMapName("I like being lost.", this.state.map.user, this.state.map.purpose);
     return (
       <Grid fluid={true}>
       <Breadcrumb>

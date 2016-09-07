@@ -67,7 +67,7 @@ var CreateNewMapDialog = React.createClass({
           </Modal.Header>
           <Modal.Body>
             <Form horizontal>
-              <FormGroup controlId="name">
+              <FormGroup controlId="user">
                 <Col sm={2}>
                   <ControlLabel>User</ControlLabel>
                 </Col>

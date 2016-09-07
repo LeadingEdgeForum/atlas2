@@ -310,8 +310,8 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG:
-      appState.w_maps[action.data.mapID].map.name = action.data.mapNameAndDescription.name;
-      appState.w_maps[action.data.mapID].map.description = action.data.mapNameAndDescription.description;
+      appState.w_maps[action.data.mapID].map.user = action.data.mapData.user;
+      appState.w_maps[action.data.mapID].map.purpose = action.data.mapData.purpose;
       workspaceStoreInstance.saveMap(action.data.mapID, function() {
         appState.editMapDialog.open = false;
         appState.editMapDialog.mapID = null;
