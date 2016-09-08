@@ -117,7 +117,7 @@ export default class Transition extends React.Component {
                   onMouseLeave={this.onMouseLeaveHandler.bind(this)}
                   onClick={this.onClick.bind(this)}>
             <Glyphicon glyph="chevron-right"/>
-            {text}
+            {text}{text ? <Glyphicon glyph="chevron-right"/> : null}
           </span>
       </span>);
   }
