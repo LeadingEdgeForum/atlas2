@@ -73,6 +73,14 @@ export default class Actions {
     });
   }
 
+  static openEditCustomerJourneyDialog(mapid) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_CUSTOMER_JOURNEY_DIALOG, data: mapid});
+  }
+
+  static closeEditCustomerJourneyDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_EDIT_CUSTOMER_JOURNEY_DIALOG});
+  }
+
   static openEditNodeDialog(mapID, nodeID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_NODE_DIALOG,

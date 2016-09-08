@@ -31,6 +31,9 @@ let appState = {
   editNodeDialog: {
     open: false
   },
+  editUserJourneyDialog : {
+    open: false
+  },
   w_maps: {}
 };
 
@@ -159,6 +162,14 @@ class WorkspaceStore extends Store {
   isMapEditDialogOpen() {
     if (appState && appState.editMapDialog) {
       return appState.editMapDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
+  isMapEditCustomerJourneyOpen() {
+    if (appState && appState.editUserJourneyDialog) {
+      return appState.editUserJourneyDialog;
     } else {
       return {open: false};
     }
@@ -299,6 +310,17 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
       workspaceStoreInstance.submitNewMapDialog(action.data);
       break;
+    case ActionTypes.MAP_OPEN_EDIT_CUSTOMER_JOURNEY_DIALOG:
+        appState.editUserJourneyDialog.open = true;
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.MAP_CLOSE_EDIT_CUSTOMER_JOURNEY_DIALOG:
+        appState.editUserJourneyDialog.open = false;
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.MAP_CLOSE_SUBMIT_CUSTOMER_JOURNEY_DIALOG:
+        // workspaceStoreInstance.submitNewMapDialog(action.data);
+        break;
     case ActionTypes.MAP_OPEN_EDIT_MAP_DIALOG:
       appState.editMapDialog.open = true;
       appState.editMapDialog.mapID = (action.data);

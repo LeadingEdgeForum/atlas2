@@ -19,7 +19,7 @@ import CreateNewNodeDialog from './create-new-node-dialog';
 import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
-import CustomerJourneyEditor from './customer-journey-editor';
+var CustomerJourneyEditDialog = require('./customer-journey-dialog');
 import {calculateMapName} from './../map-name-calculator';
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
@@ -170,7 +170,6 @@ export default class MapEditor extends React.Component {
           {mapName}
         </Breadcrumb.Item>
       </Breadcrumb>
-      <CustomerJourneyEditor/>
         <Row className="show-grid">
           <Col xs={1}>
             <Palette></Palette>
@@ -197,6 +196,7 @@ export default class MapEditor extends React.Component {
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID}/>
             <EditNodeDialog mapID={this.props.params.mapID}/>
+            <CustomerJourneyEditDialog mapID={this.props.params.mapID}/>
           </Col>
         </Row>
         <EditMapDialog/>
