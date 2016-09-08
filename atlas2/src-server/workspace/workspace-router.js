@@ -416,6 +416,82 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.post('/map/:mapID/journeystep', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var mapID = req.params.mapID;
+    var step = req.body.step;
+    var position = req.body.position;
+    var interaction = req.body.step.interaction === 'true';
+    WardleyMap.findOne({
+      _id : mapID,
+      owner: owner,
+      archived : false
+    }, function (err, result){
+      if (err) {
+        res.send(err);
+        return;
+      }
+      if(!result){
+        res.status = 404;
+        res.end();
+        return;
+      }
+      result.journey.splice(position, 0, step);
+
+      if(!interaction){
+        result.save(function(err2, result2){
+          if (err2) {
+            res.send(err2);
+            return;
+          }
+          if(!result2){
+            res.status = 500;
+            res.end();
+            return;
+          };
+          res.json({map: result2});
+        });
+      } else {
+        //create counterpart node in a map
+        result.nodes.push({
+          name:step.name,
+          x:0.1 + 0.9/(result.journey.length + 1),
+          y:0.1,
+          type:'USERNEED',
+          categorized:false,
+          category:null,
+          referencedNodes:[]});
+
+
+          result.save(function(err2, result2){
+            if (err2) {
+              res.send(err2);
+              return;
+            }
+            if(!result2){
+              res.status = 500;
+              res.end();
+              return;
+            }
+              //otherwise set the reference and then return map
+              result2.journey[position].implementingNode = result2.nodes[result2.nodes.length - 1]._id;
+              result2.save(function(err3,result3){
+                if (err3) {
+                  res.send(err3);
+                  return;
+                }
+                if(!result3){
+                  res.status = 500;
+                  res.end();
+                  return;
+                }
+                res.json({map: result3});
+              });
+          });
+      }
+    });
+  });
+
   module.router.post('/map/', stormpath.authenticationRequired, function(req, res) {
     var owner = getStormpathUserIdFromReq(req);
     var user = req.body.user;

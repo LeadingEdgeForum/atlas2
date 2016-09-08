@@ -233,6 +233,23 @@ class WorkspaceStore extends Store {
     });
   }
 
+  saveNewJourneyStep(mapID, position, step){
+    $.ajax({
+      type: 'POST',
+      url: '/api/map/' + mapID + '/journeystep/',
+      dataType: 'json',
+      data: {
+        position:position,
+        step:step
+      },
+      /*better do not be too fast with editing*/
+      success: function(data2) {
+        appState.w_maps[mapID] = data2;
+        this.emitChange();
+      }.bind(this)
+    });
+  }
+
   submitNewMapDialog(data) {
     $.ajax({
       type: 'POST',
@@ -375,8 +392,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         var name = action.data.name;
         var interaction = action.data.interaction;
         var position = action.data.position;
-        appState.w_maps[mapID].map.journey.splice(position, 0, {name:name, interaction:interaction});
-        workspaceStoreInstance.saveMap(mapID);
+        workspaceStoreInstance.saveNewJourneyStep(mapID, position, {name:name, interaction:interaction});
         break;
     case ActionTypes.PALETTE_DRAG_STARTED:
       appState.canvasState.highlight = true;

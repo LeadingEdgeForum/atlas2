@@ -26,7 +26,6 @@ var highlightStyle = {
     color: "#00789b",
     borderColor: "#00789b",
     boxShadow: "0 0 10px #00789b",
-    border: '1px solid #00789b',
     cursor:'pointer'
 }
 
