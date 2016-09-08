@@ -39,7 +39,8 @@ module.exports  = keyMirror({
       NEW_CAPABILITY_WITH_ASSIGN : null,
       ASSIGN_NODE_TO_CAPABILITY : null,
       CLEAR_NODE_ASSIGNEMENT : null,
-      MAKE_NODES_REFERENCED : null
+      MAKE_NODES_REFERENCED : null,
+      MAP_ADD_JOURNEY_STEP : null
   },
   USERNEED : null,
   EXTERNAL : null,

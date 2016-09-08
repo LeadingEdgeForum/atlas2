@@ -38,7 +38,7 @@ export default class Transition extends React.Component {
     this.onMouseEnterHandler = this.onMouseEnterHandler.bind(this);
     this.onMouseLeaveHandler = this.onMouseLeaveHandler.bind(this);
     this.onClick = this.onClick.bind(this);
-    this.saveOrAddNewStep = this.saveOrAddNewStep.bind(this);
+    this.addNewStep = this.addNewStep.bind(this);
     this.hideDialog = this.hideDialog.bind(this);
     this._handleStepChange = this._handleStepChange.bind(this);
     this._handleInteractionChange = this._handleInteractionChange.bind(this);
@@ -56,8 +56,15 @@ export default class Transition extends React.Component {
     this.setState({open:true});
   }
 
-  saveOrAddNewStep(){
-
+  addNewStep(){
+    Actions.addNewJourneyStep({
+      mapID : this.props.mapID,
+      position: this.props.counter,
+      name : this.state.stepname,
+      interaction: this.state.interaction
+    });
+    // this is cheating as dialog should close only after the action is successful and the maps are updated
+    this.setState({open:false});
   }
   hideDialog(){
     this.setState({open:false});
@@ -103,7 +110,7 @@ export default class Transition extends React.Component {
             </Form>
             </Modal.Body>
             <Modal.Footer>
-            <Button onClick={this.close}>Close</Button>
+            <Button onClick={this.addNewStep.bind(this)}>Add</Button>
           </Modal.Footer>
           </Modal>
           <span style={styleToSet}

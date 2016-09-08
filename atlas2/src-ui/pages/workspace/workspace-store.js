@@ -57,7 +57,8 @@ class WorkspaceStore extends Store {
       return {
         map: {
           name: 'Loading...',
-          loading: true
+          loading: true,
+          journey:[]
         }
       };
     }
@@ -369,6 +370,14 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         appState.editNodeDialog.nodeID = null;
       });
       break;
+    case ActionTypes.MAP_ADD_JOURNEY_STEP:
+        var mapID = action.data.mapID;
+        var name = action.data.name;
+        var interaction = action.data.interaction;
+        var position = action.data.position;
+        appState.w_maps[mapID].map.journey.splice(position, 0, {name:name, interaction:interaction});
+        workspaceStoreInstance.saveMap(mapID);
+        break;
     case ActionTypes.PALETTE_DRAG_STARTED:
       appState.canvasState.highlight = true;
       workspaceStoreInstance.emitChange();

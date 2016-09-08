@@ -155,6 +155,7 @@ export default class MapEditor extends React.Component {
   render() {
     var nodes = this.state.map.nodes;
     var connections = this.state.map.connections;
+    var journey = this.state.map.journey;
     var name = this.state.workspace ? this.state.workspace.name : "no name";
     var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
     var workspaceID = this.state.map.workspace || "";
@@ -196,7 +197,7 @@ export default class MapEditor extends React.Component {
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID}/>
             <EditNodeDialog mapID={this.props.params.mapID}/>
-            <CustomerJourneyEditDialog mapID={this.props.params.mapID}/>
+            <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey}/>
           </Col>
         </Row>
         <EditMapDialog/>

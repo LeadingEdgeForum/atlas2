@@ -25,7 +25,7 @@ var journeyStyle = {
 }
 var CustomerJourneyEditDialog = React.createClass({
   getInitialState: function() {
-    return {open:false, steps:[]};
+    return {open:false};
   },
 
   componentDidMount: function() {
@@ -57,12 +57,12 @@ var CustomerJourneyEditDialog = React.createClass({
     var chain = [];
     chain.push(<span style={journeyStyle}><Glyphicon glyph="home"/> Start</span>);
     chain.push(" ");
-    chain.push(<Transition counter={0}/>);
+    chain.push(<Transition counter={0} mapID={this.props.mapID}/>);
     chain.push(" ");
-    for(var i = 0; i< this.state.steps.length; i++){
-      chain.push(this.renderStep(this.state.steps[i]));
+    for(var i = 0; i< this.props.steps.length; i++){
+      chain.push(this.renderStep(this.props.steps[i]));
       chain.push(" ");
-      chain.push(<Transition counter={i+1}/>);
+      chain.push(<Transition counter={i+1} mapID={this.props.mapID}/>);
       chain.push(" ");
     }
     chain.push(" ");

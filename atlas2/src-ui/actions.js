@@ -254,4 +254,11 @@ export default class Actions {
       }
     });
   }
+
+  static addNewJourneyStep(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_ADD_JOURNEY_STEP,
+      data: data
+    });
+  }
 }
