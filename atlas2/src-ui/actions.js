@@ -268,4 +268,11 @@ export default class Actions {
       data: data
     });
   }
+
+  static saveJourneyStep(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_SAVE_JOURNEY_STEP,
+      data: data
+    });
+  }
 }

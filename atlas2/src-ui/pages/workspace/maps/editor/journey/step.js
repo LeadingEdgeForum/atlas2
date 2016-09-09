@@ -29,8 +29,6 @@ var highlightStyle = {
     cursor:'pointer'
 }
 
-//TODO: extract this, handle rename (sync with node) and delete (sync with node, too)
-
 export default class Step extends React.Component {
   constructor(props) {
     super(props);
@@ -39,7 +37,7 @@ export default class Step extends React.Component {
     this.onMouseEnterHandler = this.onMouseEnterHandler.bind(this);
     this.onMouseLeaveHandler = this.onMouseLeaveHandler.bind(this);
     this.onClick = this.onClick.bind(this);
-    this.addNewStep = this.addNewStep.bind(this);
+    this.saveStep = this.saveStep.bind(this);
     this.deleteStep = this.deleteStep.bind(this);
     this.hideDialog = this.hideDialog.bind(this);
     this._handleStepChange = this._handleStepChange.bind(this);
@@ -58,15 +56,15 @@ export default class Step extends React.Component {
     this.setState({open:true});
   }
 
-  addNewStep(){
-    // Actions.addNewJourneyStep({
-    //   mapID : this.props.mapID,
-    //   position: this.props.counter,
-    //   name : this.state.stepname,
-    //   interaction: this.state.interaction
-    // });
-    // // this is cheating as dialog should close only after the action is successful and the maps are updated
-    // this.setState({open:false});
+  saveStep(){
+    Actions.saveJourneyStep({
+      mapID : this.props.mapID,
+      stepID : this.props.step._id,
+      name : this.state.stepname,
+      interaction : this.state.interaction
+    });
+    // this is cheating as dialog should close only after the action is successful and the maps are updated
+    this.setState({open:false});
   }
   deleteStep(){
     Actions.deleteJourneyStep({
@@ -123,7 +121,7 @@ export default class Step extends React.Component {
           </Modal.Body>
           <Modal.Footer>
           <Button onClick={this.deleteStep.bind(this)}>Delete</Button>
-          <Button onClick={this.addNewStep.bind(this)}>Save</Button>
+          <Button onClick={this.saveStep.bind(this)}>Save</Button>
         </Modal.Footer>
         </Modal>
           <span style={styleToSet}

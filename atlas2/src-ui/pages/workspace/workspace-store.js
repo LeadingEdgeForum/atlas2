@@ -250,6 +250,23 @@ class WorkspaceStore extends Store {
     });
   }
 
+  saveJourneyStep(mapID, stepID, name, interaction){
+    $.ajax({
+      type: 'PUT',
+      url: '/api/map/' + mapID + '/journeystep/' + stepID,
+      dataType: 'json',
+      data: {
+        name:name,
+        interaction:interaction
+      },
+      /*better do not be too fast with editing*/
+      success: function(data2) {
+        appState.w_maps[mapID] = data2;
+        this.emitChange();
+      }.bind(this)
+    });
+  }
+
   deleteJourneyStep(mapID, stepID){
     $.ajax({
       type: 'DELETE',
@@ -410,6 +427,13 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         var mapID = action.data.mapID;
         var stepID = action.data.stepID;
         workspaceStoreInstance.deleteJourneyStep(mapID, stepID);
+        break;
+    case ActionTypes.MAP_SAVE_JOURNEY_STEP:
+      var mapID = action.data.mapID;
+      var stepID = action.data.stepID;
+      var name = action.data.name;
+      var interaction = action.data.interaction;
+        workspaceStoreInstance.saveJourneyStep(mapID, stepID, name, interaction);
         break;
     case ActionTypes.PALETTE_DRAG_STARTED:
       appState.canvasState.highlight = true;

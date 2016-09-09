@@ -494,7 +494,7 @@ module.exports = function(stormpath) {
                 result.nodes.splice(j,1);
                 for(var k = result.connections.length - 1; k >=0 ; k--){
                   if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
-                    result.connection.splice(k,1);
+                    result.connections.splice(k,1);
                   }
                 }
               }

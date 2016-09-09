@@ -41,7 +41,8 @@ module.exports  = keyMirror({
       CLEAR_NODE_ASSIGNEMENT : null,
       MAKE_NODES_REFERENCED : null,
       MAP_ADD_JOURNEY_STEP : null,
-      MAP_DELETE_JOURNEY_STEP : null
+      MAP_DELETE_JOURNEY_STEP : null,
+      MAP_SAVE_JOURNEY_STEP : null
   },
   USERNEED : null,
   EXTERNAL : null,
