@@ -318,6 +318,12 @@ module.exports = function(stormpath) {
               mainAffectedMap.nodes.splice(k, 1);
             }
           }
+          //and connections (if any)
+          for(var k = mainAffectedMap.connections.length - 1; k>=0; k--){
+            if((mainAffectedMap.connections[k].source + "" === "" + req.params.nodeID) || (mainAffectedMap.connections[k].target + "" === "" + req.params.nodeID)){
+              mainAffectedMap.connections.splice(k, 1);
+            }
+          }
           mainAffectedMap.save(function(err2, result2){
             if (err2) {
               res.status(500).json(err2);
