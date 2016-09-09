@@ -145,6 +145,168 @@ describe('Workspaces & maps', function() {
             });
     });
 
+    it('add journey step and ensure consistency', function(done) {
+        request(app).
+        post('/api/map/' + mapID + '/journeystep/')
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({position:0, step:{name:'teststep',interaction:'true'}})
+            .expect(200)
+            .expect(function(res) {
+                if (!(res.body.map && res.body.map.journey.length === 1)) {
+                    throw new Error('Step was not created as expected', res.body.map.journey);
+                }
+                if (res.body.map.journey[0].name !== 'teststep') {
+                    throw new Error('Step has no valid name ' + res.body.map.journey[0].name);
+                }
+                if(!(res.body.map.nodes.length === 1)){
+                  throw new Error('There should be exactly one node created', res.body.map.node);
+                }
+                if(!(res.body.map.journey[0].implementingNode._id === res.body.map.nodes[0]._id)){
+                  throw new Error('Reference is wrongly set ' + res.body.map.journey[0].implementingNode._id + " " + res.body.map.nodes[0]._id);
+                }
+                if(res.body.map.nodes[0].name !== 'teststep'){
+                  throw new Error('Reference has wrong name ' + res.body.map.nodes[0].name);
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('change journey step name and ensure consistency', function(done) {
+        request(app).
+        put('/api/map/' + mapID + '/journeystep/' + copyOfMap.journey[0]._id)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({name:'teststep2',interaction:'true'})
+            .expect(200)
+            .expect(function(res) {
+                if (res.body.map.journey[0].name !== 'teststep2') {
+                  console.log(res.body.map);
+                  throw new Error('Step not renamed ' + res.body.map.journey[0].name);
+                }
+                if(res.body.map.nodes[0].name !== 'teststep2'){
+                  throw new Error('Corresponding node not changed' + res.body.map.nodes[0].name);
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('change journey step name and noninteractive and ensure consistency', function(done) {
+        request(app).
+        put('/api/map/' + mapID + '/journeystep/' + copyOfMap.journey[0]._id)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({name:'teststep3',interaction:'false'})
+            .expect(200)
+            .expect(function(res) {
+                if (res.body.map.journey[0].name !== 'teststep3') {
+                    throw new Error('Step not renamed');
+                }
+                if(res.body.map.nodes.length !== 0){
+                  throw new Error('Corresponding node not deleted');
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('change journey step interaction and ensure consistency', function(done) {
+        request(app).
+        put('/api/map/' + mapID + '/journeystep/' + copyOfMap.journey[0]._id)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({name:'teststep3', interaction:'true'})
+            .expect(200)
+            .expect(function(res) {
+                if(res.body.map.nodes.length !== 1 || res.body.map.nodes[0].name !== 'teststep3'){
+                  throw new Error('Corresponding node not recreated');
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('delete journey step and ensure consistency', function(done) {
+        request(app).
+        delete('/api/map/' + mapID + '/journeystep/' + copyOfMap.journey[0]._id)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                if (!(res.body.map && res.body.map.journey.length === 0)) {
+                    throw new Error('Step was not created as expected', res.body.map.journey);
+                }
+                if(!(res.body.map.nodes.length === 0)){
+                  throw new Error('The node should be removed', res.body.map.node);
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('add noninteractive journey step and ensure consistency', function(done) {
+        request(app).
+        post('/api/map/' + mapID + '/journeystep/')
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .send({position:0, step:{name:'teststep',interaction:'false'}})
+            .expect(200)
+            .expect(function(res) {
+                if (!(res.body.map && res.body.map.journey.length === 1)) {
+                    throw new Error('Step was not created as expected', res.body.map.journey);
+                }
+                if (res.body.map.journey[0].name !== 'teststep') {
+                    throw new Error('Step has no valid name ' + res.body.map.journey[0].name);
+                }
+                if(!(res.body.map.nodes.length === 0)){
+                  throw new Error('Corresponding node should not be created');
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('delete journey step and ensure consistency', function(done) {
+        request(app).
+        delete('/api/map/' + mapID + '/journeystep/' + copyOfMap.journey[0]._id)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                if (!(res.body.map && res.body.map.journey.length === 0)) {
+                    throw new Error('Step was not deleted as expected', res.body.map.journey);
+                }
+                if(!(res.body.map.nodes.length === 0)){
+                  throw new Error('There should be no nodes');
+                }
+                copyOfMap = res.body.map;
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
     it('verify map created (/api/workspace/workspaceID)', function(done) {
         request(app).
         get('/api/workspace/' + workspaceID)

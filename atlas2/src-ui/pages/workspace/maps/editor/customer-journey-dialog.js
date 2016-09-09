@@ -18,6 +18,7 @@ var _ = require('underscore');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from './../../workspace-store';
 import Transition from './journey/transition';
+import Step from './journey/step';
 
 var journeyStyle = {
   color:'silver',
@@ -44,14 +45,7 @@ var CustomerJourneyEditDialog = React.createClass({
     Actions.closeEditCustomerJourneyDialog();
   },
 
-  renderStep : function(step) {
-    var renderedStep = [];
-    renderedStep.push(step.name);
-    if(step.interaction){
-      renderedStep.push(<Glyphicon glyph="flash"/>)
-    }
-    return <span>{renderedStep}</span>;
-  },
+  //TODO: extract this, handle rename (sync with node) and delete (sync with node, too)
 
   renderChain : function(){
     var chain = [];
@@ -60,7 +54,7 @@ var CustomerJourneyEditDialog = React.createClass({
     chain.push(<Transition counter={0} mapID={this.props.mapID}/>);
     chain.push(" ");
     for(var i = 0; i< this.props.steps.length; i++){
-      chain.push(this.renderStep(this.props.steps[i]));
+      chain.push(<Step step={this.props.steps[i]} position={i} mapID={this.props.mapID}/>);
       chain.push(" ");
       chain.push(<Transition counter={i+1} mapID={this.props.mapID}/>);
       chain.push(" ");
@@ -69,6 +63,7 @@ var CustomerJourneyEditDialog = React.createClass({
     chain.push(<span style={journeyStyle}><Glyphicon glyph="flag"/> End</span>);
     return chain;
   },
+
   render() {
     var show = this.state.open;
     var chain = this.renderChain();

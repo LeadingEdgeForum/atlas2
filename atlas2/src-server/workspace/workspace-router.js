@@ -30,6 +30,46 @@ var getStormpathUserIdFromReq = function(req) {
   return null;
 };
 
+var createCounterPartNodeForCustomerJourney = function(currentMap, position, name, response){
+  var result = currentMap; //actually rename would be nice
+  var res = response;
+  //create counterpart node in a map
+  result.nodes.push({
+    name:name,
+    x:0.1 + 0.9/(result.journey.length + 1),
+    y:0.1,
+    type:'USERNEED',
+    categorized:false,
+    category:null,
+    referencedNodes:[]});
+
+
+    result.save(function(err2, result2){
+      if (err2) {
+        res.send(err2);
+        return;
+      }
+      if(!result2){
+        res.status = 500;
+        res.end();
+        return;
+      }
+        //otherwise set the reference and then return map
+        result2.journey[position].implementingNode = result2.nodes[result2.nodes.length - 1];
+        result2.save(function(err3,result3){
+          if (err3) {
+            res.send(err3);
+            return;
+          }
+          if(!result3){
+            res.status = 500;
+            res.end();
+            return;
+          }
+          res.json({map: result3});
+        });
+    });
+}
 module.exports = function(stormpath) {
   var module = {};
 
@@ -116,6 +156,7 @@ module.exports = function(stormpath) {
         _.extend(result.nodes, req.body.map.nodes);
         _.extend(result.connections, req.body.map.connections);
         _.extend(result.archived, false);
+        //TODO: before save ensure that all customer journey steps have proper names derived from corresponding nodes
         result.save(function(err2, result2) {
           console.log(err2, result2);
           if (err2) {
@@ -416,12 +457,174 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.put('/map/:mapID/journeystep/:stepID', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var mapID = req.params.mapID;
+    var stepID = req.params.stepID;
+    var name = req.body.name;
+    var interaction = req.body.interaction;
+    console.log('arrived', name, interaction);
+    WardleyMap.findOne({
+      _id : mapID,
+      owner: owner,
+      archived : false
+    }, function (err, result){
+      if (err) {
+        res.send(err);
+        return;
+      }
+      if(!result){
+        res.status = 404;
+        res.end();
+        return;
+      }
+      //we have a map, find a proper journey step and modify it
+      for(var i =0; i < result.journey.length; i++){
+        if(stepID === (result.journey[i]._id + "")){
+          var oldInteraction = result.journey[i].interaction;
+          result.journey[i].name = name;
+          result.journey[i].interaction = interaction;
+          console.log('journey step modified',i);
+
+          if((oldInteraction === true || oldInteraction == 'true') && (interaction === false || interaction === 'false')){
+            //true --> false - delete existing node (and connections)
+            var _implementingNodeID = result.journey[i].implementingNode._id;
+            for(var j = 0; j < result.nodes.length; j++){
+              if(''+_implementingNodeID === ''+result.nodes[j]._id){
+                result.nodes.splice(j,1);
+                for(var k = result.connections.length - 1; k >=0 ; k--){
+                  if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
+                    result.connection.splice(k,1);
+                  }
+                }
+              }
+            }
+            result.journey[i].implementingNode = null;
+            result.save(function(err2, result2){
+              if (err2) {
+                res.send(err2);
+                return;
+              }
+              if(!result2){
+                res.status = 500;
+                res.end();
+                return;
+              };
+              res.json({map: result2});
+            });
+          }
+
+          if(''+oldInteraction === ''+interaction && ''+interaction === 'true'){
+            console.log('changing just name');
+            // true --> true -> just update the name of referenced node
+            var _implementingNodeID = result.journey[i].implementingNode._id;
+            for(var j = 0; j < result.nodes.length; j++){
+              if(''+_implementingNodeID === ''+result.nodes[j]._id){
+                result.nodes[j].name = name;
+              }
+            }
+            result.save(function(err2, result2){
+              if (err2) {
+                res.send(err2);
+                return;
+              }
+              if(!result2){
+                res.status = 500;
+                res.end();
+                return;
+              };
+              res.json({map: result2});
+            });
+          }
+
+          //false -> false - just save
+          if(''+oldInteraction === ''+interaction && ''+interaction === 'false'){
+            console.log('changing just name2');
+            result.save(function(err2, result2){
+              if (err2) {
+                res.send(err2);
+                return;
+              }
+              if(!result2){
+                res.status = 500;
+                res.end();
+                return;
+              };
+              res.json({map: result2});
+            });
+          }
+
+          //false -> true - create missing node
+          if((''+oldInteraction === 'false') && (''+interaction === 'true')){
+            console.log('recreating missing node');
+            createCounterPartNodeForCustomerJourney(result, i, name, res);
+          }
+        }
+      }
+      });
+  });
+
+  module.router.delete('/map/:mapID/journeystep/:stepID', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var mapID = req.params.mapID;
+    var stepID = req.params.stepID;
+    WardleyMap.findOne({
+      _id : mapID,
+      owner: owner,
+      archived : false
+    }, function (err, result){
+      if (err) {
+        res.send(err);
+        return;
+      }
+      if(!result){
+        res.status = 404;
+        res.end();
+        return;
+      }
+      //we have a map, find a proper journey step and delete it
+      var stepToDelete = null;
+      for(var i =0; i < result.journey.length; i++){
+        if(stepID === (result.journey[i]._id + "")){
+          stepToDelete = result.journey.splice(i,1)[0];
+        }
+      }
+      if(stepToDelete.implementingNode){
+        var _implementingNodeID = stepToDelete.implementingNode._id;
+        for(var j = 0; j < result.nodes.length; j++){
+          if(''+_implementingNodeID === ''+result.nodes[j]._id){
+            result.nodes.splice(j,1);
+
+            for(var k = result.connections.length - 1; k >=0 ; k--){
+              if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
+                result.connection.splice(k,1);
+              }
+            }
+          }
+        }
+      }
+
+      result.save(function(err2, result2){
+        if (err2) {
+          res.send(err2);
+          return;
+        }
+        if(!result2){
+          res.status = 500;
+          res.end();
+          return;
+        };
+        res.json({map: result2});
+      });
+    });
+  });
+
   module.router.post('/map/:mapID/journeystep', stormpath.authenticationRequired, function(req, res) {
     var owner = getStormpathUserIdFromReq(req);
     var mapID = req.params.mapID;
     var step = req.body.step;
     var position = req.body.position;
-    var interaction = req.body.step.interaction === 'true';
+    var interaction = (req.body.step.interaction === 'true') || (req.body.step.interaction === true);
     WardleyMap.findOne({
       _id : mapID,
       owner: owner,
@@ -452,42 +655,7 @@ module.exports = function(stormpath) {
           res.json({map: result2});
         });
       } else {
-        //create counterpart node in a map
-        result.nodes.push({
-          name:step.name,
-          x:0.1 + 0.9/(result.journey.length + 1),
-          y:0.1,
-          type:'USERNEED',
-          categorized:false,
-          category:null,
-          referencedNodes:[]});
-
-
-          result.save(function(err2, result2){
-            if (err2) {
-              res.send(err2);
-              return;
-            }
-            if(!result2){
-              res.status = 500;
-              res.end();
-              return;
-            }
-              //otherwise set the reference and then return map
-              result2.journey[position].implementingNode = result2.nodes[result2.nodes.length - 1]._id;
-              result2.save(function(err3,result3){
-                if (err3) {
-                  res.send(err3);
-                  return;
-                }
-                if(!result3){
-                  res.status = 500;
-                  res.end();
-                  return;
-                }
-                res.json({map: result3});
-              });
-          });
+        createCounterPartNodeForCustomerJourney(result, position, step.name, res);
       }
     });
   });

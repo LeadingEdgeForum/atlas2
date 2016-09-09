@@ -261,4 +261,11 @@ export default class Actions {
       data: data
     });
   }
+
+  static deleteJourneyStep(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_DELETE_JOURNEY_STEP,
+      data: data
+    });
+  }
 }
