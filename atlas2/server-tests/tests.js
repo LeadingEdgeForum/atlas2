@@ -249,7 +249,7 @@ describe('Workspaces & maps', function() {
             .expect(200)
             .expect(function(res) {
                 if (!(res.body.map && res.body.map.journey.length === 0)) {
-                    throw new Error('Step was not created as expected', res.body.map.journey);
+                    throw new Error('Step was not deleted as expected ' + res.body.map.journey.length);
                 }
                 if(!(res.body.map.nodes.length === 0)){
                   throw new Error('The node should be removed', res.body.map.node);
@@ -451,7 +451,6 @@ describe('Workspaces & maps', function() {
     });
 
     it('delete node and check references', function(done){
-      this.timeout(5000);
       request(app)
           .del('/api/map/' + mapID + "/node/" + copyOfMap.nodes[1]._id)
           .set('Content-type', 'application/json')

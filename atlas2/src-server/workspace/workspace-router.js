@@ -147,6 +147,46 @@ var cleanNodeCapability = function(removeAllNodes, owner, mapID, nodeID, callbac
     }
   });
 }
+
+var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
+
+  //check that we actually own the map, and if yes
+  if (err) {
+    callback(err);
+  }
+  if(!mainAffectedMap){
+    callback('map not found');
+  }
+  if(mainAffectedMap){
+    console.log('removing journey');
+    // remove the component from journey if there is any
+    for(var k = mainAffectedMap.journey.length - 1; k>=0; k--){
+      if(mainAffectedMap.journey[k].implementingNode && (mainAffectedMap.journey[k].implementingNode._id + "" === "" + nodeID)){
+        mainAffectedMap.journey.splice(k, 1);
+      }
+    }
+    console.log('removing ndoes');
+    // remove the component from nodes
+    for(var k = mainAffectedMap.nodes.length - 1; k>=0; k--){
+      if(mainAffectedMap.nodes[k]._id + "" === "" + nodeID){
+        mainAffectedMap.nodes.splice(k, 1);
+      }
+    }
+    console.log('removing connections');
+    //and connections (if any)
+    for(var k = mainAffectedMap.connections.length - 1; k>=0; k--){
+      if((mainAffectedMap.connections[k].source + "" === "" + nodeID) || (mainAffectedMap.connections[k].target + "" === "" + nodeID)){
+        mainAffectedMap.connections.splice(k, 1);
+      }
+    }
+    console.log('precallback');
+    mainAffectedMap.save(callback);
+  }
+};
+
+
+
+
 module.exports = function(stormpath) {
   var module = {};
 
@@ -289,52 +329,24 @@ module.exports = function(stormpath) {
     });
   });
 
-//TODO: tests
-//TODO: migrate UI to this
 //TODO: figure out what to do with map archive
-//TODO: figure out how removing a node may work in customer journey
   module.router.delete('/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
     cleanNodeCapability(true, getStormpathUserIdFromReq(req),req.params.mapID, req.params.nodeID, function(err, map){
+      console.log('capability cleaned');
       WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
-
-        //check that we actually own the map, and if yes
-        if (err) {
-          res.status(500).json(err);
-        }
-        if(!mainAffectedMap){
-          res.status(404).end();
-        }
-        if(mainAffectedMap){
-          // capability cleaned
-          // remove the component from journey if there is any
-          for(var k = mainAffectedMap.journey.length - 1; k>=0; k--){
-            if(mainAffectedMap.journey[k].referencedNode && (mainAffectedMap.journey[k].referencedNode._id + "" === "" + req.params.nodeID)){
-              mainAffectedMap.journey.splice(k, 1);
-            }
+        console.log('map reloaded', mainAffectedMap);
+        deleteNode(err, mainAffectedMap, req.params.nodeID, function(err, result){
+          console.log('node', result);
+          if (err) {
+            res.status(500).json(err);
+          } else {
+            res.json({map:result});
           }
-          // remove the component from nodes
-          for(var k = mainAffectedMap.nodes.length - 1; k>=0; k--){
-            if(mainAffectedMap.nodes[k]._id + "" === "" + req.params.nodeID){
-              mainAffectedMap.nodes.splice(k, 1);
-            }
-          }
-          //and connections (if any)
-          for(var k = mainAffectedMap.connections.length - 1; k>=0; k--){
-            if((mainAffectedMap.connections[k].source + "" === "" + req.params.nodeID) || (mainAffectedMap.connections[k].target + "" === "" + req.params.nodeID)){
-              mainAffectedMap.connections.splice(k, 1);
-            }
-          }
-          mainAffectedMap.save(function(err2, result2){
-            if (err2) {
-              res.status(500).json(err2);
-            } else {
-              res.json({map:result2});
-            }
-          });
-        }
+          console.log('done');
+        });
+      })
       });
     });
-  });
 
   // assign node to existing capability
   module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/capability/:capabilityID', stormpath.authenticationRequired, function(req, res) {
@@ -652,36 +664,43 @@ module.exports = function(stormpath) {
       var stepToDelete = null;
       for(var i =0; i < result.journey.length; i++){
         if(stepID === (result.journey[i]._id + "")){
-          stepToDelete = result.journey.splice(i,1)[0];
+          stepToDelete = result.journey.splice(i,1)[0]; //this operation is irrelevant if there is implementing node
         }
       }
       if(stepToDelete.implementingNode){
+        console.log('implementing node found');
         var _implementingNodeID = stepToDelete.implementingNode._id;
-        for(var j = 0; j < result.nodes.length; j++){
-          if(''+_implementingNodeID === ''+result.nodes[j]._id){
-            result.nodes.splice(j,1);
-
-            for(var k = result.connections.length - 1; k >=0 ; k--){
-              if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
-                result.connection.splice(k,1);
+        // clean here
+        cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err3, result3){ //this removes category if present
+          console.log('capabilities cleaned');
+          WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
+            console.log('map reloaded');
+            deleteNode(err3, mainAffectedMap, _implementingNodeID, function(err2, result2){
+              console.log('node deleted', result2);
+              if (err2) {
+                res.status(500).json(err);
+              } else {
+                //fully deleted, good to go
+                res.json({map:result2});
               }
-            }
+            });
+          });
+        });
+      } else {
+        // the node was removed
+        result.save(function(err2, result2){
+          if (err2) {
+            res.send(err2);
+            return;
           }
-        }
+          if(!result2){
+            res.status = 500;
+            res.end();
+            return;
+          };
+          res.json({map: result2});
+        });
       }
-
-      result.save(function(err2, result2){
-        if (err2) {
-          res.send(err2);
-          return;
-        }
-        if(!result2){
-          res.status = 500;
-          res.end();
-          return;
-        };
-        res.json({map: result2});
-      });
     });
   });
 
