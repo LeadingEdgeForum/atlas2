@@ -392,6 +392,7 @@ describe('Workspaces & maps', function() {
     });
 
 
+
     it('create a capability', function(done) {
       var capabilityCategoryID = copyOfWorkspace.workspace.capabilityCategories[0]._id;
       var testName = 'testcapability';
@@ -405,14 +406,22 @@ describe('Workspaces & maps', function() {
               nodeID:copyOfMap.nodes[1]._id})
             .expect(200)
             .expect(function(res) {
-              //TODO: additional check in addition to status code
-            })
-            .end(function(err, res) {
-                done(err);
-            });
+              request(app)
+              .get('/api/map/' + copyOfMap._id)
+              .set('Content-type', 'application/json')
+              .set('Accept', 'application/json')
+              .set('Authorization', authorizationHeader)
+              .expect(function(res){
+                if(res.body.map.nodes[1].categorized == false && res.body.map.nodes[1].category !== null){
+                  throw new Error('category not set properly');
+                }
+              }).end(function(err, res) {
+                  done(err);
+              })
+            }).end(function(err,res){});
     });
 
-    it('referencedNodes', function(done) {
+    it('reference nodes and check the reference', function(done) {
         request(app).
         put('/api/reference/' + mapID +"/" + copyOfMap.nodes[0]._id + "/" + mapID + "/" + copyOfMap.nodes[1]._id)
             .set('Content-type', 'application/json')
@@ -420,11 +429,48 @@ describe('Workspaces & maps', function() {
             .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
-                console.log(res.body);
+              request(app)
+              .get('/api/map/' + copyOfMap._id)
+              .set('Content-type', 'application/json')
+              .set('Accept', 'application/json')
+              .set('Authorization', authorizationHeader)
+              .expect(function(res){
+                if(res.body.map.nodes[1].categorized == false || res.body.map.nodes[0].categorized == false){
+                  throw new Error('category not set properly');
+                }
+                if(res.body.map.nodes[0].category !== res.body.map.nodes[1].category){
+                  throw new Error('category not identical');
+                }
+                copyOfMap = res.body.map;
+              }).end(function(err, res) {
+                  done(err);
+              })
             })
             .end(function(err, res) {
-                done(err);
             });
+    });
+
+    it('delete node and check references', function(done){
+      this.timeout(5000);
+      request(app)
+          .del('/api/map/' + mapID + "/node/" + copyOfMap.nodes[1]._id)
+          .set('Content-type', 'application/json')
+          .set('Accept', 'application/json')
+          .set('Authorization', authorizationHeader)
+          .expect(200)
+          .expect(function(res) {
+            console.log('verofocatopm')
+            var map = res.body.map;
+            //there should be no category
+            if(map.nodes[0].categorized){
+              throw new Error('Category should be deleted');
+            }
+            if(map.nodes.length !== 2){
+              throw new Error('Should be only two nodes, but are ' + map.nodes.length);
+            }
+          }).end(function(err, res) {
+            done(err);
+          });
     });
 
     it('archive a map (/api/map/mapID)', function(done) {
