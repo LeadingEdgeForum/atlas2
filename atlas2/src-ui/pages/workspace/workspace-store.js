@@ -31,6 +31,9 @@ let appState = {
   editNodeDialog: {
     open: false
   },
+  editUserJourneyDialog : {
+    open: false
+  },
   w_maps: {}
 };
 
@@ -54,7 +57,8 @@ class WorkspaceStore extends Store {
       return {
         map: {
           name: 'Loading...',
-          loading: true
+          loading: true,
+          journey:[]
         }
       };
     }
@@ -164,6 +168,14 @@ class WorkspaceStore extends Store {
     }
   }
 
+  isMapEditCustomerJourneyOpen() {
+    if (appState && appState.editUserJourneyDialog) {
+      return appState.editUserJourneyDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
   isNodeEditDialogOpen() {
     if (appState && appState.editNodeDialog) {
       return appState.editNodeDialog;
@@ -218,6 +230,52 @@ class WorkspaceStore extends Store {
         }
         that.emitChange();
       }
+    });
+  }
+
+  saveNewJourneyStep(mapID, position, step){
+    $.ajax({
+      type: 'POST',
+      url: '/api/map/' + mapID + '/journeystep/',
+      dataType: 'json',
+      data: {
+        position:position,
+        step:step
+      },
+      /*better do not be too fast with editing*/
+      success: function(data2) {
+        appState.w_maps[mapID] = data2;
+        this.emitChange();
+      }.bind(this)
+    });
+  }
+
+  saveJourneyStep(mapID, stepID, name, interaction){
+    $.ajax({
+      type: 'PUT',
+      url: '/api/map/' + mapID + '/journeystep/' + stepID,
+      dataType: 'json',
+      data: {
+        name:name,
+        interaction:interaction
+      },
+      /*better do not be too fast with editing*/
+      success: function(data2) {
+        appState.w_maps[mapID] = data2;
+        this.emitChange();
+      }.bind(this)
+    });
+  }
+
+  deleteJourneyStep(mapID, stepID){
+    $.ajax({
+      type: 'DELETE',
+      url: '/api/map/' + mapID + '/journeystep/' + stepID,
+      /*better do not be too fast with editing*/
+      success: function(data2) {
+        appState.w_maps[mapID] = data2;
+        this.emitChange();
+      }.bind(this)
     });
   }
 
@@ -299,6 +357,17 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
       workspaceStoreInstance.submitNewMapDialog(action.data);
       break;
+    case ActionTypes.MAP_OPEN_EDIT_CUSTOMER_JOURNEY_DIALOG:
+        appState.editUserJourneyDialog.open = true;
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.MAP_CLOSE_EDIT_CUSTOMER_JOURNEY_DIALOG:
+        appState.editUserJourneyDialog.open = false;
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.MAP_CLOSE_SUBMIT_CUSTOMER_JOURNEY_DIALOG:
+        // workspaceStoreInstance.submitNewMapDialog(action.data);
+        break;
     case ActionTypes.MAP_OPEN_EDIT_MAP_DIALOG:
       appState.editMapDialog.open = true;
       appState.editMapDialog.mapID = (action.data);
@@ -310,8 +379,8 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG:
-      appState.w_maps[action.data.mapID].map.name = action.data.mapNameAndDescription.name;
-      appState.w_maps[action.data.mapID].map.description = action.data.mapNameAndDescription.description;
+      appState.w_maps[action.data.mapID].map.user = action.data.mapData.user;
+      appState.w_maps[action.data.mapID].map.purpose = action.data.mapData.purpose;
       workspaceStoreInstance.saveMap(action.data.mapID, function() {
         appState.editMapDialog.open = false;
         appState.editMapDialog.mapID = null;
@@ -347,6 +416,25 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         appState.editNodeDialog.nodeID = null;
       });
       break;
+    case ActionTypes.MAP_ADD_JOURNEY_STEP:
+        var mapID = action.data.mapID;
+        var name = action.data.name;
+        var interaction = action.data.interaction;
+        var position = action.data.position;
+        workspaceStoreInstance.saveNewJourneyStep(mapID, position, {name:name, interaction:interaction});
+        break;
+    case ActionTypes.MAP_DELETE_JOURNEY_STEP:
+        var mapID = action.data.mapID;
+        var stepID = action.data.stepID;
+        workspaceStoreInstance.deleteJourneyStep(mapID, stepID);
+        break;
+    case ActionTypes.MAP_SAVE_JOURNEY_STEP:
+      var mapID = action.data.mapID;
+      var stepID = action.data.stepID;
+      var name = action.data.name;
+      var interaction = action.data.interaction;
+        workspaceStoreInstance.saveJourneyStep(mapID, stepID, name, interaction);
+        break;
     case ActionTypes.PALETTE_DRAG_STARTED:
       appState.canvasState.highlight = true;
       workspaceStoreInstance.emitChange();

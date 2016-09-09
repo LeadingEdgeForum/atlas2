@@ -18,7 +18,7 @@ import Actions from './../../../actions.js';
 var $ = require('jquery');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from '../workspace-store';
-
+import {calculateMapName} from './map-name-calculator';
 //TODO: validation of the workspace dialog
 
 var CreateNewMapDialog = React.createClass({
@@ -48,42 +48,48 @@ var CreateNewMapDialog = React.createClass({
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
+    this.forceUpdate();
+  },
+
+  _summary: function(){
+    return calculateMapName("Create a new map", this.internalState.user, this.internalState.purpose);
   },
   render: function() {
     var show = this.state.open;
+    var summary = this._summary();
     return (
       <div>
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Create a new map
+              {summary}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Form horizontal>
-              <FormGroup controlId="name">
+              <FormGroup controlId="user">
                 <Col sm={2}>
-                  <ControlLabel>Name</ControlLabel>
+                  <ControlLabel>User</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name (at least 5 characters)" onChange={this._handleDialogChange.bind(this, 'name')}/>
-                  <HelpBlock>Name of your map</HelpBlock>
+                  <FormControl type="text" placeholder="Enter user name" onChange={this._handleDialogChange.bind(this, 'user')}/>
+                  <HelpBlock>Who is the main user that you are going to serve?</HelpBlock>
                 </Col>
               </FormGroup>
-              <FormGroup controlId="description">
+              <FormGroup controlId="purpose">
                 <Col sm={2}>
-                  <ControlLabel>Description</ControlLabel>
+                  <ControlLabel>Purpose</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')}/>
-                  <HelpBlock>Description of your map</HelpBlock>
+                  <FormControl type="textarea" placeholder="Enter purpose" onChange={this._handleDialogChange.bind(this, 'purpose')}/>
+                  <HelpBlock>What is this user trying to accomplish?</HelpBlock>
                 </Col>
               </FormGroup>
             </Form>
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create a new map</Button>
           </Modal.Footer>
         </Modal>
       </div>

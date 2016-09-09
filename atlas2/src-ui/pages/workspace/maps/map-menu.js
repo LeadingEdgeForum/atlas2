@@ -20,6 +20,10 @@ export default class MapMenu extends React.Component {
     Actions.openEditMapDialog(mapid);
   }
 
+  openEditUserJourneyDialog(mapid) {
+    Actions.openEditCustomerJourneyDialog(mapid);
+  }
+
   render() {
     var mapID = this.props.params.mapID;
 
@@ -29,7 +33,11 @@ export default class MapMenu extends React.Component {
       <Nav>
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this, mapID)}>
       <Glyphicon glyph="edit"></Glyphicon>&nbsp;
-        Edit info
+        Edit map info
+      </NavItem>
+      <NavItem eventKey={2} href="#" key="2" onClick={this.openEditUserJourneyDialog.bind(this, mapID)}>
+      <Glyphicon glyph="random"></Glyphicon>&nbsp;
+        User journey
       </NavItem>
         <LinkContainer to={{
           pathname: deduplicateHref

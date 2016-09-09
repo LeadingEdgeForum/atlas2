@@ -11,6 +11,7 @@ import {
   Glyphicon
 } from 'react-bootstrap';
 import Actions from '../../../actions';
+import {calculateMapName} from './map-name-calculator';
 
 export default class MapListElement extends React.Component {
   archive(workspace, id) {
@@ -20,11 +21,12 @@ export default class MapListElement extends React.Component {
     var mapid = this.props.id;
     var workspaceID = this.props.workspaceID;
     var href = '/map/' + mapid;
+    var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose);
     return (
-      <ListGroupItem header={this.props.name}>
+      <ListGroupItem header={mapName}>
         <Grid fluid={true}>
           <Row className="show-grid">
-            <Col xs={9}>{this.props.description}</Col>
+            <Col xs={9}></Col>
             <Col xs={3}>
               <ButtonGroup>
                 <Button bsStyle="default" href={href}>

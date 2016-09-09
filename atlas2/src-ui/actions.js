@@ -43,6 +43,9 @@ export default class Actions {
   }
 
   static submitNewMapDialog(data) {
+    if(!(data.user && data.purpose)){
+      throw new Exception('Bad payload for submitNewMapDialog, expected user and purpose, but got', data);
+    }
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG, data: data});
   }
 
@@ -55,17 +58,27 @@ export default class Actions {
   }
 
   static submitEditMapDialog(data) {
+    if(!(data.user && data.purpose)){
+      throw new Exception('Bad payload for submitEditMapDialog, expected user and purpose, but got', data);
+    }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG,
       data: {
         mapID: data.map._id,
-        mapNameAndDescription: {
-          name: data.name,
-          description: data.description,
+        mapData: {
+          user: data.user,
           purpose: data.purpose
         }
       }
     });
+  }
+
+  static openEditCustomerJourneyDialog(mapid) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_CUSTOMER_JOURNEY_DIALOG, data: mapid});
+  }
+
+  static closeEditCustomerJourneyDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_EDIT_CUSTOMER_JOURNEY_DIALOG});
   }
 
   static openEditNodeDialog(mapID, nodeID) {
@@ -239,6 +252,27 @@ export default class Actions {
         referenceNodeID: referenceNodeID,
         referenceMapID: referenceNodemapID
       }
+    });
+  }
+
+  static addNewJourneyStep(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_ADD_JOURNEY_STEP,
+      data: data
+    });
+  }
+
+  static deleteJourneyStep(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_DELETE_JOURNEY_STEP,
+      data: data
+    });
+  }
+
+  static saveJourneyStep(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_SAVE_JOURNEY_STEP,
+      data: data
     });
   }
 }

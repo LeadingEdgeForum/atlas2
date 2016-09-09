@@ -60,11 +60,18 @@ var _ConnectionSchema = new Schema({
   target: Schema.Types.String,
 });
 
-var _MapSchema = new Schema({
+var _JourneySchema = new Schema({
   name: Schema.Types.String,
-  description: Schema.Types.String,
+  interaction: Schema.Types.Boolean,
+  implementingNode : _NodeSchema
+});
+
+var _MapSchema = new Schema({
+  user: Schema.Types.String,
+  purpose: Schema.Types.String,
   owner: Schema.Types.String,
   archived: Schema.Types.Boolean,
+  journey: [_JourneySchema],
   workspace: {
     type: Schema.Types.ObjectId,
     ref: 'Workspace'

@@ -16,6 +16,8 @@ module.exports  = keyMirror({
       MAP_OPEN_EDIT_MAP_DIALOG : null,
       MAP_CLOSE_EDIT_MAP_DIALOG : null,
       MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG : null,
+      MAP_OPEN_EDIT_CUSTOMER_JOURNEY_DIALOG : null,
+      MAP_CLOSE_EDIT_CUSTOMER_JOURNEY_DIALOG : null,
       MAP_OPEN_EDIT_NODE_DIALOG : null,
       MAP_CLOSE_EDIT_NODE_DIALOG : null,
       MAP_CLOSE_SUBMIT_EDIT_NODE_DIALOG : null,
@@ -37,7 +39,10 @@ module.exports  = keyMirror({
       NEW_CAPABILITY_WITH_ASSIGN : null,
       ASSIGN_NODE_TO_CAPABILITY : null,
       CLEAR_NODE_ASSIGNEMENT : null,
-      MAKE_NODES_REFERENCED : null
+      MAKE_NODES_REFERENCED : null,
+      MAP_ADD_JOURNEY_STEP : null,
+      MAP_DELETE_JOURNEY_STEP : null,
+      MAP_SAVE_JOURNEY_STEP : null
   },
   USERNEED : null,
   EXTERNAL : null,
