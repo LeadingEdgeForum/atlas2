@@ -570,28 +570,30 @@ module.exports = function(stormpath) {
           if((oldInteraction === true || oldInteraction == 'true') && (interaction === false || interaction === 'false')){
             //true --> false - delete existing node (and connections)
             var _implementingNodeID = result.journey[i].implementingNode._id;
-            for(var j = 0; j < result.nodes.length; j++){
-              if(''+_implementingNodeID === ''+result.nodes[j]._id){
-                result.nodes.splice(j,1);
-                for(var k = result.connections.length - 1; k >=0 ; k--){
-                  if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
-                    result.connections.splice(k,1);
+            cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err, result2){
+              for(var j = 0; j < result2.nodes.length; j++){
+                if(''+_implementingNodeID === ''+result2.nodes[j]._id){
+                  result2.nodes.splice(j,1);
+                  for(var k = result2.connections.length - 1; k >=0 ; k--){
+                    if(''+result2.connections[k].source == ''+_implementingNodeID || ''+result2.connections[k].target == ''+_implementingNodeID){
+                      result2.connections.splice(k,1);
+                    }
                   }
                 }
               }
-            }
-            result.journey[i].implementingNode = null;
-            result.save(function(err2, result2){
-              if (err2) {
-                res.send(err2);
-                return;
-              }
-              if(!result2){
-                res.status = 500;
-                res.end();
-                return;
-              };
-              res.json({map: result2});
+              result2.journey[i].implementingNode = null;
+              result2.save(function(err3, result3){
+                if (err3) {
+                  res.send(err3);
+                  return;
+                }
+                if(!result3){
+                  res.status = 500;
+                  res.end();
+                  return;
+                };
+                res.json({map: result3});
+              });
             });
           }
 
