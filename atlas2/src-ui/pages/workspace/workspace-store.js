@@ -388,7 +388,6 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       });
       break;
     case ActionTypes.MAP_OPEN_EDIT_NODE_DIALOG:
-      console.log(action.data);
       appState.editNodeDialog.open = true;
       appState.editNodeDialog.mapID = action.data.mapID;
       appState.editNodeDialog.nodeID = action.data.nodeID;
@@ -401,7 +400,6 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_EDIT_NODE_DIALOG:
-      console.log(action.data);
       for (var i = 0; i < appState.w_maps[action.data.mapID].map.nodes.length; i++) {
         var _tempNode = appState.w_maps[action.data.mapID].map.nodes[i];
         if (action.data.nodeID === _tempNode._id) {
@@ -499,25 +497,15 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.saveMap(action.data.mapID);
       break;
     case ActionTypes.CANVAS_REMOVE_NODE:
-      var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
-      for (var i = 0; i < _map.nodes.length; i++) { // jshint ignore:line
-        if (_map.nodes[i]._id === action.data.nodeID) {
-          _map.nodes.splice(i, 1);
-          break;
-        }
-      }
-      var connectionsCount = _map.connections.length;
-      while (connectionsCount--) {
-        if ((_map.connections[connectionsCount].source === action.data.nodeID) || (_map.connections[connectionsCount].target === action.data.nodeID)) {
-          _map.connections.splice(connectionsCount, 1);
-        }
-      }
-      for (var i = 0; i < _map.connections.length; i++) { // jshint ignore:line
-        if (_map.nodes[i] === action.data.nodeID) {
-          _map.splice(i, 1);
-        }
-      }
-      workspaceStoreInstance.saveMap(action.data.mapID);
+      $.ajax({
+        type: 'DELETE',
+        url: '/api/map/' + action.data.mapID + '/node/' + action.data.nodeID,
+        success: function(data2) {
+          appState.w_maps[action.data.mapID] = data2;
+          workspaceStoreInstance.fetchSingleWorkspaceInfo(data2.map.workspace);
+          workspaceStoreInstance.updateWorkspaces();
+        }.bind(this)
+      });
       break;
     case ActionTypes.WORKSPACE_ARCHIVE:
       $.ajax({

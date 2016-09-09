@@ -70,10 +70,134 @@ var createCounterPartNodeForCustomerJourney = function(currentMap, position, nam
         });
     });
 }
+
+var cleanNodeCapability = function(removeAllNodes, owner, mapID, nodeID, callback){
+  if(!removeAllNodes){
+    console.error('cleaning single node category not implemented yet, fallback on removing all nodes');
+  }
+  WardleyMap.findOne({owner: owner, _id: mapID, archived: false}).exec(function(err, mainAffectedMap) {
+    //check that we actually own the map, and if yes
+    if (mainAffectedMap) {
+      console.log('Map subject to cleaning', mainAffectedMap);
+      var mainAffectedNode = null;
+      for (var i = 0; i < mainAffectedMap.nodes.length; i++) {
+        var _node = mainAffectedMap.nodes[i];
+        // this compare is intentional as _node.id is object and nodeID is string from URL
+        if (_node.id == nodeID) { //jshint ignore:line
+          _node.categorized = false;
+          _node.category = null;
+          mainAffectedNode = _node;
+        }
+      }
+      var referencedNodes = [mainAffectedNode._id];  // this will be a whole cluster of all nodes that point at each other
+      for (var j = 0; j < mainAffectedNode.referencedNodes.length; j++) {
+        referencedNodes.push(mainAffectedNode.referencedNodes[j].nodeID);
+      }
+      //TODO find also related journey steps
+      var query = WardleyMap.find().or([
+        {
+          'nodes._id' : {$in:referencedNodes}
+        }, {
+          'journey.$.referencedNode._id ' : {$in:referencedNodes}
+        }
+      ]);
+
+      query.exec(function(err2, affectedMapsArray) {
+        if (err2) {
+          callback(err2);
+          return;
+        }
+        affectedMapsArray.map(map => {
+          map.nodes.map(node => {
+            referencedNodes.map(referencedNode => {
+              if ("" + node._id == "" + referencedNode) {
+                //TODO: instead of cleaning all nodes, it should be possible to remove one node from category and remove its reference from other nodes
+                node.categorized = false;
+                node.category = null;
+                node.referencedNodes = [];
+              }
+            });
+          });
+        });
+        // and the tricky part - save all maps
+        var limit = affectedMapsArray.length;
+        var counter = 0;
+        var errors = [];
+        var results = [];
+        affectedMapsArray.map(map => {
+          map.save(function(err3, result3) {
+            if (err3) {
+              errors.push(err3);
+              counter++;
+            } else {
+              results.push(result3);
+              counter++;
+            }
+            if (counter === limit) {
+              if (errors.length !== 0) {
+                callback(errors, null);
+              } else {
+                //TODO: calback with one map here!
+                callback(null, results);
+              }
+            }
+          });
+        });
+      });
+    }
+  });
+}
+
+var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
+
+  //check that we actually own the map, and if yes
+  if (err) {
+    callback(err);
+  }
+  if(!mainAffectedMap){
+    callback('map not found');
+  }
+  if(mainAffectedMap){
+    console.log('removing journey');
+    // remove the component from journey if there is any
+    for(var k = mainAffectedMap.journey.length - 1; k>=0; k--){
+      if(mainAffectedMap.journey[k].implementingNode && (mainAffectedMap.journey[k].implementingNode._id + "" === "" + nodeID)){
+        mainAffectedMap.journey.splice(k, 1);
+      }
+    }
+    console.log('removing ndoes');
+    // remove the component from nodes
+    for(var k = mainAffectedMap.nodes.length - 1; k>=0; k--){
+      if(mainAffectedMap.nodes[k]._id + "" === "" + nodeID){
+        mainAffectedMap.nodes.splice(k, 1);
+      }
+    }
+    console.log('removing connections');
+    //and connections (if any)
+    for(var k = mainAffectedMap.connections.length - 1; k>=0; k--){
+      if((mainAffectedMap.connections[k].source + "" === "" + nodeID) || (mainAffectedMap.connections[k].target + "" === "" + nodeID)){
+        mainAffectedMap.connections.splice(k, 1);
+      }
+    }
+    console.log('precallback');
+    mainAffectedMap.save(callback);
+  }
+};
+
+
+
+
 module.exports = function(stormpath) {
   var module = {};
 
   module.router = require('express').Router();
+
+  module.router.get('/map/:mapID/name', stormpath.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('user purpose').exec(function(err, result) {
+      res.json({map: {_id : result._id, name:'As ' + result.user + ', I want to ' + result.purpose + '.'}});
+    });
+  });
+
 
   module.router.get('/workspaces/', stormpath.authenticationRequired, function(req, res) {
 
@@ -133,14 +257,12 @@ module.exports = function(stormpath) {
   });
 
   module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
-    console.log({owner: getStormpathUserIdFromReq(req), id: req.params.workspaceID});
     Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps').exec(function(err, result) {
       res.json({workspace: result});
     });
   });
 
   module.router.get('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
-    console.log({owner: getStormpathUserIdFromReq(req), id: req.params.mapID});
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       console.log(err);
       res.json({map: result});
@@ -198,72 +320,40 @@ module.exports = function(stormpath) {
   };
 
   module.router.delete('/map/:mapID/node/:nodeID/capability', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
-      // console.log('map found', err, result, req.body.map);
-      //check that we actually own the map, and if yes
-      if (mainAffectedMap) {
-        var mainAffectedNode = null;
-        for (var i = 0; i < mainAffectedMap.nodes.length; i++) {
-          var _node = mainAffectedMap.nodes[i];
-          // this compare is intentional as _node.id is object and nodeID is string from URL
-          if (_node.id == req.params.nodeID) { //jshint ignore:line
-            _node.categorized = false;
-            _node.category = null;
-            mainAffectedNode = _node;
-            break;
-          }
+    cleanNodeCapability(true, getStormpathUserIdFromReq(req),req.params.mapID, req.params.nodeID, function(err, map){
+      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
+        //check that we actually own the map, and if yes
+        if (err) {
+          res.status(500).json(err);
         }
-        var referencedNodes = [mainAffectedNode._id];
-        for (var j = 0; j < mainAffectedNode.referencedNodes.length; j++) {
-          referencedNodes.push(mainAffectedNode.referencedNodes[j].nodeID);
+        if(!mainAffectedMap){
+          res.status(404).end();
         }
-        console.log('nodes for category removal', referencedNodes);
-        var query = WardleyMap.find().where('nodes._id'). in(referencedNodes);
-        query.exec(function(err2, affectedMapsArray) {
-          if (err2) {
-            res.json(err2);
-            return;
-          }
-          affectedMapsArray.map(map => {
-            map.nodes.map(node => {
-              referencedNodes.map(referencedNode => {
-                console.log('tetsing', node._id, referencedNode, node._id == referencedNode);
-                if ("" + node._id == "" + referencedNode) {
-                  console.log('clean up', node);
-                  node.categorized = false;
-                  node.category = null;
-                  node.referencedNodes = [];
-                }
-              });
-            });
-          });
-          // and the tricky part - save all maps
-          var limit = affectedMapsArray.length;
-          var counter = 0;
-          var errors = [];
-          var results = [];
-          affectedMapsArray.map(map => {
-            map.save(function(err3, result3) {
-              if (err3) {
-                errors.push(err3);
-                counter++;
-              } else {
-                results.push(result3);
-                counter++;
-              }
-              if (counter === limit) {
-                if (errors.length !== 0) {
-                  res.status(500).json(errors);
-                } else {
-                  res.json(results);
-                }
-              }
-            });
-          });
-        });
-      }
+        if(mainAffectedMap){
+          res.json(mainAffectedMap);
+        }
+      });
     });
   });
+
+//TODO: figure out what to do with map archive
+  module.router.delete('/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
+    cleanNodeCapability(true, getStormpathUserIdFromReq(req),req.params.mapID, req.params.nodeID, function(err, map){
+      console.log('capability cleaned');
+      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
+        console.log('map reloaded', mainAffectedMap);
+        deleteNode(err, mainAffectedMap, req.params.nodeID, function(err, result){
+          console.log('node', result);
+          if (err) {
+            res.status(500).json(err);
+          } else {
+            res.json({map:result});
+          }
+          console.log('done');
+        });
+      })
+      });
+    });
 
   // assign node to existing capability
   module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/capability/:capabilityID', stormpath.authenticationRequired, function(req, res) {
@@ -463,7 +553,6 @@ module.exports = function(stormpath) {
     var stepID = req.params.stepID;
     var name = req.body.name;
     var interaction = req.body.interaction;
-    console.log('arrived', name, interaction);
     WardleyMap.findOne({
       _id : mapID,
       owner: owner,
@@ -484,38 +573,38 @@ module.exports = function(stormpath) {
           var oldInteraction = result.journey[i].interaction;
           result.journey[i].name = name;
           result.journey[i].interaction = interaction;
-          console.log('journey step modified',i);
 
           if((oldInteraction === true || oldInteraction == 'true') && (interaction === false || interaction === 'false')){
             //true --> false - delete existing node (and connections)
             var _implementingNodeID = result.journey[i].implementingNode._id;
-            for(var j = 0; j < result.nodes.length; j++){
-              if(''+_implementingNodeID === ''+result.nodes[j]._id){
-                result.nodes.splice(j,1);
-                for(var k = result.connections.length - 1; k >=0 ; k--){
-                  if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
-                    result.connections.splice(k,1);
+            cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err, result2){
+              for(var j = 0; j < result2.nodes.length; j++){
+                if(''+_implementingNodeID === ''+result2.nodes[j]._id){
+                  result2.nodes.splice(j,1);
+                  for(var k = result2.connections.length - 1; k >=0 ; k--){
+                    if(''+result2.connections[k].source == ''+_implementingNodeID || ''+result2.connections[k].target == ''+_implementingNodeID){
+                      result2.connections.splice(k,1);
+                    }
                   }
                 }
               }
-            }
-            result.journey[i].implementingNode = null;
-            result.save(function(err2, result2){
-              if (err2) {
-                res.send(err2);
-                return;
-              }
-              if(!result2){
-                res.status = 500;
-                res.end();
-                return;
-              };
-              res.json({map: result2});
+              result2.journey[i].implementingNode = null;
+              result2.save(function(err3, result3){
+                if (err3) {
+                  res.send(err3);
+                  return;
+                }
+                if(!result3){
+                  res.status = 500;
+                  res.end();
+                  return;
+                };
+                res.json({map: result3});
+              });
             });
           }
 
           if(''+oldInteraction === ''+interaction && ''+interaction === 'true'){
-            console.log('changing just name');
             // true --> true -> just update the name of referenced node
             var _implementingNodeID = result.journey[i].implementingNode._id;
             for(var j = 0; j < result.nodes.length; j++){
@@ -539,7 +628,6 @@ module.exports = function(stormpath) {
 
           //false -> false - just save
           if(''+oldInteraction === ''+interaction && ''+interaction === 'false'){
-            console.log('changing just name2');
             result.save(function(err2, result2){
               if (err2) {
                 res.send(err2);
@@ -556,7 +644,6 @@ module.exports = function(stormpath) {
 
           //false -> true - create missing node
           if((''+oldInteraction === 'false') && (''+interaction === 'true')){
-            console.log('recreating missing node');
             createCounterPartNodeForCustomerJourney(result, i, name, res);
           }
         }
@@ -586,36 +673,43 @@ module.exports = function(stormpath) {
       var stepToDelete = null;
       for(var i =0; i < result.journey.length; i++){
         if(stepID === (result.journey[i]._id + "")){
-          stepToDelete = result.journey.splice(i,1)[0];
+          stepToDelete = result.journey.splice(i,1)[0]; //this operation is irrelevant if there is implementing node
         }
       }
       if(stepToDelete.implementingNode){
+        console.log('implementing node found');
         var _implementingNodeID = stepToDelete.implementingNode._id;
-        for(var j = 0; j < result.nodes.length; j++){
-          if(''+_implementingNodeID === ''+result.nodes[j]._id){
-            result.nodes.splice(j,1);
-
-            for(var k = result.connections.length - 1; k >=0 ; k--){
-              if(''+result.connections[k].source == ''+_implementingNodeID || ''+result.connections[k].target == ''+_implementingNodeID){
-                result.connection.splice(k,1);
+        // clean here
+        cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err3, result3){ //this removes category if present
+          console.log('capabilities cleaned');
+          WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
+            console.log('map reloaded');
+            deleteNode(err3, mainAffectedMap, _implementingNodeID, function(err2, result2){
+              console.log('node deleted', result2);
+              if (err2) {
+                res.status(500).json(err);
+              } else {
+                //fully deleted, good to go
+                res.json({map:result2});
               }
-            }
+            });
+          });
+        });
+      } else {
+        // the node was removed
+        result.save(function(err2, result2){
+          if (err2) {
+            res.send(err2);
+            return;
           }
-        }
+          if(!result2){
+            res.status = 500;
+            res.end();
+            return;
+          };
+          res.json({map: result2});
+        });
       }
-
-      result.save(function(err2, result2){
-        if (err2) {
-          res.send(err2);
-          return;
-        }
-        if(!result2){
-          res.status = 500;
-          res.end();
-          return;
-        };
-        res.json({map: result2});
-      });
     });
   });
 
