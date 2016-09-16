@@ -20,7 +20,8 @@ import Actions from '../../../../../actions';
 
 var journeyStyle = {
   color:'silver',
-  maxWidth : 200,
+  width:'100%',
+  textAlign: 'center'
 }
 var highlightStyle = {
     color: "#00789b",
@@ -81,7 +82,7 @@ export default class Transition extends React.Component {
       var text = "";
       if(this.state.hover){
         styleToSet = _.extend(styleToSet, highlightStyle);
-        text = "Click to add";
+        text = " Click to add below ";
       }
       return (<span>
           <Modal show={this.state.open} onHide={this.hideDialog}>
@@ -112,13 +113,14 @@ export default class Transition extends React.Component {
             <Button onClick={this.addNewStep.bind(this)}>Add</Button>
           </Modal.Footer>
           </Modal>
-          <span style={styleToSet}
+          <div style={styleToSet}
                   onMouseEnter={this.onMouseEnterHandler.bind(this)}
                   onMouseLeave={this.onMouseLeaveHandler.bind(this)}
                   onClick={this.onClick.bind(this)}>
-            <Glyphicon glyph="chevron-right"/>
-            {text}{text ? <Glyphicon glyph="chevron-right"/> : null}
-          </span>
+            <Glyphicon glyph="chevron-down"/>
+            {text}
+            {text ? <Glyphicon glyph="chevron-down"/> : null}
+          </div>
       </span>);
   }
 }

@@ -20,7 +20,8 @@ import Actions from '../../../../../actions';
 
 var journeyStyle = {
   color:'black',
-  maxWidth : 200,
+  width:'100%',
+  textAlign: 'center'
 }
 var highlightStyle = {
     color: "#00789b",
@@ -124,12 +125,12 @@ export default class Step extends React.Component {
           <Button onClick={this.saveStep.bind(this)}>Save</Button>
         </Modal.Footer>
         </Modal>
-          <span style={styleToSet}
+          <div style={styleToSet}
                   onMouseEnter={this.onMouseEnterHandler.bind(this)}
                   onMouseLeave={this.onMouseLeaveHandler.bind(this)}
                   onClick={this.onClick.bind(this)}>
             {stepName}{interaction}
-          </span>
+          </div>
       </span>);
   }
 }
