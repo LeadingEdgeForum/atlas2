@@ -372,6 +372,46 @@ describe('Workspaces & maps', function() {
             });
     });
 
+    it('establish connection', function(done){
+      copyOfMap.connections.push({source:copyOfMap.nodes[0]._id, target:copyOfMap.nodes[1]._id, type:'test'});
+      request(app).
+        put('/api/map/' + mapID)
+          .set('Content-type', 'application/json')
+          .set('Accept', 'application/json')
+          .set('Authorization', authorizationHeader)
+          .send({map:copyOfMap})
+          .expect(200)
+          .expect(function(res) {
+              copyOfMap = res.body.map;
+              if(copyOfMap.connections.length !== 1){
+                throw new Error('connection not created');
+              }
+          })
+          .end(function(err, res) {
+              done(err);
+          });
+    });
+
+    it('delete connection', function(done){
+      copyOfMap.connections = undefined;
+      request(app).
+        put('/api/map/' + mapID)
+          .set('Content-type', 'application/json')
+          .set('Accept', 'application/json')
+          .set('Authorization', authorizationHeader)
+          .send({map:copyOfMap})
+          .expect(200)
+          .expect(function(res) {
+              copyOfMap = res.body.map;
+              if(copyOfMap.connections.length !== 0){
+                throw new Error('connection not deleted');
+              }
+          })
+          .end(function(err, res) {
+              done(err);
+          });
+    });
+
     it('create a third node in a map', function(done) {
         var node = {name:"name1",x:0.7,y:0.7,type:"INTERNAL"};
         copyOfMap.nodes.push(node);
