@@ -10,6 +10,7 @@ import {
   ButtonGroup,
   Glyphicon
 } from 'react-bootstrap';
+var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import Actions from '../../../actions';
 import {calculateMapName} from './map-name-calculator';
 
@@ -29,9 +30,11 @@ export default class MapListElement extends React.Component {
             <Col xs={9}></Col>
             <Col xs={3}>
               <ButtonGroup>
-                <Button bsStyle="default" href={href}>
-                  <Glyphicon glyph="edit"></Glyphicon> Edit
-                </Button>
+                <LinkContainer to={{ pathname: href }}>
+                  <Button bsStyle="default" href={href}>
+                    <Glyphicon glyph="edit"></Glyphicon> Edit
+                  </Button>
+                </LinkContainer>
                 <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
                   <Glyphicon glyph="remove"></Glyphicon> Delete
                 </Button>

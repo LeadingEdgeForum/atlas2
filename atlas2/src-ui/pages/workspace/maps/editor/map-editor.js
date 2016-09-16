@@ -197,7 +197,7 @@ export default class MapEditor extends React.Component {
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID}/>
             <EditNodeDialog mapID={this.props.params.mapID}/>
-            <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey}/>
+            <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey} loading={this.state.map.loading}/>
           </Col>
         </Row>
         <EditMapDialog/>

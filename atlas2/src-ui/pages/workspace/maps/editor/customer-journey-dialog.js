@@ -22,11 +22,21 @@ import Step from './journey/step';
 
 var journeyStyle = {
   color:'silver',
-  maxWidth : 200,
+  width:'100%',
+  textAlign: 'center'
 }
 var CustomerJourneyEditDialog = React.createClass({
   getInitialState: function() {
     return {open:false};
+  },
+
+  //crappy hack. I need to rething how maps are loaded and propagated
+  componentWillReceiveProps: function(nextProps){
+    if(this.props.loading && !nextProps.loading){
+      if(nextProps.steps.length === 0){
+        Actions.openEditCustomerJourneyDialog(nextProps.mapID);
+      }
+    }
   },
 
   componentDidMount: function() {
@@ -49,18 +59,13 @@ var CustomerJourneyEditDialog = React.createClass({
 
   renderChain : function(){
     var chain = [];
-    chain.push(<span style={journeyStyle}><Glyphicon glyph="home"/> Start</span>);
-    chain.push(" ");
+    chain.push(<div style={journeyStyle}><Glyphicon glyph="home"/> Start</div>);
     chain.push(<Transition counter={0} mapID={this.props.mapID}/>);
-    chain.push(" ");
     for(var i = 0; i< this.props.steps.length; i++){
       chain.push(<Step step={this.props.steps[i]} position={i} mapID={this.props.mapID}/>);
-      chain.push(" ");
       chain.push(<Transition counter={i+1} mapID={this.props.mapID}/>);
-      chain.push(" ");
     }
-    chain.push(" ");
-    chain.push(<span style={journeyStyle}><Glyphicon glyph="flag"/> End</span>);
+    chain.push(<div style={journeyStyle}><Glyphicon glyph="flag"/> End</div>);
     return chain;
   },
 
