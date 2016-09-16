@@ -275,18 +275,19 @@ module.exports = function(stormpath) {
     });
   });
 
+
   module.router.put('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       // console.log('map found', err, result, req.body.map);
       //check that we actually own the map, and if yes
       if (result) {
         _.extend(result, req.body.map);
-        _.extend(result.nodes, req.body.map.nodes);
-        _.extend(result.connections, req.body.map.connections);
+        result.nodes = req.body.map.nodes || [];
+        result.connections = req.body.map.connections || [];;
         _.extend(result.archived, false);
+
         //TODO: before save ensure that all customer journey steps have proper names derived from corresponding nodes
         result.save(function(err2, result2) {
-          console.log(err2, result2);
           if (err2) {
             res.status(500);
           }
@@ -345,17 +346,17 @@ module.exports = function(stormpath) {
 //TODO: figure out what to do with map archive
   module.router.delete('/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
     cleanNodeCapability(true, getStormpathUserIdFromReq(req),req.params.mapID, req.params.nodeID, function(err, map){
-      console.log('capability cleaned');
+      // console.log('capability cleaned');
       WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
-        console.log('map reloaded', mainAffectedMap);
+        // console.log('map reloaded', mainAffectedMap);
         deleteNode(err, mainAffectedMap, req.params.nodeID, function(err, result){
-          console.log('node', result);
+          // console.log('node', result);
           if (err) {
             res.status(500).json(err);
           } else {
             res.json({map:result});
           }
-          console.log('done');
+          // console.log('done');
         });
       })
       });
@@ -701,15 +702,15 @@ module.exports = function(stormpath) {
         }
       }
       if(stepToDelete.implementingNode){
-        console.log('implementing node found');
+        // console.log('implementing node found');
         var _implementingNodeID = stepToDelete.implementingNode._id;
         // clean here
         cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err3, result3){ //this removes category if present
-          console.log('capabilities cleaned');
+          // console.log('capabilities cleaned');
           WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
-            console.log('map reloaded');
+            // console.log('map reloaded');
             deleteNode(err3, mainAffectedMap, _implementingNodeID, function(err2, result2){
-              console.log('node deleted', result2);
+              // console.log('node deleted', result2);
               if (err2) {
                 res.status(500).json(err);
               } else {
