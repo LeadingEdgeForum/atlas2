@@ -489,7 +489,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
       for (var i = 0; i < _map.connections.length; i++) { // jshint ignore:line
         var connection = _map.connections[i];
-        if ((connection.source = action.data.source) && (connection.target = action.data.target) && (connection.scope = action.data.scope)) {
+        if ((connection.source == action.data.source) && (connection.target == action.data.target) && (connection.scope == action.data.scope)) {
           _map.connections.splice(i, 1);
           break;
         }
