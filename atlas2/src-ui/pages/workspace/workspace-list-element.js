@@ -13,7 +13,7 @@ import {
   ListGroupItem,
   Glyphicon
 } from 'react-bootstrap';
-import LinkContainer from 'react-router-bootstrap';
+import {LinkContainer} from 'react-router-bootstrap';
 import Actions from '../../actions';
 
 export default class WorkspaceListElement extends React.Component {
@@ -40,9 +40,11 @@ export default class WorkspaceListElement extends React.Component {
             <Col xs={9}>{this.props.description} {mapsCountInfo}.</Col>
             <Col xs={3}>
               <ButtonGroup>
-                <Button bsStyle="default" href={hrefOpen}>
-                  <Glyphicon glyph="edit"></Glyphicon> Edit
-                </Button>
+                <LinkContainer to={{ pathname: hrefOpen }}>
+                  <Button bsStyle="default" href={hrefOpen}>
+                    <Glyphicon glyph="edit"></Glyphicon> Edit
+                  </Button>
+                </LinkContainer>
                 <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID)}>
                   <Glyphicon glyph="remove"></Glyphicon> Remove
                 </Button>

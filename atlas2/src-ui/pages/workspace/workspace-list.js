@@ -17,6 +17,7 @@ import WorkspaceStore from './workspace-store';
 import WorkspaceListElement from './workspace-list-element.js';
 import WorkspaceListElementNew from './workspace-list-element-new.js';
 var CreateNewWorkspaceDialog = require('./create-new-workspace-dialog');
+var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
 export default class WorkspaceList extends React.Component {
   constructor(props) {

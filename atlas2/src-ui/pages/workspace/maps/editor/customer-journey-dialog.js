@@ -30,6 +30,15 @@ var CustomerJourneyEditDialog = React.createClass({
     return {open:false};
   },
 
+  //crappy hack. I need to rething how maps are loaded and propagated
+  componentWillReceiveProps: function(nextProps){
+    if(this.props.loading && !nextProps.loading){
+      if(nextProps.steps.length === 0){
+        Actions.openEditCustomerJourneyDialog(nextProps.mapID);
+      }
+    }
+  },
+
   componentDidMount: function() {
     WorkspaceStore.addChangeListener(this._onChange);
   },
