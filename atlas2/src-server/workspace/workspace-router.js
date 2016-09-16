@@ -137,8 +137,18 @@ var cleanNodeCapability = function(removeAllNodes, owner, mapID, nodeID, callbac
               if (errors.length !== 0) {
                 callback(errors, null);
               } else {
-                //TODO: calback with one map here!
-                callback(null, results);
+                //callback with one map if possible
+                var oneMapCallback = false;
+                for(var z = 0; z < results.length;z++){
+                  if(''+results[z]._id === ''+mainAffectedMap._id){
+                      oneMapCallback = true;
+                      callback(null, results[z]);
+                      break;
+                  }
+                }
+                if(!oneMapCallback){
+                  console.error('Could not find the map to return');
+                }
               }
             }
           });
@@ -158,28 +168,24 @@ var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
     callback('map not found');
   }
   if(mainAffectedMap){
-    console.log('removing journey');
     // remove the component from journey if there is any
     for(var k = mainAffectedMap.journey.length - 1; k>=0; k--){
       if(mainAffectedMap.journey[k].implementingNode && (mainAffectedMap.journey[k].implementingNode._id + "" === "" + nodeID)){
         mainAffectedMap.journey.splice(k, 1);
       }
     }
-    console.log('removing ndoes');
     // remove the component from nodes
     for(var k = mainAffectedMap.nodes.length - 1; k>=0; k--){
       if(mainAffectedMap.nodes[k]._id + "" === "" + nodeID){
         mainAffectedMap.nodes.splice(k, 1);
       }
     }
-    console.log('removing connections');
     //and connections (if any)
     for(var k = mainAffectedMap.connections.length - 1; k>=0; k--){
       if((mainAffectedMap.connections[k].source + "" === "" + nodeID) || (mainAffectedMap.connections[k].target + "" === "" + nodeID)){
         mainAffectedMap.connections.splice(k, 1);
       }
     }
-    console.log('precallback');
     mainAffectedMap.save(callback);
   }
 };
@@ -567,17 +573,32 @@ module.exports = function(stormpath) {
         res.end();
         return;
       }
+
       //we have a map, find a proper journey step and modify it
       for(var i =0; i < result.journey.length; i++){
         if(stepID === (result.journey[i]._id + "")){
+          var getCurrentI = function(i){
+            return i;
+          }.bind(this, i);
           var oldInteraction = result.journey[i].interaction;
           result.journey[i].name = name;
           result.journey[i].interaction = interaction;
 
+          // interactivity change can and should cause node removal
           if((oldInteraction === true || oldInteraction == 'true') && (interaction === false || interaction === 'false')){
             //true --> false - delete existing node (and connections)
             var _implementingNodeID = result.journey[i].implementingNode._id;
-            cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err, result2){
+            cleanNodeCapability(true, owner, mapID, _implementingNodeID, function(err2, result2){
+              if (err2) {
+                res.send(err2);
+                return;
+              }
+              if(!result2){
+                res.status = 404;
+                res.end();
+                return;
+              }
+
               for(var j = 0; j < result2.nodes.length; j++){
                 if(''+_implementingNodeID === ''+result2.nodes[j]._id){
                   result2.nodes.splice(j,1);
@@ -588,7 +609,10 @@ module.exports = function(stormpath) {
                   }
                 }
               }
-              result2.journey[i].implementingNode = null;
+
+              result2.journey[getCurrentI()].implementingNode = null;
+              result2.journey[getCurrentI()].name = name;
+              result2.journey[getCurrentI()].interaction = interaction;
               result2.save(function(err3, result3){
                 if (err3) {
                   res.send(err3);
