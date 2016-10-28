@@ -11,3 +11,4 @@ applications:
   - mongodb-atlas2main
   - performance-monitoring-auto
   - atlas2-stormpath-credentials
+  buildpack: sdk-for-nodejs
