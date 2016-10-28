@@ -88,6 +88,25 @@ var MapComponent = React.createClass({
       }
       return null;
     }
+    if(this.props.multi){
+      var groupStyle = {
+        position: "absolute",
+        fontSize: "20px",
+        color: "silver",
+        top: "-25px",
+        left: "-25px",
+        zIndex: "30"
+      };
+      if (this.state.hover === "group") {
+        groupStyle = _.extend(groupStyle, activeStyle);
+        if (this.input) {
+          jsPlumb.setDraggable(this.input, false);
+          jsPlumb.unmakeTarget(this.input);
+          jsPlumb.unmakeSource(this.input);
+        }
+      }
+      return(<div><Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon></div>);
+    }
     var pencilStyle = {
       position: "absolute",
       fontSize: "20px",

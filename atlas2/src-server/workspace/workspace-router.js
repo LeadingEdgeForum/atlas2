@@ -69,7 +69,7 @@ var createCounterPartNodeForCustomerJourney = function(currentMap, position, nam
           res.json({map: result3});
         });
     });
-}
+};
 
 var cleanNodeCapability = function(removeAllNodes, owner, mapID, nodeID, callback){
   if(!removeAllNodes){
@@ -156,7 +156,7 @@ var cleanNodeCapability = function(removeAllNodes, owner, mapID, nodeID, callbac
       });
     }
   });
-}
+};
 
 var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
 
@@ -178,12 +178,14 @@ var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
     for(var k = mainAffectedMap.nodes.length - 1; k>=0; k--){
       if(mainAffectedMap.nodes[k]._id + "" === "" + nodeID){
         mainAffectedMap.nodes.splice(k, 1);
-      }
-    }
-    //and connections (if any)
-    for(var k = mainAffectedMap.connections.length - 1; k>=0; k--){
-      if((mainAffectedMap.connections[k].source + "" === "" + nodeID) || (mainAffectedMap.connections[k].target + "" === "" + nodeID)){
-        mainAffectedMap.connections.splice(k, 1);
+      } else {
+        // if node is not being removed, scan all the connections
+        for(var l = mainAffectedMap.nodes[k].dependencies.length - 1; l >= 0; l--){
+          // at this point we do not have depenency Types
+          if(mainAffectedMap.nodes[k].dependencies[l].nodeID === "" + nodeID){
+            mainAffectedMap.nodes[k].dependencies.splice(l,1);
+          }
+        }
       }
     }
     mainAffectedMap.save(callback);
@@ -283,7 +285,6 @@ module.exports = function(stormpath) {
       if (result) {
         _.extend(result, req.body.map);
         result.nodes = req.body.map.nodes || [];
-        result.connections = req.body.map.connections || [];;
         _.extend(result.archived, false);
 
         //TODO: before save ensure that all customer journey steps have proper names derived from corresponding nodes
@@ -603,9 +604,11 @@ module.exports = function(stormpath) {
               for(var j = 0; j < result2.nodes.length; j++){
                 if(''+_implementingNodeID === ''+result2.nodes[j]._id){
                   result2.nodes.splice(j,1);
-                  for(var k = result2.connections.length - 1; k >=0 ; k--){
-                    if(''+result2.connections[k].source == ''+_implementingNodeID || ''+result2.connections[k].target == ''+_implementingNodeID){
-                      result2.connections.splice(k,1);
+                } else {
+                  for(var l = result2.nodes[j].dependencies.length - 1; l >= 0; l--){
+                    // at this point we do not have depenency Types
+                    if(result2.nodes[j].dependencies[l].nodeID === "" + nodeID){
+                      result2.nodes[j].dependencies.splice(l,1);
                     }
                   }
                 }
@@ -623,7 +626,7 @@ module.exports = function(stormpath) {
                   res.status = 500;
                   res.end();
                   return;
-                };
+                }
                 res.json({map: result3});
               });
             });
@@ -646,7 +649,7 @@ module.exports = function(stormpath) {
                 res.status = 500;
                 res.end();
                 return;
-              };
+              }
               res.json({map: result2});
             });
           }
@@ -662,7 +665,7 @@ module.exports = function(stormpath) {
                 res.status = 500;
                 res.end();
                 return;
-              };
+              }
               res.json({map: result2});
             });
           }
@@ -731,7 +734,7 @@ module.exports = function(stormpath) {
             res.status = 500;
             res.end();
             return;
-          };
+          }
           res.json({map: result2});
         });
       }
@@ -770,7 +773,7 @@ module.exports = function(stormpath) {
             res.status = 500;
             res.end();
             return;
-          };
+          }
           res.json({map: result2});
         });
       } else {

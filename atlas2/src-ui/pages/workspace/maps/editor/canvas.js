@@ -156,10 +156,21 @@ export default class MapCanvas extends React.Component {
     conn.getOverlay("deleteOverlay").setVisible(conn.___overlayVisible);
   }
   reconcileDependencies() {
-    var modelConnections = this.props.connections; // connections that should be visible
-    if (!modelConnections) {
+    var modelConnections = [];
+    if(!this.props.nodes){
       return;
     }
+    for(var i = 0; i < this.props.nodes.length; i++){
+      var _node = this.props.nodes[i];
+      for(var j = 0; j < _node.dependencies.length;j++){
+        modelConnections.push({
+            source: _node._id,
+            target: _node.dependencies[j].nodeID,
+            scope: _node.dependencies[j].scope
+        });
+      }
+    }
+
     var canvasConnections = jsPlumb.getConnections();
     var modelIterator = modelConnections.length;
     while (modelIterator--) {
@@ -229,7 +240,7 @@ export default class MapCanvas extends React.Component {
             focused = true;
           }
         }
-        return (<MapComponent mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused}/>);
+        return (<MapComponent mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} multi={state.multiNodeSelection}/>);
       });
     }
     return (

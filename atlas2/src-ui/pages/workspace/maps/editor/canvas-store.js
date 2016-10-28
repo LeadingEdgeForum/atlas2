@@ -15,6 +15,7 @@ class CanvasStore extends Store {
     this.state = {
       currentlySelectedNodes : [],
       currentlySelectedConnections : [],
+      multiNodeSelection : false,
       dropTargetHighlight : false, // the canvas should highlight when pallette drag is initiated,
       initialized : false,
       coords : {
@@ -65,6 +66,7 @@ class CanvasStore extends Store {
   }
 
   emitChange() {
+    this.state.multiNodeSelection = this.state.currentlySelectedNodes.length > 1;
     super.emitChange();
   }
 }

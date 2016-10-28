@@ -50,7 +50,14 @@ var _NodeSchema = new Schema({
   referencedNodes : [ {
     nodeID : Schema.Types.String,
     mapID :Schema.Types.String
-  }]
+  }],
+  /* old connections between nodes */
+  dependencies : [ {
+    //dependencyType : Schema.Types.String, //submap or node
+    //mapID : Schema.Types.String, //if reffering to a node in a different mapID
+    nodeID : Schema.Types.String,
+    scope : Schema.Types.String // stolen from jsplumb, defines how the connection should be drawn
+  } ]
 });
 
 /* Connection should have references to nodes. Maybe later */
@@ -76,8 +83,7 @@ var _MapSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Workspace'
   },
-  nodes : [_NodeSchema],
-  connections: [_ConnectionSchema]
+  nodes : [_NodeSchema]
 });
 
 

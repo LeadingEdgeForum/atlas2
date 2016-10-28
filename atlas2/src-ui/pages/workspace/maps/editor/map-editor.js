@@ -155,7 +155,6 @@ export default class MapEditor extends React.Component {
 
   render() {
     var nodes = this.state.map.nodes;
-    var connections = this.state.map.connections;
     var journey = this.state.map.journey;
     var name = this.state.workspace ? this.state.workspace.name : "no name";
     var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
@@ -178,7 +177,7 @@ export default class MapEditor extends React.Component {
           </Col>
           <Col xs={9} sm={10} md={10} lg={11}>
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} connections={connections} mapID={this.props.params.mapID}></MapCanvas>
+              <MapCanvas nodes={nodes} mapID={this.props.params.mapID}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>

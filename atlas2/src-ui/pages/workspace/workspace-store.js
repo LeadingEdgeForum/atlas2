@@ -446,16 +446,27 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       break;
     case ActionTypes.CANVAS_CONNECTION_CREATED:
       var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
-      _map.connections.push({source: action.data.source, target: action.data.target, scope: action.data.scope});
+      //ugly hack, change it to API
+      for(var i = 0; i < _map.nodes.length; i++){
+        if(_map.nodes[i]._id == action.data.source){
+          _map.nodes[i].dependencies.push({
+            nodeID : action.data.target,
+            scope: action.data.scope
+          });
+        }
+      }
       workspaceStoreInstance.saveMap(action.data.mapID);
       break;
     case ActionTypes.CANVAS_CONNECTION_DELETE:
       var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
-      for (var i = 0; i < _map.connections.length; i++) { // jshint ignore:line
-        var connection = _map.connections[i];
-        if ((connection.source == action.data.source) && (connection.target == action.data.target) && (connection.scope == action.data.scope)) {
-          _map.connections.splice(i, 1);
-          break;
+      for(var i = 0; i < _map.nodes.length; i++){
+        if(_map.nodes[i]._id == action.data.source){
+          for(var k = 0; k < _map.nodes[i].dependencies.length; k++){
+            if( (_map.nodes[i].dependencies[k].nodeID == action.data.target) && (_map.nodes[i].dependencies[k].scope == action.data.scope)){
+              _map.nodes[i].dependencies.splice(k,1);
+              break;
+            }
+          }
         }
       }
       workspaceStoreInstance.saveMap(action.data.mapID);
