@@ -99,6 +99,17 @@ canvasStoreInstance.dispatchToken = Dispatcher.register(action => {
       canvasStoreInstance.state.currentlySelectedConnections = [];
       canvasStoreInstance.emitChange();
       break;
+    case ActionTypes.CANVAS__ADD_FOCUS_SINGLE_NODE:
+      canvasStoreInstance.state.currentlySelectedNodes.push(action.data);
+      canvasStoreInstance.state.currentlySelectedConnections = [];
+      canvasStoreInstance.emitChange();
+      break;
+    case ActionTypes.CANVAS_REMOVE_FOCUS_SINGLE_NODE:
+      var pos = canvasStoreInstance.state.currentlySelectedNodes.indexOf(action.data);
+      canvasStoreInstance.state.currentlySelectedNodes.splice(pos,1);
+      canvasStoreInstance.state.currentlySelectedConnections = [];
+      canvasStoreInstance.emitChange();
+      break;
     default:
       return;
   }

@@ -16,6 +16,14 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DESELECT_NODES_AND_CONNECTIONS});
   }
 
+  static deselectNode(nodeID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_REMOVE_FOCUS_SINGLE_NODE, data: nodeID});
+  }
+
+  static focusAdditionalNode(nodeID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS__ADD_FOCUS_SINGLE_NODE, data: nodeID});
+  }
+
   static focusNode(nodeID) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_SINGLE_NODE, data: nodeID});
   }

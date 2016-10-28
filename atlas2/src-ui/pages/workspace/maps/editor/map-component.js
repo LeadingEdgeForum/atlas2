@@ -58,7 +58,13 @@ var MapComponent = React.createClass({
       var mapID = this.props.mapID; //jshint ignore:line
       Actions.openEditNodeDialog(mapID, nodeID);
     }
-    if (this.props.focused) {
+    if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
+      if (this.props.focused) {
+        CanvasActions.deselectNode(this.props.id);
+      } else {
+        CanvasActions.focusAdditionalNode(this.props.id);
+      }
+    } else if (this.props.focused) {
       CanvasActions.deselectNodesAndConnections();
     } else {
       CanvasActions.focusNode(this.props.id);

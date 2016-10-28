@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 
 import Store from '../../store.js';
-import CanvasStore from './maps/editor/canvas-store'
+import CanvasStore from './maps/editor/canvas-store';
 import Dispatcher from '../../dispatcher';
 import Constants from '../../constants';
 import $ from 'jquery';
