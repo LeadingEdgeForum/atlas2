@@ -8,6 +8,7 @@ import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
+import CanvasStore from './canvas-store';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -57,6 +58,10 @@ var MapComponent = React.createClass({
       var nodeID = this.props.id; //jshint ignore:line
       var mapID = this.props.mapID; //jshint ignore:line
       Actions.openEditNodeDialog(mapID, nodeID);
+    }
+    if (this.state.hover === "group") {
+      var mapID = this.props.mapID; //jshint ignore:line
+      Actions.createSubmap({mapID:mapID, name:'hardcoded name', nodes:CanvasStore.getCanvasState().currentlySelectedNodes});
     }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {

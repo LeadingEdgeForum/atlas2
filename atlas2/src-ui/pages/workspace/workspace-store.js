@@ -501,6 +501,19 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         }.bind(this)
       });
       break;
+    case ActionTypes.MAP_SUBMAP:
+        $.ajax({
+          type: 'PUT',
+          url: '/api/map/' + action.data.mapID + '/submap',
+          data : {
+            name :action.data.name,
+            listOfNodesToSubmap : action.data.nodes
+          },
+          success: function(data2) {
+            workspaceStoreInstance.updateWorkspaces(); // this emits change
+          }.bind(this)
+        });
+        break;
     case Constants.ACTION_TYPES.NEW_CAPABILITY_WITH_ASSIGN:
       $.ajax({
         type: 'PUT',

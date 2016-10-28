@@ -265,4 +265,10 @@ export default class Actions {
       data: data
     });
   }
+  static createSubmap(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_SUBMAP,
+      data: data
+    });
+  }
 }
