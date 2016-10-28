@@ -13,6 +13,7 @@ import {
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
 import Actions from '../../../../actions';
+import CanvasActions from './canvas-actions';
 import Constants from '../../../../constants';
 var _ = require('underscore');
 import {userNeedStyle, externalStyle, internalStyle} from './component-styles';
@@ -35,7 +36,7 @@ var makeDraggable = function(type, input) {
       '100', '100'
     ],
     start: function(params) {
-      Actions.palletteDragStarted();
+      CanvasActions.highlightCanvas(true);
     },
     drag: function(params) {},
     stop: function(params) {

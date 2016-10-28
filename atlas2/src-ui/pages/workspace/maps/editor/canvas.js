@@ -1,4 +1,4 @@
-/*jshint esversion: 6 */
+ /*jshint esversion: 6 */
 
 import React, {PropTypes} from 'react';
 import DocumentTitle from 'react-document-title';
@@ -12,9 +12,11 @@ import {
   ListGroup
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
+import CanvasStore from './canvas-store';
 var _ = require('underscore');
 import $ from 'jquery';
 import Actions from '../../../../actions';
+import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
 import {endpointOptions} from './component-styles';
 
@@ -46,7 +48,7 @@ var setContainer = function(input) {
 export default class MapCanvas extends React.Component {
   constructor(props) {
     super(props);
-    this.state = WorkspaceStore.getCanvasState();
+    this.state = CanvasStore.getCanvasState();
     this.handleResize = this.handleResize.bind(this);
     this.setContainer = this.setContainer.bind(this);
     this.beforeDropListener = this.beforeDropListener.bind(this);
@@ -104,25 +106,25 @@ export default class MapCanvas extends React.Component {
         height: $(this.input).height()
       }
     };
-    Actions.canvasResized(coord);
+    CanvasActions.updateCanvasSizeAndOffset(coord);
     jsPlumb.repaintEverything();
   }
 
   componentDidMount() {
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    CanvasStore.addChangeListener(this._onChange.bind(this));
     this.handleResize();
     window.addEventListener('resize', this.handleResize);
     this.reconcileDependencies();
   }
 
   componentWillUnmount() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    CanvasStore.removeChangeListener(this._onChange.bind(this));
     jsPlumb.reset();
     window.removeEventListener('resize', this.handleResize);
   }
 
   _onChange() {
-    this.setState(WorkspaceStore.getCanvasState());
+    this.setState(CanvasStore.getCanvasState());
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -202,7 +204,7 @@ export default class MapCanvas extends React.Component {
 
   render() {
     var style = _.clone(mapCanvasStyle);
-    if (this.state.highlight) {
+    if (this.state.dropTargetHighlight) {
       style = _.extend(style, {
         borderColor: "#00789b",
         boxShadow: "0 0 10px #00789b",
@@ -217,16 +219,21 @@ export default class MapCanvas extends React.Component {
       size = this.state.coords.size;
     }
     var components = null;
-    var focusedNodeID = this.state.focusedNodeID;
     var mapID = this.props.mapID;
+    var state = this.state;
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
-        var focused = focusedNodeID === component._id;
-        return <MapComponent mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused}/>;
+        var focused = false;
+        for(var i = 0; i < state.currentlySelectedNodes.length; i++){
+          if(component._id === state.currentlySelectedNodes[i]){
+            focused = true;
+          }
+        }
+        return (<MapComponent mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused}/>);
       });
     }
     return (
-      <div style={style} ref={input => this.setContainer(input)} onClick={Actions.blurNodes}>
+      <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
       </div>
     );

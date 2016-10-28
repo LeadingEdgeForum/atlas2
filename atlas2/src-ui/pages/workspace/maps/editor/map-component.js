@@ -7,6 +7,7 @@ import Actions from '../../../../actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
+import CanvasActions from './canvas-actions';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -44,11 +45,6 @@ var MapComponent = React.createClass({
 
   componentWillUnmount: function() {},
 
-  //
-  // editNode: function() {
-  //   MapActions.editNode(this.id);
-  // },
-
   onClickHandler: function(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -63,9 +59,9 @@ var MapComponent = React.createClass({
       Actions.openEditNodeDialog(mapID, nodeID);
     }
     if (this.props.focused) {
-      Actions.blurNodes();
+      CanvasActions.deselectNodesAndConnections();
     } else {
-      Actions.focusNode(this.props.id);
+      CanvasActions.focusNode(this.props.id);
     }
   },
 

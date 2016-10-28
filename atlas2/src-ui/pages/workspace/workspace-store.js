@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 
 import Store from '../../store.js';
+import CanvasStore from './maps/editor/canvas-store'
 import Dispatcher from '../../dispatcher';
 import Constants from '../../constants';
 import $ from 'jquery';
@@ -14,11 +15,6 @@ let appState = {
   },
   workspaces: {},
   singleWorkspace: {},
-  canvasState: {
-    highlight: false,
-    coords: null,
-    focusedNodeID: null
-  },
   newNodeDialog: {
     open: false
   },
@@ -65,20 +61,6 @@ class WorkspaceStore extends Store {
     return appState.w_maps[mapID];
   }
 
-  recordNewComponent(type, params) { //normalizes the drop and opens the new node dialog
-    var relativeToCanvasPosX = params.pos[0]/*absolute pos of drop*/ - appState.canvasState.coords.offset.left/*absolute pos of canvas*/;
-    var relativeToCanvasPosY = params.pos[1]/*absolute pos of drop*/ - appState.canvasState.coords.offset.top/*absolute pos of canvas*/;
-
-    var universalCoordX = relativeToCanvasPosX / appState.canvasState.coords.size.width;
-    var universalCoordY = relativeToCanvasPosY / appState.canvasState.coords.size.height;
-    appState.newNodeDialog.open = true;
-    appState.newNodeDialog.type = type;
-    appState.newNodeDialog.coords = {
-      x: universalCoordX,
-      y: universalCoordY
-    };
-  }
-
   newNodeCreated(data) { // the new map dialog confirms the component creation
     var mapID = data.mapID;
     if (!mapID) {
@@ -102,9 +84,6 @@ class WorkspaceStore extends Store {
     return appState.newNodeDialog;
   }
 
-  getCanvasState() {
-    return appState.canvasState;
-  }
   getState() {
     return appState;
   }
@@ -433,17 +412,11 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       var interaction = action.data.interaction;
         workspaceStoreInstance.saveJourneyStep(mapID, stepID, name, interaction);
         break;
-    case ActionTypes.PALETTE_DRAG_STARTED:
-      appState.canvasState.highlight = true;
-      workspaceStoreInstance.emitChange();
-      break;
     case ActionTypes.PALETTE_DRAG_STOPPED:
-      appState.canvasState.highlight = false;
-      workspaceStoreInstance.recordNewComponent(action.type, action.data);
-      workspaceStoreInstance.emitChange();
-      break;
-    case ActionTypes.CANVAS_RESIZED:
-      appState.canvasState.coords = action.data;
+      var coords = CanvasStore.normalizeComponentCoord(action.data);
+      appState.newNodeDialog.coords = coords;
+      appState.newNodeDialog.type = action.type;
+      appState.newNodeDialog.open = true;
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_NEW_NODE_DIALOG:
@@ -460,24 +433,15 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.newNodeCreated(action.data);
       workspaceStoreInstance.emitChange(); //TODO: emit this by save
       break;
-    case ActionTypes.CANVAS_FOCUS_NODE:
-      appState.canvasState.focusedNodeID = action.data;
-      workspaceStoreInstance.emitChange();
-      break;
-    case ActionTypes.CANVAS_BLUR_NODES:
-      appState.canvasState.focusedNodeID = null;
-      workspaceStoreInstance.emitChange();
-      break;
     case ActionTypes.CANVAS_NODE_DRAGGED:
       var _map = appState.w_maps[action.data.mapID].map;
       for (var i = 0; i < _map.nodes.length; i++) { // jshint ignore:line
         if (_map.nodes[i]._id === action.data.nodeID) {
           //normalize staff
-          _map.nodes[i].x = action.data.newPos[0] / appState.canvasState.coords.size.width;
-          _map.nodes[i].y = action.data.newPos[1] / appState.canvasState.coords.size.height;
+          _map.nodes[i].x = CanvasStore.normalizeWidth(action.data.newPos[0]);
+          _map.nodes[i].y = CanvasStore.normalizeHeight(action.data.newPos[1]);
         }
       }
-      appState.canvasState.focusedNodeID = null;
       workspaceStoreInstance.saveMap(action.data.mapID);
       break;
     case ActionTypes.CANVAS_CONNECTION_CREATED:

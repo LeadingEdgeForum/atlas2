@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 import Dispatcher from './dispatcher';
 var Constants = require('./constants');
+var CanvasConstants = require('./pages/workspace/maps/editor/canvas-constants');
 
 export default class Actions {
 
@@ -109,14 +110,11 @@ export default class Actions {
     });
   }
 
-  static palletteDragStarted() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STARTED});
-  }
   static palletteDragStopped(type, data) {
+    //cancel highlight of the canvas as the component was dropped and there is no reason to keep it highlighted anymore
+    Dispatcher.dispatch({actionType: CanvasConstants.ACTION_TYPES.CANCEL_HIGHLIGHT_CANVAS_AS_DROP_TARGET});
+    // process the drop
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED, type: type, data: data});
-  }
-  static canvasResized(data) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_RESIZED, data: data});
   }
 
   static closeNewNodeDialog() {
@@ -132,14 +130,6 @@ export default class Actions {
 
   static deduplicatorUnassignedComponentDragStopped() {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED});
-  }
-
-  static focusNode(nodeID) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_NODE, data: nodeID});
-  }
-
-  static blurNodes(nodeID) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_BLUR_NODES});
   }
 
   static nodeDragged(mapID, nodeID, newPos) {
