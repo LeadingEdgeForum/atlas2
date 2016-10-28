@@ -1,6 +1,6 @@
 {
   "name": "Atlas2",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "scripts": {
     "start": "node app.js",
@@ -52,6 +52,7 @@
   },
   "repository": {},
   "engines": {
-    "node": "5.x"
+    "node": "6.7.0",
+    "npm" : "3.10.9"
   }
 }
