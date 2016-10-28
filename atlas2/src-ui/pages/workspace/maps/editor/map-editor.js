@@ -27,9 +27,10 @@ var outerStyle = { //this is style applied to the entire map area (without palet
   left: 0,
   right: 0,
   height: '100%',
-  minHeight: '400px',
+  minHeight: '500px',
   float: 'left',
-  position: 'absolute'
+  position: 'absolute',
+  minWidth: '800px'
 };
 
 var axisSupport = {
@@ -172,10 +173,10 @@ export default class MapEditor extends React.Component {
         </Breadcrumb.Item>
       </Breadcrumb>
         <Row className="show-grid">
-          <Col xs={1}>
+          <Col xs={3} sm={2} md={2} lg={1}>
             <Palette></Palette>
           </Col>
-          <Col xs={9}>
+          <Col xs={9} sm={10} md={10} lg={11}>
             <div style={outerStyle}>
               <MapCanvas nodes={nodes} connections={connections} mapID={this.props.params.mapID}></MapCanvas>
               <div>
