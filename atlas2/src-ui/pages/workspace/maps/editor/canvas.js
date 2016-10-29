@@ -162,7 +162,8 @@ export default class MapCanvas extends React.Component {
     }
     for(var i = 0; i < this.props.nodes.length; i++){
       var _node = this.props.nodes[i];
-      for(var j = 0; j < _node.dependencies.length;j++){
+      var iterator_length = _node.dependencies ? _node.dependencies.length : 0;
+      for(var j = 0; j < iterator_length;j++){
         modelConnections.push({
             source: _node._id,
             target: _node.dependencies[j].nodeID,

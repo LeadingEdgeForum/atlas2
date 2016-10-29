@@ -41,7 +41,9 @@ module.exports  = keyMirror({
       MAP_ADD_JOURNEY_STEP : null,
       MAP_DELETE_JOURNEY_STEP : null,
       MAP_SAVE_JOURNEY_STEP : null,
-      MAP_SUBMAP : null
+      MAP_SUBMAP : null,
+      MAP_CLOSE_NEW_SUBMAP_DIALOG : null,
+      SHOW_SUBMAP_DIALOG : null
   },
   USERNEED : null,
   EXTERNAL : null,

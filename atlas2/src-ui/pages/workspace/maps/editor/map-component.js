@@ -65,7 +65,9 @@ var MapComponent = React.createClass({
     }
     if (this.state.hover === "group") {
       var mapID = this.props.mapID; //jshint ignore:line
-      Actions.createSubmap({mapID:mapID, name:'hardcoded name', nodes:CanvasStore.getCanvasState().currentlySelectedNodes});
+      Actions.openCreateSubmapDialog({
+        mapID:mapID,
+        nodes:CanvasStore.getCanvasState().currentlySelectedNodes});
     }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {

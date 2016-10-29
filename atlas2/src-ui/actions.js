@@ -265,10 +265,22 @@ export default class Actions {
       data: data
     });
   }
-  static createSubmap(data){
+  
+  static openCreateSubmapDialog(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.SHOW_SUBMAP_DIALOG,
+      data: data
+    });
+  }
+
+  static closeNewSubmapDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_SUBMAP_DIALOG});
+  }
+
+  static createSubmap(name){
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_SUBMAP,
-      data: data
+      name : name
     });
   }
 }

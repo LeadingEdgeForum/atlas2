@@ -30,6 +30,9 @@ let appState = {
   editUserJourneyDialog : {
     open: false
   },
+  createSubmapDialog : {
+    open : false
+  },
   w_maps: {}
 };
 
@@ -161,6 +164,10 @@ class WorkspaceStore extends Store {
     } else {
       return {open: false};
     }
+  }
+
+  getNewSubmapDialogState() {
+    return appState.createSubmapDialog;
   }
 
   submitNewWorkspaceDialog(data) {
@@ -501,17 +508,29 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         }.bind(this)
       });
       break;
+    case ActionTypes.MAP_CLOSE_NEW_SUBMAP_DIALOG:
+      appState.createSubmapDialog = {open:false};
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.SHOW_SUBMAP_DIALOG:
+      appState.createSubmapDialog.open=true;
+      appState.createSubmapDialog.listOfNodesToSubmap=action.data.nodes;
+      appState.createSubmapDialog.mapID=action.data.mapID;
+      workspaceStoreInstance.emitChange();
+      console.log(appState.createSubmapDialog);
+      break;
     case ActionTypes.MAP_SUBMAP:
         $.ajax({
           type: 'PUT',
-          url: '/api/map/' + action.data.mapID + '/submap',
+          url: '/api/map/' + appState.createSubmapDialog.mapID + '/submap',
           dataType: 'json',
           data : {
-            name : action.data.name,
-            listOfNodesToSubmap : action.data.nodes
+            name : action.name,
+            listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap
           },
           success: function(data2) {
-            appState.w_maps[action.data.mapID] = data2;
+            appState.w_maps[appState.createSubmapDialog.mapID] = data2;
+            appState.createSubmapDialog = {open:false};
             workspaceStoreInstance.updateWorkspaces(); // this emits change
           }.bind(this)
         });

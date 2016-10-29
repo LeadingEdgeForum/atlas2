@@ -16,6 +16,7 @@ import WorkspaceStore from '../../workspace-store';
 import Palette from './palette';
 import MapCanvas from './canvas';
 import CreateNewNodeDialog from './create-new-node-dialog';
+import CreateNewSubmapDialog from './create-new-submap-dialog';
 import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
@@ -196,6 +197,7 @@ export default class MapEditor extends React.Component {
               </div>
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID}/>
+            <CreateNewSubmapDialog/>
             <EditNodeDialog mapID={this.props.params.mapID}/>
             <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey} submap={this.state.map.isSubmap} loading={this.state.map.loading}/>
           </Col>

@@ -23,6 +23,13 @@ export default class MapListElement extends React.Component {
     var workspaceID = this.props.workspaceID;
     var href = '/map/' + mapid;
     var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose, this.props.name);
+
+    var deleteButton = (<Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
+      <Glyphicon glyph="remove"></Glyphicon> Delete
+    </Button>);
+    if(this.props.isSubmap){
+      deleteButton = null;
+    }
     return (
       <ListGroupItem header={mapName}>
         <Grid fluid={true}>
@@ -35,9 +42,7 @@ export default class MapListElement extends React.Component {
                     <Glyphicon glyph="edit"></Glyphicon> Edit
                   </Button>
                 </LinkContainer>
-                <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
-                  <Glyphicon glyph="remove"></Glyphicon> Delete
-                </Button>
+                {deleteButton}
               </ButtonGroup>
             </Col>
           </Row>
