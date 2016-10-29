@@ -17,8 +17,10 @@ limitations under the License.*/
 var Model = require('./model');
 var WardleyMap = Model.WardleyMap;
 var Workspace = Model.Workspace;
+var Node = Model.Node;
 var _ = require('underscore');
 var logger = require('./../log');
+var mongoose = require('mongoose');
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -277,6 +279,91 @@ module.exports = function(stormpath) {
     });
   });
 
+
+  module.router.put('/map/:mapID/submap', stormpath.authenticationRequired, function(req, res) {
+    var listOfNodesToSubmap = req.body.listOfNodesToSubmap;
+    var submapName = req.body.name;
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, affectedMap) {
+      //check that we actually own the map, and if yes
+      var submap = new WardleyMap({name:submapName, owner: getStormpathUserIdFromReq(req), workspace: affectedMap.workspace, archived: false});
+
+      // we will push here are the external dependencies that we got from compnents that form submaps and are not satisfied by
+      // components within that submap.
+      var submapDependecies = [];
+      submap.nodes= [];
+
+      for(var i = 0; i < listOfNodesToSubmap.length; i ++){
+        var _idToCopy = listOfNodesToSubmap[i];
+        for(var j = affectedMap.nodes.length - 1; j >= 0; j--){
+            var _potentialCandidateToCopy = affectedMap.nodes[j];
+
+            if(_potentialCandidateToCopy._id + "" === _idToCopy){
+              submap.nodes.push(_potentialCandidateToCopy);
+
+              // clean up dependencies - only those stay that are satisfied within a map
+              for(var k = _potentialCandidateToCopy.dependencies.length - 1; k >=0 ; k--){
+                var dependency = _potentialCandidateToCopy.dependencies[k];
+                var inTheSubmap = listOfNodesToSubmap.indexOf("" + dependency.nodeID);
+                if(inTheSubmap === -1){ // not in the submap
+                  submapDependecies.push(dependency);
+                  _potentialCandidateToCopy.dependencies.splice(k,1);
+                }
+              }
+            }
+        }
+      }
+
+      submap.save(function(err2, savedSubmap){
+        if(err2){console.error(err2); return;}
+        Workspace.findOne({ //this is check that the person logged in can actually write to workspace
+          _id: savedSubmap.workspace,
+          owner: savedSubmap.owner,
+          archived: false
+        }, function(err, result) {
+          result.maps.push(savedSubmap._id);
+          result.save();
+
+          var fakeNodeID = mongoose.Types.ObjectId();
+          var fakeNode = new Node({
+                  name:submapName,
+                  _id: fakeNodeID,
+                  x:0.5,
+                  y:0.5,
+                  type:'SUBMAP',
+                  dependencies:submapDependecies,
+                  submapID : ''+submap._id});
+
+          for(var i = affectedMap.nodes.length - 1; i >= 0 ; i--){
+            if(listOfNodesToSubmap.indexOf(""+affectedMap.nodes[i]._id) > -1){
+              affectedMap.nodes.splice(i,1);
+            }
+          }
+
+          for(var i = affectedMap.nodes.length - 1; i >= 0 ; i--) {
+            var __node = affectedMap.nodes[i]; console.log(__node);
+            for(var k = __node.dependencies.length - 1; k >= 0; k--){
+              if(listOfNodesToSubmap.indexOf(__node.dependencies[k].nodeID) > -1){
+                __node.dependencies[k].nodeID = ""+fakeNodeID;
+              }
+            }
+          }
+
+
+          affectedMap.nodes.push(fakeNode);
+
+          affectedMap.save(
+            function(err, result){
+              if (err) {
+                res.status(500).json(err);
+              } else {
+                res.json({map:result});
+              }
+            }
+          );
+        });
+      });
+    });
+  });
 
   module.router.put('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {

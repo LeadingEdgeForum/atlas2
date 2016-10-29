@@ -45,6 +45,7 @@ var _NodeSchema = new Schema({
   x : Schema.Types.Number,
   y : Schema.Types.Number,
   type : Schema.Types.String,
+  submapID : Schema.Types.String, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
   categorized: Schema.Types.Boolean,
   category: Schema.Types.String,
   referencedNodes : [ {
@@ -53,18 +54,11 @@ var _NodeSchema = new Schema({
   }],
   /* old connections between nodes */
   dependencies : [ {
-    //dependencyType : Schema.Types.String, //submap or node
-    //mapID : Schema.Types.String, //if reffering to a node in a different mapID
+    dependencyType : Schema.Types.String, //NODE EXTERNAL_NODE
+    mapID : Schema.Types.String, //if reffering to a node in a different mapID
     nodeID : Schema.Types.String,
     scope : Schema.Types.String // stolen from jsplumb, defines how the connection should be drawn
   } ]
-});
-
-/* Connection should have references to nodes. Maybe later */
-var _ConnectionSchema = new Schema({
-  scope: Schema.Types.String,
-  source: Schema.Types.String,
-  target: Schema.Types.String,
 });
 
 var _JourneySchema = new Schema({
@@ -76,6 +70,7 @@ var _JourneySchema = new Schema({
 var _MapSchema = new Schema({
   user: Schema.Types.String,
   purpose: Schema.Types.String,
+  name: Schema.Types.String,
   owner: Schema.Types.String,
   archived: Schema.Types.Boolean,
   journey: [_JourneySchema],
@@ -90,5 +85,6 @@ var _MapSchema = new Schema({
 
 var Workspace = mongoose.model('Workspace', _WorkspaceSchema);
 var WardleyMap = mongoose.model('WardleyMap', _MapSchema);
+var Node = mongoose.model('Node', _NodeSchema);
 
-module.exports = {Workspace, WardleyMap};
+module.exports = {Workspace, WardleyMap, Node};
