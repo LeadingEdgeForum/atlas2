@@ -29,6 +29,11 @@ var internalStyle = _.extend(_.clone(mapComponentStyle), {
   backgroundColor: 'white'
 });
 
+var submapStyle = _.extend(_.clone(mapComponentStyle), {
+  border: '1px solid black',
+  backgroundColor: 'black'
+});
+
 var getStyleForType = function(type) {
   var style = null;
   switch (type) {
@@ -40,6 +45,9 @@ var getStyleForType = function(type) {
       break;
     case Constants.EXTERNAL:
       style = externalStyle;
+      break;
+    case Constants.SUBMAP:
+      style = submapStyle;
       break;
   }
   return _.clone(style);

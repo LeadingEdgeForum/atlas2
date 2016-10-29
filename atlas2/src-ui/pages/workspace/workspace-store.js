@@ -505,8 +505,9 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         $.ajax({
           type: 'PUT',
           url: '/api/map/' + action.data.mapID + '/submap',
+          dataType: 'json',
           data : {
-            name :action.data.name,
+            name : action.data.name,
             listOfNodesToSubmap : action.data.nodes
           },
           success: function(data2) {

@@ -9,6 +9,7 @@ import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 import CanvasStore from './canvas-store';
+var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -47,6 +48,9 @@ var MapComponent = React.createClass({
   componentWillUnmount: function() {},
 
   onClickHandler: function(e) {
+    if (this.state.hover === "submap") {
+      return; //pass the event to link
+    }
     e.preventDefault();
     e.stopPropagation();
     if (this.state.hover === "remove") {
@@ -176,12 +180,37 @@ var MapComponent = React.createClass({
         jsPlumb.unmakeSource(this.input);
       }
     }
+    var submapStyle = {
+      position: "absolute",
+      top: "20px",
+      color: "silver",
+      left: "-5px",
+      fontSize: "20px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "submap") {
+      submapStyle = _.extend(submapStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
+      }
+    }
+    var menuItems = [];
+    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
+    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
+    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+    if(this.props.node.type === Constants.SUBMAP){
+      var href = "/map/" + this.props.node.submapID;
+      var linkContainer = (
+        <a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="hand-down" style={submapStyle}></Glyphicon></a>
+      );
+      menuItems.push(linkContainer);
+    }
     return (
       <div>
-        <Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>
-        <Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>
-        <Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>
-        <Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>
+        {menuItems}
       </div>
     );
   },

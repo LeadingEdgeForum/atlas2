@@ -45,5 +45,6 @@ module.exports  = keyMirror({
   },
   USERNEED : null,
   EXTERNAL : null,
-  INTERNAL : null
+  INTERNAL : null,
+  SUBMAP : null
 });
