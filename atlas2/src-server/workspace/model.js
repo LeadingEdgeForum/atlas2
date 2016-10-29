@@ -72,6 +72,7 @@ var _MapSchema = new Schema({
   purpose: Schema.Types.String,
   name: Schema.Types.String,
   owner: Schema.Types.String,
+  isSubmap: Schema.Types.Boolean,
   archived: Schema.Types.Boolean,
   journey: [_JourneySchema],
   workspace: {

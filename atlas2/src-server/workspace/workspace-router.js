@@ -285,7 +285,12 @@ module.exports = function(stormpath) {
     var submapName = req.body.name;
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, affectedMap) {
       //check that we actually own the map, and if yes
-      var submap = new WardleyMap({name:submapName, owner: getStormpathUserIdFromReq(req), workspace: affectedMap.workspace, archived: false});
+      var submap = new WardleyMap({
+        name:submapName,
+        isSubmap:true,
+        owner: getStormpathUserIdFromReq(req),
+        workspace: affectedMap.workspace,
+        archived: false});
 
       // we will push here are the external dependencies that we got from compnents that form submaps and are not satisfied by
       // components within that submap.
