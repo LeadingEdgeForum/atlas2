@@ -22,7 +22,7 @@ export default class MapListElement extends React.Component {
     var mapid = this.props.id;
     var workspaceID = this.props.workspaceID;
     var href = '/map/' + mapid;
-    var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose);
+    var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose, this.props.name);
     return (
       <ListGroupItem header={mapName}>
         <Grid fluid={true}>

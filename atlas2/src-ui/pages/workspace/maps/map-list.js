@@ -45,7 +45,7 @@ export default class MapList extends React.Component {
     var purpose = "";
     var name = null;
     if (this.state && this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
-      _mapsToShow = this.state.workspace.maps.map(item => <MapListElement workspaceID={workspaceID} key={item._id} id={item._id} user={item.user} purpose={item.purpose}></MapListElement>);
+      _mapsToShow = this.state.workspace.maps.map(item => <MapListElement workspaceID={workspaceID} key={item._id} id={item._id} user={item.user} purpose={item.purpose} name={item.name}></MapListElement>);
       purpose = this.state.workspace.purpose;
       name = this.state.workspace.name;
     } else {
