@@ -511,6 +511,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             listOfNodesToSubmap : action.data.nodes
           },
           success: function(data2) {
+            appState.w_maps[action.data.mapID] = data2;
             workspaceStoreInstance.updateWorkspaces(); // this emits change
           }.bind(this)
         });

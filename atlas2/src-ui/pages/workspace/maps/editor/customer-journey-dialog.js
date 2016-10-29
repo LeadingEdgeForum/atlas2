@@ -33,6 +33,10 @@ var CustomerJourneyEditDialog = React.createClass({
   //crappy hack. I need to rething how maps are loaded and propagated
   componentWillReceiveProps: function(nextProps){
     if(this.props.loading && !nextProps.loading){
+      console.log(this.props);
+      if(nextProps.submap){
+        return;
+      }
       if(nextProps.steps.length === 0){
         Actions.openEditCustomerJourneyDialog(nextProps.mapID);
       }

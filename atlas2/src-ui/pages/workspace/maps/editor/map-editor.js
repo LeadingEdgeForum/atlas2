@@ -159,7 +159,7 @@ export default class MapEditor extends React.Component {
     var name = this.state.workspace ? this.state.workspace.name : "no name";
     var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
     var workspaceID = this.state.map.workspace || "";
-    var mapName = calculateMapName("I like being lost.", this.state.map.user, this.state.map.purpose);
+    var mapName = calculateMapName("I like being lost.", this.state.map.user, this.state.map.purpose, this.state.map.name);
     return (
       <Grid fluid={true}>
       <Breadcrumb>
@@ -197,7 +197,7 @@ export default class MapEditor extends React.Component {
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID}/>
             <EditNodeDialog mapID={this.props.params.mapID}/>
-            <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey} loading={this.state.map.loading}/>
+            <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey} submap={this.state.map.isSubmap} loading={this.state.map.loading}/>
           </Col>
         </Row>
         <EditMapDialog/>
