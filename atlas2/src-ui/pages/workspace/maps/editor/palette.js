@@ -16,7 +16,7 @@ import Actions from '../../../../actions';
 import CanvasActions from './canvas-actions';
 import Constants from '../../../../constants';
 var _ = require('underscore');
-import {userNeedStyle, externalStyle, internalStyle} from './component-styles';
+import {userNeedStyle, externalStyle, internalStyle, submapStyle} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -24,7 +24,7 @@ require('jsplumb');
 var jsPlumb = window.jsPlumb;
 /*jshint -W117 */
 
-var makeDraggable = function(type, input) {
+var makeDraggable = function(type, mapID, input) {
   if (input === null) {
     //noop - component was destroyed, no need to worry about draggable
     return;
@@ -40,7 +40,7 @@ var makeDraggable = function(type, input) {
     },
     drag: function(params) {},
     stop: function(params) {
-      Actions.palletteDragStopped(type, params);
+      Actions.palletteDragStopped(type, mapID , params);
     }
   });
 };
@@ -61,6 +61,7 @@ export default class Palette extends React.Component {
   }
 
   render() {
+    var mapID = this.props.mapID;
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
@@ -71,7 +72,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.USERNEED)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.USERNEED,mapID)} style={HigherMargins}>
                 <div style={userNeedStyle}></div>&nbsp;User need
               </div>
             </Button>
@@ -80,7 +81,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.INTERNAL)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.INTERNAL,mapID)} style={HigherMargins}>
                 <div style={internalStyle}></div>&nbsp;Internal
               </div>
             </Button>
@@ -89,8 +90,17 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.EXTERNAL)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.EXTERNAL,mapID)} style={HigherMargins}>
                 <div style={externalStyle}></div>&nbsp;External
+              </div>
+            </Button>
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={12}>
+            <Button href="#" style={buttonStyle} bsStyle={null}>
+              <div ref={makeDraggable.bind(this, Constants.SUBMAP, mapID)} style={HigherMargins}>
+                <div style={submapStyle}></div>&nbsp;Submap
               </div>
             </Button>
           </Col>

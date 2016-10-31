@@ -110,11 +110,11 @@ export default class Actions {
     });
   }
 
-  static palletteDragStopped(type, data) {
+  static palletteDragStopped(type, mapID, data) {
     //cancel highlight of the canvas as the component was dropped and there is no reason to keep it highlighted anymore
     Dispatcher.dispatch({actionType: CanvasConstants.ACTION_TYPES.CANCEL_HIGHLIGHT_CANVAS_AS_DROP_TARGET});
     // process the drop
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED, type: type, data: data});
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.PALETTE_DRAG_STOPPED, type: type, data: data, mapID:mapID});
   }
 
   static closeNewNodeDialog() {
@@ -265,7 +265,7 @@ export default class Actions {
       data: data
     });
   }
-  
+
   static openCreateSubmapDialog(data){
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.SHOW_SUBMAP_DIALOG,

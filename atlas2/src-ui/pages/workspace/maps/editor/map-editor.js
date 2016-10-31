@@ -174,7 +174,7 @@ export default class MapEditor extends React.Component {
       </Breadcrumb>
         <Row className="show-grid">
           <Col xs={3} sm={2} md={2} lg={1}>
-            <Palette></Palette>
+            <Palette mapID={this.props.params.mapID}></Palette>
           </Col>
           <Col xs={9} sm={10} md={10} lg={11}>
             <div style={outerStyle}>

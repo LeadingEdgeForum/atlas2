@@ -421,9 +421,16 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         break;
     case ActionTypes.PALETTE_DRAG_STOPPED:
       var coords = CanvasStore.normalizeComponentCoord(action.data);
-      appState.newNodeDialog.coords = coords;
-      appState.newNodeDialog.type = action.type;
-      appState.newNodeDialog.open = true;
+      if(action.type === Constants.SUBMAP){
+        appState.createSubmapDialog.open=true;
+        appState.createSubmapDialog.coords = coords;
+        appState.createSubmapDialog.listOfNodesToSubmap=[];
+        appState.createSubmapDialog.mapID=action.mapID;
+      } else {
+        appState.newNodeDialog.coords = coords;
+        appState.newNodeDialog.type = action.type;
+        appState.newNodeDialog.open = true;
+      }
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_NEW_NODE_DIALOG:
@@ -517,7 +524,6 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       appState.createSubmapDialog.listOfNodesToSubmap=action.data.nodes;
       appState.createSubmapDialog.mapID=action.data.mapID;
       workspaceStoreInstance.emitChange();
-      console.log(appState.createSubmapDialog);
       break;
     case ActionTypes.MAP_SUBMAP:
         $.ajax({
@@ -526,7 +532,8 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           dataType: 'json',
           data : {
             name : action.name,
-            listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap
+            listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap,
+            coords: appState.createSubmapDialog.coords
           },
           success: function(data2) {
             appState.w_maps[appState.createSubmapDialog.mapID] = data2;

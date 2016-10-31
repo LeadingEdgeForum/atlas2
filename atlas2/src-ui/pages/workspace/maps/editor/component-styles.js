@@ -75,4 +75,4 @@ var endpointOptions = {
   uniqueEndpoints: true
 };
 
-export {userNeedStyle, externalStyle, internalStyle, getStyleForType, endpointOptions};
+export {userNeedStyle, externalStyle, internalStyle, submapStyle, getStyleForType, endpointOptions};

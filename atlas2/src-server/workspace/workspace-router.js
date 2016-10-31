@@ -32,6 +32,18 @@ var getStormpathUserIdFromReq = function(req) {
   return null;
 };
 
+
+var calculateMean = function(list, field){
+  if(!list || list.length === 0){
+    return 0.5;
+  }
+  var mean = 0;
+  for(var i = 0; i < list.length; i++){
+    mean += list[i][field];
+  }
+  return mean / list.length;
+};
+
 var createCounterPartNodeForCustomerJourney = function(currentMap, position, name, response){
   var result = currentMap; //actually rename would be nice
   var res = response;
@@ -281,8 +293,12 @@ module.exports = function(stormpath) {
 
 
   module.router.put('/map/:mapID/submap', stormpath.authenticationRequired, function(req, res) {
-    var listOfNodesToSubmap = req.body.listOfNodesToSubmap;
+    var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
     var submapName = req.body.name;
+    var coords = req.body.coords;
+
+    var x, y;
+
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, affectedMap) {
       //check that we actually own the map, and if yes
       var submap = new WardleyMap({
@@ -317,6 +333,8 @@ module.exports = function(stormpath) {
             }
         }
       }
+      var x = coords ? coords.x : calculateMean(submap.nodes, 'x');
+      var y = coords ? coords.y : calculateMean(submap.nodes, 'y');
 
       submap.save(function(err2, savedSubmap){
         if(err2){console.error(err2); return;}
@@ -330,10 +348,10 @@ module.exports = function(stormpath) {
 
           var fakeNodeID = mongoose.Types.ObjectId();
           var fakeNode = new Node({
-                  name:submapName,
+                  name: submapName,
                   _id: fakeNodeID,
-                  x:0.5,
-                  y:0.5,
+                  x:x,
+                  y:y,
                   type:'SUBMAP',
                   dependencies:submapDependecies,
                   submapID : ''+submap._id});
