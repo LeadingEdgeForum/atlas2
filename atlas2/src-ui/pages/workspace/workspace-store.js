@@ -422,10 +422,19 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.PALETTE_DRAG_STOPPED:
       var coords = CanvasStore.normalizeComponentCoord(action.data);
       if(action.type === Constants.SUBMAP){
+        // this is a dropped submap. The user should see a possibility to select one of exisiting submaps.
         appState.createSubmapDialog.open=true;
         appState.createSubmapDialog.coords = coords;
         appState.createSubmapDialog.listOfNodesToSubmap=[];
         appState.createSubmapDialog.mapID=action.mapID;
+        $.ajax({
+          type: 'GET',
+          url: '/api/submaps/map/' + appState.createSubmapDialog.mapID,
+          success: function(data2) {
+            appState.createSubmapDialog.listOfAvailableSubmaps = data2.listOfAvailableSubmaps;
+            workspaceStoreInstance.emitChange();
+          }.bind(this)
+        });
       } else {
         appState.newNodeDialog.coords = coords;
         appState.newNodeDialog.type = action.type;
@@ -533,6 +542,21 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           data : {
             name : action.name,
             listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap,
+            coords: appState.createSubmapDialog.coords
+          },
+          success: function(data2) {
+            appState.w_maps[appState.createSubmapDialog.mapID] = data2;
+            appState.createSubmapDialog = {open:false};
+            workspaceStoreInstance.updateWorkspaces(); // this emits change
+          }.bind(this)
+        });
+        break;
+    case ActionTypes.MAP_REF_SUBMAP:
+        $.ajax({
+          type: 'PUT',
+          url: '/api/map/' + appState.createSubmapDialog.mapID + '/submap/' + action.refMapID,
+          dataType: 'json',
+          data : {
             coords: appState.createSubmapDialog.coords
           },
           success: function(data2) {

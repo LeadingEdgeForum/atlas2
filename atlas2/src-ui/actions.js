@@ -283,4 +283,11 @@ export default class Actions {
       name : name
     });
   }
+
+  static createReferencedSubmap(refMapID){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.MAP_REF_SUBMAP,
+      refMapID : refMapID
+    });
+  }
 }

@@ -315,6 +315,37 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.put('/map/:mapID/submap/:submapID', stormpath.authenticationRequired, function(req, res) {
+
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.submapID, archived: false}).exec(function(err, submap) {
+      var submapName = submap.name;
+
+      var x = req.body.coords.x;
+      var y = req.body.coords.y;
+
+      var fakeNodeID = mongoose.Types.ObjectId();
+      var fakeNode = new Node({
+              name: submapName,
+              _id: fakeNodeID,
+              x:x,
+              y:y,
+              type:'SUBMAP',
+              dependencies:[],
+              submapID : req.params.submapID});
+      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, affectedMap) {
+          affectedMap.nodes.push(fakeNode);
+          affectedMap.save(function(err, result){
+            if(err){
+              res.json(err);
+              return;
+            }
+            res.json({map:result});
+          });
+      });
+
+    });
+  });
+
   module.router.put('/map/:mapID/submap', stormpath.authenticationRequired, function(req, res) {
     var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
     var submapName = req.body.name;
