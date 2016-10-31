@@ -27,9 +27,9 @@ export default class MapListElement extends React.Component {
     var deleteButton = (<Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
       <Glyphicon glyph="remove"></Glyphicon> Delete
     </Button>);
-    if(this.props.isSubmap){
-      deleteButton = null;
-    }
+    // if(this.props.isSubmap){
+    //   deleteButton = null;
+    // }
     return (
       <ListGroupItem header={mapName}>
         <Grid fluid={true}>
