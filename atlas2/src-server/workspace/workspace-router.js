@@ -291,6 +291,29 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.get('/submaps/map/:mapID', stormpath.authenticationRequired, function(req, res){
+    WardleyMap.findOne({
+      owner: getStormpathUserIdFromReq(req),
+      _id: req.params.mapID,
+      archived: false
+    }).exec(function(err, targetMap) {
+      // so we have a map that has a workspaceID, now it is time to look for all the maps within the workspace that has submap flag
+      // we obviously miss a case where the map is already referenced, but let's leave it for future
+      WardleyMap.find({
+        workspace : targetMap.workspace,
+        archived: false,
+        owner: getStormpathUserIdFromReq(req),
+        isSubmap : true
+      }).exec(function(err, results){
+        //handle the results - repack them into something useful.
+        var listOfAvailableSubmaps = [];
+        for(var i = 0; i < results.length; i++){
+          listOfAvailableSubmaps.push({_id:results[i]._id, name:results[i].name});
+        }
+        res.json({listOfAvailableSubmaps:listOfAvailableSubmaps});
+      });
+    });
+  });
 
   module.router.put('/map/:mapID/submap', stormpath.authenticationRequired, function(req, res) {
     var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
