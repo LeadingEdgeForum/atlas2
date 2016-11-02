@@ -315,6 +315,17 @@ module.exports = function(stormpath) {
     });
   });
 
+  module.router.get('/submap/:submapID/usage', stormpath.authenticationRequired, function(req, res){
+    WardleyMap.find({
+      owner: getStormpathUserIdFromReq(req),
+      archived: false,
+      'nodes.type': 'SUBMAP',
+      'nodes.submapID' : req.params.submapID
+    }).select('name user purpose _id').exec(function(err, availableMaps) {
+        res.json(availableMaps);
+    });
+  });
+
   module.router.put('/map/:mapID/submap/:submapID', stormpath.authenticationRequired, function(req, res) {
 
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.submapID, archived: false}).exec(function(err, submap) {

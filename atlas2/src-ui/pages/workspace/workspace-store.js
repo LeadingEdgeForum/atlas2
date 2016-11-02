@@ -33,6 +33,10 @@ let appState = {
   createSubmapDialog : {
     open : false
   },
+  //TODO: rename this
+  showReferencesDialog : {
+    open : false
+  },
   w_maps: {}
 };
 
@@ -168,6 +172,10 @@ class WorkspaceStore extends Store {
 
   getNewSubmapDialogState() {
     return appState.createSubmapDialog;
+  }
+
+  getSubmapReferencesDialogState() {
+    return appState.showReferencesDialog;
   }
 
   submitNewWorkspaceDialog(data) {
@@ -446,6 +454,26 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       appState.newNodeDialog = { //cleans up by overwriting any current data
         open: false
       };
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.SHOW_REFERENCES_SUBMAP:
+    console.log(action);
+      appState.showReferencesDialog.open = true;
+      appState.showReferencesDialog.mapID = action.mapID;
+      appState.showReferencesDialog.submapID = action.submapID;
+      appState.showReferencesDialog.currentName = action.currentName;
+      $.ajax({
+        type: 'GET',
+        url: '/api/submap/' + appState.showReferencesDialog.submapID + '/usage',
+        success: function(data2) {
+          appState.showReferencesDialog.referencingMaps = data2;
+          workspaceStoreInstance.emitChange();
+        }.bind(this)
+      });
+      workspaceStoreInstance.emitChange();
+      break;
+    case ActionTypes.CLOSE_REFERENCES_SUBMAP:
+      appState.showReferencesDialog = {open:false};
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG:

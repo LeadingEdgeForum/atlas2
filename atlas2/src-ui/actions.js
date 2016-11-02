@@ -290,4 +290,19 @@ export default class Actions {
       refMapID : refMapID
     });
   }
+
+  static openSubmapReferencesDialog(currentName, mapID, submapID){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.SHOW_REFERENCES_SUBMAP,
+      currentName : currentName,
+      mapID : mapID,
+      submapID : submapID
+    });
+  }
+
+  static closeSubmapReferencesDialog(){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CLOSE_REFERENCES_SUBMAP
+    });
+  }
 }

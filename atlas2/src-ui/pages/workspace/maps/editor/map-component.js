@@ -69,6 +69,15 @@ var MapComponent = React.createClass({
         mapID:mapID,
         nodes:CanvasStore.getCanvasState().currentlySelectedNodes});
     }
+    if (this.state.hover === "info") {
+      var mapID = this.props.mapID; //jshint ignore:line
+      var submapID = this.props.node.submapID;
+      var currentName = this.props.node.name;
+      Actions.openSubmapReferencesDialog(
+         currentName: currentName,
+         mapID:mapID,
+         submapID:submapID);
+    }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {
         CanvasActions.deselectNode(this.props.id);
@@ -198,6 +207,22 @@ var MapComponent = React.createClass({
         jsPlumb.unmakeSource(this.input);
       }
     }
+    var infoStyle = {
+      position: "absolute",
+      top: "-30px",
+      color: "silver",
+      left: "-5px",
+      fontSize: "20px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "info") {
+      infoStyle = _.extend(infoStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
+      }
+    }
     var menuItems = [];
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
@@ -208,7 +233,9 @@ var MapComponent = React.createClass({
       var linkContainer = (
         <a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="hand-down" style={submapStyle}></Glyphicon></a>
       );
+      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" style={infoStyle}></Glyphicon></a>);
       menuItems.push(linkContainer);
+      menuItems.push(infoContainer);
     }
     return (
       <div>
