@@ -457,7 +457,6 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.emitChange();
       break;
     case ActionTypes.SHOW_REFERENCES_SUBMAP:
-    console.log(action);
       appState.showReferencesDialog.open = true;
       appState.showReferencesDialog.mapID = action.mapID;
       appState.showReferencesDialog.submapID = action.submapID;
