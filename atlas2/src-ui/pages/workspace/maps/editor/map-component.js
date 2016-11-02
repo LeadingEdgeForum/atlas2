@@ -47,6 +47,13 @@ var MapComponent = React.createClass({
 
   componentWillUnmount: function() {},
 
+  shouldComponentUpdate(nextProps, nextState){
+    if(nextProps.focused === false){
+      nextState.hover = null;
+    }
+    return true;
+  },
+
   onClickHandler: function(e) {
     if (this.state.hover === "submap") {
       return; //pass the event to link
