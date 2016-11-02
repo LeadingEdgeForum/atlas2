@@ -12,3 +12,5 @@ applications:
   - performance-monitoring-auto
   - atlas2-stormpath-credentials
   buildpack: sdk-for-nodejs
+  env:
+      NODE_MODULES_CACHE: false

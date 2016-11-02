@@ -7,12 +7,19 @@ var bodyParser = require('body-parser');
 var morgan = require('morgan');
 var path = require('path');
 var express = require('express');
-var webpack = require('webpack');
-var config = require('./webpack.config');
 
 var app = express();
-var compiler = webpack(config);
-app.use(require('webpack-dev-middleware')(compiler));
+var webpack_middleware = null;
+try{
+  var webpack = require('webpack');
+  var config = require('./webpack.config');
+  var compiler = webpack(config);
+  webpack_middleware = require('webpack-dev-middleware')(compiler);
+  app.use(webpack_middleware);
+}catch(e){
+  console.log(e);
+}
+
 
 app.use(morgan('combined'));
 
