@@ -77,6 +77,18 @@ var EditNodeDialog = React.createClass({
     }
     var name = this.internalState.name;
     var type = this.internalState.type;
+
+    var typeGroup = type != Constants.SUBMAP ? (<FormGroup controlId="type">
+      <Col sm={2}>
+        <ControlLabel>Type</ControlLabel>
+      </Col>
+      <Col sm={9}>
+        <Radio inline checked={Constants.USERNEED === type} value={Constants.USERNEED} onChange={this._handleDialogChange.bind(this, 'type')}>User need</Radio>
+        <Radio inline checked={Constants.INTERNAL === type} value={Constants.INTERNAL} onChange={this._handleDialogChange.bind(this, 'type')}>Internal</Radio>
+        <Radio inline checked={Constants.EXTERNAL === type} value={Constants.EXTERNAL} onChange={this._handleDialogChange.bind(this, 'type')}>Outsourced</Radio>
+      </Col>
+    </FormGroup>) : null;
+
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -95,17 +107,7 @@ var EditNodeDialog = React.createClass({
                   <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} value={name}/>
                 </Col>
               </FormGroup>
-              <FormGroup controlId="type">
-                <Col sm={2}>
-                  <ControlLabel>Type</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <Radio inline checked={Constants.USERNEED === type} value={Constants.USERNEED} onChange={this._handleDialogChange.bind(this, 'type')}>User need</Radio>
-                  <Radio inline checked={Constants.INTERNAL === type} value={Constants.INTERNAL} onChange={this._handleDialogChange.bind(this, 'type')}>
-                    Internal</Radio>
-                  <Radio inline checked={Constants.EXTERNAL === type} value={Constants.EXTERNAL} onChange={this._handleDialogChange.bind(this, 'type')}>Outsourced</Radio>
-                </Col>
-              </FormGroup>
+              {typeGroup}
             </Form>
           </Modal.Body>
           <Modal.Footer>
