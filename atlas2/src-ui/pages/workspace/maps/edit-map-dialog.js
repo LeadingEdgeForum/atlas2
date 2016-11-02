@@ -44,6 +44,7 @@ var CreateNewMapDialog = React.createClass({
       this.internalState.map = map.map;
       this.internalState.user = this.internalState.map.user;
       this.internalState.purpose = this.internalState.map.purpose;
+      this.internalState.name = this.internalState.map.name;
     }
     //dialog is going to be closed, clean internal state
     if (!newState.open) {
@@ -63,7 +64,42 @@ var CreateNewMapDialog = React.createClass({
     this.forceUpdate();
   },
   _summary: function(){
-    return calculateMapName("Edit your map", this.internalState.user, this.internalState.purpose);
+    return calculateMapName("Edit your map", this.internalState.user, this.internalState.purpose, this.internalState.name);
+  },
+  _userPurposeEdit : function(currentUser,currentPurpose){
+    return (<Form horizontal>
+      <FormGroup controlId="user">
+        <Col sm={2}>
+          <ControlLabel>User</ControlLabel>
+        </Col>
+        <Col sm={9}>
+          <FormControl type="text" placeholder="Enter user name" onChange={this._handleDialogChange.bind(this, 'user')} value={currentUser}/>
+          <HelpBlock>Who is the main user that you are going to serve?</HelpBlock>
+        </Col>
+      </FormGroup>
+      <FormGroup controlId="purpose">
+        <Col sm={2}>
+          <ControlLabel>Purpose</ControlLabel>
+        </Col>
+        <Col sm={9}>
+          <FormControl type="textarea" placeholder="Enter purpose" onChange={this._handleDialogChange.bind(this, 'purpose')} value={currentPurpose}/>
+          <HelpBlock>What is this user trying to accomplish?</HelpBlock>
+        </Col>
+      </FormGroup>
+    </Form>);
+  },
+  _nameEdit : function(currentName){
+    return (<Form horizontal>
+      <FormGroup controlId="name">
+        <Col sm={2}>
+          <ControlLabel>Name</ControlLabel>
+        </Col>
+        <Col sm={9}>
+          <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} value={currentName}/>
+          <HelpBlock>What name would describe the best what the system is doing?</HelpBlock>
+        </Col>
+      </FormGroup>
+    </Form>);
   },
   render: function() {
     var show = this.state.open;
@@ -72,7 +108,9 @@ var CreateNewMapDialog = React.createClass({
     }
     var currentUser = this.internalState.user;
     var currentPurpose = this.internalState.purpose;
+    var currentName = this.internalState.name;
     var summary = this._summary();
+    var form = this.internalState.map.isSubmap ?  this._nameEdit(currentName) : this._userPurposeEdit(currentUser, currentPurpose);
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -82,26 +120,7 @@ var CreateNewMapDialog = React.createClass({
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Form horizontal>
-              <FormGroup controlId="user">
-                <Col sm={2}>
-                  <ControlLabel>User</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter user name" onChange={this._handleDialogChange.bind(this, 'user')} value={currentUser}/>
-                  <HelpBlock>Who is the main user that you are going to serve?</HelpBlock>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="purpose">
-                <Col sm={2}>
-                  <ControlLabel>Purpose</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter purpose" onChange={this._handleDialogChange.bind(this, 'purpose')} value={currentPurpose}/>
-                  <HelpBlock>What is this user trying to accomplish?</HelpBlock>
-                </Col>
-              </FormGroup>
-            </Form>
+            {form}
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
