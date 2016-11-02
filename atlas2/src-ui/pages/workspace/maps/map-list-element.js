@@ -42,6 +42,9 @@ export default class MapListElement extends React.Component {
     if(!this.state || !this.state.referencingMaps){
       return null;
     }
+    if(this.state.referencingMaps.length === 0){
+      return <div>No other map uses this submap. It&#39;s undesired.</div>;
+    }
     var mapsList = [];
     for(var i = 0; i < this.state.referencingMaps.length; i++){
       var href = '/map/' + this.state.referencingMaps[i]._id;
