@@ -78,7 +78,7 @@ var SubmapReferencesDialog = React.createClass({
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Other maps referencing submap <b>&#39;{currentName}&#39;</b>.
+              Other maps using submap <b>&#39;{currentName}&#39;</b>.
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
