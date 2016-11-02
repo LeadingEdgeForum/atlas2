@@ -74,7 +74,7 @@ var EditWorkspaceDialog = React.createClass({
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Edit existing workspace
+              Edit existing organization
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>

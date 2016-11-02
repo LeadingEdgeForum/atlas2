@@ -29,7 +29,7 @@ export default class WorkspaceMenu extends React.Component {
       <Nav>
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditWorkspaceDialog.bind(this, workspaceID)}>
       <Glyphicon glyph="edit"></Glyphicon>&nbsp;
-        Edit workspace info
+        Edit organization info
       </NavItem>
         <LinkContainer to={{
           pathname: deduplicateHref

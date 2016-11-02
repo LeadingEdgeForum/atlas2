@@ -55,7 +55,7 @@ var CreateNewWorkspaceDialog = React.createClass({
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Create a new workspace
+              Create a new organization
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
