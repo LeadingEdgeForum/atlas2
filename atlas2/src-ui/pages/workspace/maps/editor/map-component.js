@@ -92,7 +92,9 @@ var MapComponent = React.createClass({
   },
 
   mouseOver: function(target) {
-    this.setState({hover: target});
+    if(this.props.focused){
+      this.setState({hover: target});
+    }
   },
 
   mouseOut: function(target) {
