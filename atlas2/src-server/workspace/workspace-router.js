@@ -164,9 +164,15 @@ module.exports = function(stormpath) {
 
   module.router = require('express').Router();
 
+  // this is so shitty.... the name should be calculated client side
+  // TODO: fix this
   module.router.get('/map/:mapID/name', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('user purpose').exec(function(err, result) {
-      res.json({map: {_id : result._id, name:'As ' + result.user + ', I want to ' + result.purpose + '.'}});
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('user purpose name').exec(function(err, result) {
+      if(result.user && result.purpose){
+        res.json({map: {_id : result._id, name:'As ' + result.user + ', I want to ' + result.purpose + '.'}});
+      } else {
+        res.json({map: {_id : result._id, name:result.name + '.'}});
+      }
     });
   });
 
