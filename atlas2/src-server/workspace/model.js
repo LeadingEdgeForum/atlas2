@@ -61,12 +61,6 @@ var _NodeSchema = new Schema({
   } ]
 });
 
-var _JourneySchema = new Schema({
-  name: Schema.Types.String,
-  interaction: Schema.Types.Boolean,
-  implementingNode : _NodeSchema
-});
-
 var _MapSchema = new Schema({
   user: Schema.Types.String,
   purpose: Schema.Types.String,
@@ -74,7 +68,6 @@ var _MapSchema = new Schema({
   owner: Schema.Types.String,
   isSubmap: Schema.Types.Boolean,
   archived: Schema.Types.Boolean,
-  journey: [_JourneySchema],
   workspace: {
     type: Schema.Types.ObjectId,
     ref: 'Workspace'
