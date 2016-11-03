@@ -1,1 +1,1 @@
-webpack && cf push
+webpack -p && cf push
