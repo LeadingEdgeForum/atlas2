@@ -213,7 +213,7 @@ describe('Workspaces & maps', function() {
     });
 
     it('establish connection', function(done){
-      copyOfMap.connections.push({source:copyOfMap.nodes[0]._id, target:copyOfMap.nodes[1]._id, type:'test'});
+      copyOfMap.nodes[0].dependencies.push({nodeID:copyOfMap.nodes[1]._id, scope:'test'});
       request(app).
         put('/api/map/' + mapID)
           .set('Content-type', 'application/json')
@@ -223,7 +223,7 @@ describe('Workspaces & maps', function() {
           .expect(200)
           .expect(function(res) {
               copyOfMap = res.body.map;
-              if(copyOfMap.connections.length !== 1){
+              if(copyOfMap.nodes[0].dependencies.length !== 1){
                 throw new Error('connection not created');
               }
           })
@@ -233,7 +233,7 @@ describe('Workspaces & maps', function() {
     });
 
     it('delete connection', function(done){
-      copyOfMap.connections = undefined;
+      copyOfMap.nodes[0].dependencies = [];
       request(app).
         put('/api/map/' + mapID)
           .set('Content-type', 'application/json')
@@ -243,7 +243,7 @@ describe('Workspaces & maps', function() {
           .expect(200)
           .expect(function(res) {
               copyOfMap = res.body.map;
-              if(copyOfMap.connections.length !== 0){
+              if(copyOfMap.nodes[0].dependencies.length !== 0){
                 throw new Error('connection not deleted');
               }
           })
