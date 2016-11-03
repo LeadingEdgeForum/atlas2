@@ -66,6 +66,13 @@ var CreateNewMapDialog = React.createClass({
   _summary: function(){
     return calculateMapName("Edit your map", this.internalState.user, this.internalState.purpose, this.internalState.name);
   },
+  // catch enter and consider it to be 'submit'
+  _enterInterceptor(e){
+    if(e.nativeEvent.keyCode===13){
+        e.preventDefault();
+        e.stopPropagation()
+    }
+  },
   _userPurposeEdit : function(currentUser,currentPurpose){
     return (<Form horizontal>
       <FormGroup controlId="user">
@@ -95,7 +102,7 @@ var CreateNewMapDialog = React.createClass({
           <ControlLabel>Name</ControlLabel>
         </Col>
         <Col sm={9}>
-          <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} value={currentName}/>
+          <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} value={currentName} onKeyDown={this._enterInterceptor.bind(this)}/>
           <HelpBlock>What name would describe the best what the system is doing?</HelpBlock>
         </Col>
       </FormGroup>

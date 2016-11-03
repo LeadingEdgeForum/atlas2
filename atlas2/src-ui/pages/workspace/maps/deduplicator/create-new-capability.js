@@ -32,6 +32,13 @@ var CreateNewCapabilityDialog = React.createClass({
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
   },
+  // catch enter and consider it to be 'submit'
+  _enterInterceptor(e){
+    if(e.nativeEvent.keyCode===13){
+        e.preventDefault();
+        e.stopPropagation()
+    }
+  },
   render: function() {
     var show = this.props.open;
     var nodeName = this.props.nodeBeingAssigned
@@ -55,7 +62,7 @@ var CreateNewCapabilityDialog = React.createClass({
                   <ControlLabel>Description</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter description here" onChange={this._handleDialogChange.bind(this, 'description')}/>
+                  <FormControl type="textarea" placeholder="Enter description here" onChange={this._handleDialogChange.bind(this, 'description')} onKeyDown={this._enterInterceptor.bind(this)}/>
                   <HelpBlock>Describe what this component actually does.</HelpBlock>
                 </Col>
               </FormGroup>

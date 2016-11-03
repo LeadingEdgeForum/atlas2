@@ -70,6 +70,13 @@ var EditNodeDialog = React.createClass({
     this.internalState[parameterName] = event.target.value;
     this.forceUpdate();
   },
+  // catch enter and consider it to be 'submit'
+  _enterInterceptor(e){
+    if(e.nativeEvent.keyCode===13){
+        e.preventDefault();
+        e.stopPropagation()
+    }
+  },
   render: function() {
     var show = this.state.open;
     if (!show) {
@@ -104,7 +111,7 @@ var EditNodeDialog = React.createClass({
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} value={name}/>
+                  <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} value={name} onKeyDown={this._enterInterceptor.bind(this)}/>
                 </Col>
               </FormGroup>
               {typeGroup}

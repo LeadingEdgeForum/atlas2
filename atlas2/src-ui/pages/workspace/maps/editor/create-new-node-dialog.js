@@ -50,6 +50,13 @@ var CreateNewNodeDialog = React.createClass({
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
   },
+  // catch enter and consider it to be 'submit'
+  _enterInterceptor(e){
+    if(e.nativeEvent.keyCode===13){
+        e.preventDefault();
+        e.stopPropagation()
+    }
+  },
   render: function() {
     var show = this.state.open;
     return (
@@ -67,7 +74,7 @@ var CreateNewNodeDialog = React.createClass({
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')}/>
+                  <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor.bind(this)}/>
                 </Col>
               </FormGroup>
             </Form>
