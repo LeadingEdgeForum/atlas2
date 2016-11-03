@@ -75,14 +75,6 @@ export default class Actions {
     });
   }
 
-  static openEditCustomerJourneyDialog(mapid) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_CUSTOMER_JOURNEY_DIALOG, data: mapid});
-  }
-
-  static closeEditCustomerJourneyDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_EDIT_CUSTOMER_JOURNEY_DIALOG});
-  }
-
   static openEditNodeDialog(mapID, nodeID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_NODE_DIALOG,
@@ -243,27 +235,6 @@ export default class Actions {
         referenceNodeID: referenceNodeID,
         referenceMapID: referenceNodemapID
       }
-    });
-  }
-
-  static addNewJourneyStep(data){
-    Dispatcher.dispatch({
-      actionType: Constants.ACTION_TYPES.MAP_ADD_JOURNEY_STEP,
-      data: data
-    });
-  }
-
-  static deleteJourneyStep(data){
-    Dispatcher.dispatch({
-      actionType: Constants.ACTION_TYPES.MAP_DELETE_JOURNEY_STEP,
-      data: data
-    });
-  }
-
-  static saveJourneyStep(data){
-    Dispatcher.dispatch({
-      actionType: Constants.ACTION_TYPES.MAP_SAVE_JOURNEY_STEP,
-      data: data
     });
   }
 

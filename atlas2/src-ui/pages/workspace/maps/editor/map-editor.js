@@ -21,7 +21,6 @@ import SubmapReferencesDialog from './submap-references-dialog';
 import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
-var CustomerJourneyEditDialog = require('./customer-journey-dialog');
 import {calculateMapName} from './../map-name-calculator';
 
 var outerStyle = { //this is style applied to the entire map area (without palette)
@@ -157,7 +156,6 @@ export default class MapEditor extends React.Component {
 
   render() {
     var nodes = this.state.map.nodes;
-    var journey = this.state.map.journey;
     var name = this.state.workspace ? this.state.workspace.name : "no name";
     var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
     var workspaceID = this.state.map.workspace || "";
@@ -201,7 +199,6 @@ export default class MapEditor extends React.Component {
             <CreateNewSubmapDialog/>
             <EditNodeDialog mapID={this.props.params.mapID}/>
             <SubmapReferencesDialog/>
-            <CustomerJourneyEditDialog mapID={this.props.params.mapID} steps={journey} submap={this.state.map.isSubmap} loading={this.state.map.loading}/>
           </Col>
         </Row>
         <EditMapDialog/>
