@@ -232,6 +232,7 @@ export default class MapCanvas extends React.Component {
     }
     var components = null;
     var mapID = this.props.mapID;
+    var workspaceID = this.props.workspaceID;
     var state = this.state;
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
@@ -241,7 +242,7 @@ export default class MapCanvas extends React.Component {
             focused = true;
           }
         }
-        return (<MapComponent mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} multi={state.multiNodeSelection}/>);
+        return (<MapComponent workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} multi={state.multiNodeSelection}/>);
       });
     }
     return (

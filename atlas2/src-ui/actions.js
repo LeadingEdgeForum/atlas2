@@ -95,6 +95,7 @@ export default class Actions {
       data: {
         mapID: data.map._id,
         nodeID: data.nodeID,
+        workspaceID : data.workspaceID,
         params: {
           name: data.name,
           type: data.type
@@ -125,13 +126,14 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED});
   }
 
-  static nodeDragged(mapID, nodeID, newPos) {
+  static nodeDragged(workspaceID,mapID, nodeID, newPos) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_NODE_DRAGGED,
       data: {
         mapID: mapID,
         nodeID: nodeID,
-        newPos: newPos
+        newPos: newPos,
+        workspaceID : workspaceID
       }
     });
   }
@@ -160,10 +162,11 @@ export default class Actions {
     });
   }
 
-  static removeNode(mapID, nodeID) {
+  static removeNode(workspaceID, mapID, nodeID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_REMOVE_NODE,
       data: {
+        workspaceID : workspaceID,
         mapID: mapID,
         nodeID: nodeID
       }

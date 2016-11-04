@@ -28,6 +28,7 @@ describe('Workspaces & maps', function() {
     var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
     var workspaceID;
     var mapID;
+    var node1ID;
     var copyOfMap;
     var copyOfWorkspace;
 
@@ -175,235 +176,293 @@ describe('Workspaces & maps', function() {
     });
 
     it('create a node in a map', function(done) {
-        var node = {name:"name",x:0.5,y:0.5,type:"INTERNAL"};
+        var nodeName = "name";
+        var node = {name:nodeName,coords:{x:0.5,y:0.5},type:"INTERNAL"};
         copyOfMap.nodes.push(node);
-        console.log({map:copyOfMap});
         request(app).
-        put('/api/map/' + mapID)
+        post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
             .set('Authorization', authorizationHeader)
-            .send({map:copyOfMap})
+            .send(node)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
+                node1ID = res.body.map.nodes[0]._id;
+                res.body.map.nodes[0].name.should.equal(node.name);
+                console.log(res.body.map.nodes);
             })
             .end(function(err, res) {
                 done(err);
             });
     });
 
-    it('create a second node in a map', function(done) {
-        var node = {name:"name1",x:0.7,y:0.5,type:"INTERNAL"};
-        copyOfMap.nodes.push(node);
-        console.log({map:copyOfMap});
+    it('change a node in a map', function(done) {
+        var nodeName = "name2";
+        var node = {name:nodeName,x:0.5,y:0.5,type:"INTERNAL"};
         request(app).
-        put('/api/map/' + mapID)
+        put('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
             .set('Authorization', authorizationHeader)
-            .send({map:copyOfMap})
+            .send(node)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
+                res.body.map.nodes[0].name.should.equal(node.name);
             })
             .end(function(err, res) {
                 done(err);
             });
     });
 
-    it('establish connection', function(done){
-      copyOfMap.nodes[0].dependencies.push({nodeID:copyOfMap.nodes[1]._id, scope:'test'});
-      request(app).
-        put('/api/map/' + mapID)
-          .set('Content-type', 'application/json')
-          .set('Accept', 'application/json')
-          .set('Authorization', authorizationHeader)
-          .send({map:copyOfMap})
-          .expect(200)
-          .expect(function(res) {
-              copyOfMap = res.body.map;
-              if(copyOfMap.nodes[0].dependencies.length !== 1){
-                throw new Error('connection not created');
-              }
-          })
-          .end(function(err, res) {
-              done(err);
-          });
-    });
-
-    it('delete connection', function(done){
-      copyOfMap.nodes[0].dependencies = [];
-      request(app).
-        put('/api/map/' + mapID)
-          .set('Content-type', 'application/json')
-          .set('Accept', 'application/json')
-          .set('Authorization', authorizationHeader)
-          .send({map:copyOfMap})
-          .expect(200)
-          .expect(function(res) {
-              copyOfMap = res.body.map;
-              if(copyOfMap.nodes[0].dependencies.length !== 0){
-                throw new Error('connection not deleted');
-              }
-          })
-          .end(function(err, res) {
-              done(err);
-          });
-    });
-
-    it('create a third node in a map', function(done) {
-        var node = {name:"name1",x:0.7,y:0.7,type:"INTERNAL"};
-        copyOfMap.nodes.push(node);
-        console.log({map:copyOfMap});
+    it('change a node in a map', function(done) {
+        var nodeName = "name3";
+        var node = {name:nodeName};
         request(app).
-        put('/api/map/' + mapID)
+        put('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
             .set('Authorization', authorizationHeader)
-            .send({map:copyOfMap})
+            .send(node)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
+                res.body.map.nodes[0].name.should.equal(node.name);
+                res.body.map.nodes[0].x.should.equal(0.5);
             })
             .end(function(err, res) {
                 done(err);
             });
     });
 
-
-
-    it('create a capability', function(done) {
-      var capabilityCategoryID = copyOfWorkspace.workspace.capabilityCategories[0]._id;
-      var testName = 'testcapability';
+    it('delete a node in a map', function(done) {
         request(app).
-        put('/api/workspace/' + workspaceID + '/capabilityCategory/' + capabilityCategoryID)
-            .set('Content-type', 'application/json')
-            .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
-            .send({name:testName,
-              mapID:copyOfMap._id,
-              nodeID:copyOfMap.nodes[1]._id})
-            .expect(200)
-            .expect(function(res) {
-              request(app)
-              .get('/api/map/' + copyOfMap._id)
-              .set('Content-type', 'application/json')
-              .set('Accept', 'application/json')
-              .set('Authorization', authorizationHeader)
-              .expect(function(res){
-                if(res.body.map.nodes[1].categorized == false && res.body.map.nodes[1].category !== null){
-                  throw new Error('category not set properly');
-                }
-              }).end(function(err, res) {
-                  done(err);
-              })
-            }).end(function(err,res){});
-    });
-
-    it('reference nodes and check the reference', function(done) {
-        request(app).
-        put('/api/reference/' + mapID +"/" + copyOfMap.nodes[0]._id + "/" + mapID + "/" + copyOfMap.nodes[1]._id)
+        del('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
             .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
-              request(app)
-              .get('/api/map/' + copyOfMap._id)
-              .set('Content-type', 'application/json')
-              .set('Accept', 'application/json')
-              .set('Authorization', authorizationHeader)
-              .expect(function(res){
-                if(res.body.map.nodes[1].categorized == false || res.body.map.nodes[0].categorized == false){
-                  throw new Error('category not set properly');
-                }
-                if(res.body.map.nodes[0].category !== res.body.map.nodes[1].category){
-                  throw new Error('category not identical');
-                }
                 copyOfMap = res.body.map;
-              }).end(function(err, res) {
-                  done(err);
-              })
-            })
-            .end(function(err, res) {
-            });
-    });
-
-    it('delete node and check references', function(done){
-      request(app)
-          .del('/api/map/' + mapID + "/node/" + copyOfMap.nodes[1]._id)
-          .set('Content-type', 'application/json')
-          .set('Accept', 'application/json')
-          .set('Authorization', authorizationHeader)
-          .expect(200)
-          .expect(function(res) {
-            console.log('verofocatopm')
-            var map = res.body.map;
-            //there should be no category
-            if(map.nodes[0].categorized){
-              throw new Error('Category should be deleted');
-            }
-            if(map.nodes.length !== 2){
-              throw new Error('Should be only two nodes, but are ' + map.nodes.length);
-            }
-          }).end(function(err, res) {
-            done(err);
-          });
-    });
-
-    it('archive a map (/api/map/mapID)', function(done) {
-        request(app).
-        del('/api/map/' + mapID)
-            .set('Content-type', 'application/json')
-            .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
-            .expect(200)
-            .end(function(err, res) {
-                done(err);
-            });
-    });
-
-    it('verify map does not exist (map)', function(done) {
-        request(app).
-        get('/api/map/' + mapID)
-            .set('Content-type', 'application/json')
-            .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
-            .expect(200)
-            .expect(function(res) {
-                if (res.body.map) {
-                    throw new Error('map should not be visible after archive' + res.body.map);
-                }
+                res.body.map.nodes.length.should.equal(0);
             })
             .end(function(err, res) {
                 done(err);
             });
     });
 
-    it('verify map does not exist (workspace)', function(done) {
-        request(app).
-        get('/api/workspace/' + workspaceID)
-            .set('Content-type', 'application/json')
-            .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
-            .expect(200)
-            .expect(function(res) {
-                var found = null;
-                for (var i = 0; i < res.body.workspace.maps.length; i++) {
-                    var _map = res.body.workspace.maps[i];
-                    if (_map._id === mapID) {
-                        found = _map;
-                    }
-                }
-                if (found) {
-                    throw new Error("Map " + mapID + " was not correctly removed from workspace " + workspaceID);
-                }
-            })
-            .end(function(err, res) {
-                done(err);
-            });
-    });
+    // it('create a second node in a map', function(done) {
+    //     var node = {name:"name1",x:0.7,y:0.5,type:"INTERNAL"};
+    //     copyOfMap.nodes.push(node);
+    //     console.log({map:copyOfMap});
+    //     request(app).
+    //     put('/api/map/' + mapID)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .send({map:copyOfMap})
+    //         .expect(200)
+    //         .expect(function(res) {
+    //             copyOfMap = res.body.map;
+    //         })
+    //         .end(function(err, res) {
+    //             done(err);
+    //         });
+    // });
+    //
+    // it('establish connection', function(done){
+    //   copyOfMap.nodes[0].dependencies.push({nodeID:copyOfMap.nodes[1]._id, scope:'test'});
+    //   request(app).
+    //     put('/api/map/' + mapID)
+    //       .set('Content-type', 'application/json')
+    //       .set('Accept', 'application/json')
+    //       .set('Authorization', authorizationHeader)
+    //       .send({map:copyOfMap})
+    //       .expect(200)
+    //       .expect(function(res) {
+    //           copyOfMap = res.body.map;
+    //           if(copyOfMap.nodes[0].dependencies.length !== 1){
+    //             throw new Error('connection not created');
+    //           }
+    //       })
+    //       .end(function(err, res) {
+    //           done(err);
+    //       });
+    // });
+    //
+    // it('delete connection', function(done){
+    //   copyOfMap.nodes[0].dependencies = [];
+    //   request(app).
+    //     put('/api/map/' + mapID)
+    //       .set('Content-type', 'application/json')
+    //       .set('Accept', 'application/json')
+    //       .set('Authorization', authorizationHeader)
+    //       .send({map:copyOfMap})
+    //       .expect(200)
+    //       .expect(function(res) {
+    //           copyOfMap = res.body.map;
+    //           if(copyOfMap.nodes[0].dependencies.length !== 0){
+    //             throw new Error('connection not deleted');
+    //           }
+    //       })
+    //       .end(function(err, res) {
+    //           done(err);
+    //       });
+    // });
+    //
+    // it('create a third node in a map', function(done) {
+    //     var node = {name:"name1",x:0.7,y:0.7,type:"INTERNAL"};
+    //     copyOfMap.nodes.push(node);
+    //     console.log({map:copyOfMap});
+    //     request(app).
+    //     put('/api/map/' + mapID)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .send({map:copyOfMap})
+    //         .expect(200)
+    //         .expect(function(res) {
+    //             copyOfMap = res.body.map;
+    //         })
+    //         .end(function(err, res) {
+    //             done(err);
+    //         });
+    // });
+    //
+    //
+    //
+    // it('create a capability', function(done) {
+    //   var capabilityCategoryID = copyOfWorkspace.workspace.capabilityCategories[0]._id;
+    //   var testName = 'testcapability';
+    //     request(app).
+    //     put('/api/workspace/' + workspaceID + '/capabilityCategory/' + capabilityCategoryID)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .send({name:testName,
+    //           mapID:copyOfMap._id,
+    //           nodeID:copyOfMap.nodes[1]._id})
+    //         .expect(200)
+    //         .expect(function(res) {
+    //           request(app)
+    //           .get('/api/map/' + copyOfMap._id)
+    //           .set('Content-type', 'application/json')
+    //           .set('Accept', 'application/json')
+    //           .set('Authorization', authorizationHeader)
+    //           .expect(function(res){
+    //             if(res.body.map.nodes[1].categorized == false && res.body.map.nodes[1].category !== null){
+    //               throw new Error('category not set properly');
+    //             }
+    //           }).end(function(err, res) {
+    //               done(err);
+    //           })
+    //         }).end(function(err,res){});
+    // });
+    //
+    // it('reference nodes and check the reference', function(done) {
+    //     request(app).
+    //     put('/api/reference/' + mapID +"/" + copyOfMap.nodes[0]._id + "/" + mapID + "/" + copyOfMap.nodes[1]._id)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .expect(200)
+    //         .expect(function(res) {
+    //           request(app)
+    //           .get('/api/map/' + copyOfMap._id)
+    //           .set('Content-type', 'application/json')
+    //           .set('Accept', 'application/json')
+    //           .set('Authorization', authorizationHeader)
+    //           .expect(function(res){
+    //             if(res.body.map.nodes[1].categorized == false || res.body.map.nodes[0].categorized == false){
+    //               throw new Error('category not set properly');
+    //             }
+    //             if(res.body.map.nodes[0].category !== res.body.map.nodes[1].category){
+    //               throw new Error('category not identical');
+    //             }
+    //             copyOfMap = res.body.map;
+    //           }).end(function(err, res) {
+    //               done(err);
+    //           })
+    //         })
+    //         .end(function(err, res) {
+    //         });
+    // });
+    //
+    // it('delete node and check references', function(done){
+    //   request(app)
+    //       .del('/api/map/' + mapID + "/node/" + copyOfMap.nodes[1]._id)
+    //       .set('Content-type', 'application/json')
+    //       .set('Accept', 'application/json')
+    //       .set('Authorization', authorizationHeader)
+    //       .expect(200)
+    //       .expect(function(res) {
+    //         console.log('verofocatopm')
+    //         var map = res.body.map;
+    //         //there should be no category
+    //         if(map.nodes[0].categorized){
+    //           throw new Error('Category should be deleted');
+    //         }
+    //         if(map.nodes.length !== 2){
+    //           throw new Error('Should be only two nodes, but are ' + map.nodes.length);
+    //         }
+    //       }).end(function(err, res) {
+    //         done(err);
+    //       });
+    // });
+    //
+    // it('archive a map (/api/map/mapID)', function(done) {
+    //     request(app).
+    //     del('/api/map/' + mapID)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .expect(200)
+    //         .end(function(err, res) {
+    //             done(err);
+    //         });
+    // });
+    //
+    // it('verify map does not exist (map)', function(done) {
+    //     request(app).
+    //     get('/api/map/' + mapID)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .expect(200)
+    //         .expect(function(res) {
+    //             if (res.body.map) {
+    //                 throw new Error('map should not be visible after archive' + res.body.map);
+    //             }
+    //         })
+    //         .end(function(err, res) {
+    //             done(err);
+    //         });
+    // });
+    //
+    // it('verify map does not exist (workspace)', function(done) {
+    //     request(app).
+    //     get('/api/workspace/' + workspaceID)
+    //         .set('Content-type', 'application/json')
+    //         .set('Accept', 'application/json')
+    //         .set('Authorization', authorizationHeader)
+    //         .expect(200)
+    //         .expect(function(res) {
+    //             var found = null;
+    //             for (var i = 0; i < res.body.workspace.maps.length; i++) {
+    //                 var _map = res.body.workspace.maps[i];
+    //                 if (_map._id === mapID) {
+    //                     found = _map;
+    //                 }
+    //             }
+    //             if (found) {
+    //                 throw new Error("Map " + mapID + " was not correctly removed from workspace " + workspaceID);
+    //             }
+    //         })
+    //         .end(function(err, res) {
+    //             done(err);
+    //         });
+    // });
 
 
 });

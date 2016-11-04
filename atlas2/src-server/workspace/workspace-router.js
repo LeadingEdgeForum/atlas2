@@ -21,6 +21,7 @@ var Node = Model.Node;
 var _ = require('underscore');
 var logger = require('./../log');
 var mongoose = require('mongoose');
+var ObjectId = mongoose.Types.ObjectId;
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -247,8 +248,20 @@ module.exports = function(stormpath) {
   });
 
   module.router.get('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
-      console.log(err);
+    WardleyMap.findOne({
+        owner: getStormpathUserIdFromReq(req),
+        _id: req.params.mapID,
+        archived: false})
+    .populate('nodes')
+    .exec(function(err, result) {
+      if(err){
+        console.error(err);
+        res.json(err);
+      }
+      if(!result){
+        res.statusCode = 404;
+        res.send('map not found');
+      }
       res.json({map: result});
     });
   });
@@ -735,6 +748,210 @@ module.exports = function(stormpath) {
           res.json({map: savedMap});
         });
       });
+    });
+  });
+
+
+  module.router.post('/workspace/:workspaceID/map/:mapID/node', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var name = req.body.name;
+    var x = req.body.x;
+    var y = req.body.y;
+    var type = req.body.type;
+    var parentMap = new ObjectId(mapID);
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+      _id: mapID,
+      owner: owner,
+      archived: false,
+      workspace : workspaceID
+    }, function(err, mapResult) {
+      if (err) {
+        res.send(err);
+        return;
+      }
+      if(!mapResult){
+        res.statusCode = 404;
+        res.send('Map not found in a workspace');
+      }
+
+      var newNode = new Node({
+        name : name,
+        x : x,
+        y : y,
+        type : type,
+        workspace : new ObjectId(workspaceID),
+        parentMap : parentMap
+      });
+      newNode.save(function(errNewNode, resultNewNode){
+        if(errNewNode){
+          res.statusCode = 500;
+          res.send(errNewNode);
+          return;
+        }
+        mapResult.nodes.push(resultNewNode._id);
+        mapResult.save(function(errModifiedMap, resultModifiedMap){
+          if(errModifiedMap){
+            console.error('Inconsistent database node created but not added to map');
+            res.statusCode = 500;
+            res.send(errModifiedMap);
+          }
+          WardleyMap.populate(
+            resultModifiedMap,
+            {path:'nodes', model: 'Node'},
+            function(popError, popResult){
+              res.json({map: popResult});
+            });
+          });
+      });
+    });
+  });
+
+  module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var name = req.body.name;
+    var x = req.body.x;
+    var y = req.body.y;
+    var type = req.body.type;
+    var parentMap = new ObjectId(mapID);
+    var desiredNodeId = new ObjectId(req.params.nodeID);
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+      _id: mapID,
+      owner: owner,
+      archived: false,
+      workspace : workspaceID,
+    })
+    .populate('nodes')
+    .exec(function(err, mapResult) {
+      if (err) {
+        res.send(err);
+        return;
+      }
+      if(!mapResult){
+        res.statusCode = 404;
+        res.send('Map not found in a workspace');
+      }
+
+      var found = false;
+      for(var i = 0; i < mapResult.nodes.length; i++){
+        if(desiredNodeId.equals(mapResult.nodes[i]._id)){
+          found = true;
+          var modifiedNode = mapResult.nodes[i];
+
+          if (name) {
+            modifiedNode.name = name;
+          }
+          if (x) {
+            modifiedNode.x = x;
+          }
+          if (y) {
+            modifiedNode.y = y;
+          }
+          if (type) {
+            modifiedNode.type = type;
+          }
+
+          modifiedNode.save(
+            function(errNodeSave, resultNodeSave){ //jshint ignore:line
+              if(errNodeSave){
+                res.statusCode = 500;
+                res.send(errNodeSave);
+                return;
+              }
+              WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+                // all owners should be replaced with some sort of accessibility check
+                _id: mapID,
+                owner: owner,
+                archived: false,
+                workspace : workspaceID,
+              })
+              .populate('nodes')
+              .exec(function(err2, mapResult2) {
+                  if(err2){
+                    res.statusCode = 500;
+                    res.send(err2);
+                    return;
+                  }
+                  res.json({map: mapResult2});
+              });
+            }
+          );
+          break;
+        }
+      }
+      if(!found){
+        res.statusCode = 404;
+        res.send('Node not found in a map');
+      }
+    });
+  });
+
+  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
+    var owner = getStormpathUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var parentMap = new ObjectId(mapID);
+    var desiredNodeId = new ObjectId(req.params.nodeID);
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+      _id: mapID,
+      owner: owner,
+      archived: false,
+      workspace : workspaceID,
+    })
+    .populate('nodes')
+    .exec(function(err, mapResult) {
+      if (err) {
+        res.send(err);
+        return;
+      }
+      if(!mapResult){
+        res.statusCode = 404;
+        res.send('Map not found in a workspace');
+      }
+
+      var found = false;
+      for(var i = 0; i < mapResult.nodes.length; i++){
+        if(desiredNodeId.equals(mapResult.nodes[i]._id)){
+          found = true;
+          var deleteNode = mapResult.nodes[i];
+          deleteNode.remove(
+            function(errNodeRemove){ //jshint ignore:line
+              if(errNodeRemove){
+                res.statusCode = 500;
+                res.send(errNodeRemove);
+                return;
+              }
+              WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+                // all owners should be replaced with some sort of accessibility check
+                _id: mapID,
+                owner: owner,
+                archived: false,
+                workspace : workspaceID,
+              })
+              .populate('nodes')
+              .exec(function(err2, mapResult2) {
+                  if(err2){
+                    res.statusCode = 500;
+                    res.send(err2);
+                    return;
+                  }
+                  res.json({map: mapResult2});
+              });
+            }
+          );
+          break;
+        }
+      }
+      if(!found){
+        res.statusCode = 404;
+        res.send('Node not found in a map');
+      }
     });
   });
 

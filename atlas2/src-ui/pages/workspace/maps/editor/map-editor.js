@@ -177,7 +177,7 @@ export default class MapEditor extends React.Component {
           </Col>
           <Col xs={9} sm={10} md={10} lg={11}>
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} mapID={this.props.params.mapID}></MapCanvas>
+              <MapCanvas nodes={nodes} mapID={this.props.params.mapID} workspaceID={workspaceID}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>
@@ -195,9 +195,9 @@ export default class MapEditor extends React.Component {
                 <div style={axisSupport3}/>
               </div>
             </div>
-            <CreateNewNodeDialog mapID={this.props.params.mapID}/>
+            <CreateNewNodeDialog mapID={this.props.params.mapID}  workspaceID={workspaceID}/>
             <CreateNewSubmapDialog/>
-            <EditNodeDialog mapID={this.props.params.mapID}/>
+            <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <SubmapReferencesDialog/>
           </Col>
         </Row>

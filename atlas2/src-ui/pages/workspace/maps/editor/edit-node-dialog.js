@@ -62,6 +62,7 @@ var EditNodeDialog = React.createClass({
   },
   _submit: function() {
     this.internalState.mapID = this.props.mapID;
+    this.internalState.workspaceID = this.state.workspaceID;
     this.internalState.nodeID = this.state.nodeID;
     Actions.submitEditNodeDialog(this.internalState);
   },

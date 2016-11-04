@@ -52,6 +52,14 @@ var _NodeSchema = new Schema({
     nodeID : Schema.Types.String,
     mapID :Schema.Types.String
   }],
+  workspace : {
+    type: Schema.Types.ObjectId,
+    ref: 'Workspace'
+  },
+  parentMap : {
+    type: Schema.Types.ObjectId,
+    ref: 'WardleyMap'
+  },
   /* old connections between nodes */
   dependencies : [ {
     dependencyType : Schema.Types.String, //NODE EXTERNAL_NODE
@@ -72,7 +80,10 @@ var _MapSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Workspace'
   },
-  nodes : [_NodeSchema]
+  nodes : [{
+      type: Schema.Types.ObjectId,
+      ref: 'Node'
+  }]
 });
 
 

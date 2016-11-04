@@ -63,7 +63,8 @@ var MapComponent = React.createClass({
     if (this.state.hover === "remove") {
       var id = this.props.id;
       var mapID = this.props.mapID;
-      Actions.removeNode(mapID, id);
+      var workspaceID = this.props.workspaceID;
+      Actions.removeNode(workspaceID, mapID, id);
     }
     if (this.state.hover === "pencil") {
       var nodeID = this.props.id; //jshint ignore:line
@@ -271,6 +272,7 @@ var MapComponent = React.createClass({
     var id = this.props.id;
     var mapID = this.props.mapID;
     var focused = this.props.focused;
+    var workspaceID = this.props.workspaceID;
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
         if (input) {
@@ -285,7 +287,7 @@ var MapComponent = React.createClass({
             50, 50
           ],
           stop: function(event) {
-            Actions.nodeDragged(mapID, id, event.finalPos);
+            Actions.nodeDragged(workspaceID, mapID, id, event.finalPos);
           }
         });
       }}>
