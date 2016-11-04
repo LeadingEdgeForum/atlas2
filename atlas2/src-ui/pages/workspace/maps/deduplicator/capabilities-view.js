@@ -218,6 +218,7 @@ export default class CapabilitiesView extends React.Component {
     var _acceptorStyleToSet = _.clone(acceptorStyle);
     var _capabilityStyleToSet = _.clone(capabilityStyle);
     var _greyLaneStyleToSet = _.clone(greyLaneStyle);
+    var greyLaneText = null;
     if (this.props.dragStarted) {
       _acceptorStyleToSet = _.extend(_acceptorStyleToSet, {
         borderColor: "#00789b",
@@ -228,8 +229,10 @@ export default class CapabilitiesView extends React.Component {
       _greyLaneStyleToSet = _.extend(_greyLaneStyleToSet, {
         borderColor: "#00789b",
         boxShadow: "0 0 5px #00789b",
-        border: '1px solid #00789b'
+        border: '1px solid #00789b',
+        zIndex:20
       });
+      greyLaneText = "Drop here if the component does the same what this component";
     }
 
     var categories = null;
@@ -242,10 +245,10 @@ export default class CapabilitiesView extends React.Component {
         categories.push(
           <Row className="show-grid">
             <Col xs={3}>
-              <h4>{category.name}&nbsp;capabilities</h4>
+              <h4>{category.name}</h4>
             </Col>
             <Col xs={9}>
-              <div style={_acceptorStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropNewCapability.bind(this, category._id)}>Drop here to create a new capability in this category</div>
+              <div style={_acceptorStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropNewCapability.bind(this, category._id)}>Drop here if nothing in this category does the same job</div>
             </Col>
           </Row>
         );
@@ -265,7 +268,7 @@ export default class CapabilitiesView extends React.Component {
                 </Col>
                 <Col xs={9}>
                   <div style={_capabilityStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropExistingCapability.bind(this, category._id, capability._id, existingItems)}>
-                    <div style={_greyLaneStyleToSet}></div>
+                    <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
                     {_itemsToDisplay}
                   </div>
                 </Col>

@@ -154,6 +154,7 @@ export default class Deduplicator extends React.Component {
               {_toDisplayComponents}
             </Col>
             <Col xs={9}>
+              <h4>Capabilities:</h4>
               <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categorizedComponents={categorizedComponents}/>
             </Col>
           </Row>

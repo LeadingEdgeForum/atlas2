@@ -223,6 +223,12 @@ module.exports = function(stormpath) {
           name: 'Quality'
         }, {
           name: 'Operational'
+        }, {
+          name: 'Marketing'
+        }, {
+          name: 'Research'
+        }, {
+          name: 'Finances'
         }
       ]
     });
