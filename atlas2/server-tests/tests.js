@@ -330,6 +330,41 @@ describe('Workspaces & maps', function() {
             });
     });
 
+    it('connect nodes again', function(done) {
+        request(app).
+        post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID + '/outgoingDependency/' + node2ID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                copyOfMap = res.body.map;
+                res.body.map.nodes.length.should.equal(2);
+                res.body.map.nodes[0].outboundDependencies[0].should.equal(res.body.map.nodes[1]._id);
+                res.body.map.nodes[1].inboundDependencies[0].should.equal(res.body.map.nodes[0]._id);
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('delete the second node', function(done) {
+        request(app).
+        del('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node2ID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                copyOfMap = res.body.map;
+                res.body.map.nodes.length.should.equal(1);
+                res.body.map.nodes[0].outboundDependencies.length.should.equal(0);
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
     //
     // it('create a third node in a map', function(done) {
     //     var node = {name:"name1",x:0.7,y:0.7,type:"INTERNAL"};

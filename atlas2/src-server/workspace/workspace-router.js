@@ -156,14 +156,51 @@ var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
     mainAffectedMap.save(callback);
   }
 };
-
+/**
+Remove object from populated list
+*/
 var removeFromArrayBy_ID = function(array, item){
   for(var i = 0; i < array.length; i++){
     if(array[i]._id.equals(item._id)){
       array.splice(i,1);
-      return;
+      break;
     }
   }
+};
+/**
+Remove object from unpopulated list
+*/
+var removeFromArrayOfStringsBy_ID = function(array, item){
+  for(var i = 0; i < array.length; i++){
+    if(array[i].equals('' + item._id)){
+      array.splice(i,1);
+      break;
+    }
+  }
+};
+
+
+var multiSave = function(array, callback){
+    if(!array || array.length === 0){
+      return callback([],[]);
+    }
+    var errors = [];
+    var savedObjects = [];
+    var counter  = [0];
+    var onSave = function(err, result){
+      if(err){
+        errors.push(err);
+      }
+      if(result){
+        savedObjects.push(result);
+      }
+      if(savedObjects.length === array.length){
+        return callback(errors,savedObjects);
+      }
+    };
+    for(var i = 0; i < array.length; i++){
+      array[i].save(onSave);
+    }
 };
 
 
@@ -927,29 +964,55 @@ module.exports = function(stormpath) {
         if(desiredNodeId.equals(mapResult.nodes[i]._id)){
           found = true;
           var deleteNode = mapResult.nodes[i];
-          deleteNode.remove(
-            function(errNodeRemove){ //jshint ignore:line
-              if(errNodeRemove){
-                res.statusCode = 500;
-                res.send(errNodeRemove);
-                return;
+          //1.  remove all the references
+          Node.populate(
+            deleteNode,
+            {path:'inboundDependencies outboundDependencies', model: 'Node'},
+            function(err,deleteNode){
+              var nodesToSave = []; // all return references removed
+              for(var k = 0; k < deleteNode.inboundDependencies.length; k++){
+                removeFromArrayOfStringsBy_ID(deleteNode.inboundDependencies[k].outboundDependencies, deleteNode);
+                nodesToSave.push(deleteNode.inboundDependencies[k]);
               }
-              WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-                // all owners should be replaced with some sort of accessibility check
-                _id: mapID,
-                owner: owner,
-                archived: false,
-                workspace : workspaceID,
-              })
-              .populate('nodes')
-              .exec(function(err2, mapResult2) {
-                  if(err2){
-                    res.statusCode = 500;
-                    res.send(err2);
-                    return;
+              for(var l = 0; l < deleteNode.outboundDependencies.length; l++){
+                removeFromArrayOfStringsBy_ID(deleteNode.outboundDependencies[l].inboundDependencies, deleteNode);
+                nodesToSave.push(deleteNode.outboundDependencies[l]);
+              }
+              var multiSaveCallback = function(errors, savedItems){
+                if(errors.length !== 0){
+                  res.statusCode = 500;
+                  res.send(errors);
+                  return;
+                }
+                // and we can safely remove the main node
+                deleteNode.remove(
+                  function(errNodeRemove){ //jshint ignore:line
+                    if(errNodeRemove){
+                      res.statusCode = 500;
+                      res.send(errNodeRemove);
+                      return;
+                    }
+                    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+                      // all owners should be replaced with some sort of accessibility check
+                      _id: mapID,
+                      owner: owner,
+                      archived: false,
+                      workspace : workspaceID,
+                    })
+                    .populate('nodes')
+                    .exec(function(err2, mapResult2) {
+                        if(err2){
+                          res.statusCode = 500;
+                          res.send(err2);
+                          return;
+                        }
+                        res.json({map: mapResult2});
+                    });
                   }
-                  res.json({map: mapResult2});
-              });
+                );
+              };
+              // by now no other node is referencing this one
+              multiSave(nodesToSave, multiSaveCallback);
             }
           );
           break;
