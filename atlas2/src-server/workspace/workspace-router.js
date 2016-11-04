@@ -157,7 +157,14 @@ var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
   }
 };
 
-
+var removeFromArrayBy_ID = function(array, item){
+  for(var i = 0; i < array.length; i++){
+    if(array[i]._id.equals(item._id)){
+      array.splice(i,1);
+      return;
+    }
+  }
+};
 
 
 module.exports = function(stormpath) {
@@ -953,6 +960,136 @@ module.exports = function(stormpath) {
         res.send('Node not found in a map');
       }
     });
+  });
+
+  module.router.post(
+    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var mapID = req.params.mapID;
+      var nodeID1 = new ObjectId(req.params.nodeID1);
+      var nodeID2 = new ObjectId(req.params.nodeID2);
+      var parentMap = new ObjectId(mapID);
+
+      Node
+        .find({_id:{$in:[nodeID1,nodeID2]}}) //two ids we are looking for
+        .populate('parentMap')
+        .exec(function(err, nodes){
+          if(err){
+            console.error(err);
+            res.statusCode = 500;
+            res.json(err);
+            return;
+          }
+          if(!nodes && nodes.length !== 2){
+            console.error('expect two nodes, but got ' + nodes);
+            res.statusCode = 500;
+            res.json('expect two nodes, but got ' + nodes);
+            return;
+          }
+          if((nodes[0].parentMap.owner !== owner) || (nodes[1].parentMap.owner !== owner)){
+            console.error('improper ownership');
+            res.statusCode = 500;
+            res.json('improper ownership');
+            return;
+          }
+          var dependencySourceNode = nodeID1.equals(nodes[0]._id) ? nodes[0] : nodes[1];
+          var dependencyTargetNode = nodeID2.equals(nodes[0]._id) ? nodes[0] : nodes[1];
+          dependencySourceNode.outboundDependencies.push(dependencyTargetNode);
+          dependencyTargetNode.inboundDependencies.push(dependencySourceNode);
+          dependencySourceNode.save(function(errDSN, resultDSN){
+            dependencyTargetNode.save(function(errDTN, resultDTN){
+              if(errDSN || errDTN){
+                console.error(errDSN, errDTN);
+                res.statusCode = 500;
+                res.json({e1:errDSN,e2:errDTN});
+                return;
+              }
+              WardleyMap.findOne({
+                _id: mapID,
+                owner: owner,
+                archived: false,
+                workspace : workspaceID,
+              })
+              .populate('nodes')
+              .exec(function(err2, mapResult2) {
+                  if(err2){
+                    res.statusCode = 500;
+                    res.send(err2);
+                    return;
+                  }
+                  res.json({map: mapResult2});
+              });
+            });
+          });
+        });
+  });
+
+  module.router.delete(
+    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var mapID = req.params.mapID;
+      var nodeID1 = new ObjectId(req.params.nodeID1);
+      var nodeID2 = new ObjectId(req.params.nodeID2);
+      var parentMap = new ObjectId(mapID);
+
+      Node
+        .find({_id:{$in:[nodeID1,nodeID2]}}) //two ids we are looking for
+        .populate('parentMap inboundDependencies outboundDependencies')
+        .exec(function(err, nodes){
+          if(err){
+            console.error(err);
+            res.statusCode = 500;
+            res.json(err);
+            return;
+          }
+          if(!nodes && nodes.length !== 2){
+            console.error('expect two nodes, but got ' + nodes);
+            res.statusCode = 500;
+            res.json('expect two nodes, but got ' + nodes);
+            return;
+          }
+          if((nodes[0].parentMap.owner !== owner) || (nodes[1].parentMap.owner !== owner)){
+            console.error('improper ownership');
+            res.statusCode = 500;
+            res.json('improper ownership');
+            return;
+          }
+          var dependencySourceNode = nodeID1.equals(nodes[0]._id) ? nodes[0] : nodes[1];
+          var dependencyTargetNode = nodeID2.equals(nodes[0]._id) ? nodes[0] : nodes[1];
+          removeFromArrayBy_ID(dependencySourceNode.outboundDependencies,dependencyTargetNode);
+          removeFromArrayBy_ID(dependencyTargetNode.inboundDependencies, dependencySourceNode);
+          dependencySourceNode.save(function(errDSN, resultDSN){
+            dependencyTargetNode.save(function(errDTN, resultDTN){
+              if(errDSN || errDTN){
+                console.error(errDSN, errDTN);
+                res.statusCode = 500;
+                res.json({e1:errDSN,e2:errDTN});
+                return;
+              }
+              WardleyMap.findOne({
+                _id: mapID,
+                owner: owner,
+                archived: false,
+                workspace : workspaceID,
+              })
+              .populate('nodes')
+              .exec(function(err2, mapResult2) {
+                  if(err2){
+                    res.statusCode = 500;
+                    res.send(err2);
+                    return;
+                  }
+                  res.json({map: mapResult2});
+              });
+            });
+          });
+        });
   });
 
   return module;

@@ -75,7 +75,7 @@ export default class MapCanvas extends React.Component {
       //connection already exists, so do not do anything
       return false;
     }
-    Actions.recordConnection(this.props.mapID, scope, connection.sourceId, connection.targetId);
+    Actions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
     //never create connection as they will be reconciled
     return false;
   }
@@ -147,7 +147,7 @@ export default class MapCanvas extends React.Component {
   overlayClickHandler(obj) {
     if (obj.component) {
       //hurray, overlay clicked. So far there is only one, so it is not an issue
-      Actions.deleteConnection(this.props.mapID, obj.component.scope, obj.component.sourceId, obj.component.targetId);
+      Actions.deleteConnection(this.props.workspaceID, this.props.mapID, obj.component.sourceId, obj.component.targetId);
       return;
     }
     // we got pure connection
@@ -155,19 +155,21 @@ export default class MapCanvas extends React.Component {
     conn.___overlayVisible = !conn.___overlayVisible;
     conn.getOverlay("deleteOverlay").setVisible(conn.___overlayVisible);
   }
+
   reconcileDependencies() {
     var modelConnections = [];
     if(!this.props.nodes){
       return;
     }
+
     for(var i = 0; i < this.props.nodes.length; i++){
       var _node = this.props.nodes[i];
-      var iterator_length = _node.dependencies ? _node.dependencies.length : 0;
+      var iterator_length = _node.outboundDependencies ? _node.outboundDependencies.length : 0;
       for(var j = 0; j < iterator_length;j++){
         modelConnections.push({
             source: _node._id,
-            target: _node.dependencies[j].nodeID,
-            scope: _node.dependencies[j].scope
+            target: _node.outboundDependencies[j],
+            scope: jsPlumb.Defaults.Scope
         });
       }
     }
@@ -180,7 +182,7 @@ export default class MapCanvas extends React.Component {
       var currentModel = modelConnections[modelIterator];
       while (canvasIterator--) {
         var currentCanvas = canvasConnections[canvasIterator];
-        if ((currentModel.source === currentCanvas.sourceId) && (currentModel.target === currentCanvas.targetId) && currentModel.scope === currentCanvas.scope) {
+        if ((currentModel.source === currentCanvas.sourceId) && (currentModel.target === currentCanvas.targetId)) {
           isCurrentModelConnectionInTheCanvas = true;
           //we found graphic equivalent, so we ignore further processing of this element
           canvasConnections.splice(canvasIterator, 1);
@@ -191,7 +193,7 @@ export default class MapCanvas extends React.Component {
         var connection = jsPlumb.connect({
           source: currentModel.source,
           target: currentModel.target,
-          scope: currentModel.scope,
+          scope: jsPlumb.Defaults.Scope,
           anchors: [
             "BottomCenter", "TopCenter"
           ],
@@ -209,8 +211,8 @@ export default class MapCanvas extends React.Component {
       }
     }
     //clean up unnecessary canvas connection (no counterpart in model)
-    for (var i = 0; i < canvasConnections.length; i++) {
-      jsPlumb.detach(canvasConnections[i]);
+    for (var z = 0; z < canvasConnections.length; z++) {
+      jsPlumb.detach(canvasConnections[z]);
     }
   }
 

@@ -41,17 +41,6 @@ var _WorkspaceSchema = new Schema({
   ]
 });
 var _NodeSchema = new Schema({
-  name: Schema.Types.String,
-  x : Schema.Types.Number,
-  y : Schema.Types.Number,
-  type : Schema.Types.String,
-  submapID : Schema.Types.String, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
-  categorized: Schema.Types.Boolean,
-  category: Schema.Types.String,
-  referencedNodes : [ {
-    nodeID : Schema.Types.String,
-    mapID :Schema.Types.String
-  }],
   workspace : {
     type: Schema.Types.ObjectId,
     ref: 'Workspace'
@@ -60,13 +49,25 @@ var _NodeSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'WardleyMap'
   },
-  /* old connections between nodes */
-  dependencies : [ {
-    dependencyType : Schema.Types.String, //NODE EXTERNAL_NODE
-    mapID : Schema.Types.String, //if reffering to a node in a different mapID
+  name: Schema.Types.String,
+  x : Schema.Types.Number,
+  y : Schema.Types.Number,
+  type : Schema.Types.String,
+  inboundDependencies:  [ {
+    type: Schema.Types.ObjectId,
+    ref : 'Node'
+  }],
+  outboundDependencies:  [ {
+    type: Schema.Types.ObjectId,
+    ref : 'Node'
+  }],
+  submapID : Schema.Types.String, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
+  categorized: Schema.Types.Boolean,
+  category: Schema.Types.String,
+  referencedNodes : [ {
     nodeID : Schema.Types.String,
-    scope : Schema.Types.String // stolen from jsplumb, defines how the connection should be drawn
-  } ]
+    mapID :Schema.Types.String
+  }],
 });
 
 var _MapSchema = new Schema({

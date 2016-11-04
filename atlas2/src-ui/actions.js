@@ -138,26 +138,26 @@ export default class Actions {
     });
   }
 
-  static recordConnection(mapID, scope, sourceId, targetId) {
+  static recordConnection(workspaceID, mapID, sourceId, targetId) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_CONNECTION_CREATED,
       data: {
         mapID: mapID,
-        scope: scope,
-        source: sourceId,
-        target: targetId
+        sourceID: sourceId,
+        targetID: targetId,
+        workspaceID : workspaceID
       }
     });
   }
 
-  static deleteConnection(mapID, scope, sourceId, targetId) {
+  static deleteConnection(workspaceID, mapID, sourceId, targetId) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_CONNECTION_DELETE,
       data: {
         mapID: mapID,
-        scope: scope,
-        source: sourceId,
-        target: targetId
+        workspaceID : workspaceID,
+        sourceID: sourceId,
+        targetID: targetId
       }
     });
   }

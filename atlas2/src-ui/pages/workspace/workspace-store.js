@@ -64,26 +64,6 @@ class WorkspaceStore extends Store {
     return appState.w_maps[mapID];
   }
 
-  newNodeCreated(data) { // the new map dialog confirms the component creation
-    var mapID = data.mapID;
-    if (!mapID) {
-      console.error('No mapID while creating a node');
-    }
-    if (!(data.name && data.type && data.coords)) {
-      console.error('Insufficient data', data);
-    }
-    if (!appState.w_maps[mapID]) {
-      appState.w_maps[mapID] = {};
-    }
-    var currentMap = appState.w_maps[mapID].map;
-    if (!currentMap.nodes) {
-      currentMap.nodes = [];
-    }
-    currentMap.nodes.push({name: data.name, type: data.type, x: data.coords.x, y: data.coords.y});
-    // no save map here!!
-    this.saveMap(mapID);
-  }
-
   getNewNodeDialogState() {
     return appState.newNodeDialog;
   }
@@ -435,31 +415,30 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           });
           break;
     case ActionTypes.CANVAS_CONNECTION_CREATED:
-      var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
-      //ugly hack, change it to API
-      for(var i = 0; i < _map.nodes.length; i++){
-        if(_map.nodes[i]._id == action.data.source){
-          _map.nodes[i].dependencies.push({
-            nodeID : action.data.target,
-            scope: action.data.scope
-          });
-        }
-      }
-      workspaceStoreInstance.saveMap(action.data.mapID);
+      $.ajax({
+        type: 'POST',
+        url:  '/api/workspace/' + action.data.workspaceID +
+              '/map/' + action.data.mapID +
+              '/node/' + action.data.sourceID +
+              '/outgoingDependency/' + action.data.targetID,
+        success: function(data2) {
+          appState.w_maps[action.data.mapID] = data2;
+          workspaceStoreInstance.emitChange();
+        }.bind(this)
+      });
       break;
     case ActionTypes.CANVAS_CONNECTION_DELETE:
-      var _map = appState.w_maps[action.data.mapID].map; // jshint ignore:line
-      for(var i = 0; i < _map.nodes.length; i++){
-        if(_map.nodes[i]._id == action.data.source){
-          for(var k = 0; k < _map.nodes[i].dependencies.length; k++){
-            if( (_map.nodes[i].dependencies[k].nodeID == action.data.target) && (_map.nodes[i].dependencies[k].scope == action.data.scope)){
-              _map.nodes[i].dependencies.splice(k,1);
-              break;
-            }
-          }
-        }
-      }
-      workspaceStoreInstance.saveMap(action.data.mapID);
+      $.ajax({
+        type: 'DELETE',
+        url:  '/api/workspace/' + action.data.workspaceID +
+              '/map/' + action.data.mapID +
+              '/node/' + action.data.sourceID +
+              '/outgoingDependency/' + action.data.targetID,
+        success: function(data2) {
+          appState.w_maps[action.data.mapID] = data2;
+          workspaceStoreInstance.emitChange();
+        }.bind(this)
+      });
       break;
     case ActionTypes.WORKSPACE_ARCHIVE:
       $.ajax({
