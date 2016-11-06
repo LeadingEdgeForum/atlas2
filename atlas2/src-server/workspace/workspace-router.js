@@ -189,6 +189,19 @@ var multiSave = function(array, callback){
     if(!array || array.length === 0){
       return callback([],[]);
     }
+
+    // cut out dupicates as handling them in mongoose really sucks
+    var mySet = new Set();
+    for(var i = 0; i < array.length; i++){
+      mySet.add(''+array[i]._id);
+    }
+    for(var j = array.length - 1; j >= 0; j--){
+      if(mySet.has(''+array[j]._id)){
+        mySet.delete(''+array[j]._id);
+      } else {
+        array.splice(j,1);
+      }
+    }
     var errors = [];
     var savedObjects = [];
     var counter  = [0];
@@ -205,6 +218,28 @@ var multiSave = function(array, callback){
     };
     for(var i = 0; i < array.length; i++){
       array[i].save(onSave);
+    }
+};
+
+var removeDuplicatesDependenciesFromList = function(dependencies){
+  var mySet = new Set();
+  for(var i = 0; i < dependencies.length; i++){
+    mySet.add(''+dependencies[i]);
+  }
+  for(var j = dependencies.length - 1; j >= 0; j--){
+    if(mySet.has(''+dependencies[j])){
+      mySet.delete(''+dependencies[j]);
+    } else {
+      dependencies.splice(j,1);
+      j--;
+    }
+  }
+};
+
+var removeDuplicatesDependencies = function(nodes){
+    for(var i = 0 ; i < nodes.length; i++){
+        removeDuplicatesDependenciesFromList(nodes[i].outboundDependencies);
+        removeDuplicatesDependenciesFromList(nodes[i].inboundDependencies);
     }
 };
 
@@ -455,9 +490,10 @@ module.exports = function(stormpath) {
                   // and fix dependencies if necessary
                   for(var j = transferredNode.outboundDependencies.length - 1; j >= 0; j--){
                     if(listOfNodesToSubmap.indexOf(''+ transferredNode.outboundDependencies[j]) === -1){
+                      var dependencyAlreadyEstablished = false;
                       savedNode.outboundDependencies.push(transferredNode.outboundDependencies[j]);
-                      transferredNode.outboundDependencies.splice(j,1);
                       nodesToSave.push(savedNode);
+                      transferredNode.outboundDependencies.splice(j,1);
                       submapLogger.trace('fixing outboundDependencies for transfer');
                     }
                   }
@@ -475,11 +511,15 @@ module.exports = function(stormpath) {
                   console.log('transferred after fixing', transferredNode);
                 }
               }
+
               savedNode.x = coords ? coords.x : calculateMean(transferredNodes, 'x');
               savedNode.y = coords ? coords.y : calculateMean(transferredNodes, 'y');
               submapLogger.trace('coords calculated', savedNode.x, savedNode.y);
               affectedMap.nodes.push(savedNode);
               nodesToSave.push(savedNode);
+
+              removeDuplicatesDependencies(nodesToSave);
+
               // console.log(nodesToSave);
               multiSave(nodesToSave.concat(transferredNodes), function(e1, r1){
                 submapLogger.trace('multisave');

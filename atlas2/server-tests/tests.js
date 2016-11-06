@@ -494,6 +494,10 @@ describe('Workspaces & maps', function() {
                     .should.equal(res.body.map.nodes[2]._id);
                   submapID = res.body.map.nodes[2].submapID;
                   submapID.should.not.be.null('missing submap id');
+                  res.body.map.nodes[2].outboundDependencies.length.should.equal(1);
+                  res.body.map.nodes[2].inboundDependencies.length.should.equal(1);
+                  res.body.map.nodes[2].outboundDependencies[0].should.equal(res.body.map.nodes[1]._id);
+                  res.body.map.nodes[2].inboundDependencies[0].should.equal(res.body.map.nodes[0]._id);
                 })
                 .end(function(err, res) {
                     done(err);
