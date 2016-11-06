@@ -513,6 +513,7 @@ describe('Workspaces & maps', function() {
                 .expect(200)
                 .expect(function(res2){
                   submapName.should.equal(res2.body.map.name);
+                  res2.body.map.isSubmap.should.equal(true);
                   res2.body.map.nodes.length.should.equal(2);
                   res2.body.map.nodes[1].outboundDependencies.length.should.equal(1);
                   res2.body.map.nodes[1].inboundDependencies.length.should.equal(0);
@@ -538,6 +539,49 @@ describe('Workspaces & maps', function() {
                   // console.log(res2.body);
                   res2.body.length.should.equal(1);
                   // res2.body.map.nodes.length.should.equal(2);
+                }).end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('verify suggestion', function(done) {
+          request(app).
+              get('/api/submaps/map/' + mapID)
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res2){
+                  res2.body.listOfAvailableSubmaps.length.should.equal(1);
+                  res2.body.listOfAvailableSubmaps[0]._id.should.equal(submapID);
+                }).end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('delete submap', function(done) {
+          request(app).
+            delete('/api/map/' + submapID)
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res2){
+                  should.not.exist(res2.body.map);
+                }).end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('verify suggestion again', function(done) {
+          request(app).
+              get('/api/submaps/map/' + mapID)
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res2){
+                  res2.body.listOfAvailableSubmaps.length.should.equal(0);
                 }).end(function(err, res) {
                     done(err);
                 });

@@ -692,37 +692,30 @@ module.exports = function(stormpath) {
 
   // TODO: remove nodes pointing to this map if it is a submap
   module.router.delete('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
+    WardleyMap
+      .findOne({
+          owner: getStormpathUserIdFromReq(req),
+          _id: req.params.mapID,
+          archived: false})
+      .populate('workspace')
+      .exec(function(err, result) {
       //check that we actually own the map, and if yes
       if (err) {
         res.status(500).json(err);
+        return;
       }
       if (result) {
         result.archived = true;
-        result.save(function(err2, result2) {
-          if (err2) {
-            res.status(500).json(err2);
-          }
-          Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: result2.workspace, archived: false}).exec(function(err3, result3) {
-            //check that we actually own the workspace, and if yes
-            if (err3) {
-              res.status(500).json(err3);
+        var worskpace = result.workspace;
+        worskpace.maps.pull(result._id);
+        worskpace.save(function(e1, savedWorkspace){
+          result.save(function(e2, savedMap) {
+            if(e1 || e2){
+              res.status(500).json([e1,e2]);
+              return;
             }
-            if (result3) {
-              for (var i = 0; i < result3.maps.length; i++) {
-                if (("" + result3.maps[i]) === req.params.mapID) {
-                  result3.maps.splice(i, 1); //hide the map from workspace
-                }
-              }
-              result3.save(function(err4, result4) {
-                if (err4) {
-                  res.status(500).json(err4);
-                }
-                res.json({map: null});
-              });
-            }
+            res.json({map: null});
           });
-
         });
       }
     });
