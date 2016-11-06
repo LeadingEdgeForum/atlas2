@@ -470,6 +470,7 @@ describe('Workspaces & maps', function() {
         it('connect nodes', connectNodes.bind(this, 1, 2));
         it('connect nodes', connectNodes.bind(this, 2, 3));
 
+        var submapID;
         it('create a submap', function(done) {
             request(app).
             put('/api/map/' + mapID + '/submap')
@@ -491,11 +492,54 @@ describe('Workspaces & maps', function() {
                   res.body.map.nodes[1]._id.should.equal(nodeID[3]);
                   res.body.map.nodes[1].inboundDependencies[0]
                     .should.equal(res.body.map.nodes[2]._id);
+                  submapID = res.body.map.nodes[2].submapID;
+                  submapID.should.not.be.null('missing submap id');
                 })
                 .end(function(err, res) {
                     done(err);
                 });
         });
+
+        it('verify the submap', function(done) {
+          request(app).
+            get('/api/map/' + submapID)
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res2){
+                  submapName.should.equal(res2.body.map.name);
+                  res2.body.map.nodes.length.should.equal(2);
+                  res2.body.map.nodes[1].outboundDependencies.length.should.equal(1);
+                  res2.body.map.nodes[1].inboundDependencies.length.should.equal(0);
+                  res2.body.map.nodes[0].inboundDependencies.length.should.equal(1);
+                  res2.body.map.nodes[0].outboundDependencies.length.should.equal(0);
+                  res2.body.map.nodes[1].outboundDependencies[0]
+                    .should.equal(res2.body.map.nodes[0]._id);
+                  res2.body.map.nodes[0].inboundDependencies[0]
+                      .should.equal(res2.body.map.nodes[1]._id);
+                }).end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('verify submap usage info', function(done) {
+          request(app).
+            get('/api/submap/' + submapID + '/usage')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res2){
+                  // console.log(res2.body);
+                  res2.body.length.should.equal(1);
+                  // res2.body.map.nodes.length.should.equal(2);
+                }).end(function(err, res) {
+                    done(err);
+                });
+        });
+
+
     });
 
     //

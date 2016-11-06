@@ -61,7 +61,10 @@ var _NodeSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref : 'Node'
   }],
-  submapID : Schema.Types.String, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
+  submapID : {
+    type: Schema.Types.ObjectId,
+    ref : 'WardleyMap'
+  }, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
   categorized: Schema.Types.Boolean,
   category: Schema.Types.String,
   referencedNodes : [ {

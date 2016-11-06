@@ -21,7 +21,6 @@ var Node = Model.Node;
 var _ = require('underscore');
 var logger = require('./../log');
 var submapLogger = require('./../log').getLogger('submap');
-submapLogger.Level = 'TRACE';
 var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
@@ -341,13 +340,19 @@ module.exports = function(stormpath) {
   });
 
   module.router.get('/submap/:submapID/usage', stormpath.authenticationRequired, function(req, res){
-    WardleyMap.find({
-      owner: getStormpathUserIdFromReq(req),
-      archived: false,
-      'nodes.type': 'SUBMAP',
-      'nodes.submapID' : req.params.submapID
-    }).select('name user purpose _id').exec(function(err, availableMaps) {
-        res.json(availableMaps);
+    Node.find({type:'SUBMAP', submapID : req.params.submapID}).select('parentMap').exec(function(e,r){
+      var ids = [];
+      r.forEach(item => ids.push(item.parentMap));
+      WardleyMap
+        .find({
+          owner: getStormpathUserIdFromReq(req),
+          archived: false,
+          _id : {$in : ids}
+        })
+        .populate('nodes')
+        .select('name user purpose _id').exec(function(err, availableMaps) {
+            res.json(availableMaps);
+        });
     });
   });
 
@@ -413,9 +418,9 @@ module.exports = function(stormpath) {
             var artificialNode = new Node({
                     name: submapName,
                     workspace: affectedMap.workspace,
-                    parentMap: affectedMap._id,
+                    parentMap: affectedMap,
                     type:'SUBMAP',
-                    submapID : ''+savedSubmap._id});
+                    submapID : savedSubmap});
             artificialNode.save(function(err, savedNode){
               submapLogger.trace('submap and node saved');
               var nodesToSave = [];
@@ -451,6 +456,7 @@ module.exports = function(stormpath) {
                   for(var j = transferredNode.outboundDependencies.length - 1; j >= 0; j--){
                     if(listOfNodesToSubmap.indexOf(''+ transferredNode.outboundDependencies[j]) === -1){
                       savedNode.outboundDependencies.push(transferredNode.outboundDependencies[j]);
+                      transferredNode.outboundDependencies.splice(j,1);
                       nodesToSave.push(savedNode);
                       submapLogger.trace('fixing outboundDependencies for transfer');
                     }
@@ -461,9 +467,12 @@ module.exports = function(stormpath) {
                     if(listOfNodesToSubmap.indexOf(''+ transferredNode.inboundDependencies[j]) === -1){
                       savedNode.inboundDependencies.push(transferredNode.inboundDependencies[j]);
                       nodesToSave.push(savedNode);
+                      transferredNode.inboundDependencies.splice(j,1);
                       submapLogger.trace('fixing inboundDependencies for transfer');
                     }
                   }
+
+                  console.log('transferred after fixing', transferredNode);
                 }
               }
               savedNode.x = coords ? coords.x : calculateMean(transferredNodes, 'x');
@@ -511,7 +520,6 @@ module.exports = function(stormpath) {
       //check that we actually own the map, and if yes
       if (result) {
         _.extend(result, req.body.map);
-        result.nodes = req.body.map.nodes || [];
         _.extend(result.archived, false);
 
         result.save(function(err2, result2) {
