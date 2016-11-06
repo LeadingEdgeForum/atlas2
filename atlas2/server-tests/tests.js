@@ -591,27 +591,6 @@ describe('Workspaces & maps', function() {
     });
 
     //
-    // it('create a third node in a map', function(done) {
-    //     var node = {name:"name1",x:0.7,y:0.7,type:"INTERNAL"};
-    //     copyOfMap.nodes.push(node);
-    //     console.log({map:copyOfMap});
-    //     request(app).
-    //     put('/api/map/' + mapID)
-    //         .set('Content-type', 'application/json')
-    //         .set('Accept', 'application/json')
-    //         .set('Authorization', authorizationHeader)
-    //         .send({map:copyOfMap})
-    //         .expect(200)
-    //         .expect(function(res) {
-    //             copyOfMap = res.body.map;
-    //         })
-    //         .end(function(err, res) {
-    //             done(err);
-    //         });
-    // });
-    //
-    //
-    //
     // it('create a capability', function(done) {
     //   var capabilityCategoryID = copyOfWorkspace.workspace.capabilityCategories[0]._id;
     //   var testName = 'testcapability';
@@ -690,59 +669,59 @@ describe('Workspaces & maps', function() {
     //         done(err);
     //       });
     // });
-    //
-    // it('archive a map (/api/map/mapID)', function(done) {
-    //     request(app).
-    //     del('/api/map/' + mapID)
-    //         .set('Content-type', 'application/json')
-    //         .set('Accept', 'application/json')
-    //         .set('Authorization', authorizationHeader)
-    //         .expect(200)
-    //         .end(function(err, res) {
-    //             done(err);
-    //         });
-    // });
-    //
-    // it('verify map does not exist (map)', function(done) {
-    //     request(app).
-    //     get('/api/map/' + mapID)
-    //         .set('Content-type', 'application/json')
-    //         .set('Accept', 'application/json')
-    //         .set('Authorization', authorizationHeader)
-    //         .expect(200)
-    //         .expect(function(res) {
-    //             if (res.body.map) {
-    //                 throw new Error('map should not be visible after archive' + res.body.map);
-    //             }
-    //         })
-    //         .end(function(err, res) {
-    //             done(err);
-    //         });
-    // });
-    //
-    // it('verify map does not exist (workspace)', function(done) {
-    //     request(app).
-    //     get('/api/workspace/' + workspaceID)
-    //         .set('Content-type', 'application/json')
-    //         .set('Accept', 'application/json')
-    //         .set('Authorization', authorizationHeader)
-    //         .expect(200)
-    //         .expect(function(res) {
-    //             var found = null;
-    //             for (var i = 0; i < res.body.workspace.maps.length; i++) {
-    //                 var _map = res.body.workspace.maps[i];
-    //                 if (_map._id === mapID) {
-    //                     found = _map;
-    //                 }
-    //             }
-    //             if (found) {
-    //                 throw new Error("Map " + mapID + " was not correctly removed from workspace " + workspaceID);
-    //             }
-    //         })
-    //         .end(function(err, res) {
-    //             done(err);
-    //         });
-    // });
+
+    it('archive a map (/api/map/mapID)', function(done) {
+        request(app).
+        del('/api/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('verify map does not exist (directly)', function(done) {
+        request(app).
+        get('/api/workspace/' + workspaceID + '/map/' + mapID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                if (res.body.map) {
+                    throw new Error('map should not be visible after archive' + res.body.map);
+                }
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('verify map does not exist (through workspace)', function(done) {
+        request(app).
+        get('/api/workspace/' + workspaceID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+                var found = null;
+                for (var i = 0; i < res.body.workspace.maps.length; i++) {
+                    var _map = res.body.workspace.maps[i];
+                    if (_map._id === mapID) {
+                        found = _map;
+                    }
+                }
+                if (found) {
+                    throw new Error("Map " + mapID + " was not correctly removed from workspace " + workspaceID);
+                }
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
 
 
 });
