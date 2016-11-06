@@ -20,8 +20,13 @@ var Workspace = Model.Workspace;
 var Node = Model.Node;
 var _ = require('underscore');
 var logger = require('./../log');
+var submapLogger = require('./../log').getLogger('submap');
+submapLogger.Level = 'TRACE';
 var mongoose = require('mongoose');
+var q = require('q');
+mongoose.Promise = q.Promise;
 var ObjectId = mongoose.Types.ObjectId;
+
 
 var getStormpathUserIdFromReq = function(req) {
   if (req && req.user && req.user.href) {
@@ -35,6 +40,7 @@ var getStormpathUserIdFromReq = function(req) {
 
 
 var calculateMean = function(list, field){
+  // submapLogger.trace('multisave', list, field);
   if(!list || list.length === 0){
     return 0.5;
   }
@@ -380,95 +386,122 @@ module.exports = function(stormpath) {
     var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
     var submapName = req.body.name;
     var coords = req.body.coords;
+    var owner = getStormpathUserIdFromReq(req);
+    submapLogger.trace({
+      submapName:submapName,
+      coords:coords,
+      owner:owner,
+      listOfNodesToSubmap:listOfNodesToSubmap });
+    var toSave = [];
+    var transferredNodes = [];
 
-    var x, y;
+    WardleyMap.findOne({ // a very primitive check that we actually have right to the particular mapś
+          owner: getStormpathUserIdFromReq(req),
+          _id: req.params.mapID,
+          archived: false})
+      .populate('nodes')
+      .exec(function(err, affectedMap) {
+          //check that we actually own the map, and if yes
+          var submap = new WardleyMap({
+            name      : submapName,
+            isSubmap  : true,
+            owner     : getStormpathUserIdFromReq(req),
+            workspace : affectedMap.workspace,
+            archived  : false
+          });
+          submap.save(function(err, savedSubmap){
+            var artificialNode = new Node({
+                    name: submapName,
+                    workspace: affectedMap.workspace,
+                    parentMap: affectedMap._id,
+                    type:'SUBMAP',
+                    submapID : ''+savedSubmap._id});
+            artificialNode.save(function(err, savedNode){
+              submapLogger.trace('submap and node saved');
+              var nodesToSave = [];
+              for(var i = affectedMap.nodes.length -1; i>= 0; i--){
+                var index = listOfNodesToSubmap.indexOf(''+affectedMap.nodes[i]._id);
+                if(index === -1){ // node not being transferred
+                  var notTransferredNode = affectedMap.nodes[i];
+                  // and fix dependencies if necessary
+                  for(var j = notTransferredNode.outboundDependencies.length - 1; j >= 0; j--){
+                    if(listOfNodesToSubmap.indexOf(''+ notTransferredNode.outboundDependencies[j]) > -1){
+                      notTransferredNode.outboundDependencies.set(j,savedNode);
+                      submapLogger.trace('fixing outboundDependencies for nonTransfer');
+                      nodesToSave.push(notTransferredNode);
+                    }
+                  }
 
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, affectedMap) {
-      //check that we actually own the map, and if yes
-      var submap = new WardleyMap({
-        name:submapName,
-        isSubmap:true,
-        owner: getStormpathUserIdFromReq(req),
-        workspace: affectedMap.workspace,
-        archived: false});
+                  // and fix dependencies if necessary
+                  for(var j = notTransferredNode.inboundDependencies.length - 1; j >= 0; j--){
+                    if(listOfNodesToSubmap.indexOf(''+ notTransferredNode.inboundDependencies[j]) > -1){
+                      notTransferredNode.inboundDependencies.set(j,savedNode);
+                      submapLogger.trace('fixing inboundDependencies for nonTransfer');
+                      nodesToSave.push(notTransferredNode);
+                    }
+                  }
+                } else {
+                  var transferredNode = affectedMap.nodes.splice(i, 1)[0];
+                  transferredNode.parentMap = savedSubmap;  // transfer the node
+                  savedSubmap.nodes.push(transferredNode);
+                  transferredNodes.push(transferredNode);
+                  submapLogger.trace('transfering' ,transferredNode);
 
-      // we will push here are the external dependencies that we got from compnents that form submaps and are not satisfied by
-      // components within that submap.
-      var submapDependecies = [];
-      submap.nodes= [];
+                  // and fix dependencies if necessary
+                  for(var j = transferredNode.outboundDependencies.length - 1; j >= 0; j--){
+                    if(listOfNodesToSubmap.indexOf(''+ transferredNode.outboundDependencies[j]) === -1){
+                      savedNode.outboundDependencies.push(transferredNode.outboundDependencies[j]);
+                      nodesToSave.push(savedNode);
+                      submapLogger.trace('fixing outboundDependencies for transfer');
+                    }
+                  }
 
-      for(var i = 0; i < listOfNodesToSubmap.length; i ++){
-        var _idToCopy = listOfNodesToSubmap[i];
-        for(var j = affectedMap.nodes.length - 1; j >= 0; j--){
-            var _potentialCandidateToCopy = affectedMap.nodes[j];
-
-            if(_potentialCandidateToCopy._id + "" === _idToCopy){
-              submap.nodes.push(_potentialCandidateToCopy);
-
-              // clean up dependencies - only those stay that are satisfied within a map
-              for(var k = _potentialCandidateToCopy.dependencies.length - 1; k >=0 ; k--){
-                var dependency = _potentialCandidateToCopy.dependencies[k];
-                var inTheSubmap = listOfNodesToSubmap.indexOf("" + dependency.nodeID);
-                if(inTheSubmap === -1){ // not in the submap
-                  submapDependecies.push(dependency);
-                  _potentialCandidateToCopy.dependencies.splice(k,1);
+                  // and fix dependencies if necessary
+                  for(var j = transferredNode.inboundDependencies.length - 1; j >= 0; j--){
+                    if(listOfNodesToSubmap.indexOf(''+ transferredNode.inboundDependencies[j]) === -1){
+                      savedNode.inboundDependencies.push(transferredNode.inboundDependencies[j]);
+                      nodesToSave.push(savedNode);
+                      submapLogger.trace('fixing inboundDependencies for transfer');
+                    }
+                  }
                 }
               }
-            }
-        }
-      }
-      var x = coords ? coords.x : calculateMean(submap.nodes, 'x');
-      var y = coords ? coords.y : calculateMean(submap.nodes, 'y');
+              savedNode.x = coords ? coords.x : calculateMean(transferredNodes, 'x');
+              savedNode.y = coords ? coords.y : calculateMean(transferredNodes, 'y');
+              submapLogger.trace('coords calculated', savedNode.x, savedNode.y);
+              affectedMap.nodes.push(savedNode);
+              nodesToSave.push(savedNode);
+              // console.log(nodesToSave);
+              multiSave(nodesToSave.concat(transferredNodes), function(e1, r1){
+                submapLogger.trace('multisave');
+                savedSubmap.save(function(err, savedSubmap2){
+                  submapLogger.trace('save map');
+                  affectedMap.save(function(e2, savedAffectedMap){
+                    submapLogger.trace('all saved');
+                    WardleyMap
+                      .findOne({_id:savedAffectedMap._id})
+                      .populate('nodes')
+                      .exec(function(e3,p){
+                        Workspace
+                          .findById(savedSubmap2.workspace)
+                          .exec(function(e4, rworkspace){
+                            rworkspace.maps.push(savedSubmap2);
+                            rworkspace.save(function(e5,w){});
+                            if(e1.length > 0 || e2 || e3 || e4){
+                              console.log(e1,e2,e3,e4);
+                              res.status(500).json([e1,e2,e3,e4]);
+                              return;
+                            }
+                            res.json({map:p});
+                          });
+                    });
+                  });
+                });
+              });
+            });
 
-      submap.save(function(err2, savedSubmap){
-        if(err2){console.error(err2); return;}
-        Workspace.findOne({ //this is check that the person logged in can actually write to workspace
-          _id: savedSubmap.workspace,
-          owner: savedSubmap.owner,
-          archived: false
-        }, function(err, result) {
-          result.maps.push(savedSubmap._id);
-          result.save();
+          });
 
-          var fakeNodeID = mongoose.Types.ObjectId();
-          var fakeNode = new Node({
-                  name: submapName,
-                  _id: fakeNodeID,
-                  x:x,
-                  y:y,
-                  type:'SUBMAP',
-                  dependencies:submapDependecies,
-                  submapID : ''+submap._id});
-
-          for(var i = affectedMap.nodes.length - 1; i >= 0 ; i--){
-            if(listOfNodesToSubmap.indexOf(""+affectedMap.nodes[i]._id) > -1){
-              affectedMap.nodes.splice(i,1);
-            }
-          }
-
-          for(var i = affectedMap.nodes.length - 1; i >= 0 ; i--) {
-            var __node = affectedMap.nodes[i]; console.log(__node);
-            for(var k = __node.dependencies.length - 1; k >= 0; k--){
-              if(listOfNodesToSubmap.indexOf(__node.dependencies[k].nodeID) > -1){
-                __node.dependencies[k].nodeID = ""+fakeNodeID;
-              }
-            }
-          }
-
-
-          affectedMap.nodes.push(fakeNode);
-
-          affectedMap.save(
-            function(err, result){
-              if (err) {
-                res.status(500).json(err);
-              } else {
-                res.json({map:result});
-              }
-            }
-          );
-        });
-      });
     });
   });
 
@@ -609,6 +642,7 @@ module.exports = function(stormpath) {
     });
   });
 
+  // TODO: remove nodes pointing to this map if it is a submap
   module.router.delete('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
     WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       //check that we actually own the map, and if yes
