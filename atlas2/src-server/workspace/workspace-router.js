@@ -445,7 +445,7 @@ module.exports = function(stormpath) {
                   transferredNode.parentMap = savedSubmap;  // transfer the node
                   savedSubmap.nodes.push(transferredNode);
                   transferredNodes.push(transferredNode);
-                  submapLogger.trace('transfering' ,transferredNode);
+                  submapLogger.trace('transfering' ,transferredNode._id);
 
                   // and fix dependencies if necessary
                   for(var j = transferredNode.outboundDependencies.length - 1; j >= 0; j--){
