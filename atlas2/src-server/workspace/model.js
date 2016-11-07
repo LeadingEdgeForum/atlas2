@@ -70,7 +70,7 @@ var _NodeSchema = new Schema({
   } /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
 });
 
-_NodeSchema.makeDependencyTo = function(_targetId, callback/**err, node*/){
+_NodeSchema.methods.makeDependencyTo = function(_targetId, callback/**err, node*/){
   var targetId = new ObjectId(_targetId);
   var promises = [];
   this.outboundDependencies.push(targetId);
@@ -92,8 +92,26 @@ _NodeSchema.makeDependencyTo = function(_targetId, callback/**err, node*/){
   });
 };
 
-_NodeSchema.removeDependencyTo = function(targetId, callback/**err, node*/){
-
+_NodeSchema.methods.removeDependencyTo = function(_targetId, callback/**err, node*/){
+  var targetId = new ObjectId(_targetId);
+  var promises = [];
+  this.outboundDependencies.pull(targetId);
+  promises.push(this.save());
+  promises.push(Node.update({
+    _id: targetId,
+    workspace : this.workspace
+  }, {
+    $pull: {
+      inboundDependencies: this._id
+    }
+  }, {
+    safe: true
+  }));
+  q.all(promises).then(function(results) {
+    callback(null, results);
+  }, function(err) {
+    callback(err, null);
+  });
 };
 
 var _MapSchema = new Schema({

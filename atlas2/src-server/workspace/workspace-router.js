@@ -161,29 +161,6 @@ var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
     mainAffectedMap.save(callback);
   }
 };
-/**
-Remove object from populated list
-*/
-var removeFromArrayBy_ID = function(array, item){
-  for(var i = 0; i < array.length; i++){
-    if(array[i]._id.equals(item._id)){
-      array.splice(i,1);
-      break;
-    }
-  }
-};
-/**
-Remove object from unpopulated list
-*/
-var removeFromArrayOfStringsBy_ID = function(array, item){
-  for(var i = 0; i < array.length; i++){
-    if(array[i].equals('' + item._id)){
-      array.splice(i,1);
-      break;
-    }
-  }
-};
-
 
 var multiSave = function(array, callback){
     if(!array || array.length === 0){
@@ -1072,54 +1049,28 @@ module.exports = function(stormpath) {
       var parentMap = new ObjectId(mapID);
 
       Node
-        .find({_id:{$in:[nodeID1,nodeID2]}}) //two ids we are looking for
-        .populate('parentMap')
-        .exec(function(err, nodes){
+        .findById(nodeID1) //two ids we are looking for
+        .exec(function(err, node){
           if(err){
-            console.error(err);
             res.statusCode = 500;
             res.json(err);
             return;
           }
-          if(!nodes && nodes.length !== 2){
-            console.error('expect two nodes, but got ' + nodes);
-            res.statusCode = 500;
-            res.json('expect two nodes, but got ' + nodes);
-            return;
-          }
-          if((nodes[0].parentMap.owner !== owner) || (nodes[1].parentMap.owner !== owner)){
-            console.error('improper ownership');
-            res.statusCode = 500;
-            res.json('improper ownership');
-            return;
-          }
-          var dependencySourceNode = nodeID1.equals(nodes[0]._id) ? nodes[0] : nodes[1];
-          var dependencyTargetNode = nodeID2.equals(nodes[0]._id) ? nodes[0] : nodes[1];
-          dependencySourceNode.outboundDependencies.push(dependencyTargetNode);
-          dependencyTargetNode.inboundDependencies.push(dependencySourceNode);
-          dependencySourceNode.save(function(errDSN, resultDSN){
-            dependencyTargetNode.save(function(errDTN, resultDTN){
-              if(errDSN || errDTN){
-                console.error(errDSN, errDTN);
-                res.statusCode = 500;
-                res.json({e1:errDSN,e2:errDTN});
-                return;
-              }
-              WardleyMap.findOne({
-                _id: mapID,
-                owner: owner,
-                archived: false,
-                workspace : workspaceID,
-              })
-              .populate('nodes')
-              .exec(function(err2, mapResult2) {
-                  if(err2){
-                    res.statusCode = 500;
-                    res.send(err2);
-                    return;
-                  }
-                  res.json({map: mapResult2});
-              });
+          node.makeDependencyTo(nodeID2, function(err, result){
+            WardleyMap.findOne({
+              _id: mapID,
+              owner: owner,
+              archived: false,
+              workspace : workspaceID,
+            })
+            .populate('nodes')
+            .exec(function(err2, mapResult2) {
+                if(err2){
+                  res.statusCode = 500;
+                  res.send(err2);
+                  return;
+                }
+                res.json({map: mapResult2});
             });
           });
         });
@@ -1137,54 +1088,28 @@ module.exports = function(stormpath) {
       var parentMap = new ObjectId(mapID);
 
       Node
-        .find({_id:{$in:[nodeID1,nodeID2]}}) //two ids we are looking for
-        .populate('parentMap inboundDependencies outboundDependencies')
-        .exec(function(err, nodes){
+        .findById(nodeID1)
+        .exec(function(err, node){
           if(err){
-            console.error(err);
             res.statusCode = 500;
             res.json(err);
             return;
           }
-          if(!nodes && nodes.length !== 2){
-            console.error('expect two nodes, but got ' + nodes);
-            res.statusCode = 500;
-            res.json('expect two nodes, but got ' + nodes);
-            return;
-          }
-          if((nodes[0].parentMap.owner !== owner) || (nodes[1].parentMap.owner !== owner)){
-            console.error('improper ownership');
-            res.statusCode = 500;
-            res.json('improper ownership');
-            return;
-          }
-          var dependencySourceNode = nodeID1.equals(nodes[0]._id) ? nodes[0] : nodes[1];
-          var dependencyTargetNode = nodeID2.equals(nodes[0]._id) ? nodes[0] : nodes[1];
-          removeFromArrayBy_ID(dependencySourceNode.outboundDependencies,dependencyTargetNode);
-          removeFromArrayBy_ID(dependencyTargetNode.inboundDependencies, dependencySourceNode);
-          dependencySourceNode.save(function(errDSN, resultDSN){
-            dependencyTargetNode.save(function(errDTN, resultDTN){
-              if(errDSN || errDTN){
-                console.error(errDSN, errDTN);
-                res.statusCode = 500;
-                res.json({e1:errDSN,e2:errDTN});
-                return;
-              }
-              WardleyMap.findOne({
-                _id: mapID,
-                owner: owner,
-                archived: false,
-                workspace : workspaceID,
-              })
-              .populate('nodes')
-              .exec(function(err2, mapResult2) {
-                  if(err2){
-                    res.statusCode = 500;
-                    res.send(err2);
-                    return;
-                  }
-                  res.json({map: mapResult2});
-              });
+          node.removeDependencyTo(nodeID2, function(err, result){
+            WardleyMap.findOne({
+              _id: mapID,
+              owner: owner,
+              archived: false,
+              workspace : workspaceID,
+            })
+            .populate('nodes')
+            .exec(function(err2, mapResult2) {
+                if(err2){
+                  res.statusCode = 500;
+                  res.send(err2);
+                  return;
+                }
+                res.json({map: mapResult2});
             });
           });
         });
