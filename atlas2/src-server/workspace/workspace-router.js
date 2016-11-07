@@ -1022,9 +1022,7 @@ module.exports = function(stormpath) {
       owner: owner,
       archived: false,
       workspace : workspaceID,
-    })
-    .populate('nodes')
-    .exec(function(err, mapResult) {
+    }).exec(function(err, mapResult) {
       if (err) {
         res.send(err);
         return;
@@ -1033,70 +1031,32 @@ module.exports = function(stormpath) {
         res.statusCode = 404;
         res.send('Map not found in a workspace');
       }
-
-      var found = false;
-      for(var i = 0; i < mapResult.nodes.length; i++){
-        if(desiredNodeId.equals(mapResult.nodes[i]._id)){
-          found = true;
-          var deleteNode = mapResult.nodes[i];
-          //1.  remove all the references
-          Node.populate(
-            deleteNode,
-            {path:'inboundDependencies outboundDependencies', model: 'Node'},
-            function(err,deleteNode){
-              var nodesToSave = []; // all return references removed
-              for(var k = 0; k < deleteNode.inboundDependencies.length; k++){
-                removeFromArrayOfStringsBy_ID(deleteNode.inboundDependencies[k].outboundDependencies, deleteNode);
-                nodesToSave.push(deleteNode.inboundDependencies[k]);
-              }
-              for(var l = 0; l < deleteNode.outboundDependencies.length; l++){
-                removeFromArrayOfStringsBy_ID(deleteNode.outboundDependencies[l].inboundDependencies, deleteNode);
-                nodesToSave.push(deleteNode.outboundDependencies[l]);
-              }
-              var multiSaveCallback = function(errors, savedItems){
-                if(errors.length !== 0){
+      Node.findById(desiredNodeId)
+        .exec(function(err,result){
+          if(err){
+            res.statusCode = 500;
+            res.send(err);
+            return;
+          }
+          result.remove(function(e, r){
+            WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+              // all owners should be replaced with some sort of accessibility check
+              _id: mapID,
+              owner: owner,
+              archived: false,
+              workspace : workspaceID,
+            })
+            .populate('nodes')
+            .exec(function(err2, mapResult2) {
+                if(err2){
                   res.statusCode = 500;
-                  res.send(errors);
+                  res.send(err2);
                   return;
                 }
-                // and we can safely remove the main node
-                deleteNode.remove(
-                  function(errNodeRemove){ //jshint ignore:line
-                    if(errNodeRemove){
-                      res.statusCode = 500;
-                      res.send(errNodeRemove);
-                      return;
-                    }
-                    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-                      // all owners should be replaced with some sort of accessibility check
-                      _id: mapID,
-                      owner: owner,
-                      archived: false,
-                      workspace : workspaceID,
-                    })
-                    .populate('nodes')
-                    .exec(function(err2, mapResult2) {
-                        if(err2){
-                          res.statusCode = 500;
-                          res.send(err2);
-                          return;
-                        }
-                        res.json({map: mapResult2});
-                    });
-                  }
-                );
-              };
-              // by now no other node is referencing this one
-              multiSave(nodesToSave, multiSaveCallback);
-            }
-          );
-          break;
-        }
-      }
-      if(!found){
-        res.statusCode = 404;
-        res.send('Node not found in a map');
-      }
+                res.json({map: mapResult2});
+            });
+          });
+        });
     });
   });
 

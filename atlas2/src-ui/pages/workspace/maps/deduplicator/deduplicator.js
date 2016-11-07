@@ -76,18 +76,20 @@ export default class Deduplicator extends React.Component {
     if (this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
       this.state.workspace.maps.map(_map => {
         _map.nodes.map(_node => {
-          _components.push({
-            _id: _node._id,
-            name: _node.name,
-            type: _node.type,
-            mapID: _map._id,
-            mapName: _map.name,
-            x: _node.x,
-            y: _node.y,
-            category: _node.category,
-            categorized: _node.categorized,
-            referencedNodes: _node.referencedNodes
-          });
+          if(_node.type !== 'SUBMAP'){ //submaps cannot be duplicated as they are just references. duplication should be discovered on the level of submap map!
+              _components.push({
+                _id: _node._id,
+                name: _node.name,
+                type: _node.type,
+                mapID: _map._id,
+                mapName: _map.name,
+                x: _node.x,
+                y: _node.y,
+                category: _node.category,
+                categorized: _node.categorized,
+                referencedNodes: _node.referencedNodes
+              });
+          }
         });
       });
     }

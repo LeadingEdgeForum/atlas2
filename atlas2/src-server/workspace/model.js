@@ -17,6 +17,9 @@ limitations under the License.*/
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var MongoDBConnectionURL = require('./../mongodb-helper');
+var q = require('q');
+var ObjectId = mongoose.Types.ObjectId;
+var modelLogger = require('./../log').getLogger('Model');
 mongoose.connect(MongoDBConnectionURL);
 
 var _WorkspaceSchema = new Schema({
@@ -64,14 +67,34 @@ var _NodeSchema = new Schema({
   submapID : {
     type: Schema.Types.ObjectId,
     ref : 'WardleyMap'
-  }, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
-  categorized: Schema.Types.Boolean,
-  category: Schema.Types.String,
-  referencedNodes : [ {
-    nodeID : Schema.Types.String,
-    mapID :Schema.Types.String
-  }],
+  } /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
 });
+
+_NodeSchema.makeDependencyTo = function(_targetId, callback/**err, node*/){
+  var targetId = new ObjectId(_targetId);
+  var promises = [];
+  this.outboundDependencies.push(targetId);
+  promises.push(this.save());
+  promises.push(Node.update({
+    _id: targetId,
+    workspace : this.workspace
+  }, {
+    $push: {
+      inboundDependencies: this._id
+    }
+  }, {
+    safe: true
+  }));
+  q.all(promises).then(function(results) {
+    callback(null, results);
+  }, function(err) {
+    callback(err, null);
+  });
+};
+
+_NodeSchema.removeDependencyTo = function(targetId, callback/**err, node*/){
+
+};
 
 var _MapSchema = new Schema({
   user: Schema.Types.String,
@@ -95,5 +118,48 @@ var _MapSchema = new Schema({
 var Workspace = mongoose.model('Workspace', _WorkspaceSchema);
 var WardleyMap = mongoose.model('WardleyMap', _MapSchema);
 var Node = mongoose.model('Node', _NodeSchema);
+
+
+_NodeSchema.pre('remove', function(next) {
+  var promises = [];
+  var dependencyToRemove = this._id;
+  for (var i = 0; i < this.inboundDependencies.length; i++) {
+    promises.push(Node.update({
+      _id: this.inboundDependencies[i]
+    }, {
+      $pull: {
+        outboundDependencies: this._id
+      }
+    }, {
+      safe: true
+    }));
+  }
+  for (var j = 0; j < this.outboundDependencies.length; j++) {
+    promises.push(Node.update({
+      _id: this.outboundDependencies[j]
+    }, {
+      $pull: {
+        inboundDependencies: this._id
+      }
+    }, {
+      safe: true
+    }));
+  }
+  promises.push(WardleyMap.update({
+    _id: this.parentMap
+  }, {
+    $pull: {
+      nodes: this._id
+    }
+  }, {
+    safe: true
+  }));
+  q.all(promises).then(function(results) {
+    modelLogger.trace(results);
+    next();
+  }, function(err) {
+    next(err);
+  });
+});
 
 module.exports = {Workspace, WardleyMap, Node};
