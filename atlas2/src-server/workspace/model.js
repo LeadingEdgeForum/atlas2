@@ -43,6 +43,24 @@ var _WorkspaceSchema = new Schema({
     }
   ]
 });
+
+var _CapabilityCategorySchema = new Schema({
+    name: Schema.Types.String,
+    capabilities : [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Capability'
+      }
+    ]
+});
+
+var _CapabilitySchema = new Schema({
+    nodes : [{
+        type: Schema.Types.ObjectId,
+        ref: 'Node'
+    }]
+});
+
 var _NodeSchema = new Schema({
   workspace : {
     type: Schema.Types.ObjectId,
@@ -71,7 +89,11 @@ var _NodeSchema = new Schema({
   processedForDuplication : {
     default : false,
     type: Schema.Types.Boolean
-  }
+  },
+  aliases : [{ // different nodes in different maps representing same (nonduplicated activity) in a company
+    type: Schema.Types.ObjectId,
+    ref : 'Node',
+  }]
 });
 
 _NodeSchema.methods.makeDependencyTo = function(_targetId, callback/**err, node*/){
@@ -140,9 +162,11 @@ var _MapSchema = new Schema({
 var Workspace = mongoose.model('Workspace', _WorkspaceSchema);
 var WardleyMap = mongoose.model('WardleyMap', _MapSchema);
 var Node = mongoose.model('Node', _NodeSchema);
-
+var CapabilityCategory = mongoose.model('CapabilityCategory',_CapabilityCategorySchema);
+var Capability = mongoose.model('Capability',_CapabilitySchema);
 
 _NodeSchema.pre('remove', function(next) {
+  modelLogger.trace('pre remove on node');
   var promises = [];
   var dependencyToRemove = this._id;
   for (var i = 0; i < this.inboundDependencies.length; i++) {
@@ -176,12 +200,32 @@ _NodeSchema.pre('remove', function(next) {
   }, {
     safe: true
   }));
+  this.aliases.forEach(function(node){
+    promises.push(Node.update({
+      _id: node
+    }, {
+      $pull: {
+        aliases: this._id
+      }
+    }, {
+      safe: true
+    }));
+  });
+  promises.push(Capability.update({
+      nodes : this._id
+    },
+    {
+      $pull: {
+        nodes: this._id
+      }
+    },
+    {safe:true}));
   q.all(promises).then(function(results) {
-    modelLogger.trace(results);
     next();
   }, function(err) {
+    modelLogger.error(err);
     next(err);
   });
 });
 
-module.exports = {Workspace, WardleyMap, Node};
+module.exports = {Workspace, WardleyMap, Node, CapabilityCategory, Capability};

@@ -37,6 +37,7 @@ var draggableComponentStyle = {
 var dragStarted = false;
 
 export default class Deduplicator extends React.Component {
+
   constructor(props) {
     super(props);
     this.state = WorkspaceStore.getWorkspaceInfo(props.params.workspaceID);
@@ -66,41 +67,14 @@ export default class Deduplicator extends React.Component {
     e.dataTransfer.effectAllowed = 'copy';
     e.dataTransfer.setData('json', JSON.stringify(node));
     dragStarted = true;
-
-    // Actions.deduplicatorUnassignedComponentDragStarted();
     this.forceUpdate();
   }
+
   handleDragStop(node, e) {
     dragStarted = false;
     this.forceUpdate();
   }
 
-  // getAvailableComponents() {
-  //   var _components = [];
-  //
-  //   if (this.state.workspace && this.state.workspace.maps && Array.isArray(this.state.workspace.maps)) {
-  //     this.state.workspace.maps.map(_map => {
-  //       _map.nodes.map(_node => {
-  //         if(_node.type !== 'SUBMAP'){ //submaps cannot be duplicated as they are just references. duplication should be discovered on the level of submap map!
-  //             _components.push({
-  //               _id: _node._id,
-  //               name: _node.name,
-  //               type: _node.type,
-  //               mapID: _map._id,
-  //               mapName: _map.name,
-  //               x: _node.x,
-  //               y: _node.y,
-  //               category: _node.category,
-  //               categorized: _node.categorized,
-  //               referencedNodes: _node.referencedNodes
-  //             });
-  //         }
-  //       });
-  //     });
-  //   }
-  //   return _components;
-  // }
-  //
   renderAvailableComponents(map) {
     var nodes = [];
     var linkToMap = "/map/" + map.mapID;
@@ -110,23 +84,6 @@ export default class Deduplicator extends React.Component {
             {node.name}
          </div>
       ));
-    //     <div style={getStyleForType(node.type)}></div>
-    //     {node.name}
-    //   </div>);
-    // var _popover = (
-    //   <Popover id={node.name} title="Component details">
-    //     <p>Name: {node.name}</p>
-    //     <p>Map:
-    //       <a href={linkToMap}>{node.mapName}</a>
-    //     </p>
-    //   </Popover>
-    // );
-    // return <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
-    //   <div data-item={node} draggable="true" style={draggableComponentStyle} onDragEnd={this.handleDragStop.bind(this, node)} onDragStart={this.handleDragStart.bind(this, node)}>
-    //     <div style={getStyleForType(node.type)}></div>
-    //     {node.name}
-    //   </div>
-    // </OverlayTrigger>;
     return (<div><a href={linkToMap}><h5>{map.user}{map.purpose}{map.name}</h5></a>{nodes}</div>);
   }
 
@@ -165,7 +122,7 @@ export default class Deduplicator extends React.Component {
             </Col>
             <Col xs={9}>
               <h4>Capabilities:</h4>
-              // <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categorizedComponents={categorizedComponents}/>
+              <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categorizedComponents={categorizedComponents}/>
             </Col>
           </Row>
         </Grid>
@@ -184,7 +141,7 @@ export default class Deduplicator extends React.Component {
         </Breadcrumb>
           <Row className="show-grid">
             <Col xs={12}>
-              // <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categorizedComponents={categorizedComponents}/>
+              <CapabilitiesView dragStarted={dragStarted} workspace={workspace}/>
             </Col>
           </Row>
         </Grid>

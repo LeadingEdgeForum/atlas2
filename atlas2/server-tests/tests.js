@@ -748,7 +748,7 @@ describe('Workspaces & maps', function() {
 
         it('verify unprocessed components', function(done) {
             request(app).
-            get('/api/workspace/' + workspaceID + '/components')
+            get('/api/workspace/' + workspaceID + '/components/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .set('Authorization', authorizationHeader)

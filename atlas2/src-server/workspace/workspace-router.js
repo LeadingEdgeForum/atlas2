@@ -18,6 +18,8 @@ var Model = require('./model');
 var WardleyMap = Model.WardleyMap;
 var Workspace = Model.Workspace;
 var Node = Model.Node;
+var CapabilityCategory = Model.CapabilityCategory;
+var Capability = Model.Capability;
 var _ = require('underscore');
 var logger = require('./../log');
 var submapLogger = require('./../log').getLogger('submap');
@@ -25,6 +27,9 @@ var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
 var ObjectId = mongoose.Types.ObjectId;
+
+var log4js = require('log4js');
+submapLogger.setLevel(log4js.levels.WARN);
 
 
 var getStormpathUserIdFromReq = function(req) {
@@ -273,37 +278,27 @@ module.exports = function(stormpath) {
       description: description,
       purpose:purpose,
       owner: owner,
-      archived: false,
-      capabilityCategories: [
-        {
-          name: 'Customer Service'
-        }, {
-          name: 'Product'
-        }, {
-          name: 'Administrative'
-        }, {
-          name: 'Quality'
-        }, {
-          name: 'Operational'
-        }, {
-          name: 'Marketing'
-        }, {
-          name: 'Research'
-        }, {
-          name: 'Finances'
-        }
-      ]
+      archived: false
     });
-    wkspc.save(function(err, result) {
-      if (err) {
-        res.status(500).json(err);
-      }
-      res.json(result);
+    var promisesToSave = [];
+    var capabilityCategories = ['Customer Service','Product','Administrative','Quality','Operational','Marketing', 'Research','Finances'];
+    capabilityCategories.forEach(function(name){
+      promisesToSave.push((new CapabilityCategory({name})).save());
     });
+    q.all(promisesToSave)
+      .then(function(results){
+        return wkspc.save();
+      })
+      .fail(function(e){
+          res.status(500).json(e);
+      })
+      .done(function(wkspc){
+          res.json(wkspc);
+      });
   });
 
   module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
-    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps').exec(function(err, result) {
+    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps capabilityCategories').exec(function(err, result) {
       res.json({workspace: result});
     });
   });
@@ -484,8 +479,6 @@ module.exports = function(stormpath) {
                       submapLogger.trace('fixing inboundDependencies for transfer');
                     }
                   }
-
-                  console.log('transferred after fixing', transferredNode);
                 }
               }
 
@@ -1116,7 +1109,7 @@ module.exports = function(stormpath) {
   });
 
   module.router.get(
-    '/workspace/:workspaceID/components',
+    '/workspace/:workspaceID/components/unprocessed',
     stormpath.authenticationRequired,
     function(req, res) {
       var owner = getStormpathUserIdFromReq(req);

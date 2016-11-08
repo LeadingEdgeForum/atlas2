@@ -118,14 +118,6 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG, data: data});
   }
 
-  static deduplicatorUnassignedComponentDragStarted() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STARTED});
-  }
-
-  static deduplicatorUnassignedComponentDragStopped() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED});
-  }
-
   static nodeDragged(workspaceID,mapID, nodeID, newPos) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_NODE_DRAGGED,

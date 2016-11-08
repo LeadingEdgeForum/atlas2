@@ -4,8 +4,12 @@ var Constants = require('./canvas-constants');
 
 export default class Actions {
 
-  static highlightCanvas() {
-    return Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.HIGHLIGHT_CANVAS_AS_DROP_TARGET});
+  static deduplicatorUnassignedComponentDragStarted() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STARTED});
+  }
+
+  static deduplicatorUnassignedComponentDragStopped() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.DEDUPLICATOR_UNASSIGNED_COMPONENT_DRAG_STOPPED});
   }
 
 }

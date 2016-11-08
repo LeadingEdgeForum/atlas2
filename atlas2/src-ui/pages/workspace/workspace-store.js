@@ -223,7 +223,8 @@ class WorkspaceStore extends Store {
     return {
       workspace: {
         name: "Loading...",
-        maps: []
+        maps: [],
+        capabilityCategories : []
       },
       loading: true
     };

@@ -16,7 +16,9 @@ class DeduplicatorStore extends Store {
     this.workspaceID = workspaceID;
     this.state = {
         availableComponents : [],
-        loaded : false
+        processedComponents : [],
+        loadedAvailable : false,
+        loadedProcessed : false
     };
     // this.dispatchToken = Dispatcher.register(action => {
     //   switch (action.actionType) {
@@ -38,20 +40,38 @@ class DeduplicatorStore extends Store {
     list of maps with unprocessed components
   */
   getAvailableComponents(){
-    console.log(this.state);
-    if(!this.state.loaded){
+    if(!this.state.loadedAvailable){
       $.ajax({
         type: 'GET',
-        url: '/api/workspace/' + this.workspaceID + '/components',
+        url: '/api/workspace/' + this.workspaceID + '/components/unprocessed',
         dataType: 'json',
         success: function(data) {
           this.state.availableComponents = data.maps;
           this.emitChange();
         }.bind(this)
       });
-      this.state.loaded = true;
+      this.state.loadedAvailable = true;
     }
     return this.state.availableComponents;
+  }
+
+  /**
+    list of maps with processed components
+  */
+  getProcessedComponents(){
+    if(!this.state.loadedProcessed){
+      $.ajax({
+        type: 'GET',
+        url: '/api/workspace/' + this.workspaceID + '/components/processed',
+        dataType: 'json',
+        success: function(data) {
+          this.state.processedComponents = [];
+          this.emitChange();
+        }.bind(this)
+      });
+      this.state.loadedProcessed = true;
+    }
+    return this.state.processedComponents;
   }
 }
 
