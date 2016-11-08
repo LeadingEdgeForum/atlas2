@@ -23,6 +23,7 @@ var Capability = Model.Capability;
 var _ = require('underscore');
 var logger = require('./../log');
 var submapLogger = require('./../log').getLogger('submap');
+var capabilityLogger = require('./../log').getLogger('capability');
 var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
@@ -1150,6 +1151,62 @@ module.exports = function(stormpath) {
           res.json({maps:maps});
         })
         ;
+  });
+
+
+  module.router.post(
+    '/workspace/:workspaceID/capabilitycategory/:categoryID/node/:nodeID',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var categoryID = req.params.categoryID;
+      var nodeID = req.params.nodeID;
+      // capabilityLogger.trace('wkspc');
+      Workspace
+        .find({
+            _id : workspaceID,
+            owner : owner,
+            archived : false,
+            capabilityCategories : categoryID})
+        .then(function(workspace){
+          // capabilityLogger.trace('workspace loaded', !!workspace);
+          if(!workspace){
+            res.status(404).json("workspace not found");
+            return null;
+          }
+          return Node.update({
+            _id : nodeID
+          },{
+            processedForDuplication : true
+          },{
+            safe:true
+          });
+        })
+        .then(function(node){
+          capabilityLogger.trace('creating capability');
+          return new Capability({nodes:[new ObjectId(nodeID)]});
+        })
+        .then(function(capability){
+          capabilityLogger.trace('capability created', capability);
+          return CapabilityCategory.findByIdAndUpdate(
+            categoryID
+          , {
+            $push : {
+              capabilities : capability._id
+            }
+          }, {
+            safe:true,
+            new : true
+          });
+        })
+        .then(function(category){
+          capabilityLogger.trace('responding', category);
+          res.json({capabilitycategory: category});
+        })
+        .fail(function(e){
+          res.status(500).json(e);
+        });
   });
 
   return module;

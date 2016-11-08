@@ -776,6 +776,38 @@ describe('Workspaces & maps', function() {
                     done(err);
                 });
         });
+        var category = null;
+        it('verify categories are present', function(done) {
+            request(app).
+            get('/api/workspace/' + workspaceID)
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  res.body.workspace.capabilityCategories.length.should.not.equal(0);
+                  category = res.body.workspace.capabilityCategories[0]._id;
+                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('create a category', function(done) {
+            request(app).
+            post('/api/workspace/' + workspaceID + '/capabilitycategory/' + category + '/node/' + nodeID[0])
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  res.body.capabilitycategory.capabilities.length.should.equal(1);
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
 
     });
 
