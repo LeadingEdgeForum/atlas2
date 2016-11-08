@@ -287,6 +287,7 @@ module.exports = function(stormpath) {
     });
     q.all(promisesToSave)
       .then(function(results){
+        wkspc.capabilityCategories = results;
         return wkspc.save();
       })
       .fail(function(e){

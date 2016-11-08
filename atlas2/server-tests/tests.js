@@ -90,12 +90,28 @@ describe('Workspaces & maps', function() {
                     if (res.body.workspaces[i].workspace._id === workspaceID) {
                         found = true;
                         copyOfWorkspace = res.body.workspaces[i];
+                        // copyOfWorkspace.capabilityCategories.length.should.not.equal(0);
                     }
                 }
                 if (!found) {
                     throw new Error('Workspace ' + workspaceID + ' not present on the list');
                 }
 
+            })
+            .end(function(err, res) {
+                done(err);
+            });
+    });
+
+    it('get workspace', function(done) {
+        request(app).
+        get('/api/workspace/' + workspaceID)
+            .set('Content-type', 'application/json')
+            .set('Accept', 'application/json')
+            .set('Authorization', authorizationHeader)
+            .expect(200)
+            .expect(function(res) {
+              res.body.workspace.capabilityCategories.length.should.not.equal(0);
             })
             .end(function(err, res) {
                 done(err);
