@@ -1115,5 +1115,48 @@ module.exports = function(stormpath) {
         });
   });
 
+  module.router.get(
+    '/workspace/:workspaceID/components',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      WardleyMap
+        .find({       // find all undeleted maps within workspace
+          archived:false,
+          owner: owner,
+          workspace : workspaceID
+        })
+        .select('user purpose name')
+        .then(function(maps){
+          var loadPromises = [];
+          maps.forEach(function(cv, i, a){
+              loadPromises.push(Node
+                .find({
+                  parentMap : cv,
+                  processedForDuplication : false
+                })
+                .then(function(nodes){
+                    a[i].nodes = nodes;
+                    return a[i];
+                }));
+          });
+          return q.all(loadPromises)
+                  .then(function(results){
+                    var finalResults = [];
+                    return results.filter(function(map){
+                        return map.nodes && map.nodes.length > 0;
+                    });
+                  });
+        })
+        .fail(function(e){
+          res.status(500).json(e);
+        })
+        .done(function(maps){
+          res.json({maps:maps});
+        })
+        ;
+  });
+
   return module;
 };

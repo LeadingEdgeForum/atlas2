@@ -67,7 +67,11 @@ var _NodeSchema = new Schema({
   submapID : {
     type: Schema.Types.ObjectId,
     ref : 'WardleyMap'
-  } /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
+  }, /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
+  processedForDuplication : {
+    default : false,
+    type: Schema.Types.Boolean
+  }
 });
 
 _NodeSchema.methods.makeDependencyTo = function(_targetId, callback/**err, node*/){
