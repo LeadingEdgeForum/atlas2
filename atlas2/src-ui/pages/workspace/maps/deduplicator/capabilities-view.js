@@ -52,7 +52,7 @@ export default class CapabilitiesView extends React.Component {
     // this.componentDidMount = this.componentDidMount.bind(this);
     // this.componentWillUnmount = this.componentWillUnmount.bind(this);
     // this._onChange = this._onChange.bind(this);
-    this.render = this.render.bind(this);
+    // this.render = this.render.bind(this);
   }
 
   // componentDidMount() {
@@ -239,11 +239,11 @@ export default class CapabilitiesView extends React.Component {
       greyLaneText = "Drop here if the component does the same what this component";
     }
 
-    var categories = this.props.categories;
-    if(!categories){
+    var categories = [];
+    if(!this.props.categories || !this.props.categories.capabilityCategories){
       return <div> wait...</div>
     }
-    this.state.capabilityCategories.forEach(function(category){
+    this.props.categories.capabilityCategories.forEach(function(category){
 
       var dragOver = _this.handleDragOver.bind(_this);
       var onDrop = _this.handleDropNewCapability.bind(_this, category._id);
