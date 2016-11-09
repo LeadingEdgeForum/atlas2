@@ -21,7 +21,6 @@ var $ = require('jquery');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from '../../workspace-store';
 
-//TODO: validation
 
 var AssignExistingCapabilityDialog = React.createClass({
 
@@ -31,19 +30,25 @@ var AssignExistingCapabilityDialog = React.createClass({
     this.props.submitAssignDialog(nodeBeingAssignedID);
   },
 
+  submitAlias: function(nodeBeingAssignedID, aliasID) { //duplicate in capability
+    this.props.submitAssignAlias(nodeBeingAssignedID, aliasID);
+  },
+
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
   },
-  renderExistingItems: function(nodes) {
-    var submit = this.submit;
+  renderExistingItems: function(capability) {
+    var submit = this.submitAlias;
     var result = [];
     var nodeBeingAssigned = this.props.nodeBeingAssigned; // find a a map
-    nodes.map(node => {
-      result.push(
-        <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned._id)}>
-          <b>&#039;{node.name}&#039;</b> from map MAPNAME
-        </ListGroupItem>
-      );
+    capability.aliases.map(alias => {
+      alias.nodes.map(node => {
+        result.push(
+          <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned._id, alias._id)}>
+            <b>&#039;{node.name}&#039;</b> from map MAPNAME
+          </ListGroupItem>
+        );
+      });
     });
     return result;
   },
@@ -54,7 +59,7 @@ var AssignExistingCapabilityDialog = React.createClass({
       return null;
     }
     var cancel = this.props.cancel;
-    var existingItems = this.renderExistingItems(this.props.otherNodes);
+    var existingItems = this.renderExistingItems(this.props.capability);
     var submit = this.submit;
     return (
       <div>

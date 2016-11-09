@@ -18,6 +18,7 @@ var Model = require('./model');
 var WardleyMap = Model.WardleyMap;
 var Workspace = Model.Workspace;
 var Node = Model.Node;
+var Alias = Model.Alias;
 var CapabilityCategory = Model.CapabilityCategory;
 var Capability = Model.Capability;
 var _ = require('underscore');
@@ -548,47 +549,6 @@ module.exports = function(stormpath) {
     });
   });
 
-  var assignComponentToCapability = function(initialResponse, mapID, nodeID, capabilityID) {
-    WardleyMap.findOne({_id: mapID, archived: false}).exec(function(err, result) {
-      //check that we actually own the map, and if yes
-      if (err) {
-        initialResponse.status(500).json(err);
-      }
-      if (result) {
-        for (var i = 0; i < result.nodes.length; i++) {
-          var _node = result.nodes[i];
-          if (nodeID == _node._id) { //jshint ignore:line
-            _node.categorized = true;
-            _node.category = capabilityID;
-          }
-        }
-        result.save(function(err2, result2) {
-          if (err2) {
-            initialResponse.status(500).json(err2);
-          } else {
-            initialResponse.status(200).end();
-          }
-        });
-      }
-    });
-  };
-
-  module.router.delete('/map/:mapID/node/:nodeID/capability', stormpath.authenticationRequired, function(req, res) {
-    cleanNodeCapability(true, getStormpathUserIdFromReq(req),req.params.mapID, req.params.nodeID, function(err, map){
-      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
-        //check that we actually own the map, and if yes
-        if (err) {
-          res.status(500).json(err);
-        }
-        if(!mainAffectedMap){
-          res.status(404).end();
-        }
-        if(mainAffectedMap){
-          res.json(mainAffectedMap);
-        }
-      });
-    });
-  });
 
 //TODO: figure out what to do with map archive
   module.router.delete('/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
@@ -608,39 +568,6 @@ module.exports = function(stormpath) {
       });
       });
     });
-
-  // assign node to existing capability
-  module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/capability/:capabilityID', stormpath.authenticationRequired, function(req, res) {
-    assignComponentToCapability(res, req.body.mapID, req.body.nodeID, req.params.capabilityID);
-  });
-
-  // create a new capability and assign node to it
-  module.router.put('/workspace/:workspaceID/capabilityCategory/:capabilityCategoryID/', stormpath.authenticationRequired, function(req, res) {
-    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
-      //check that we actually own the workspace, and if yes
-      if (err) {
-        res.status(500).json(err);
-      }
-      if (result) {
-        var i = -1;
-        var capabilityIndex = -1;
-        for (i = 0; i < result.capabilityCategories.length; i++) {
-          var capabilityCategory = result.capabilityCategories[i];
-          if (capabilityCategory._id == req.params.capabilityCategoryID) { //jshint ignore:line
-            capabilityCategory.capabilities.push({name: req.body.name});
-            capabilityIndex = capabilityCategory.capabilities.length - 1;
-            break;
-          }
-        }
-        result.save(function(err2, result2) {
-          if (err2) {
-            res.status(500).json(err2);
-          }
-          assignComponentToCapability(res, req.body.mapID, req.body.nodeID, result2.capabilityCategories[i].capabilities[capabilityIndex]._id);
-        });
-      }
-    });
-  });
 
   module.router.put('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
     Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
@@ -705,93 +632,11 @@ module.exports = function(stormpath) {
         result.save(function(err2, result2) {
           if (err2) {
             res.status(500).json(err2);
+            return;
           }
           res.json({workspace: null});
         });
       }
-    });
-  });
-
-  module.router.put('/reference/:mapID1/:nodeID1/:mapID2/:nodeID2', stormpath.authenticationRequired, function(req, res) {
-    var query = WardleyMap.find({owner: getStormpathUserIdFromReq(req)}).where("nodes._id"). in([req.params.nodeID1, req.params.nodeID2]);
-
-    query.exec(function(err, arrayOfMaps) {
-      //so we have two maps that have all the nodes, let's build a nodes referenced cluster, that is all nodes that should be point at each other
-      var cluster = [];
-      var targetCategory = null;
-      arrayOfMaps.map(map => {
-        map.nodes.map(node => {
-          if (node._id == req.params.nodeID1 || node._id == req.params.nodeID2) {
-            cluster.concat(node.referencedNodes);
-          }
-          if (node._id == req.params.nodeID2) {
-            targetCategory = node.category;
-          }
-        });
-      });
-      cluster.push({nodeID: req.params.nodeID1, mapID: req.params.mapID1});
-      cluster.push({nodeID: req.params.nodeID2, mapID: req.params.mapID2});
-
-      var referencedMaps = [];
-      cluster.map(item => {
-        referencedMaps.push(item.mapID);
-      });
-      //so right now we have a list of all maps that fit into the cluster.
-      // we load all of them, and then modify their nodes so the referenced nodes are correctly set up
-
-      var allAffectedMapsQuery = WardleyMap.find({owner: getStormpathUserIdFromReq(req)}).where("_id"). in(referencedMaps);
-      allAffectedMapsQuery.exec(function(err, allReferencedMapsArray) {
-        if (err) {
-          res.status(500).json(err);
-          return;
-        }
-        allReferencedMapsArray.map(map => {
-          map.nodes.map(node => {
-            var nodeForProcessing = false;
-            cluster.map(item => {
-              if (item.nodeID == node._id) {
-                nodeForProcessing = true;
-              }
-            });
-            if (!nodeForProcessing) {
-              return;
-            }
-            node.referencedNodes = [];
-            node.categorized = true;
-            node.category = targetCategory;
-            cluster.map(referencedNode => {
-              if (referencedNode.nodeID != node._id) {
-                //TODO: check for existince of the reference node on the list
-                node.referencedNodes.push(referencedNode);
-              }
-            });
-          });
-        });
-
-        // and the tricky part - save all maps
-        var limit = allReferencedMapsArray.length;
-        var counter = 0;
-        var errors = [];
-        var results = [];
-        allReferencedMapsArray.map(map => {
-          map.save(function(err, result) {
-            if (err) {
-              errors.push(err);
-              counter++;
-            } else {
-              results.push(result);
-              counter++;
-            }
-            if (counter === limit) {
-              if (errors.length !== 0) {
-                res.status(500).json(errors);
-              } else {
-                res.json(results);
-              }
-            }
-          });
-        });
-      });
     });
   });
 
@@ -1173,14 +1018,18 @@ module.exports = function(stormpath) {
               path: 'capabilities',
               model: 'Capability',
               populate : {
-                model: 'Node',
-                path:'nodes'
+                path: 'aliases',
+                model : 'Alias',
+                populate: {
+                  model: 'Node',
+                  path:'nodes'
+                }
               }
             }
         })
         .exec()
         .then(function(wk){
-          capabilityLogger.trace('responding get', wk._id);
+          capabilityLogger.trace('responding get', wk._id ? wk._id : 'null');
           res.json({workspace:wk});
         }).fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1219,8 +1068,12 @@ module.exports = function(stormpath) {
           }).exec();
         })
         .then(function(node){
+          capabilityLogger.trace('creating alias');
+          return new Alias({nodes:[new ObjectId(nodeID)]}).save();
+        })
+        .then(function(alias){
           capabilityLogger.trace('creating capability');
-          return new Capability({nodes:[new ObjectId(nodeID)]}).save();
+          return new Capability({aliases:[alias._id]}).save();
         })
         .then(function(capability){
           capabilityLogger.trace('capability created', capability._id);
@@ -1252,8 +1105,12 @@ module.exports = function(stormpath) {
                   path: 'capabilities',
                   model: 'Capability',
                   populate : {
-                    model: 'Node',
-                    path:'nodes'
+                    path: 'aliases',
+                    model : 'Alias',
+                    populate: {
+                      model: 'Node',
+                      path:'nodes'
+                    }
                   }
                 }
             })
@@ -1301,12 +1158,16 @@ module.exports = function(stormpath) {
           }).exec();
         })
         .then(function(node){
-          capabilityLogger.trace('adding node to capability', node,  capabilityID);
+          capabilityLogger.trace('creating alias');
+          return new Alias({nodes:[new ObjectId(nodeID)]}).save();
+        })
+        .then(function(alias){
+          capabilityLogger.trace('adding alias to capability', alias,  capabilityID);
           return Capability.findOneAndUpdate({
                   _id : capabilityID
                 },{
                   $push : {
-                    nodes : new ObjectId(nodeID)
+                    aliases : new ObjectId(alias._id)
                   }
                 },{
                   safe:true,
@@ -1329,8 +1190,12 @@ module.exports = function(stormpath) {
                   path: 'capabilities',
                   model: 'Capability',
                   populate : {
-                    model: 'Node',
-                    path:'nodes'
+                    path: 'aliases',
+                    model : 'Alias',
+                    populate: {
+                      model: 'Node',
+                      path:'nodes'
+                    }
                   }
                 }
             })
@@ -1340,6 +1205,133 @@ module.exports = function(stormpath) {
         .then(function(wk){
           capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
           res.json({workspace: wk});
+        })
+        .fail(function(e){
+          capabilityLogger.error('responding...', e);
+          res.status(500).json(e);
+        });
+  });
+
+  module.router.put(
+    '/workspace/:workspaceID/alias/:aliasID/node/:nodeID',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var aliasID = req.params.aliasID;
+      var nodeID = req.params.nodeID;
+      capabilityLogger.trace(workspaceID, aliasID, nodeID);
+      Workspace
+        .find({
+            _id : workspaceID,
+            owner : owner,
+            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
+        .exec()
+        .then(function(workspace){
+          if(!workspace){
+            res.status(404).json("workspace not found");
+            return null;
+          }
+
+          return Node.update({
+            _id : nodeID
+          },{
+            processedForDuplication : true
+          },{
+            safe:true
+          }).exec();
+        })
+        .then(function(node){
+          capabilityLogger.trace('adding to alias');
+          return Alias.findOneAndUpdate({
+                  _id : aliasID
+                },{
+                  $push : {
+                    nodes : new ObjectId(nodeID)
+                  }
+                },{
+                  safe:true,
+                  new:true
+                }).exec();
+        })
+        .then(function(ur){
+          capabilityLogger.trace('populating response', ur);
+          var wkPromise =  Workspace
+            .findOne({
+              archived : false,
+              owner : owner,
+              _id : workspaceID
+            })
+            .populate({
+                path: 'capabilityCategories',
+                model: 'CapabilityCategory',
+                populate : {
+                  path: 'capabilities',
+                  model: 'Capability',
+                  populate : {
+                    path: 'aliases',
+                    model : 'Alias',
+                    populate: {
+                      model: 'Node',
+                      path:'nodes'
+                    }
+                  }
+                }
+            })
+            .exec();
+            return wkPromise;
+        })
+        .then(function(wk){
+          capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
+          res.json({workspace: wk});
+        })
+        .fail(function(e){
+          capabilityLogger.error('responding...', e);
+          res.status(500).json(e);
+        });
+  });
+
+  module.router.get(
+    '/workspace/:workspaceID/node/:nodeID/usage',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var nodeID = req.params.nodeID;
+      Workspace
+        .find({
+            _id : workspaceID,
+            owner : owner,
+            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
+        .exec()
+        .then(function(workspace){
+          if(!workspace){
+            res.status(404).json("workspace not found");
+            return null;
+          }
+
+          return Alias.findOne({nodes : nodeID}).exec();
+        })
+        .then(function(alias){
+          capabilityLogger.trace('tracking parent capability');
+          return Capability.findOne({
+                  aliases : alias._id
+                }).populate({
+                  path: 'aliases',
+                  model : 'Alias',
+                  populate: {
+                    model: 'Node',
+                    path:'nodes',
+                    populate: {
+                      model:'WardleyMap',
+                      path: 'parentMap'
+                    }
+                  }
+                }).exec();
+        })
+        .then(function(cp){
+          capabilityLogger.trace('responding ...', cp);
+          res.json({capability: cp});
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1388,8 +1380,12 @@ module.exports = function(stormpath) {
                   path: 'capabilities',
                   model: 'Capability',
                   populate : {
-                    model: 'Node',
-                    path:'nodes'
+                    path: 'aliases',
+                    model : 'Alias',
+                    populate: {
+                      model: 'Node',
+                      path:'nodes'
+                    }
                   }
                 }
             })

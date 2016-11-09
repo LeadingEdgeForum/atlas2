@@ -64,7 +64,6 @@ export default class CapabilitiesView extends React.Component {
       assignExistingCapabilityDialog: {
         open: true,
         nodeBeingAssigned: item,
-        otherNodes: capability.nodes,
         capability: capability,
       }
     };
@@ -86,8 +85,18 @@ export default class CapabilitiesView extends React.Component {
   }
 
   submitAssignDialog(nodeBeingAssignedID) {
+    console.log('submit assign');
     var capability = this.state.assignExistingCapabilityDialog.capability;
     Actions.assignNodeToCapability(this.props.workspace._id, capability._id, nodeBeingAssignedID);
+    this.setState({
+        assignExistingCapabilityDialog: {
+          open: false
+        }
+      });
+  }
+
+  submitAssignAlias(nodeBeingAssignedID, aliasID) {
+    Actions.assignNodeToAlias(this.props.workspace._id, aliasID, nodeBeingAssignedID);
     this.setState({
         assignExistingCapabilityDialog: {
           open: false
@@ -138,6 +147,7 @@ export default class CapabilitiesView extends React.Component {
 
 
   renderSingleNode(node){
+    console.log('single node');
     var style = getStyleForType(node.type);
     style.left = node.x * 100 + '%';
     style.position = 'absolute';
@@ -189,13 +199,15 @@ export default class CapabilitiesView extends React.Component {
       );
 
       category.capabilities.forEach(function(capability){
+        console.log('rendering',capability );
         var _itemsToDisplay = [];
-        capability.nodes.forEach(function(node){
+        capability.aliases.forEach(function(alias){
+          console.log('rendering',alias );
             _itemsToDisplay.push(
-              _this.renderSingleNode(node)
+              _this.renderSingleNode(alias.nodes[0])
             );
         });
-        var name = capability.nodes[0] ? capability.nodes[0].name : 'banana';
+        var name = capability.aliases[0].nodes[0].name;
         categories.push(
           <Row className="show-grid" key={capability._id}>
                       <Col xs={3}>
@@ -228,15 +240,21 @@ export default class CapabilitiesView extends React.Component {
     }
 
     var assignDialogOpen = this.state.assignExistingCapabilityDialog.open;
-    var assignNodeBeingAssigned = this.state.assignExistingCapabilityDialog.nodeBeingAssigned;
-    var capabilityID = this.state.assignExistingCapabilityDialog.capabilityID;
-    var assignItems = this.state.assignExistingCapabilityDialog.otherNodes;
+    var capability = this.state.assignExistingCapabilityDialog.capability;
+    var nodeBeingAssigned = this.state.assignExistingCapabilityDialog.nodeBeingAssigned;
 
     var _this;
     return (
       <Grid fluid={true}>
         {categories}
-        <AssignExistingCapabilityDialog open={assignDialogOpen} nodeBeingAssigned={assignNodeBeingAssigned} capabilityID={capabilityID} otherNodes={assignItems} cancel={_this.cancelDialog.bind(_this)} submitAssignDialog={_this.submitAssignDialog.bind(_this)}/>
+        <AssignExistingCapabilityDialog
+          open={assignDialogOpen}
+          nodeBeingAssigned={nodeBeingAssigned}
+          capability={capability}
+          cancel={_this.cancelDialog.bind(_this)}
+          submitAssignDialog={_this.submitAssignDialog.bind(_this)}
+          submitAssignAlias={_this.submitAssignAlias.bind(_this)}
+          />
       </Grid>
     );
   }

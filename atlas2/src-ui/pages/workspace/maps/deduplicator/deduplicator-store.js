@@ -56,6 +56,17 @@ class DeduplicatorStore extends Store {
             }.bind(this)
           });
           break;
+        case Constants.ACTION_TYPES.ASSIGN_NODE_TO_ALIAS:
+            $.ajax({
+              type: 'PUT',
+              url: '/api/workspace/' + action.data.workspaceID + '/alias/' + action.data.aliasID + '/node/' + action.data.nodeID,
+              success: function(data2) {
+                this.state.loadedAvailable = false;
+                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.emitChange();
+              }.bind(this)
+            });
+            break;
         default:
           return;
       }

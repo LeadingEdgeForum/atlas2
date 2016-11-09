@@ -27,6 +27,17 @@ export default class Actions {
     });
   }
 
+  static assignNodeToAlias(workspaceID, aliasID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.ASSIGN_NODE_TO_ALIAS,
+      data: {
+        workspaceID: workspaceID,
+        aliasID: aliasID,
+        nodeID: nodeID
+      }
+    });
+  }
+
   static deleteCapability(workspaceID, capabilityID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.DELETE_CAPABILITY,
@@ -36,28 +47,4 @@ export default class Actions {
       }
     });
   }
-  //
-  // static clearNodeAssignement(workspaceID, mapID, nodeID) {
-  //   Dispatcher.dispatch({
-  //     actionType: Constants.ACTION_TYPES.CLEAR_NODE_ASSIGNEMENT,
-  //     data: {
-  //       workspaceID: workspaceID,
-  //       mapID: mapID,
-  //       nodeID: nodeID
-  //     }
-  //   });
-  // }
-  //
-  // static makeNodesReferenced(workspaceID, nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
-  //   Dispatcher.dispatch({
-  //     actionType: Constants.ACTION_TYPES.MAKE_NODES_REFERENCED,
-  //     data: {
-  //       workspaceID: workspaceID,
-  //       nodeBeingAssignedMapID: nodeBeingAssignedMapID,
-  //       nodeBeingAssignedID: nodeBeingAssignedID,
-  //       referenceNodeID: referenceNodeID,
-  //       referenceMapID: referenceNodemapID
-  //     }
-  //   });
-  // }
 }

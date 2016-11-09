@@ -9,6 +9,6 @@ module.exports  = keyMirror({
       NEW_CAPABILITY : null,
       ASSIGN_NODE_TO_CAPABILITY : null,
       DELETE_CAPABILITY : null,
-      // MAKE_NODES_REFERENCED : null,
+      ASSIGN_NODE_TO_ALIAS : null
   }
 });

@@ -54,6 +54,13 @@ var _CapabilityCategorySchema = new Schema({
 });
 
 var _CapabilitySchema = new Schema({
+    aliases : [{
+        type: Schema.Types.ObjectId,
+        ref: 'Alias'
+    }]
+});
+
+var _AliasSchema = new Schema({
     nodes : [{
         type: Schema.Types.ObjectId,
         ref: 'Node'
@@ -88,11 +95,7 @@ var _NodeSchema = new Schema({
   processedForDuplication : {
     default : false,
     type: Schema.Types.Boolean
-  },
-  aliases : [{ // different nodes in different maps representing same (nonduplicated activity) in a company
-    type: Schema.Types.ObjectId,
-    ref : 'Node',
-  }]
+  }
 });
 
 _NodeSchema.methods.makeDependencyTo = function(_targetId, callback/**err, node*/){
@@ -159,14 +162,29 @@ var _MapSchema = new Schema({
 _CapabilitySchema.pre('remove', function(next) {
   var promises = [];
   var _id = this._id;
-  var nodes = this.nodes.map(n => new ObjectId(n));//unmark all nodes processed for duplication
-  modelLogger.trace('unprocessing nodes', nodes);
-  nodes.forEach(function(n){
-    promises.push(Node.update({_id : n},{$set:{processedForDuplication : false}},{safe:true}).exec());
+  var aliases = this.aliases.map(n => new ObjectId(n));//unmark all nodes processed for duplication
+  modelLogger.trace('unprocessing aliases', aliases);
+  aliases.forEach(function(n){
+    promises.push(Alias.findById(n._id).remove().exec());
   });
   promises.push(CapabilityCategory.update({capabilities : _id},{$pull : {capabilities : _id}},{safe:true}).exec());
   q.all(promises).then(function(results) {
-    modelLogger.trace('unprocessing results', results);
+    modelLogger.trace('unprocessing results', results.length);
+    next();
+  }, function(err) {
+    modelLogger.error(err);
+    next(err);
+  });
+});
+
+_AliasSchema.pre('remove', function(next){
+  var promises = [];
+  var nodes = this.nodes.map(n => new ObjectId(n));
+  nodes.forEach(function(n){
+    promises.push(Node.update({_id : n},{$set:{processedForDuplication : false}},{safe:true}).exec());
+  });
+  q.all(promises).then(function(results) {
+    modelLogger.trace('alias removing results', results);
     next();
   }, function(err) {
     modelLogger.error(err);
@@ -211,18 +229,10 @@ _NodeSchema.pre('remove', function(next) {
   }, {
     safe: true
   }));
-  this.aliases.forEach(function(node){
-    promises.push(Node.update({
-      _id: node
-    }, {
-      $pull: {
-        aliases: this._id
-      }
-    }, {
-      safe: true
-    }));
-  });
-  promises.push(Capability.update({
+  // find and remove from all aliases
+  // find and delete empty aliases
+  // find and delete empty capabilities
+  promises.push(Alias.update({
       nodes : this._id
     },
     {
@@ -249,5 +259,6 @@ var WardleyMap = conn.model('WardleyMap', _MapSchema); //jshint ignore:line
 var Node = conn.model('Node', _NodeSchema);//jshint ignore:line
 var CapabilityCategory = conn.model('CapabilityCategory',_CapabilityCategorySchema);//jshint ignore:line
 var Capability = conn.model('Capability',_CapabilitySchema);//jshint ignore:line
+var Alias = conn.model('Alias',_AliasSchema);//jshint ignore:line
 
-module.exports = {Workspace, WardleyMap, Node, CapabilityCategory, Capability};
+module.exports = {Workspace, WardleyMap, Node, CapabilityCategory, Capability, Alias};

@@ -776,6 +776,8 @@ describe('Workspaces & maps', function() {
                     done(err);
                 });
         });
+
+
         var category = null;
         it('verify categories are present', function(done) {
             request(app).
@@ -794,7 +796,7 @@ describe('Workspaces & maps', function() {
                 });
         });
 
-        it('create a category', function(done) {
+        it('create a capability', function(done) {
             request(app).
             post('/api/workspace/' + workspaceID + '/capabilitycategory/' + category + '/node/' + nodeID[0])
                 .set('Content-type', 'application/json')
@@ -808,6 +810,7 @@ describe('Workspaces & maps', function() {
                     done(err);
                 });
         });
+
         var capabilityID = null;
         it('check capability creation', function(done) {
             request(app).
@@ -826,6 +829,7 @@ describe('Workspaces & maps', function() {
                 });
         });
 
+        var aliasID = null;
         it('add a node to capability', function(done) {
             request(app).
             put('/api/workspace/' + workspaceID + '/capability/' + capabilityID + '/node/' + nodeID[1])
@@ -836,7 +840,44 @@ describe('Workspaces & maps', function() {
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
                   res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].nodes.length.should.equal(2);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases.length.should.equal(2);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(1);
+                  aliasID = res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1]._id;
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('add a node to an alias', function(done) {
+            request(app).
+            put('/api/workspace/' + workspaceID + '/alias/' + aliasID + '/node/' + nodeID[1])
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
+                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases.length.should.equal(2);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(2);
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+        it('get info', function(done) {
+            request(app).
+            get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  console.log(res.body);
+                  // res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
                 })
                 .end(function(err, res) {
                     done(err);
@@ -851,21 +892,24 @@ describe('Workspaces & maps', function() {
                 .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
-                  console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
+                  // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
                   res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
-                  // request(app).
-                  // get('/api/workspace/' + workspaceID + '/components/unprocessed')
-                  //     .set('Content-type', 'application/json')
-                  //     .set('Accept', 'application/json')
-                  //     .set('Authorization', authorizationHeader)
-                  //     .expect(200)
-                  //     .expect(function(res) {
-                  //         // res.body.maps.length.should.equal(2);
-                  //         console.log(res.body.maps);
-                  //     })
-                  //     .end(function(err, res) {
-                  //         done(err);
-                  //     });
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('get info', function(done) {
+            request(app).
+            get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  console.log(res.body);
+                  // res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
                 })
                 .end(function(err, res) {
                     done(err);
