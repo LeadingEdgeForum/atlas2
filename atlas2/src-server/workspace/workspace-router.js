@@ -1270,5 +1270,82 @@ module.exports = function(stormpath) {
         });
   });
 
+
+  module.router.put(
+    '/workspace/:workspaceID/capability/:capabilityID/node/:nodeID',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var capabilityID = req.params.capabilityID;
+      var nodeID = req.params.nodeID;
+      capabilityLogger.trace(workspaceID, capabilityID, nodeID);
+      Workspace
+        .find({
+            _id : workspaceID,
+            owner : owner,
+            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
+        .exec()
+        .then(function(workspace){
+          if(!workspace){
+            res.status(404).json("workspace not found");
+            return null;
+          }
+
+          return Node.update({
+            _id : nodeID
+          },{
+            processedForDuplication : true
+          },{
+            safe:true
+          }).exec();
+        })
+        .then(function(node){
+          capabilityLogger.trace('adding node to capability', node,  capabilityID);
+          return Capability.findOneAndUpdate({
+                  _id : capabilityID
+                },{
+                  $push : {
+                    nodes : new ObjectId(nodeID)
+                  }
+                },{
+                  safe:true,
+                  new:true
+                }
+          ).exec();
+        })
+        .then(function(ur){
+          capabilityLogger.trace('populating response', ur);
+          var wkPromise =  Workspace
+            .findOne({
+              archived : false,
+              owner : owner,
+              _id : workspaceID
+            })
+            .populate({
+                path: 'capabilityCategories',
+                model: 'CapabilityCategory',
+                populate : {
+                  path: 'capabilities',
+                  model: 'Capability',
+                  populate : {
+                    model: 'Node',
+                    path:'nodes'
+                  }
+                }
+            })
+            .exec();
+            return wkPromise;
+        })
+        .then(function(wk){
+          capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
+          res.json({workspace: wk});
+        })
+        .fail(function(e){
+          capabilityLogger.error('responding...', e);
+          res.status(500).json(e);
+        });
+  });
+
   return module;
 };

@@ -183,39 +183,14 @@ export default class CapabilitiesView extends React.Component {
     );
   }
 
-  findNodesInCapability(capabilityID) {
-    var foundNodes = [];
-    var components = this.props.categorizedComponents;
-    if (!components) {
-      return null;
-    }
-    components.map(node => {
-      if (node.category === capabilityID) {
-        var alreadyReferenced = false;
-        var toAdd = node;
-        foundNodes.map(foundNode => {
-          foundNode.referencedNodes.map(referencedNode => {
-            //this comparison is intentional as it might be String vs Object
-            if (referencedNode.nodeID == node._id) { //jshint ignore:line
-              alreadyReferenced = true;
-            }
-          });
-        });
-        if (!alreadyReferenced) {
-          foundNodes.push(toAdd);
-        }
-      }
-    });
-    return foundNodes;
+
+  renderSingleNode(node){
+    var style = getStyleForType(node.type);
+    style.left = node.x * 100 + '%';
+    style.position = 'absolute';
+    style.top = "10px";
+    return <div style={style}></div>;
   }
-
-  renderFoundNodesInCapability(capabilityID) {
-    var nodesToDisplay = this.findNodesInCapability(capabilityID);
-    return nodesToDisplay.map(node => this.renderNodeInACapability(node));
-  }
-
-
-
 
   render() {
     var _acceptorStyleToSet = _.clone(acceptorStyle);
@@ -263,18 +238,26 @@ export default class CapabilitiesView extends React.Component {
       category.capabilities.forEach(function(capability){
         //onDrop={this.handleDropExistingCapability.bind(this, category._id, capability._id, existingItems)
         // /{_itemsToDisplay}
+        var _itemsToDisplay = [];
+        capability.nodes.forEach(function(node){
+            _itemsToDisplay.push(
+              _this.renderSingleNode(node)
+            );
+        });
+        var name = capability.nodes[0] ? capability.nodes[0].name : 'banana';
         categories.push(
           <Row className="show-grid" key={capability._id}>
                       <Col xs={3}>
                         <div style={{
                           textAlign: "right"
                         }}>
-                          <h5>{capability.nodes[0].name}</h5>
+                          <h5>{name}</h5>
                         </div>
                       </Col>
                       <Col xs={9}>
                         <div style={_capabilityStyleToSet} onDragOver={dragOver}>
                           <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
+                          {_itemsToDisplay}
                         </div>
                       </Col>
                     </Row>

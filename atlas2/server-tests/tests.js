@@ -808,7 +808,7 @@ describe('Workspaces & maps', function() {
                     done(err);
                 });
         });
-
+        var capabilityID = null;
         it('check capability creation', function(done) {
             request(app).
             get('/api/workspace/' + workspaceID + '/components/processed')
@@ -817,8 +817,26 @@ describe('Workspaces & maps', function() {
                 .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
-                  console.log(res.body.workspace.capabilityCategories[0]);
+                  // console.log(res.body.workspace.capabilityCategories[0]);
                   res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
+                  capabilityID = res.body.workspace.capabilityCategories[0].capabilities[0]._id;
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('add a node to category', function(done) {
+            request(app).
+            put('/api/workspace/' + workspaceID + '/capability/' + capabilityID + '/node/' + nodeID[1])
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
+                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
+                  res.body.workspace.capabilityCategories[0].capabilities[0].nodes.length.should.equal(2);
                 })
                 .end(function(err, res) {
                     done(err);
