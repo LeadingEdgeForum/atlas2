@@ -34,6 +34,17 @@ class DeduplicatorStore extends Store {
             }.bind(this)
           });
           break;
+        case Constants.ACTION_TYPES.DELETE_CAPABILITY:
+            $.ajax({
+              type: 'DELETE',
+              url: '/api/workspace/' + action.data.workspaceID + '/capability/' + action.data.capabilityID,
+              success: function(data2) {
+                this.state.loadedAvailable = false;
+                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.emitChange();
+              }.bind(this)
+            });
+            break;
         case Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY:
           $.ajax({
             type: 'PUT',

@@ -156,13 +156,25 @@ var _MapSchema = new Schema({
   }]
 });
 
+_CapabilitySchema.pre('remove', function(next) {
+  var promises = [];
+  var _id = this._id;
+  var nodes = this.nodes.map(n => new ObjectId(n));//unmark all nodes processed for duplication
+  modelLogger.trace('unprocessing nodes', nodes);
+  nodes.forEach(function(n){
+    promises.push(Node.update({_id : n},{$set:{processedForDuplication : false}},{safe:true}).exec());
+  });
+  promises.push(CapabilityCategory.update({capabilities : _id},{$pull : {capabilities : _id}},{safe:true}).exec());
+  q.all(promises).then(function(results) {
+    modelLogger.trace('unprocessing results', results);
+    next();
+  }, function(err) {
+    modelLogger.error(err);
+    next(err);
+  });
+});
 
 
-var Workspace = conn.model('Workspace', _WorkspaceSchema);
-var WardleyMap = conn.model('WardleyMap', _MapSchema);
-var Node = conn.model('Node', _NodeSchema);
-var CapabilityCategory = conn.model('CapabilityCategory',_CapabilityCategorySchema);
-var Capability = conn.model('Capability',_CapabilitySchema);
 
 _NodeSchema.pre('remove', function(next) {
   modelLogger.trace('pre remove on node');
@@ -219,12 +231,23 @@ _NodeSchema.pre('remove', function(next) {
       }
     },
     {safe:true}));
-  q.all(promises).then(function(results) {
+  q.all(promises)
+  .then(function(results){
+    console.error('implement cascading removal of capabilities');
+    return true;
+  })
+  .then(function(results) {
     next();
   }, function(err) {
     modelLogger.error(err);
     next(err);
   });
 });
+
+var Workspace = conn.model('Workspace', _WorkspaceSchema);
+var WardleyMap = conn.model('WardleyMap', _MapSchema); //jshint ignore:line
+var Node = conn.model('Node', _NodeSchema);//jshint ignore:line
+var CapabilityCategory = conn.model('CapabilityCategory',_CapabilityCategorySchema);//jshint ignore:line
+var Capability = conn.model('Capability',_CapabilitySchema);//jshint ignore:line
 
 module.exports = {Workspace, WardleyMap, Node, CapabilityCategory, Capability};

@@ -826,7 +826,7 @@ describe('Workspaces & maps', function() {
                 });
         });
 
-        it('add a node to category', function(done) {
+        it('add a node to capability', function(done) {
             request(app).
             put('/api/workspace/' + workspaceID + '/capability/' + capabilityID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
@@ -837,6 +837,35 @@ describe('Workspaces & maps', function() {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
                   res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
                   res.body.workspace.capabilityCategories[0].capabilities[0].nodes.length.should.equal(2);
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('delete capability', function(done) {
+            request(app).
+            delete('/api/workspace/' + workspaceID + '/capability/' + capabilityID)
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
+                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
+                  // request(app).
+                  // get('/api/workspace/' + workspaceID + '/components/unprocessed')
+                  //     .set('Content-type', 'application/json')
+                  //     .set('Accept', 'application/json')
+                  //     .set('Authorization', authorizationHeader)
+                  //     .expect(200)
+                  //     .expect(function(res) {
+                  //         // res.body.maps.length.should.equal(2);
+                  //         console.log(res.body.maps);
+                  //     })
+                  //     .end(function(err, res) {
+                  //         done(err);
+                  //     });
                 })
                 .end(function(err, res) {
                     done(err);

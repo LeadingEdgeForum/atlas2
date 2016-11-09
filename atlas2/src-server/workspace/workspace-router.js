@@ -1347,5 +1347,64 @@ module.exports = function(stormpath) {
         });
   });
 
+
+  module.router.delete(
+    '/workspace/:workspaceID/capability/:capabilityID',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var capabilityID = req.params.capabilityID;
+      capabilityLogger.trace(workspaceID, capabilityID);
+      Workspace
+        .find({
+            _id : workspaceID,
+            owner : owner,
+            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
+        .exec()
+        .then(function(workspace){
+          if(!workspace){
+            res.status(404).json("workspace not found");
+            return null;
+          }
+
+          return Capability.findById(capabilityID).exec();
+        })
+        .then(function(cap){
+          return cap.remove();
+        })
+        .then(function(ur){
+          capabilityLogger.trace('populating response...');
+          var wkPromise =  Workspace
+            .findOne({
+              archived : false,
+              owner : owner,
+              _id : workspaceID
+            })
+            .populate({
+                path: 'capabilityCategories',
+                model: 'CapabilityCategory',
+                populate : {
+                  path: 'capabilities',
+                  model: 'Capability',
+                  populate : {
+                    model: 'Node',
+                    path:'nodes'
+                  }
+                }
+            })
+            .exec();
+            return wkPromise;
+        })
+        .then(function(wk){
+          capabilityLogger.trace('responding ...');
+          res.json({workspace: wk});
+        })
+        .fail(function(e){
+          capabilityLogger.error('responding...', e);
+          res.status(500).json(e);
+        });
+  });
+
   return module;
 };

@@ -26,6 +26,16 @@ export default class Actions {
       }
     });
   }
+
+  static deleteCapability(workspaceID, capabilityID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.DELETE_CAPABILITY,
+      data: {
+        capabilityID: capabilityID,
+        workspaceID:workspaceID
+      }
+    });
+  }
   //
   // static clearNodeAssignement(workspaceID, mapID, nodeID) {
   //   Dispatcher.dispatch({

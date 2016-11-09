@@ -85,10 +85,6 @@ export default class CapabilitiesView extends React.Component {
     this.setState(newState);
   }
 
-  submitDialog(capabilityCategory, newCapabilityName, copyOfNode) {
-    // Actions.createNewCapabilityAndAssingNodeToIt(this.props.workspace._id, capabilityCategory, newCapabilityName, copyOfNode.mapID, copyOfNode._id);
-  }
-
   submitAssignDialog(nodeBeingAssignedID) {
     var capability = this.state.assignExistingCapabilityDialog.capability;
     Actions.assignNodeToCapability(this.props.workspace._id, capability._id, nodeBeingAssignedID);
@@ -99,46 +95,46 @@ export default class CapabilitiesView extends React.Component {
       });
   }
 
-  clearNodeAssignement(mapID, nodeID, e) {
+  deleteCapability(capability, e) {
     if (e.preventDefault) {
       e.preventDefault();
     }
     e.stopPropagation();
-    Actions.clearNodeAssignement(this.props.workspace._id, mapID, nodeID);
+    Actions.deleteCapability(this.props.workspace._id, capability._id);
   }
 
-  renderNodeInACapability(node) {
-    var style = getStyleForType(node.type);
-    style.left = node.x * 100 + '%';
-    style.position = 'absolute';
-    style.top = "10px";
-    var linkToMap = "/map/" + node.mapID;
-    var _popover = (
-      <Popover id={node.name} title="Component details">
-        <p>Name: {node.name}</p>
-        <p>Map:
-          <a href={linkToMap}>{node.mapName}</a>
-        </p>
-        <p>
-          Appears also on following map(s):
-          <ul>
-            {node.referencedNodes.map(node => <li>
-              <MapLink mapID={node.mapID}></MapLink>
-            </li>)}</ul>
-        </p>
-        <p>
-          <a href="#" onClick={this.clearNodeAssignement.bind(this, node.mapID, node._id)}>Remove from this capability
-          </a>
-        </p>
-      </Popover>
-    );
-    //
-    return (
-      <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
-        <div style={style}></div>
-      </OverlayTrigger>
-    );
-  }
+  // renderNodeInACapability(node) {
+  //   var style = getStyleForType(node.type);
+  //   style.left = node.x * 100 + '%';
+  //   style.position = 'absolute';
+  //   style.top = "10px";
+  //   var linkToMap = "/map/" + node.mapID;
+  //   var _popover = (
+  //     <Popover id={node.name} title="Component details">
+  //       <p>Name: {node.name}</p>
+  //       <p>Map:
+  //         <a href={linkToMap}>{node.mapName}</a>
+  //       </p>
+  //       <p>
+  //         Appears also on following map(s):
+  //         <ul>
+  //           {node.referencedNodes.map(node => <li>
+  //             <MapLink mapID={node.mapID}></MapLink>
+  //           </li>)}</ul>
+  //       </p>
+  //       <p>
+  //         <a href="#" onClick={this.clearNodeAssignement.bind(this, node.mapID, node._id)}>Remove from this capability
+  //         </a>
+  //       </p>
+  //     </Popover>
+  //   );
+  //   //
+  //   return (
+  //     <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
+  //       <div style={style}></div>
+  //     </OverlayTrigger>
+  //   );
+  // }
 
 
   renderSingleNode(node){
@@ -209,11 +205,14 @@ export default class CapabilitiesView extends React.Component {
                           <h5>{name}</h5>
                         </div>
                       </Col>
-                      <Col xs={9}>
+                      <Col xs={8}>
                         <div style={_capabilityStyleToSet} onDragOver={dragOver} onDrop={_this.handleDropExistingCapability.bind(_this, capability)}>
                           <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
                           {_itemsToDisplay}
                         </div>
+                      </Col>
+                      <Col xs={1}>
+                        <Button bsSize="xsmall" onClick={_this.deleteCapability.bind(_this, capability)}><Glyphicon glyph="remove"></Glyphicon></Button>
                       </Col>
                     </Row>
         );
@@ -227,48 +226,6 @@ export default class CapabilitiesView extends React.Component {
                   </Col>
                 </Row>);
     }
-    // if (this.props.workspace && this.props.workspace.capabilityCategories) {
-    //   for (var i = 0; i < this.props.workspace.capabilityCategories.length; i++) {
-    //     if (!categories) {
-    //       categories = [];
-    //     }
-    //     var category = this.props.workspace.capabilityCategories[i];
-    //     categories.push(
-    //       <Row className="show-grid">
-    //         <Col xs={3}>
-    //           <h4>{category.name}</h4>
-    //         </Col>
-    //         <Col xs={9}>
-    //           <div style={_acceptorStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropNewCapability.bind(this, category._id)}>Drop here if nothing in this category does the same job</div>
-    //         </Col>
-    //       </Row>
-    //     );
-    //     if (category.capabilities) {
-    //       for (var j = 0; j < category.capabilities.length; j++) {
-    //         var capability = category.capabilities[j];
-    //         var _itemsToDisplay = this.renderFoundNodesInCapability(capability._id);
-    //         var existingItems = this.findNodesInCapability(capability._id);
-    //         categories.push(
-    //           <Row className="show-grid">
-    //             <Col xs={3}>
-    //               <div style={{
-    //                 textAlign: "right"
-    //               }}>
-    //                 <h5>{capability.name}</h5>
-    //               </div>
-    //             </Col>
-    //             <Col xs={9}>
-    //               <div style={_capabilityStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropExistingCapability.bind(this, category._id, capability._id, existingItems)}>
-    //                 <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
-    //                 {_itemsToDisplay}
-    //               </div>
-    //             </Col>
-    //           </Row>
-    //         );
-    //       }
-    //     }
-    //   }
-    // }
 
     var assignDialogOpen = this.state.assignExistingCapabilityDialog.open;
     var assignNodeBeingAssigned = this.state.assignExistingCapabilityDialog.nodeBeingAssigned;
