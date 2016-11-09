@@ -18,6 +18,7 @@ import _ from "underscore";
 var AssignExistingCapabilityDialog = require('./assign-existing-capability');
 import {getStyleForType} from './../editor/component-styles';
 import MapLink from './maplink.js';
+var WMPopover = require('./wm-popover');
 
 var acceptorStyle = {
   width: "100%",
@@ -85,7 +86,6 @@ export default class CapabilitiesView extends React.Component {
   }
 
   submitAssignDialog(nodeBeingAssignedID) {
-    console.log('submit assign');
     var capability = this.state.assignExistingCapabilityDialog.capability;
     Actions.assignNodeToCapability(this.props.workspace._id, capability._id, nodeBeingAssignedID);
     this.setState({
@@ -147,12 +147,18 @@ export default class CapabilitiesView extends React.Component {
 
 
   renderSingleNode(node){
-    console.log('single node');
     var style = getStyleForType(node.type);
     style.left = node.x * 100 + '%';
     style.position = 'absolute';
     style.top = "10px";
-    return <div style={style}></div>;
+    var workspaceID = this.props.workspace._id;
+    var _popover = <Popover id={node._id} title="Component details">
+            <WMPopover node={node} workspaceID={workspaceID}/>
+        </Popover>;
+    return (
+      <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
+        <div style={style}></div>
+      </OverlayTrigger>);
   }
 
   render() {

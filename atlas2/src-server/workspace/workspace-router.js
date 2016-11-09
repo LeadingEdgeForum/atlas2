@@ -57,118 +57,6 @@ var calculateMean = function(list, field){
   return mean / list.length;
 };
 
-
-var cleanNodeCapability = function(removeAllNodes, owner, mapID, nodeID, callback){
-  if(!removeAllNodes){
-    console.error('cleaning single node category not implemented yet, fallback on removing all nodes');
-  }
-  WardleyMap.findOne({owner: owner, _id: mapID, archived: false}).exec(function(err, mainAffectedMap) {
-    //check that we actually own the map, and if yes
-    if (mainAffectedMap) {
-      console.log('Map subject to cleaning', mainAffectedMap);
-      var mainAffectedNode = null;
-      for (var i = 0; i < mainAffectedMap.nodes.length; i++) {
-        var _node = mainAffectedMap.nodes[i];
-        // this compare is intentional as _node.id is object and nodeID is string from URL
-        if (_node.id == nodeID) { //jshint ignore:line
-          _node.categorized = false;
-          _node.category = null;
-          mainAffectedNode = _node;
-        }
-      }
-      var referencedNodes = [mainAffectedNode._id];  // this will be a whole cluster of all nodes that point at each other
-      for (var j = 0; j < mainAffectedNode.referencedNodes.length; j++) {
-        referencedNodes.push(mainAffectedNode.referencedNodes[j].nodeID);
-      }
-
-      var query = WardleyMap.find({
-        'nodes._id' : {$in:referencedNodes}
-      });
-
-      query.exec(function(err2, affectedMapsArray) {
-        if (err2) {
-          callback(err2);
-          return;
-        }
-        affectedMapsArray.map(map => {
-          map.nodes.map(node => {
-            referencedNodes.map(referencedNode => {
-              if ("" + node._id === "" + referencedNode) {
-                //TODO: instead of cleaning all nodes, it should be possible to remove one node from category and remove its reference from other nodes
-                node.categorized = false;
-                node.category = null;
-                node.referencedNodes = [];
-              }
-            });
-          });
-        });
-        // and the tricky part - save all maps
-        var limit = affectedMapsArray.length;
-        var counter = 0;
-        var errors = [];
-        var results = [];
-        affectedMapsArray.map(map => {
-          map.save(function(err3, result3) {
-            if (err3) {
-              errors.push(err3);
-              counter++;
-            } else {
-              results.push(result3);
-              counter++;
-            }
-            if (counter === limit) {
-              if (errors.length !== 0) {
-                callback(errors, null);
-              } else {
-                //callback with one map if possible
-                var oneMapCallback = false;
-                for(var z = 0; z < results.length;z++){
-                  if(''+results[z]._id === ''+mainAffectedMap._id){
-                      oneMapCallback = true;
-                      callback(null, results[z]);
-                      break;
-                  }
-                }
-                if(!oneMapCallback){
-                  console.error('Could not find the map to return');
-                }
-              }
-            }
-          });
-        });
-      });
-    }
-  });
-};
-
-var deleteNode = function(err, mainAffectedMap, nodeID,  callback) {
-
-  //check that we actually own the map, and if yes
-  if (err) {
-    callback(err);
-  }
-  if(!mainAffectedMap){
-    callback('map not found');
-  }
-  if(mainAffectedMap){
-    // remove the component from nodes
-    for(var k = mainAffectedMap.nodes.length - 1; k>=0; k--){
-      if(mainAffectedMap.nodes[k]._id + "" === "" + nodeID){
-        mainAffectedMap.nodes.splice(k, 1);
-      } else {
-        // if node is not being removed, scan all the connections
-        for(var l = mainAffectedMap.nodes[k].dependencies.length - 1; l >= 0; l--){
-          // at this point we do not have depenency Types
-          if(mainAffectedMap.nodes[k].dependencies[l].nodeID === "" + nodeID){
-            mainAffectedMap.nodes[k].dependencies.splice(l,1);
-          }
-        }
-      }
-    }
-    mainAffectedMap.save(callback);
-  }
-};
-
 var multiSave = function(array, callback){
     if(!array || array.length === 0){
       return callback([],[]);
@@ -548,26 +436,6 @@ module.exports = function(stormpath) {
       }
     });
   });
-
-
-//TODO: figure out what to do with map archive
-  module.router.delete('/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
-    cleanNodeCapability(true, getStormpathUserIdFromReq(req),req.params.mapID, req.params.nodeID, function(err, map){
-      // console.log('capability cleaned');
-      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, mainAffectedMap) {
-        // console.log('map reloaded', mainAffectedMap);
-        deleteNode(err, mainAffectedMap, req.params.nodeID, function(err, result){
-          // console.log('node', result);
-          if (err) {
-            res.status(500).json(err);
-          } else {
-            res.json({map:result});
-          }
-          // console.log('done');
-        });
-      });
-      });
-    });
 
   module.router.put('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
     Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
@@ -1360,7 +1228,6 @@ module.exports = function(stormpath) {
             res.status(404).json("workspace not found");
             return null;
           }
-
           return Capability.findById(capabilityID).exec();
         })
         .then(function(cap){

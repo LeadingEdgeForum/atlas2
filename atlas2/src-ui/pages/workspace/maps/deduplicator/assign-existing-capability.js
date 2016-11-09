@@ -20,7 +20,7 @@ import Actions from './../../../../actions.js';
 var $ = require('jquery');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from '../../workspace-store';
-
+import MapLink from './maplink.js';
 
 var AssignExistingCapabilityDialog = React.createClass({
 
@@ -45,7 +45,7 @@ var AssignExistingCapabilityDialog = React.createClass({
       alias.nodes.map(node => {
         result.push(
           <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned._id, alias._id)}>
-            <b>&#039;{node.name}&#039;</b> from map MAPNAME
+            <b>&#039;{node.name}&#039;</b> from map <MapLink mapID={node.parentMap} textOnly={true}/>
           </ListGroupItem>
         );
       });

@@ -7,15 +7,19 @@ export default class MapLink extends React.Component {
   //we do expect mapID
   constructor(props) {
     super(props);
-    console.log(props);
     this.state = {name:"Loading..."};
     this.componentDidMount = this.componentDidMount.bind(this);
   }
 
   render() {
     var targetURL = '/map/' + this.props.mapID;
+    var textOnly = this.props.textOnly;
     var name = this.state.name;
-    return <a href={targetURL}>{name}</a>;
+    if(textOnly){
+      return <span>{name}</span>;
+    } else {
+      return <a href={targetURL}>{name}</a>;
+    }
   }
 
   componentDidMount() {
