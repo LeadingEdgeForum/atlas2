@@ -37,34 +37,11 @@ class DeduplicatorStore extends Store {
         case Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY:
           $.ajax({
             type: 'PUT',
-            url: '/api/workspace/' + action.data.workspaceID + '/capabilityCategory/' + action.data.capabilityCategoryID + '/capability/' + action.data.capabilityID,
-            data: {
-              mapID: action.data.mapID,
-              nodeID: action.data.nodeID
-            },
+            url: '/api/workspace/' + action.data.workspaceID + '/capability/' + action.data.capabilityID + '/node/' + action.data.nodeID,
             success: function(data2) {
-              workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
-              workspaceStoreInstance.updateWorkspaces(); // this emits change
-            }.bind(this)
-          });
-          break;
-        case Constants.ACTION_TYPES.CLEAR_NODE_ASSIGNEMENT:
-          $.ajax({
-            type: 'DELETE',
-            url: '/api/map/' + action.data.mapID + '/node/' + action.data.nodeID + '/capability/',
-            success: function(data2) {
-              workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
-              workspaceStoreInstance.updateWorkspaces(); // this emits change
-            }.bind(this)
-          });
-          break;
-        case Constants.ACTION_TYPES.MAKE_NODES_REFERENCED:
-          $.ajax({
-            type: 'PUT',
-            url: '/api/reference/' + action.data.nodeBeingAssignedMapID + '/' + action.data.nodeBeingAssignedID + '/' + action.data.referenceMapID + '/' + action.data.referenceNodeID,
-            success: function(data2) {
-              workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
-              workspaceStoreInstance.updateWorkspaces(); // this emits change
+              this.state.loadedAvailable = false;
+              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.emitChange();
             }.bind(this)
           });
           break;

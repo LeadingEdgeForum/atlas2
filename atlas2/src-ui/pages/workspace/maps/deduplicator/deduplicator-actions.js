@@ -16,18 +16,16 @@ export default class Actions {
     });
   }
 
-  // static assignNodeToCapability(workspaceID, capabilityCategoryID, capabilityID, mapID, nodeID) {
-  //   Dispatcher.dispatch({
-  //     actionType: Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY,
-  //     data: {
-  //       workspaceID: workspaceID,
-  //       capabilityCategoryID: capabilityCategoryID,
-  //       capabilityID: capabilityID,
-  //       mapID: mapID,
-  //       nodeID: nodeID
-  //     }
-  //   });
-  // }
+  static assignNodeToCapability(workspaceID, capabilityID, nodeID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY,
+      data: {
+        workspaceID: workspaceID,
+        capabilityID: capabilityID,
+        nodeID: nodeID
+      }
+    });
+  }
   //
   // static clearNodeAssignement(workspaceID, mapID, nodeID) {
   //   Dispatcher.dispatch({

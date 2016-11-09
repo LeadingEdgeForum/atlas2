@@ -27,9 +27,8 @@ var AssignExistingCapabilityDialog = React.createClass({
 
   internalState: {},
 
-  submit: function(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
-    console.log('submit 1');
-    this.props.submitAssignDialog(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID);
+  submit: function(nodeBeingAssignedID) { //duplicate in capability
+    this.props.submitAssignDialog(nodeBeingAssignedID);
   },
 
   _handleDialogChange: function(parameterName, event) {
@@ -38,20 +37,17 @@ var AssignExistingCapabilityDialog = React.createClass({
   renderExistingItems: function(nodes) {
     var submit = this.submit;
     var result = [];
-    var nodeBeingAssigned = this.props.nodeBeingAssigned;
+    var nodeBeingAssigned = this.props.nodeBeingAssigned; // find a a map
     nodes.map(node => {
-      console.log(node);
       result.push(
-        <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned.mapID, nodeBeingAssigned._id, node._id, node.mapID)}>
-          <b>{node.name}</b>&nbsp;from map &nbsp;
-          <b>{node.mapName}</b>
+        <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned._id)}>
+          <b>&#039;{node.name}&#039;</b> from map MAPNAME
         </ListGroupItem>
       );
     });
     return result;
   },
   render: function() {
-    console.log(this.props);
     var show = this.props.open;
     var nodeBeingAssigned = this.props.nodeBeingAssigned;
     if (!nodeBeingAssigned) {
@@ -65,18 +61,19 @@ var AssignExistingCapabilityDialog = React.createClass({
         <Modal show={show} onHide={cancel}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Assign the component component from map
+              Assign the component <b>&#039;{nodeBeingAssigned.name}&#039;</b>
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            Choose whether
-            <b>&nbsp;{nodeBeingAssigned.name}&nbsp;</b>
-            from map
-            <b>&nbsp;{nodeBeingAssigned.mapName}</b>&nbsp; is the same as:
+            Choose whether component
+            <b>&#039;{nodeBeingAssigned.name}&#039;</b>:
             <br/><br/>
             <ListGroup>
+              <ListGroupItem onClick={submit.bind(this, nodeBeingAssigned._id)}>is independent and duplicates the job of components below</ListGroupItem>
+            </ListGroup>
+            is just a different name for
+            <ListGroup>
               {existingItems}
-              <ListGroupItem bsStyle="danger" onClick={submit.bind(this, nodeBeingAssigned.mapID, nodeBeingAssigned._id)}>No, this is separate component</ListGroupItem>
             </ListGroup>
           </Modal.Body>
           <Modal.Footer>
