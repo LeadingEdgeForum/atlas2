@@ -13,9 +13,8 @@ import {
   OverlayTrigger,
   Glyphicon
 } from 'react-bootstrap';
-import Actions from '../../../../actions';
+import Actions from './deduplicator-actions';
 import _ from "underscore";
-var CreateNewCapabilityDialog = require('./create-new-capability');
 var AssignExistingCapabilityDialog = require('./assign-existing-capability');
 import {getStyleForType} from './../editor/component-styles';
 import MapLink from './maplink.js';
@@ -46,15 +45,29 @@ var greyLaneStyle = {
 export default class CapabilitiesView extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      newCapabilityDialog: {
+    this.state = {};
+    this.state.assignExistingCapabilityDialog =  {
         open: false
-      },
-      assignExistingCapabilityDialog: {
-        open: false
-      }
     };
+    // this.componentDidMount = this.componentDidMount.bind(this);
+    // this.componentWillUnmount = this.componentWillUnmount.bind(this);
+    // this._onChange = this._onChange.bind(this);
+    this.render = this.render.bind(this);
   }
+
+  // componentDidMount() {
+  //   this.props.store.addChangeListener(this._onChange);
+  // }
+  //
+  // componentWillUnmount() {
+  //   this.props.store.removeChangeListener(this._onChange);
+  // }
+  //
+  // _onChange() {
+  //   console.log('new components will be', this.props.store.getProcessedComponents());
+  //   this.setState(this.props.store.getProcessedComponents());
+  // }
+
   handleDragOver(e) {
     if (e.preventDefault) {
       e.preventDefault();
@@ -88,14 +101,8 @@ export default class CapabilitiesView extends React.Component {
   }
 
   handleDropNewCapability(cat, e) {
-    var newState = {
-      newCapabilityDialog: {
-        open: true,
-        item: JSON.parse(e.dataTransfer.getData('json')),
-        categoryId: cat
-      }
-    };
-    this.setState(newState);
+    var item = JSON.parse(e.dataTransfer.getData('json'));
+    Actions.createNewCapability(this.props.workspace._id, cat, item._id);
   }
 
   cancelDialog(dialogParametersName) {
@@ -108,14 +115,6 @@ export default class CapabilitiesView extends React.Component {
 
   submitDialog(capabilityCategory, newCapabilityName, copyOfNode) {
     Actions.createNewCapabilityAndAssingNodeToIt(this.props.workspace._id, capabilityCategory, newCapabilityName, copyOfNode.mapID, copyOfNode._id);
-    var newState = {
-      newCapabilityDialog: {
-        open: false,
-        item: null,
-        categoryId: null
-      }
-    };
-    this.setState(newState);
   }
 
   submitAssignDialog(nodeBeingAssignedMapID, nodeBeingAssignedID, referenceNodeID, referenceNodemapID) {
@@ -214,11 +213,16 @@ export default class CapabilitiesView extends React.Component {
     var nodesToDisplay = this.findNodesInCapability(capabilityID);
     return nodesToDisplay.map(node => this.renderNodeInACapability(node));
   }
+
+
+
+
   render() {
     var _acceptorStyleToSet = _.clone(acceptorStyle);
     var _capabilityStyleToSet = _.clone(capabilityStyle);
     var _greyLaneStyleToSet = _.clone(greyLaneStyle);
     var greyLaneText = null;
+    var _this = this;
     if (this.props.dragStarted) {
       _acceptorStyleToSet = _.extend(_acceptorStyleToSet, {
         borderColor: "#00789b",
@@ -235,66 +239,114 @@ export default class CapabilitiesView extends React.Component {
       greyLaneText = "Drop here if the component does the same what this component";
     }
 
-    var categories = null;
-    if (this.props.workspace && this.props.workspace.capabilityCategories) {
-      for (var i = 0; i < this.props.workspace.capabilityCategories.length; i++) {
-        if (!categories) {
-          categories = [];
-        }
-        var category = this.props.workspace.capabilityCategories[i];
-        categories.push(
-          <Row className="show-grid">
-            <Col xs={3}>
-              <h4>{category.name}</h4>
-            </Col>
-            <Col xs={9}>
-              <div style={_acceptorStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropNewCapability.bind(this, category._id)}>Drop here if nothing in this category does the same job</div>
-            </Col>
-          </Row>
-        );
-        if (category.capabilities) {
-          for (var j = 0; j < category.capabilities.length; j++) {
-            var capability = category.capabilities[j];
-            var _itemsToDisplay = this.renderFoundNodesInCapability(capability._id);
-            var existingItems = this.findNodesInCapability(capability._id);
-            categories.push(
-              <Row className="show-grid">
-                <Col xs={3}>
-                  <div style={{
-                    textAlign: "right"
-                  }}>
-                    <h5>{capability.name}</h5>
-                  </div>
-                </Col>
-                <Col xs={9}>
-                  <div style={_capabilityStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropExistingCapability.bind(this, category._id, capability._id, existingItems)}>
-                    <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
-                    {_itemsToDisplay}
-                  </div>
-                </Col>
-              </Row>
-            );
-          }
-        }
-      }
+    var categories = this.props.categories;
+    if(!categories){
+      return <div> wait...</div>
     }
+    this.state.capabilityCategories.forEach(function(category){
 
-    var dialogOpen = this.state.newCapabilityDialog.open;
-    var nodeBeingAssigned = this.state.newCapabilityDialog.item;
-    var capabilityCategory = this.state.newCapabilityDialog.categoryId;
+      var dragOver = _this.handleDragOver.bind(_this);
+      var onDrop = _this.handleDropNewCapability.bind(_this, category._id);
 
-    var assignDialogOpen = this.state.assignExistingCapabilityDialog.open;
-    var assignNodeBeingAssigned = this.state.assignExistingCapabilityDialog.nodeBeingAssigned;
-    var assignCapabilityId = this.state.assignExistingCapabilityDialog.categoryId;
-    var assignItems = this.state.assignExistingCapabilityDialog.otherNodes;
+      // first the title
+      categories.push(
+        <Row className="show-grid" key={category._id}>
+          <Col xs={3}>
+            <h4>{category.name}</h4>
+          </Col>
+          <Col xs={9}>
+            <div style={_acceptorStyleToSet} onDragOver={dragOver} onDrop={onDrop}>Drop here if nothing in this category does the same job</div>
+          </Col>
+        </Row>
+      );
+
+      category.capabilities.forEach(function(capability){
+        //onDrop={this.handleDropExistingCapability.bind(this, category._id, capability._id, existingItems)
+        // /{_itemsToDisplay}
+        categories.push(
+          <Row className="show-grid" key={capability._id}>
+                      <Col xs={3}>
+                        <div style={{
+                          textAlign: "right"
+                        }}>
+                          <h5>{capability.nodes[0].name}</h5>
+                        </div>
+                      </Col>
+                      <Col xs={9}>
+                        <div style={_capabilityStyleToSet} onDragOver={dragOver}>
+                          <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
+                        </div>
+                      </Col>
+                    </Row>
+        );
+      });
+
+    });
+    if(categories.length === 0){
+      categories.push(<Row className="show-grid">
+                  <Col xs={12}>
+                    Nothing found
+                  </Col>
+                </Row>);
+    }
+    // if (this.props.workspace && this.props.workspace.capabilityCategories) {
+    //   for (var i = 0; i < this.props.workspace.capabilityCategories.length; i++) {
+    //     if (!categories) {
+    //       categories = [];
+    //     }
+    //     var category = this.props.workspace.capabilityCategories[i];
+    //     categories.push(
+    //       <Row className="show-grid">
+    //         <Col xs={3}>
+    //           <h4>{category.name}</h4>
+    //         </Col>
+    //         <Col xs={9}>
+    //           <div style={_acceptorStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropNewCapability.bind(this, category._id)}>Drop here if nothing in this category does the same job</div>
+    //         </Col>
+    //       </Row>
+    //     );
+    //     if (category.capabilities) {
+    //       for (var j = 0; j < category.capabilities.length; j++) {
+    //         var capability = category.capabilities[j];
+    //         var _itemsToDisplay = this.renderFoundNodesInCapability(capability._id);
+    //         var existingItems = this.findNodesInCapability(capability._id);
+    //         categories.push(
+    //           <Row className="show-grid">
+    //             <Col xs={3}>
+    //               <div style={{
+    //                 textAlign: "right"
+    //               }}>
+    //                 <h5>{capability.name}</h5>
+    //               </div>
+    //             </Col>
+    //             <Col xs={9}>
+    //               <div style={_capabilityStyleToSet} onDragOver={this.handleDragOver.bind(this)} onDrop={this.handleDropExistingCapability.bind(this, category._id, capability._id, existingItems)}>
+    //                 <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
+    //                 {_itemsToDisplay}
+    //               </div>
+    //             </Col>
+    //           </Row>
+    //         );
+    //       }
+    //     }
+    //   }
+    // }
+
+    // var dialogOpen = this.state.newCapabilityDialog.open;
+    // var nodeBeingAssigned = this.state.newCapabilityDialog.item;
+    // var capabilityCategory = this.state.newCapabilityDialog.categoryId;
+    //
+    // var assignDialogOpen = this.state.assignExistingCapabilityDialog.open;
+    // var assignNodeBeingAssigned = this.state.assignExistingCapabilityDialog.nodeBeingAssigned;
+    // var assignCapabilityId = this.state.assignExistingCapabilityDialog.categoryId;
+    // var assignItems = this.state.assignExistingCapabilityDialog.otherNodes;
 
     var _this;
     return (
       <Grid fluid={true}>
         {categories}
-        <CreateNewCapabilityDialog open={dialogOpen} nodeBeingAssigned={nodeBeingAssigned} capabilityCategory={capabilityCategory} cancel={this.cancelDialog.bind(this, "newCapabilityDialog")} submitDialog={this.submitDialog.bind(this)}/>
-        <AssignExistingCapabilityDialog open={assignDialogOpen} nodeBeingAssigned={assignNodeBeingAssigned} capabilityID={assignCapabilityId} otherNodes={assignItems} cancel={this.cancelDialog.bind(this, "assignExistingCapabilityDialog")} submitAssignDialog={this.submitAssignDialog.bind(this)}/>
       </Grid>
     );
+    // <AssignExistingCapabilityDialog open={assignDialogOpen} nodeBeingAssigned={assignNodeBeingAssigned} capabilityID={assignCapabilityId} otherNodes={assignItems} cancel={this.cancelDialog.bind(this, "assignExistingCapabilityDialog")} submitAssignDialog={this.submitAssignDialog.bind(this)}/>
   }
 }

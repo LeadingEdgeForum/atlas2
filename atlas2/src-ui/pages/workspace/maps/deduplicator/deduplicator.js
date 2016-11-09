@@ -90,8 +90,9 @@ export default class Deduplicator extends React.Component {
   render() {
 
     var unprocessedComponents = this.store.getAvailableComponents();
+    var store = this.store;
 
-    var processedComponents = [];
+    var processedComponents = this.store.getProcessedComponents();
 
     var _toDisplayComponents = unprocessedComponents.map(map => this.renderAvailableComponents(map));
 
@@ -122,7 +123,7 @@ export default class Deduplicator extends React.Component {
             </Col>
             <Col xs={9}>
               <h4>Capabilities:</h4>
-              <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categorizedComponents={categorizedComponents}/>
+              <CapabilitiesView dragStarted={dragStarted} workspace={workspace} store={store}/>
             </Col>
           </Row>
         </Grid>
@@ -141,7 +142,7 @@ export default class Deduplicator extends React.Component {
         </Breadcrumb>
           <Row className="show-grid">
             <Col xs={12}>
-              <CapabilitiesView dragStarted={dragStarted} workspace={workspace}/>
+              <CapabilitiesView dragStarted={dragStarted} workspace={workspace} categories={processedComponents}/>
             </Col>
           </Row>
         </Grid>

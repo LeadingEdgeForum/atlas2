@@ -1153,6 +1153,41 @@ module.exports = function(stormpath) {
         ;
   });
 
+  module.router.get(
+    '/workspace/:workspaceID/components/processed',
+    stormpath.authenticationRequired,
+    function(req, res) {
+      var owner = getStormpathUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+
+      Workspace
+        .findOne({
+          archived : false,
+          owner : owner,
+          _id : workspaceID
+        })
+        .populate({
+            path: 'capabilityCategories',
+            model: 'CapabilityCategory',
+            populate : {
+              path: 'capabilities',
+              model: 'Capability',
+              populate : {
+                model: 'Node',
+                path:'nodes'
+              }
+            }
+        })
+        .exec()
+        .then(function(wk){
+          capabilityLogger.trace('responding get', wk._id);
+          res.json({workspace:wk});
+        }).fail(function(e){
+          capabilityLogger.error('responding...', e);
+          res.status(500).json(e);
+        });
+  });
+
 
   module.router.post(
     '/workspace/:workspaceID/capabilitycategory/:categoryID/node/:nodeID',
@@ -1162,15 +1197,15 @@ module.exports = function(stormpath) {
       var workspaceID = req.params.workspaceID;
       var categoryID = req.params.categoryID;
       var nodeID = req.params.nodeID;
-      // capabilityLogger.trace('wkspc');
+      capabilityLogger.trace(workspaceID, categoryID, nodeID);
       Workspace
         .find({
             _id : workspaceID,
             owner : owner,
             archived : false,
             capabilityCategories : categoryID})
+        .exec()
         .then(function(workspace){
-          // capabilityLogger.trace('workspace loaded', !!workspace);
           if(!workspace){
             res.status(404).json("workspace not found");
             return null;
@@ -1181,30 +1216,56 @@ module.exports = function(stormpath) {
             processedForDuplication : true
           },{
             safe:true
-          });
+          }).exec();
         })
         .then(function(node){
           capabilityLogger.trace('creating capability');
-          return new Capability({nodes:[new ObjectId(nodeID)]});
+          return new Capability({nodes:[new ObjectId(nodeID)]}).save();
         })
         .then(function(capability){
-          capabilityLogger.trace('capability created', capability);
-          return CapabilityCategory.findByIdAndUpdate(
-            categoryID
-          , {
-            $push : {
-              capabilities : capability._id
-            }
-          }, {
-            safe:true,
-            new : true
-          });
+          capabilityLogger.trace('capability created', capability._id);
+          capabilityLogger.trace('adding it to category', categoryID);
+          return CapabilityCategory.findOneAndUpdate({
+                  _id : categoryID
+                },{
+                  $push : {
+                    capabilities : new ObjectId(capability._id)
+                  }
+                },{
+                  safe:true,
+                  new:true
+                }
+          ).exec();
         })
-        .then(function(category){
-          capabilityLogger.trace('responding', category);
-          res.json({capabilitycategory: category});
+        .then(function(ur){
+          capabilityLogger.trace('populating response, update result', ur, ur.isModified());
+          var wkPromise =  Workspace
+            .findOne({
+              archived : false,
+              owner : owner,
+              _id : workspaceID
+            })
+            .populate({
+                path: 'capabilityCategories',
+                model: 'CapabilityCategory',
+                populate : {
+                  path: 'capabilities',
+                  model: 'Capability',
+                  populate : {
+                    model: 'Node',
+                    path:'nodes'
+                  }
+                }
+            })
+            .exec();
+            return wkPromise;
+        })
+        .then(function(wk){
+          capabilityLogger.trace('responding ...', wk);
+          res.json({workspace: wk});
         })
         .fail(function(e){
+          capabilityLogger.error('responding...', e);
           res.status(500).json(e);
         });
   });

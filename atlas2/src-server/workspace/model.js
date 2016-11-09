@@ -20,7 +20,8 @@ var MongoDBConnectionURL = require('./../mongodb-helper');
 var q = require('q');
 var ObjectId = mongoose.Types.ObjectId;
 var modelLogger = require('./../log').getLogger('Model');
-mongoose.connect(MongoDBConnectionURL);
+var conn = mongoose.connect(MongoDBConnectionURL);
+// mongoose.set('debug', true);
 
 var _WorkspaceSchema = new Schema({
   name: Schema.Types.String,
@@ -36,10 +37,8 @@ var _WorkspaceSchema = new Schema({
   ],
   capabilityCategories : [
     {
-      name: Schema.Types.String,
-      capabilities :[
-        {name: Schema.Types.String}
-      ]
+      type: Schema.Types.ObjectId,
+      ref: 'CapabilityCategory'
     }
   ]
 });
@@ -159,11 +158,11 @@ var _MapSchema = new Schema({
 
 
 
-var Workspace = mongoose.model('Workspace', _WorkspaceSchema);
-var WardleyMap = mongoose.model('WardleyMap', _MapSchema);
-var Node = mongoose.model('Node', _NodeSchema);
-var CapabilityCategory = mongoose.model('CapabilityCategory',_CapabilityCategorySchema);
-var Capability = mongoose.model('Capability',_CapabilitySchema);
+var Workspace = conn.model('Workspace', _WorkspaceSchema);
+var WardleyMap = conn.model('WardleyMap', _MapSchema);
+var Node = conn.model('Node', _NodeSchema);
+var CapabilityCategory = conn.model('CapabilityCategory',_CapabilityCategorySchema);
+var Capability = conn.model('Capability',_CapabilitySchema);
 
 _NodeSchema.pre('remove', function(next) {
   modelLogger.trace('pre remove on node');

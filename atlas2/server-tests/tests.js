@@ -802,7 +802,23 @@ describe('Workspaces & maps', function() {
                 .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
-                  res.body.capabilitycategory.capabilities.length.should.equal(1);
+                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('check capability creation', function(done) {
+            request(app).
+            get('/api/workspace/' + workspaceID + '/components/processed')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                  console.log(res.body.workspace.capabilityCategories[0]);
+                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
                 })
                 .end(function(err, res) {
                     done(err);

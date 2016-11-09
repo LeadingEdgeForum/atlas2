@@ -20,16 +20,58 @@ class DeduplicatorStore extends Store {
         loadedAvailable : false,
         loadedProcessed : false
     };
-    // this.dispatchToken = Dispatcher.register(action => {
-    //   switch (action.actionType) {
-    //
-    //     case ActionTypes.HIGHLIGHT_CANVAS_AS_DROP_TARGET:
-    //       // canvasStoreInstance.highlightCanvasAsDropTarget(true);
-    //       return;
-    //     default:
-    //       return;
-    //   }
-    // });
+    this.dispatchToken = Dispatcher.register(action => {
+      switch (action.actionType) {
+
+        case Constants.ACTION_TYPES.NEW_CAPABILITY:
+          $.ajax({
+            type: 'POST',
+            url: '/api/workspace/' + action.data.workspaceID + '/capabilitycategory/' + action.data.capabilityCategoryID + '/node/' + action.data.nodeID,
+            success: function(data2) {
+              this.state.loadedAvailable = false;
+              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.emitChange();
+            }.bind(this)
+          });
+          break;
+        case Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY:
+          $.ajax({
+            type: 'PUT',
+            url: '/api/workspace/' + action.data.workspaceID + '/capabilityCategory/' + action.data.capabilityCategoryID + '/capability/' + action.data.capabilityID,
+            data: {
+              mapID: action.data.mapID,
+              nodeID: action.data.nodeID
+            },
+            success: function(data2) {
+              workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+              workspaceStoreInstance.updateWorkspaces(); // this emits change
+            }.bind(this)
+          });
+          break;
+        case Constants.ACTION_TYPES.CLEAR_NODE_ASSIGNEMENT:
+          $.ajax({
+            type: 'DELETE',
+            url: '/api/map/' + action.data.mapID + '/node/' + action.data.nodeID + '/capability/',
+            success: function(data2) {
+              workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+              workspaceStoreInstance.updateWorkspaces(); // this emits change
+            }.bind(this)
+          });
+          break;
+        case Constants.ACTION_TYPES.MAKE_NODES_REFERENCED:
+          $.ajax({
+            type: 'PUT',
+            url: '/api/reference/' + action.data.nodeBeingAssignedMapID + '/' + action.data.nodeBeingAssignedID + '/' + action.data.referenceMapID + '/' + action.data.referenceNodeID,
+            success: function(data2) {
+              workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+              workspaceStoreInstance.updateWorkspaces(); // this emits change
+            }.bind(this)
+          });
+          break;
+        default:
+          return;
+      }
+    });
   }
 
   emitChange() {
@@ -65,13 +107,13 @@ class DeduplicatorStore extends Store {
         url: '/api/workspace/' + this.workspaceID + '/components/processed',
         dataType: 'json',
         success: function(data) {
-          this.state.processedComponents = [];
+          this.state.processedComponents = data.workspace.capabilityCategories;
           this.emitChange();
         }.bind(this)
       });
       this.state.loadedProcessed = true;
     }
-    return this.state.processedComponents;
+    return {capabilityCategories : this.state.processedComponents};
   }
 }
 
