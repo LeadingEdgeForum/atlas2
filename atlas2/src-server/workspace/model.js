@@ -162,10 +162,21 @@ var _MapSchema = new Schema({
 _CapabilitySchema.pre('remove', function(next) {
   var promises = [];
   var _id = this._id;
-  var aliases = this.aliases.map(n => new ObjectId(n));//unmark all nodes processed for duplication
+  var aliases = this.aliases.map(n => n);//unmark all nodes processed for duplication
   modelLogger.trace('unprocessing aliases', aliases);
-  aliases.forEach(function(n){
-    promises.push(Alias.findById(n._id).remove().exec());
+  aliases.forEach(function(a){
+    promises.push(
+      Alias.findById(new Object(a))
+      .then(function(alias){
+            alias.nodes.forEach(function(n){
+              modelLogger.trace('unprocessing node', n);
+              promises.push(Node.update({_id : n},{$set:{processedForDuplication : false}},{safe:true}).exec());
+            });
+            return alias;
+      }).then(function(alias){
+        return alias.remove();
+      })
+    );
   });
   promises.push(CapabilityCategory.update({capabilities : _id},{$pull : {capabilities : _id}},{safe:true}).exec());
   q.all(promises).then(function(results) {
@@ -178,6 +189,7 @@ _CapabilitySchema.pre('remove', function(next) {
 });
 
 _AliasSchema.pre('remove', function(next){
+  modelLogger.trace('alias pre remove');
   var promises = [];
   var nodes = this.nodes.map(n => new ObjectId(n));
   nodes.forEach(function(n){

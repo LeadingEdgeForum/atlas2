@@ -900,6 +900,22 @@ describe('Workspaces & maps', function() {
                 });
         });
 
+        it('verify unprocessed components', function(done) {
+            request(app).
+            get('/api/workspace/' + workspaceID + '/components/unprocessed')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .set('Authorization', authorizationHeader)
+                .expect(200)
+                .expect(function(res) {
+                    console.log(res.body.maps);
+                    res.body.maps.length.should.equal(2);
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
         it('get info', function(done) {
             request(app).
             get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')

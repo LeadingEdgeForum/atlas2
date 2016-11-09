@@ -1314,6 +1314,7 @@ module.exports = function(stormpath) {
         })
         .then(function(alias){
           capabilityLogger.trace('tracking parent capability');
+          if(!alias) {return alias;}
           return Capability.findOne({
                   aliases : alias._id
                 }).populate({

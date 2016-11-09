@@ -10,14 +10,18 @@ var express = require('express');
 
 var app = express();
 var webpack_middleware = null;
-try{
-  var webpack = require('webpack');
-  var config = require('./webpack.config');
-  var compiler = webpack(config);
-  webpack_middleware = require('webpack-dev-middleware')(compiler);
-  app.use(webpack_middleware);
-}catch(e){
-  console.log(e);
+var debug = false;
+debug = true;
+if (debug){
+  try{
+    var webpack = require('webpack');
+    var config = require('./webpack.config');
+    var compiler = webpack(config);
+    webpack_middleware = require('webpack-dev-middleware')(compiler);
+    app.use(webpack_middleware);
+  }catch(e){
+    console.log(e);
+  }
 }
 
 
