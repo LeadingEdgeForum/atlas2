@@ -10,6 +10,22 @@ var express = require('express');
 
 var app = express();
 var webpack_middleware = null;
+
+if(process.env.PRODUCTION){
+  console.log('forcing https');
+  app.enable('trust proxy');
+  app.use(function (req, res, next) {
+    if (req.secure) {
+            next();
+    } else {
+            res.redirect('https://' + req.headers.host + req.url);
+    }
+});
+}
+
+
+
+
 var debug = false;
 debug = true;
 if (debug){
