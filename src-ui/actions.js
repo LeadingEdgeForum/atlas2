@@ -208,12 +208,14 @@ export default class Actions {
     });
   }
 
-  static openSubmapReferencesDialog(currentName, mapID, submapID){
+  static openSubmapReferencesDialog(currentName, mapID, submapID, node, workspaceID){
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.SHOW_REFERENCES_SUBMAP,
       currentName : currentName,
       mapID : mapID,
-      submapID : submapID
+      submapID : submapID,
+      node : node,
+      workspaceID:workspaceID
     });
   }
 

@@ -21,6 +21,7 @@ var _ = require('underscore');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from './../../workspace-store';
 import {calculateMapName} from './../map-name-calculator';
+var WMPopover = require('../deduplicator/wm-popover');
 
 //TODO: validation of the workspace dialog
 
@@ -49,10 +50,10 @@ var SubmapReferencesDialog = React.createClass({
       return 'Loading... please wait.'
     }
     if(this.state.referencingMaps.length === 0){
-      return 'No map uses this component';
+      return 'No map uses this submap';
     }
     if(this.state.referencingMaps.length === 1 && this.state.referencingMaps[0]._id === this.state.mapID){
-      return 'No other map uses this component';
+      return 'No other map uses this submap';
     }
     var otherMaps = [];
     for(var i = 0; i < this.state.referencingMaps.length; i++){
@@ -72,17 +73,26 @@ var SubmapReferencesDialog = React.createClass({
       return null;
     }
     var currentName = this.state.currentName;
+    var node = this.state.node;
+    var workspaceID = this.state.workspaceID;
     var message = this.constructMessage();
+    console.log(node, workspaceID);
     return (
       <div>
-        <Modal show={show} onHide={this._close}>
+        <Modal show={show} onHide={this._close} animation={false}>
           <Modal.Header closeButton>
             <Modal.Title>
               Other maps using submap <b>&#39;{currentName}&#39;</b>.
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
+              <div>
               {message}
+              </div>
+              Additionally:
+              <div>
+              <WMPopover node={node} workspaceID={workspaceID}/>
+              </div>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>

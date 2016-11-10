@@ -365,6 +365,8 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       appState.showReferencesDialog.mapID = action.mapID;
       appState.showReferencesDialog.submapID = action.submapID;
       appState.showReferencesDialog.currentName = action.currentName;
+      appState.showReferencesDialog.node = action.node;
+      appState.showReferencesDialog.workspaceID = action.workspaceID;
       $.ajax({
         type: 'GET',
         url: '/api/submap/' + appState.showReferencesDialog.submapID + '/usage',

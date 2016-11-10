@@ -81,14 +81,16 @@ var MapComponent = React.createClass({
       var mapID = this.props.mapID; //jshint ignore:line
       var submapID = this.props.node.submapID;
       var currentName = this.props.node.name;
+      var node = this.props.node; //jshint ignore:line
+      var workspaceID = this.props.workspaceID;
       if(submapID){
         Actions.openSubmapReferencesDialog(
            currentName: currentName,
            mapID:mapID,
-           submapID:submapID);
+           submapID:submapID,
+           node :node,
+           workspaceID:workspaceID);
       } else {
-        var node = this.props.node; //jshint ignore:line
-        var workspaceID = this.props.workspaceID;
         Actions.openReferencesDialog(
            currentName: currentName,
            node:node,
