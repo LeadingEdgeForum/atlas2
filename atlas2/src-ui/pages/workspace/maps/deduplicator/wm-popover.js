@@ -17,16 +17,6 @@ import {
 import MapLink from './maplink.js';
 
 var WMPopover = React.createClass({
-  // //we do expect mapID
-  // constructor(props) {
-  //   super(props);
-  //   this.state = {name:"Loading..."};
-  //   this.componentDidMount = this.componentDidMount.bind(this);
-  // }
-//<a href={linkToMap}>{node.mapName}</a>
-// {node.referencedNodes.map(node => <li>
-//   <MapLink mapID={node.mapID}></MapLink>
-// </li>)}
   render() {
     var node = this.props.node;
     var capability= this.state ? this.state.capability : null;

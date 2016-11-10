@@ -21,6 +21,7 @@ var Constants = require('./../../../../constants');
 import Actions from './../../../../actions.js';
 import _ from "underscore";
 import CapabilitiesView from './capabilities-view';
+import MapLink from './maplink.js';
 
 var draggableComponentStyle = {
   borderWidth: '1px',
@@ -77,14 +78,13 @@ export default class Deduplicator extends React.Component {
 
   renderAvailableComponents(map) {
     var nodes = [];
-    var linkToMap = "/map/" + map.mapID;
     nodes = map.nodes.map(node =>
       (<div data-item={node} draggable="true" style={draggableComponentStyle} onDragEnd={this.handleDragStop.bind(this, node)} onDragStart={this.handleDragStart.bind(this, node)}>
         <div style={getStyleForType(node.type)}></div>
             {node.name}
          </div>
       ));
-    return (<div><a href={linkToMap}><h5>{map.user}{map.purpose}{map.name}</h5></a>{nodes}</div>);
+    return (<div><h5><MapLink mapID={map._id}/></h5>{nodes}</div>);
   }
 
   render() {
