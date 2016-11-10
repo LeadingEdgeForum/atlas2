@@ -112,39 +112,6 @@ export default class CapabilitiesView extends React.Component {
     Actions.deleteCapability(this.props.workspace._id, capability._id);
   }
 
-  // renderNodeInACapability(node) {
-  //   var style = getStyleForType(node.type);
-  //   style.left = node.x * 100 + '%';
-  //   style.position = 'absolute';
-  //   style.top = "10px";
-  //   var linkToMap = "/map/" + node.mapID;
-  //   var _popover = (
-  //     <Popover id={node.name} title="Component details">
-  //       <p>Name: {node.name}</p>
-  //       <p>Map:
-  //         <a href={linkToMap}>{node.mapName}</a>
-  //       </p>
-  //       <p>
-  //         Appears also on following map(s):
-  //         <ul>
-  //           {node.referencedNodes.map(node => <li>
-  //             <MapLink mapID={node.mapID}></MapLink>
-  //           </li>)}</ul>
-  //       </p>
-  //       <p>
-  //         <a href="#" onClick={this.clearNodeAssignement.bind(this, node.mapID, node._id)}>Remove from this capability
-  //         </a>
-  //       </p>
-  //     </Popover>
-  //   );
-  //   //
-  //   return (
-  //     <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
-  //       <div style={style}></div>
-  //     </OverlayTrigger>
-  //   );
-  // }
-
 
   renderSingleNode(node){
     var style = getStyleForType(node.type);
