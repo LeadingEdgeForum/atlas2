@@ -277,34 +277,32 @@ module.exports = function(stormpath) {
 
   module.router.put('/map/:mapID/submap/:submapID', stormpath.authenticationRequired, function(req, res) {
 
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.submapID, archived: false}).exec(function(err, submap) {
-      var submapName = submap.name;
-
+    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err0, map) {
+      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.submapID, archived: false}).exec(function(err1, submap) {
       var x = req.body.coords.x;
       var y = req.body.coords.y;
 
-      var fakeNodeID = mongoose.Types.ObjectId();
-      var fakeNode = new Node({
-              name: submapName,
-              _id: fakeNodeID,
+      var artificialNode = new Node({
+              name:submap.name,
+              workspace: map.workspace,
+              parentMap: map,
+              type:'SUBMAP',
               x:x,
               y:y,
-              type:'SUBMAP',
-              dependencies:[],
-              submapID : req.params.submapID});
-      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, affectedMap) {
-          affectedMap.nodes.push(fakeNode);
-          affectedMap.save(function(err, result){
-            if(err){
-              res.json(err);
-              return;
-            }
-            res.json({map:result});
-          });
+              submapID : submap._id
+            });
+      artificialNode.save(function(err2, savedNode){
+        map.nodes.push(savedNode);
+        map.save(function(err3, savedMap){
+            savedMap.populate('nodes', function(err4){
+                //TODO: error loggin
+                res.json({map:savedMap});
+            });
+        });
       });
-
     });
   });
+});
 
   module.router.put('/map/:mapID/submap', stormpath.authenticationRequired, function(req, res) {
     var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
