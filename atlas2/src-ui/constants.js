@@ -35,7 +35,9 @@ module.exports  = keyMirror({
       MAP_CLOSE_NEW_SUBMAP_DIALOG : null,
       SHOW_SUBMAP_DIALOG : null,
       SHOW_REFERENCES_SUBMAP : null,
-      CLOSE_REFERENCES_SUBMAP : null
+      CLOSE_REFERENCES_SUBMAP : null,
+      SHOW_REFERENCES : null,
+      CLOSE_REFERENCES : null
   },
   USERNEED : null,
   EXTERNAL : null,

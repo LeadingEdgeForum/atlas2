@@ -222,4 +222,19 @@ export default class Actions {
       actionType: Constants.ACTION_TYPES.CLOSE_REFERENCES_SUBMAP
     });
   }
+
+  static openReferencesDialog(currentName, node, workspaceID){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.SHOW_REFERENCES,
+      currentName : currentName,
+      node : node,
+      workspaceID : workspaceID
+    });
+  }
+
+  static closeReferencesDialog(){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CLOSE_REFERENCES
+    });
+  }
 }

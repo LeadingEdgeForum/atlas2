@@ -31,7 +31,10 @@ let appState = {
     open : false
   },
   //TODO: rename this
-  showReferencesDialog : {
+  showReferencesDialog : { //submaps
+    open : false
+  },
+  showReferences2Dialog : { //pure references
     open : false
   },
   w_maps: {}
@@ -145,6 +148,10 @@ class WorkspaceStore extends Store {
 
   getSubmapReferencesDialogState() {
     return appState.showReferencesDialog;
+  }
+
+  getReferencesDialogState() {
+    return appState.showReferences2Dialog;
   }
 
   submitNewWorkspaceDialog(data) {
@@ -372,6 +379,17 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       appState.showReferencesDialog = {open:false};
       workspaceStoreInstance.emitChange();
       break;
+      case ActionTypes.SHOW_REFERENCES:
+        appState.showReferences2Dialog.open = true;
+        appState.showReferences2Dialog.node = action.node;
+        appState.showReferences2Dialog.workspaceID = action.workspaceID;
+        appState.showReferences2Dialog.currentName = action.currentName;
+        workspaceStoreInstance.emitChange();
+        break;
+      case ActionTypes.CLOSE_REFERENCES:
+        appState.showReferences2Dialog = {open:false};
+        workspaceStoreInstance.emitChange();
+        break;
     case ActionTypes.MAP_CLOSE_SUBMIT_NEW_NODE_DIALOG:
       $.ajax({
         type: 'POST',

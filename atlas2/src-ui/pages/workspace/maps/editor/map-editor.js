@@ -18,6 +18,7 @@ import MapCanvas from './canvas';
 import CreateNewNodeDialog from './create-new-node-dialog';
 import CreateNewSubmapDialog from './create-new-submap-dialog';
 import SubmapReferencesDialog from './submap-references-dialog';
+import ReferencesDialog from './references-dialog';
 import EditNodeDialog from './edit-node-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
@@ -199,6 +200,7 @@ export default class MapEditor extends React.Component {
             <CreateNewSubmapDialog/>
             <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <SubmapReferencesDialog/>
+            <ReferencesDialog/>
           </Col>
         </Row>
         <EditMapDialog/>

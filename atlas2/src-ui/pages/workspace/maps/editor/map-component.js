@@ -81,10 +81,19 @@ var MapComponent = React.createClass({
       var mapID = this.props.mapID; //jshint ignore:line
       var submapID = this.props.node.submapID;
       var currentName = this.props.node.name;
-      Actions.openSubmapReferencesDialog(
-         currentName: currentName,
-         mapID:mapID,
-         submapID:submapID);
+      if(submapID){
+        Actions.openSubmapReferencesDialog(
+           currentName: currentName,
+           mapID:mapID,
+           submapID:submapID);
+      } else {
+        var node = this.props.node; //jshint ignore:line
+        var workspaceID = this.props.workspaceID;
+        Actions.openReferencesDialog(
+           currentName: currentName,
+           node:node,
+           workspaceID:workspaceID);
+      }
     }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {
@@ -245,6 +254,9 @@ var MapComponent = React.createClass({
       );
       var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" style={infoStyle}></Glyphicon></a>);
       menuItems.push(linkContainer);
+      menuItems.push(infoContainer);
+    } else {
+      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" style={infoStyle}></Glyphicon></a>);
       menuItems.push(infoContainer);
     }
     return (
