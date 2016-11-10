@@ -115,6 +115,27 @@ var removeDuplicatesDependencies = function(nodes){
     }
 };
 
+var removeEmptyCapabilities = function(workspace){
+  if(!workspace){
+    return null;
+  }
+  workspace.capabilityCategories.forEach(function(cat){
+    for(var j = cat.capabilities.length - 1; j >= 0; j--){
+      for(var k = cat.capabilities[j].aliases.length - 1; k>= 0; k--){
+        var alias = cat.capabilities[j].aliases[k];
+        if(alias.nodes.length === 0){
+          cat.capabilities[j].aliases.splice(k,1);
+          console.log('removing empty alias');
+        }
+      }
+      if(cat.capabilities[j].aliases.length === 0){
+        console.log('removing empty cap');
+        cat.capabilities.splice(j,1);
+      }
+    }
+  });
+  return workspace;
+};
 
 module.exports = function(stormpath) {
   var module = {};
@@ -866,6 +887,7 @@ module.exports = function(stormpath) {
         ;
   });
 
+
   module.router.get(
     '/workspace/:workspaceID/components/processed',
     stormpath.authenticationRequired,
@@ -898,7 +920,7 @@ module.exports = function(stormpath) {
         .exec()
         .then(function(wk){
           capabilityLogger.trace('responding get', wk._id ? wk._id : 'null');
-          res.json({workspace:wk});
+          res.json({workspace: removeEmptyCapabilities(wk)});
         }).fail(function(e){
           capabilityLogger.error('responding...', e);
           res.status(500).json(e);
@@ -987,7 +1009,7 @@ module.exports = function(stormpath) {
         })
         .then(function(wk){
           capabilityLogger.trace('responding ...', wk);
-          res.json({workspace: wk});
+          res.json({workspace: removeEmptyCapabilities(wk)});
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1072,7 +1094,7 @@ module.exports = function(stormpath) {
         })
         .then(function(wk){
           capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
-          res.json({workspace: wk});
+          res.json({workspace: removeEmptyCapabilities(wk)});
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1151,7 +1173,7 @@ module.exports = function(stormpath) {
         })
         .then(function(wk){
           capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
-          res.json({workspace: wk});
+          res.json({workspace: removeEmptyCapabilities(wk)});
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1262,7 +1284,7 @@ module.exports = function(stormpath) {
         })
         .then(function(wk){
           capabilityLogger.trace('responding ...');
-          res.json({workspace: wk});
+          res.json({workspace: removeEmptyCapabilities(wk)});
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);

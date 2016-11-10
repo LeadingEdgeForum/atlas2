@@ -243,7 +243,7 @@ _NodeSchema.pre('remove', function(next) {
   }));
   // find and remove from all aliases
   // find and delete empty aliases
-  // find and delete empty capabilities
+  // find and delete empty capabilities -- temporary workarounded by query
   promises.push(Alias.update({
       nodes : this._id
     },
@@ -252,7 +252,7 @@ _NodeSchema.pre('remove', function(next) {
         nodes: this._id
       }
     },
-    {safe:true}));
+    {safe:true,new:true}));
   q.all(promises)
   .then(function(results){
     console.error('implement cascading removal of capabilities');
