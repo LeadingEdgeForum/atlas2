@@ -19,7 +19,7 @@
     "jquery": "*",
     "jsplumb": "2.2.6",
     "keymirror": "*",
-    "mongoose": "4.6.8",
+    "mongoose": "4.7.0",
     "morgan": "^1.7.0",
     "path": "*",
     "react": "^15.3.0",
