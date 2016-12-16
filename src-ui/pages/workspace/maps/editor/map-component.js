@@ -191,6 +191,7 @@ var MapComponent = React.createClass({
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
         jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
         jsPlumb.makeSource(this.input, endpointOptions, {anchor: "BottomCenter"});
       }
     }
