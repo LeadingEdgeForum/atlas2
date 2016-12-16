@@ -15,11 +15,11 @@
     "flux": "*",
     "globals": "^9.9.0",
     "history": "^4.4.0",
-    "imports-loader": "^0.6.5",
+    "imports-loader": "^0.7.0",
     "jquery": "*",
     "jsplumb": "2.2.6",
     "keymirror": "*",
-    "mongoose": "4.7.1",
+    "mongoose": "4.7.2",
     "morgan": "^1.7.0",
     "path": "*",
     "react": "^15.3.0",
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
       "mocha": "*",
-      "should": "11.1.1",
+      "should": "11.1.2",
       "supertest": "*",
       "babel-core": "^6.11.4",
       "babel-loader": "^6.2.4",
@@ -47,7 +47,7 @@
       "babel-preset-stage-0": "^6.5.0",
       "babel-runtime": "^6.9.2",
       "webpack-dev-middleware": "^1.8.4",
-      "webpack": "1.13.3"
+      "webpack": "1.14.0"
   },
   "repository": {},
   "engines": {
