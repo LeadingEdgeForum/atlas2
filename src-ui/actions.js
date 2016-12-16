@@ -60,7 +60,7 @@ export default class Actions {
 
   static submitEditMapDialog(data) {
     if(!( (data.user && data.purpose) || data.name)){
-      throw new Exception('Bad payload for submitEditMapDialog, got', data);
+      throw new Error('Bad payload for submitEditMapDialog, got', data);
     }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG,
