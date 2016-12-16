@@ -797,6 +797,9 @@ module.exports = function(stormpath) {
                   res.send(err2);
                   return;
                 }
+                if(err === 400){
+                  res.statusCode = 400;
+                }
                 res.json({map: mapResult2});
             });
           });

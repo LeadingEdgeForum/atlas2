@@ -101,6 +101,13 @@ var _NodeSchema = new Schema({
 _NodeSchema.methods.makeDependencyTo = function(_targetId, callback/**err, node*/){
   var targetId = new ObjectId(_targetId);
   var promises = [];
+  //abort if the connection is already there...
+  for(var j = 0; j < this.outboundDependencies.length; j++){
+    if(targetId.equals(this.outboundDependencies[j])){
+      callback(400, null);
+      return;
+    }
+  }
   this.outboundDependencies.push(targetId);
   promises.push(this.save());
   promises.push(Node.update({

@@ -483,6 +483,27 @@ describe('Workspaces & maps', function() {
         it('create a node in a map', createNodeInAMap.bind(this,3));
 
         it('connect nodes', connectNodes.bind(this, 0, 1));
+        //try to duplcate the connection
+        it('connect nodes and verify duplicates are not created', function(done){
+          request(app).
+          post( '/api/workspace/' + workspaceID +
+                '/map/' + mapID +
+                '/node/' + nodeID[0] +
+                '/outgoingDependency/' + nodeID[1])
+              .set('Content-type', 'application/json')
+              .set('Accept', 'application/json')
+              .set('Authorization', authorizationHeader)
+              .expect(400)
+              .expect(function(res) {
+                  res.body.map.nodes[0].outboundDependencies.length.should.equal(1);
+                  res.body.map.nodes[1].inboundDependencies.length.should.equal(1);
+                  res.body.map.nodes[0].outboundDependencies[0].should.equal(res.body.map.nodes[1]._id);
+                  res.body.map.nodes[1].inboundDependencies[0].should.equal(res.body.map.nodes[0]._id);
+              })
+              .end(function(err, res) {
+                  done(err);
+              });
+        });
         it('connect nodes', connectNodes.bind(this, 1, 2));
         it('connect nodes', connectNodes.bind(this, 2, 3));
 
