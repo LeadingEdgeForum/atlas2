@@ -446,11 +446,16 @@ module.exports = function(stormpath) {
           if (err2) {
             res.status(500);
           }
-          res.json(err2
-            ? err2 // jshint ignore:line
-            : {
-              map: result2
-            });
+          WardleyMap
+            .findOne({_id:result2._id})
+            .populate('nodes')
+            .exec(function(e3,mapresult){
+              res.json(err2
+                ? err2 // jshint ignore:line
+                : {
+                  map: mapresult
+                });
+          });
         });
       }
     });
