@@ -136,7 +136,7 @@ export default class MapCanvas extends React.Component {
       [
         "Custom", {
           create: function(component) {
-            return $("<div><span class='glyphicon glyphicon-remove' style='color: silver;z-index: 30;cursor: pointer'></span></div>");
+            return $("<div><span class='glyphicon glyphicon-remove' style='color: #a98c74;z-index: 50;cursor: pointer'></span></div>");
           },
           location: 0.5,
           id: "deleteOverlay"
