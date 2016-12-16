@@ -61,9 +61,9 @@ var endpointOptions = {
   allowLoopback: false,
   connector: "Straight",
   connectorStyle: {
-    lineWidth: 1,
-    strokeStyle: 'silver',
-    outlineColor: "transparent",
+    strokeWidth: 1,
+    stroke: 'silver',
+    outlineStroke: "transparent",
     outlineWidth: 10
   },
   endpoint: [

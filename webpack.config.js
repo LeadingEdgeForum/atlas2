@@ -17,9 +17,6 @@ module.exports = {
   module: {
     loaders: [
       {
-        test: require.resolve('jsplumb'),
-        loaders: ['imports?this=>window', 'script']
-      }, {
         test: /\.js$/,
         loaders: ['babel'],
         include: path.join(__dirname, 'src-ui')
