@@ -20,7 +20,11 @@ import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
 import {endpointOptions} from './component-styles';
 
-import jsPlumb from 'jsPlumb';
+//one day - make it proper require, but JsPlumb 2.2.0 must be released
+/*jshint -W117 */
+require('jsplumb');
+var jsPlumb = window.jsPlumb;
+/*jshint -W117 */
 
 
 var mapCanvasStyle = { //this is style applied to the place where actuall components can be drawn
