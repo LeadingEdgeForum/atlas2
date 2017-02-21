@@ -16,7 +16,7 @@
     "globals": "^9.9.0",
     "history": "^4.4.0",
     "jquery": "*",
-    "jsplumb": "2.2.10",
+    "jsplumb": "2.3.0",
     "keymirror": "*",
     "mongoose": "4.7.3",
     "morgan": "^1.7.0",
