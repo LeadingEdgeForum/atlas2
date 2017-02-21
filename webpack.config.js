@@ -16,12 +16,12 @@ module.exports = {
   },
   module: {
     loaders: [
-      {        
+      {
         test: require.resolve('jsplumb'),
-        loaders: ['imports?this=>window', 'script']
+        loaders: ['imports-loader?this=>window', 'script-loader']
       }, {
         test: /\.js$/,
-        loaders: ['babel'],
+        loaders: ['babel-loader'],
         include: path.join(__dirname, 'src-ui')
       }
     ]
