@@ -14,7 +14,6 @@ import {
   VerifyEmailPage,
   ProfilePage
 } from './pages';
-import WelcomePage from './pages/WelcomePage.js';
 import WorkspaceList from './pages/workspace/workspace-list';
 import MapList from './pages/workspace/maps/map-list.js';
 import Deduplicator from './pages/workspace/maps/deduplicator/deduplicator.js';

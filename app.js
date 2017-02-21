@@ -40,6 +40,19 @@ if (debug){
 }
 
 
+var config = {
+    userProvider : {
+      type:'stormpath'
+    }
+};
+
+try {
+  config = require('./config.json');
+} catch (ex) {
+
+}
+
+
 app.use(morgan('combined'));
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
@@ -90,17 +103,32 @@ app.get('/img/LEF_logo.png', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/img/LEF_logo.png'));
 });
 
-app.get('/app.js', function(req, res) {
-    res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
-});
 
-userProvider.installUserProvider(app);
+    app.get('/app.js', function(req, res) {
+        console.log('stormpath');
+        res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
+    });
+
+    app.get('/app.js', function(req, res) {
+        console.log('local');
+        res.sendFile(path.join(__dirname, '/build-ui/js/local.js'));
+    });
+
+userProvider.installUserProvider(app, config);
 
 app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard()).router);
 
-app.get('*', function(req, res) {
-    res.sendFile(path.join(__dirname, '/build-ui/index.html'));
-});
+
+
+if (config.userProvider.type === 'stormpath') {
+  app.get('*', function(req, res) {
+      res.sendFile(path.join(__dirname, '/build-ui/index.html'));
+  });
+} else {
+  app.get('*', function(req, res) {
+      res.sendFile(path.join(__dirname, '/build-ui/local.html'));
+  });
+}
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();

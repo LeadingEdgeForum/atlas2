@@ -12,21 +12,11 @@ limitations under the License.*/
 var StormpathHelper = require('./stormpath-helper');
 var stormpath = require('express-stormpath');
 
-var config = {
-    userProvider : {
-      type:'stormpath'
-    }
-};
 
-try {
-    config = require('../config.json');
-} catch (ex) {
-
-}
 
 var guard = null;
 
-function createUserProvider(app){
+function createUserProvider(app, config){
   if (config.userProvider.type === 'stormpath') {
       var provider =  stormpath.init(app, {
           debug: 'debug',
@@ -82,9 +72,7 @@ function createUserProvider(app){
                   if (err) {
                       return writeError('The existing password that you entered was incorrect.');
                   }
-
                   req.user.password = req.body.password;
-
                   saveAccount();
               });
           } else {
@@ -127,6 +115,7 @@ function createUserProvider(app){
 
       app.use(passport.initialize());
       app.use(passport.session());
+
       app.get('/me',function(req,res){
         if (req.isAuthenticated()) {
             res.status(200).send(req.user);
@@ -134,14 +123,17 @@ function createUserProvider(app){
         }
         res.status(401).send({"status":401,"message":"Unauthorized"});
       });
+
       app.post('/login', passport.authenticate('stormpath', {
           successRedirect: '/',
           failureRedirect: '/login'
       }));
+
       app.get('/logout', function(req,res){
         req.logout();
         res.redirect('/');
       });
+
       app.get('/login', function(req, res, next) {
         console.log(next, !req.get('X-Stormpath-Agent'));
         if(!req.get('X-Stormpath-Agent')){
@@ -183,8 +175,8 @@ function createUserProvider(app){
 
 
 var WrapperClass = function(){
-    this.installUserProvider = function(app){
-      createUserProvider(app);
+    this.installUserProvider = function(app, config){
+      createUserProvider(app, config);
     };
 
     this.getGuard = function(){
