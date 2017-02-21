@@ -1,0 +1,3 @@
+{
+  "userProvider" : "stormpath"
+}
