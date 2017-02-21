@@ -1,3 +1,0 @@
-{
-  "userProvider" : "stormpath"
-}

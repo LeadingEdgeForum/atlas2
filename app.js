@@ -41,7 +41,17 @@ if (debug){
 
 
 app.use(morgan('combined'));
+app.use(bodyParser.json()); // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
+    extended: true
+}));
 
+
+app.use(require('express-session')({
+  resave:true,
+  secret:'nosecret',
+  saveUninitialized:'true'}));
+app.use(require('cookie-parser')());
 
 
 // cfenv provides access to your Cloud Foundry environment
@@ -84,12 +94,8 @@ app.get('/app.js', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
 });
 
-app.use(userProvider.getRouter(app));
+userProvider.installUserProvider(app);
 
-app.use(bodyParser.json()); // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
-    extended: true
-}));
 app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard()).router);
 
 app.get('*', function(req, res) {

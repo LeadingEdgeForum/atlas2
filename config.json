@@ -1,0 +1,5 @@
+{
+  "userProvider" : {
+    "type" : "passport"
+  }
+}
