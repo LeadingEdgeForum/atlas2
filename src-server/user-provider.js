@@ -36,7 +36,6 @@ function registerStormpathPassportStrategy(app, passport, name) {
     app.use(passport.session());
 
     app.get('/login', function(req, res, next) {
-        console.log(next, !req.get('X-Stormpath-Agent'));
         if (!req.get('X-Stormpath-Agent')) {
             // no stormpath agent, process normally
             return next();
@@ -104,6 +103,51 @@ function registerGooglePassportStrategy(app, passport, config) {
     }));
 }
 
+function registerLdapPassportStrategy(app, passport, config) {
+    var LDAPStrategy = require('passport-ldapauth').Strategy;
+    var ldapStrategy = new LDAPStrategy({
+            server: config.userProvider.server,
+            usernameField: 'login'
+        });
+
+    passport.use(config.userProvider.strategy, ldapStrategy);
+
+    passport.serializeUser(function(user, cb) {
+        user.href = user.mail;
+        return cb(null, JSON.stringify(user));
+    });
+    passport.deserializeUser(function(id, cb) {
+        return cb(null, JSON.parse(id));
+    });
+
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    app.get('/login', function(req, res, next) {
+        if (!req.get('X-Stormpath-Agent')) {
+            // no stormpath agent, process normally
+            return next();
+        }
+        res.status(200).send({
+            "form": {
+                "fields": [{
+                    "label": "Username or Email",
+                    "placeholder": "Username or Email",
+                    "required": true,
+                    "type": "text",
+                    "name": "login"
+                }, {
+                    "label": "Password",
+                    "placeholder": "Password",
+                    "required": true,
+                    "type": "password",
+                    "name": "password"
+                }]
+            },
+            "accountStores": []
+        });
+    });
+}
 
 function registerAnonymousPassportStrategy(app, passport, name) {
     var LocalStrategy = require('passport-local');
@@ -133,7 +177,6 @@ function registerAnonymousPassportStrategy(app, passport, name) {
     app.use(passport.session());
 
     app.get('/login', function(req, res, next) {
-        console.log(next, !req.get('X-Stormpath-Agent'));
         if (!req.get('X-Stormpath-Agent')) {
             // no stormpath agent, process normally
             return next();
@@ -247,6 +290,9 @@ function createUserProvider(app, config) {
         }
         if (config.userProvider.strategy === 'google') {
             registerGooglePassportStrategy(app, passport, config);
+        }
+        if (config.userProvider.strategy === 'ldap') {
+            registerLdapPassportStrategy(app, passport, config);
         }
         if (config.userProvider.strategy === 'anonymous') {
             registerAnonymousPassportStrategy(app, passport, config.userProvider.strategy);

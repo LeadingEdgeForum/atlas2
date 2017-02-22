@@ -1,9 +1,13 @@
 {
-  "userProvider" : {
-    "type" : "passport",
-    "strategy" : "google",
-    "clientID" : "465155999503-lfdoopp43thr6q2rl2i8u0kmjst6crv3.apps.googleusercontent.com",
-    "clientSecret" : "",
-    "callbackURL" : "http://localhost:6001/auth/google/callback"
-  }
+    "userProvider": {
+        "type": "passport",
+        "strategy": "ldap",
+        "server": {
+            "url": "ldap://ldap.forumsys.com:389",
+            "bindDn": "cn=read-only-admin,dc=example,dc=com",
+            "searchBase" : "dc=example, dc=com",
+            "bindCredentials": "password",
+            "searchFilter": "(uid={{username}})"
+        }
+    }
 }
