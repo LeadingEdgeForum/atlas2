@@ -1,5 +1,6 @@
 {
   "userProvider" : {
-    "type" : "passport"
+    "type" : "passport",
+    "strategy" : "anonymous"
   }
 }
