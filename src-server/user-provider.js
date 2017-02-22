@@ -32,7 +32,8 @@ function registerStormpathPassportStrategy(app, passport, name) {
     passport.serializeUser(stormpathStrategy.serializeUser);
     passport.deserializeUser(stormpathStrategy.deserializeUser);
 
-
+    app.use(passport.initialize());
+    app.use(passport.session());
 
     app.get('/login', function(req, res, next) {
         console.log(next, !req.get('X-Stormpath-Agent'));
@@ -61,38 +62,46 @@ function registerStormpathPassportStrategy(app, passport, name) {
     });
 }
 
-
-function registerGoogleAuthPassportStrategy(app, passport, name) {
-    var GoogleStrategy = require('passport-google-auth').Strategy;
-    var googleStrategy = new GoogleStrategy();
-
-    passport.use(name, googleStrategy);
-
-    app.get('/login', function(req, res, next) {
-        console.log(next, !req.get('X-Stormpath-Agent'));
-        if (!req.get('X-Stormpath-Agent')) {
-            // no stormpath agent, process normally
-            return next();
-        }
-        res.status(200).send({
-            "form": {
-                "fields": [{
-                    "label": "Username or Email",
-                    "placeholder": "Username or Email",
-                    "required": true,
-                    "type": "text",
-                    "name": "login"
-                }, {
-                    "label": "Password",
-                    "placeholder": "Password",
-                    "required": true,
-                    "type": "password",
-                    "name": "password"
-                }]
-            },
-            "accountStores": []
+function registerGooglePassportStrategy(app, passport, config) {
+    var GoogleStrategy = require('passport-google-oauth20').Strategy;
+    var googleStrategy = new GoogleStrategy({
+        clientID: config.userProvider.clientID,
+        clientSecret: config.userProvider.clientSecret,
+        callbackURL: config.userProvider.callbackURL
+    }, function(accessToken, refreshToken, profile, done) {
+        return done(null, {
+            email: profile.id,
+            href: profile.id
         });
     });
+
+    passport.use(config.userProvider.strategy, googleStrategy);
+
+    passport.serializeUser(function(user, cb) {
+        cb(null, user.email);
+    });
+    passport.deserializeUser(function(id, cb) {
+        cb(null, {
+            email: id,
+            href: id
+        });
+    });
+
+    app.use(passport.initialize());
+    app.use(passport.session());
+
+    app.get('/auth/google/callback',
+        passport.authenticate(config.userProvider.strategy, {
+            failureRedirect: '/login'
+        }),
+        function(req, res) {
+            // Successful authentication, redirect home.
+            res.redirect('/');
+        });
+
+    app.get('/login', passport.authenticate(config.userProvider.strategy, {
+        scope: ['profile']
+    }));
 }
 
 
@@ -119,6 +128,9 @@ function registerAnonymousPassportStrategy(app, passport, name) {
     });
 
     passport.use(name, localStrategy);
+
+    app.use(passport.initialize());
+    app.use(passport.session());
 
     app.get('/login', function(req, res, next) {
         console.log(next, !req.get('X-Stormpath-Agent'));
@@ -233,16 +245,12 @@ function createUserProvider(app, config) {
         if (config.userProvider.strategy === 'stormpath') {
             registerStormpathPassportStrategy(app, passport, config.userProvider.strategy);
         }
-        if (config.userProvider.strategy === 'google-auth') {
-            registerGoogleAuthPassportStrategy(app, passport, config.userProvider.strategy);
+        if (config.userProvider.strategy === 'google') {
+            registerGooglePassportStrategy(app, passport, config);
         }
         if (config.userProvider.strategy === 'anonymous') {
             registerAnonymousPassportStrategy(app, passport, config.userProvider.strategy);
         }
-
-
-        app.use(passport.initialize());
-        app.use(passport.session());
 
         app.post('/login', passport.authenticate(config.userProvider.strategy, {
             successRedirect: '/',
