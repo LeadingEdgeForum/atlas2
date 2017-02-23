@@ -10,6 +10,9 @@ let appState = {
   newWorkspaceDialog: {
     open: false
   },
+  inviteDialog: {
+    open: false
+  },
   newMapDialog: {
     open: false
   },
@@ -105,6 +108,14 @@ class WorkspaceStore extends Store {
   isWorkspaceNewDialogOpen() {
     if (appState && appState.newWorkspaceDialog) {
       return appState.newWorkspaceDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
+  isInviteNewUserDialogOpen(){
+    if (appState && appState.inviteDialog) {
+      return appState.inviteDialog;
     } else {
       return {open: false};
     }
@@ -257,6 +268,35 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       workspaceStoreInstance.submitNewWorkspaceDialog(action.data);
       //no change, because it will go only after the submission is successful
       break;
+    case ActionTypes.WORKSPACE_OPEN_INVITE_DIALOG:
+        appState.inviteDialog.open = true;
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.WORKSPACE_CLOSE_INVITE_DIALOG:
+        appState.inviteDialog.open = false;
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.WORKSPACE_SUBMIT_INVITE_DIALOG:
+        $.ajax({
+          type: 'PUT',
+          url: '/api/workspace/' + action.data.workspaceID + '/editor/' + action.data.email,
+          success: function(data2) {
+            appState.inviteDialog.open = false;
+            workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+            workspaceStoreInstance.updateWorkspaces(); // this emits change
+          }.bind(this)
+        });
+        break;
+    case ActionTypes.WORKSPACE_DELETE_USER:
+        $.ajax({
+          type: 'DELETE',
+          url: '/api/workspace/' + action.data.workspaceID + '/editor/' + action.data.email,
+          success: function(data2) {
+            workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
+            workspaceStoreInstance.updateWorkspaces(); // this emits change
+          }.bind(this)
+        });
+        break;
     case ActionTypes.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG:
       appState.editWorkspaceDialog.open = true;
       appState.editWorkspaceDialog.editedWorkspace = action.data;

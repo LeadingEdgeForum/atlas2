@@ -27,13 +27,12 @@ var log4js = require('log4js');
 submapLogger.setLevel(log4js.levels.WARN);
 
 
-var getStormpathUserIdFromReq = function(req) {
-  if (req && req.user && req.user.href) {
-    var href = req.user.href;
-    return href.substr(href.lastIndexOf('/') + 1);
+var getUserIdFromReq = function(req) {
+  if (req && req.user && req.user.email) {
+    return req.user.email;
   }
   //should never happen as indicates lack of authentication
-  console.error('user.href not present');
+  console.error('user.email not present');
   return null;
 };
 
@@ -130,7 +129,7 @@ var removeEmptyCapabilities = function(workspace){
   return workspace;
 };
 
-module.exports = function(stormpath, mongooseConnection) {
+module.exports = function(authGuardian, mongooseConnection) {
   var Model = require('./model')(mongooseConnection);
   var WardleyMap = Model.WardleyMap;
   var Workspace = Model.Workspace;
@@ -145,8 +144,8 @@ module.exports = function(stormpath, mongooseConnection) {
 
   // this is so shitty.... the name should be calculated client side
   // TODO: fix this
-  module.router.get('/map/:mapID/name', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('user purpose name').exec(function(err, result) {
+  module.router.get('/map/:mapID/name', authGuardian.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getUserIdFromReq(req), _id: req.params.mapID, archived: false}).select('user purpose name').exec(function(err, result) {
       if(result.user && result.purpose){
         res.json({map: {_id : result._id, name:'As ' + result.user + ', I want to ' + result.purpose + '.'}});
       } else {
@@ -156,10 +155,10 @@ module.exports = function(stormpath, mongooseConnection) {
   });
 
 
-  module.router.get('/workspaces/', stormpath.authenticationRequired, function(req, res) {
+  module.router.get('/workspaces/', authGuardian.authenticationRequired, function(req, res) {
 
     Workspace.find({
-      owner: getStormpathUserIdFromReq(req),
+      owner: getUserIdFromReq(req),
       archived: false
     }, function(err, results) {
       console.error(err);
@@ -171,8 +170,8 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.post('/workspace/', stormpath.authenticationRequired, function(req, res) {
-    var owner = getStormpathUserIdFromReq(req);
+  module.router.post('/workspace/', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
     var name = req.body.name;
     if (!name) {
       name = "Anonymous workspace";
@@ -189,7 +188,7 @@ module.exports = function(stormpath, mongooseConnection) {
       name: name,
       description: description,
       purpose:purpose,
-      owner: owner,
+      owner: [owner],
       archived: false
     });
     var promisesToSave = [];
@@ -210,15 +209,15 @@ module.exports = function(stormpath, mongooseConnection) {
       });
   });
 
-  module.router.get('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
-    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps capabilityCategories').exec(function(err, result) {
+  module.router.get('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
+    Workspace.findOne({owner: getUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps capabilityCategories').exec(function(err, result) {
       res.json({workspace: result});
     });
   });
 
-  module.router.get('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
+  module.router.get('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
     WardleyMap.findOne({
-        owner: getStormpathUserIdFromReq(req),
+        owner: getUserIdFromReq(req),
         _id: req.params.mapID,
         archived: false})
     .populate('nodes')
@@ -235,9 +234,9 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.get('/submaps/map/:mapID', stormpath.authenticationRequired, function(req, res){
+  module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res){
     WardleyMap.findOne({
-      owner: getStormpathUserIdFromReq(req),
+      owner: getUserIdFromReq(req),
       _id: req.params.mapID,
       archived: false
     }).exec(function(err, targetMap) {
@@ -246,7 +245,7 @@ module.exports = function(stormpath, mongooseConnection) {
       WardleyMap.find({
         workspace : targetMap.workspace,
         archived: false,
-        owner: getStormpathUserIdFromReq(req),
+        owner: getUserIdFromReq(req),
         isSubmap : true
       }).exec(function(err, results){
         //handle the results - repack them into something useful.
@@ -259,13 +258,13 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.get('/submap/:submapID/usage', stormpath.authenticationRequired, function(req, res){
+  module.router.get('/submap/:submapID/usage', authGuardian.authenticationRequired, function(req, res){
     Node.find({type:'SUBMAP', submapID : req.params.submapID}).select('parentMap').exec(function(e,r){
       var ids = [];
       r.forEach(item => ids.push(item.parentMap));
       WardleyMap
         .find({
-          owner: getStormpathUserIdFromReq(req),
+          owner: getUserIdFromReq(req),
           archived: false,
           _id : {$in : ids}
         })
@@ -276,10 +275,10 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.put('/map/:mapID/submap/:submapID', stormpath.authenticationRequired, function(req, res) {
+  module.router.put('/map/:mapID/submap/:submapID', authGuardian.authenticationRequired, function(req, res) {
 
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err0, map) {
-      WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.submapID, archived: false}).exec(function(err1, submap) {
+    WardleyMap.findOne({owner: getUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err0, map) {
+      WardleyMap.findOne({owner: getUserIdFromReq(req), _id: req.params.submapID, archived: false}).exec(function(err1, submap) {
       var x = req.body.coords.x;
       var y = req.body.coords.y;
 
@@ -305,11 +304,11 @@ module.exports = function(stormpath, mongooseConnection) {
   });
 });
 
-  module.router.put('/map/:mapID/submap', stormpath.authenticationRequired, function(req, res) {
+  module.router.put('/map/:mapID/submap', authGuardian.authenticationRequired, function(req, res) {
     var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
     var submapName = req.body.name;
     var coords = req.body.coords;
-    var owner = getStormpathUserIdFromReq(req);
+    var owner = getUserIdFromReq(req);
     submapLogger.trace({
       submapName:submapName,
       coords:coords,
@@ -319,7 +318,7 @@ module.exports = function(stormpath, mongooseConnection) {
     var transferredNodes = [];
 
     WardleyMap.findOne({ // a very primitive check that we actually have right to the particular mapś
-          owner: getStormpathUserIdFromReq(req),
+          owner: getUserIdFromReq(req),
           _id: req.params.mapID,
           archived: false})
       .populate('nodes')
@@ -328,7 +327,7 @@ module.exports = function(stormpath, mongooseConnection) {
           var submap = new WardleyMap({
             name      : submapName,
             isSubmap  : true,
-            owner     : getStormpathUserIdFromReq(req),
+            owner     : getUserIdFromReq(req),
             workspace : affectedMap.workspace,
             archived  : false
           });
@@ -435,8 +434,8 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.put('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
-    WardleyMap.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
+  module.router.put('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
+    WardleyMap.findOne({owner: getUserIdFromReq(req), _id: req.params.mapID, archived: false}).exec(function(err, result) {
       // console.log('map found', err, result, req.body.map);
       //check that we actually own the map, and if yes
       if (result) {
@@ -462,8 +461,8 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.put('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
-    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
+  module.router.put('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
+    Workspace.findOne({owner: getUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
       //check that we actually own the workspace, and if yes
       if (err) {
         res.status(500).json(err);
@@ -483,10 +482,10 @@ module.exports = function(stormpath, mongooseConnection) {
   });
 
   // TODO: remove nodes pointing to this map if it is a submap
-  module.router.delete('/map/:mapID', stormpath.authenticationRequired, function(req, res) {
+  module.router.delete('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
     WardleyMap
       .findOne({
-          owner: getStormpathUserIdFromReq(req),
+          owner: getUserIdFromReq(req),
           _id: req.params.mapID,
           archived: false})
       .populate('workspace')
@@ -513,8 +512,8 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.delete('/workspace/:workspaceID', stormpath.authenticationRequired, function(req, res) {
-    Workspace.findOne({owner: getStormpathUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
+  module.router.delete('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
+    Workspace.findOne({owner: getUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
       //check that we actually own the map, and if yes
       if (err) {
         res.status(500).json(err);
@@ -533,8 +532,8 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.post('/map/', stormpath.authenticationRequired, function(req, res) {
-    var owner = getStormpathUserIdFromReq(req);
+  module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
     var user = req.body.user;
     if (!user) {
       user = "your competitor";
@@ -581,8 +580,8 @@ module.exports = function(stormpath, mongooseConnection) {
   });
 
 
-  module.router.post('/workspace/:workspaceID/map/:mapID/node', stormpath.authenticationRequired, function(req, res) {
-    var owner = getStormpathUserIdFromReq(req);
+  module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
     var workspaceID = req.params.workspaceID;
     var mapID = req.params.mapID;
     var name = req.body.name;
@@ -638,8 +637,72 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
-    var owner = getStormpathUserIdFromReq(req);
+  module.router.put('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var email = req.params.email;
+
+    Workspace.findOne(
+      {owner: getUserIdFromReq(req),
+        _id: req.params.workspaceID,
+        archived: false
+    }).exec(function(err, result) {
+      //check that we actually own the map, and if yes
+      if (err) {
+        res.status(500).json(err);
+        return;
+      }
+      if (result) {
+        result.owner.push(email);
+        result.save(function(err2, result2) {
+          if (err2) {
+            res.status(500).json(err2);
+            return;
+          }
+          res.json({workspace: result2});
+        });
+      }
+    });
+
+  });
+
+
+  module.router.delete('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var email = req.params.email;
+
+    if(owner === email){
+      res.status(500).json({message:'Cannot delete self'});
+      return;
+    }
+
+    Workspace.findOne(
+      {owner: getUserIdFromReq(req),
+        _id: req.params.workspaceID,
+        archived: false
+    }).exec(function(err, result) {
+      //check that we actually own the map, and if yes
+      if (err) {
+        res.status(500).json(err);
+        return;
+      }
+      if (result) {
+        result.owner.pop(email);
+        result.save(function(err2, result2) {
+          if (err2) {
+            res.status(500).json(err2);
+            return;
+          }
+          res.json({workspace: result2});
+        });
+      }
+    });
+
+  });
+
+  module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
     var workspaceID = req.params.workspaceID;
     var mapID = req.params.mapID;
     var name = req.body.name;
@@ -720,8 +783,8 @@ module.exports = function(stormpath, mongooseConnection) {
     });
   });
 
-  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID', stormpath.authenticationRequired, function(req, res) {
-    var owner = getStormpathUserIdFromReq(req);
+  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
     var workspaceID = req.params.workspaceID;
     var mapID = req.params.mapID;
     var parentMap = new ObjectId(mapID);
@@ -772,9 +835,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.post(
     '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var mapID = req.params.mapID;
       var nodeID1 = new ObjectId(req.params.nodeID1);
@@ -814,9 +877,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.delete(
     '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var mapID = req.params.mapID;
       var nodeID1 = new ObjectId(req.params.nodeID1);
@@ -853,9 +916,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.get(
     '/workspace/:workspaceID/components/unprocessed',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       WardleyMap
         .find({       // find all undeleted maps within workspace
@@ -897,9 +960,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.get(
     '/workspace/:workspaceID/components/processed',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
 
       Workspace
@@ -937,9 +1000,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.post(
     '/workspace/:workspaceID/capabilitycategory/:categoryID/node/:nodeID',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var categoryID = req.params.categoryID;
       var nodeID = req.params.nodeID;
@@ -1027,9 +1090,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.put(
     '/workspace/:workspaceID/capability/:capabilityID/node/:nodeID',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var capabilityID = req.params.capabilityID;
       var nodeID = req.params.nodeID;
@@ -1111,9 +1174,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.put(
     '/workspace/:workspaceID/alias/:aliasID/node/:nodeID',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var aliasID = req.params.aliasID;
       var nodeID = req.params.nodeID;
@@ -1190,9 +1253,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.get(
     '/workspace/:workspaceID/node/:nodeID/usage',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var nodeID = req.params.nodeID;
       Workspace
@@ -1240,9 +1303,9 @@ module.exports = function(stormpath, mongooseConnection) {
 
   module.router.delete(
     '/workspace/:workspaceID/capability/:capabilityID',
-    stormpath.authenticationRequired,
+    authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getStormpathUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var capabilityID = req.params.capabilityID;
       capabilityLogger.trace(workspaceID, capabilityID);

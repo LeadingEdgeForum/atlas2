@@ -23,7 +23,7 @@ var q = require('q');
 var ObjectId = mongoose.Types.ObjectId;
 var modelLogger = require('./log').getLogger('User-Model');
 
-
+var UnifiedUser = null;
 module.exports = function(conn) {
 
     var _UnifiedUserSchema = new Schema({
@@ -36,9 +36,9 @@ module.exports = function(conn) {
         email : String,
         fullName : String
     });
-
-    var UnifiedUser = conn.model('UnifiedUser', _UnifiedUserSchema); //jshint ignore:line
-
+    if(!UnifiedUser){
+      UnifiedUser = conn.model('UnifiedUser', _UnifiedUserSchema); //jshint ignore:line
+    }
     return {
         UnifiedUser: UnifiedUser
     };

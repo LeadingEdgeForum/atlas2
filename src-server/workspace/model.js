@@ -28,7 +28,9 @@ module.exports = function(conn) {
         name: Schema.Types.String,
         purpose: Schema.Types.String,
         description: Schema.Types.String,
-        owner: Schema.Types.String,
+        owner: [{
+            type: Schema.Types.String
+        }],
         archived: Schema.Types.Boolean,
         maps: [{
             type: Schema.Types.ObjectId,

@@ -17,6 +17,22 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG, data: newWorkspaceData});
   }
 
+  static openInviteNewUserMapDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_OPEN_INVITE_DIALOG});
+  }
+
+  static closeInviteNewUserDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_CLOSE_INVITE_DIALOG});
+  }
+
+  static submitInviteNewUserDialog(data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_INVITE_DIALOG, data: data});
+  }
+
+  static deleteUser(data) {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_DELETE_USER, data: data});
+  }
+
   static openEditWorkspaceDialog(workspaceID) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG, data: workspaceID});
   }
