@@ -119,7 +119,7 @@ app.get('/img/LEF_logo.png', function(req, res) {
         res.sendFile(path.join(__dirname, '/build-ui/js/local.js'));
     });
 
-userProvider.installUserProvider(app, config);
+userProvider.installUserProvider(app, config, conn);
 
 app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
 

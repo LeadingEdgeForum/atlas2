@@ -14,10 +14,34 @@ var StormpathHelper = require('./stormpath-helper');
 var stormpath = require('express-stormpath');
 
 
-
 var guard = null;
 
-
+function renderProperStormpathLoginForm(app){
+  app.get('/login', function(req, res, next) {
+      if (!req.get('X-Stormpath-Agent')) {
+          // no stormpath agent, process normally
+          return next();
+      }
+      res.status(200).send({
+          "form": {
+              "fields": [{
+                  "label": "Username or Email",
+                  "placeholder": "Username or Email",
+                  "required": true,
+                  "type": "text",
+                  "name": "login"
+              }, {
+                  "label": "Password",
+                  "placeholder": "Password",
+                  "required": true,
+                  "type": "password",
+                  "name": "password"
+              }]
+          },
+          "accountStores": []
+      });
+  });
+}
 /*
  */
 function registerStormpathPassportStrategy(app, passport, name) {
@@ -35,55 +59,56 @@ function registerStormpathPassportStrategy(app, passport, name) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    app.get('/login', function(req, res, next) {
-        if (!req.get('X-Stormpath-Agent')) {
-            // no stormpath agent, process normally
-            return next();
-        }
-        res.status(200).send({
-            "form": {
-                "fields": [{
-                    "label": "Username or Email",
-                    "placeholder": "Username or Email",
-                    "required": true,
-                    "type": "text",
-                    "name": "login"
-                }, {
-                    "label": "Password",
-                    "placeholder": "Password",
-                    "required": true,
-                    "type": "password",
-                    "name": "password"
-                }]
-            },
-            "accountStores": []
-        });
-    });
+    return renderProperStormpathLoginForm(app);
 }
 
-function registerGooglePassportStrategy(app, passport, config) {
+function registerGooglePassportStrategy(app, passport, config, conn) {
     var GoogleStrategy = require('passport-google-oauth20').Strategy;
     var googleStrategy = new GoogleStrategy({
         clientID: config.userProvider.clientID,
         clientSecret: config.userProvider.clientSecret,
         callbackURL: config.userProvider.callbackURL
     }, function(accessToken, refreshToken, profile, done) {
-        return done(null, {
-            email: profile.id,
-            href: profile.id
-        });
+      var UnifiedUser = require('./user-model')(conn).UnifiedUser;
+      UnifiedUser.findOne({
+          type: 'Passport',
+          href: profile.id
+      }).exec(function(err, result) {
+          if (err) {
+              return done(err);
+          }
+          //create new user if missing.
+          if (!result) {
+              result = new UnifiedUser();
+          }
+          var email = null;
+          for(var i = 0; i< profile.emails.length; i++){
+            if(profile.emails[i].type === 'account'){
+              email = profile.emails[i].value;
+              break;
+            }
+          }
+          if(!email){ //better this than nothing
+            email = profile.emails[0].value;
+          }
+          result.type = 'Passport';
+          result.href = profile.id;
+          result.email = email;
+          result.fullName = profile.displayName;
+          result.save(function(e2, r2) {
+              return done(e2, r2);
+          });
+      });
     });
 
     passport.use(config.userProvider.strategy, googleStrategy);
 
     passport.serializeUser(function(user, cb) {
-        cb(null, user.email);
+        return cb(null, JSON.stringify(user));
     });
+
     passport.deserializeUser(function(id, cb) {
-        cb(null, {
-            email: id,
-            href: id
-        });
+        return cb(null, JSON.parse(id));
     });
 
     app.use(passport.initialize());
@@ -99,21 +124,41 @@ function registerGooglePassportStrategy(app, passport, config) {
         });
 
     app.get('/login', passport.authenticate(config.userProvider.strategy, {
-        scope: ['profile']
+        scope: ['profile email']
     }));
 }
 
-function registerLdapPassportStrategy(app, passport, config) {
+function registerLdapPassportStrategy(app, passport, config, conn) {
     var LDAPStrategy = require('passport-ldapauth').Strategy;
     var ldapStrategy = new LDAPStrategy({
-            server: config.userProvider.server,
-            usernameField: 'login'
+        server: config.userProvider.server,
+        usernameField: 'login'
+    }, function(user, done) {
+        var UnifiedUser = require('./user-model')(conn).UnifiedUser;
+        UnifiedUser.findOne({
+            type: 'Passport',
+            email: user.mail
+        }).exec(function(err, result) {
+            if (err) {
+                return done(err);
+            }
+            //create new user if missing.
+            if (!result) {
+                result = new UnifiedUser();
+            }
+            result.type = 'Passport';
+            result.href = user.uid;
+            result.email = user.mail;
+            result.fullName = user.cn;
+            result.save(function(e2, r2) {
+                return done(e2, r2);
+            });
         });
+    });
 
     passport.use(config.userProvider.strategy, ldapStrategy);
 
     passport.serializeUser(function(user, cb) {
-        user.href = user.mail;
         return cb(null, JSON.stringify(user));
     });
     passport.deserializeUser(function(id, cb) {
@@ -123,52 +168,43 @@ function registerLdapPassportStrategy(app, passport, config) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    app.get('/login', function(req, res, next) {
-        if (!req.get('X-Stormpath-Agent')) {
-            // no stormpath agent, process normally
-            return next();
-        }
-        res.status(200).send({
-            "form": {
-                "fields": [{
-                    "label": "Username or Email",
-                    "placeholder": "Username or Email",
-                    "required": true,
-                    "type": "text",
-                    "name": "login"
-                }, {
-                    "label": "Password",
-                    "placeholder": "Password",
-                    "required": true,
-                    "type": "password",
-                    "name": "password"
-                }]
-            },
-            "accountStores": []
-        });
-    });
+    return renderProperStormpathLoginForm(app);
 }
 
-function registerAnonymousPassportStrategy(app, passport, name) {
+function registerAnonymousPassportStrategy(app, passport, name, conn) {
     var LocalStrategy = require('passport-local');
     var localStrategy = new LocalStrategy({
         usernameField: 'login',
         session: true
     }, function(user, pass, done) {
-        return done(null, {
-            email: user,
-            href: user
+        var UnifiedUser = require('./user-model')(conn).UnifiedUser;
+        UnifiedUser.findOne({
+            type: 'Passport',
+            email: user
+        }).exec(function(err, result) {
+            if (err) {
+                return done(err);
+            }
+            //create new user if missing.
+            if (!result) {
+                result = new UnifiedUser();
+            }
+            result.type = 'Passport';
+            result.href = user;
+            result.email = user;
+            result.fullName = user;
+            result.save(function(e2, r2) {
+                return done(e2, r2);
+            });
         });
     });
 
     passport.serializeUser(function(user, cb) {
-        cb(null, user.email);
+        return cb(null, JSON.stringify(user));
     });
+
     passport.deserializeUser(function(id, cb) {
-        cb(null, {
-            email: id,
-            href: id
-        });
+        return cb(null, JSON.parse(id));
     });
 
     passport.use(name, localStrategy);
@@ -176,34 +212,11 @@ function registerAnonymousPassportStrategy(app, passport, name) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    app.get('/login', function(req, res, next) {
-        if (!req.get('X-Stormpath-Agent')) {
-            // no stormpath agent, process normally
-            return next();
-        }
-        res.status(200).send({
-            "form": {
-                "fields": [{
-                    "label": "Username or Email",
-                    "placeholder": "Username or Email",
-                    "required": true,
-                    "type": "text",
-                    "name": "login"
-                }, {
-                    "label": "Password",
-                    "placeholder": "Password",
-                    "required": true,
-                    "type": "password",
-                    "name": "password"
-                }]
-            },
-            "accountStores": []
-        });
-    });
+    return renderProperStormpathLoginForm(app);
 }
 
 
-function createUserProvider(app, config) {
+function createUserProvider(app, config, conn) {
 
     /*
       The default provider - uses stormpath to manage users. Stormpath has to be
@@ -286,16 +299,16 @@ function createUserProvider(app, config) {
 
         var passport = require('passport');
         if (config.userProvider.strategy === 'stormpath') {
-            registerStormpathPassportStrategy(app, passport, config.userProvider.strategy);
+            registerStormpathPassportStrategy(app, passport, config.userProvider.strategy, conn);
         }
         if (config.userProvider.strategy === 'google') {
-            registerGooglePassportStrategy(app, passport, config);
+            registerGooglePassportStrategy(app, passport, config, conn);
         }
         if (config.userProvider.strategy === 'ldap') {
-            registerLdapPassportStrategy(app, passport, config);
+            registerLdapPassportStrategy(app, passport, config, conn);
         }
         if (config.userProvider.strategy === 'anonymous') {
-            registerAnonymousPassportStrategy(app, passport, config.userProvider.strategy);
+            registerAnonymousPassportStrategy(app, passport, config.userProvider.strategy, conn);
         }
 
         app.post('/login', passport.authenticate(config.userProvider.strategy, {
@@ -342,8 +355,8 @@ function createUserProvider(app, config) {
 
 
 var WrapperClass = function() {
-    this.installUserProvider = function(app, config) {
-        createUserProvider(app, config);
+    this.installUserProvider = function(app, config, conn) {
+        createUserProvider(app, config, conn);
     };
 
     this.getGuard = function() {
