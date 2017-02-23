@@ -22,7 +22,12 @@ if(process.env.PRODUCTION){
 });
 }
 
-
+var mongoose = require('mongoose');
+var q = require('q');
+mongoose.Promise = q.Promise;
+// mongoose.set('debug', true);
+var MongoDBConnectionURL = require('./src-server/mongodb-helper');
+var conn = mongoose.connect(MongoDBConnectionURL);
 
 
 var debug = false;
@@ -116,9 +121,7 @@ app.get('/img/LEF_logo.png', function(req, res) {
 
 userProvider.installUserProvider(app, config);
 
-app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard()).router);
-
-
+app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
 
 if (config.userProvider.type === 'stormpath') {
   app.get('*', function(req, res) {

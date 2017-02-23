@@ -14,21 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 
-var Model = require('./model');
-var WardleyMap = Model.WardleyMap;
-var Workspace = Model.Workspace;
-var Node = Model.Node;
-var Alias = Model.Alias;
-var CapabilityCategory = Model.CapabilityCategory;
-var Capability = Model.Capability;
+
 var _ = require('underscore');
 var logger = require('./../log');
 var submapLogger = require('./../log').getLogger('submap');
 var capabilityLogger = require('./../log').getLogger('capability');
 var mongoose = require('mongoose');
-var q = require('q');
-mongoose.Promise = q.Promise;
 var ObjectId = mongoose.Types.ObjectId;
+var q = require('q');
 
 var log4js = require('log4js');
 submapLogger.setLevel(log4js.levels.WARN);
@@ -137,7 +130,15 @@ var removeEmptyCapabilities = function(workspace){
   return workspace;
 };
 
-module.exports = function(stormpath) {
+module.exports = function(stormpath, mongooseConnection) {
+  var Model = require('./model')(mongooseConnection);
+  var WardleyMap = Model.WardleyMap;
+  var Workspace = Model.Workspace;
+  var Node = Model.Node;
+  var Alias = Model.Alias;
+  var CapabilityCategory = Model.CapabilityCategory;
+  var Capability = Model.Capability;
+
   var module = {};
 
   module.router = require('express').Router();
