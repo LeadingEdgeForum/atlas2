@@ -151,7 +151,6 @@ module.exports = function(conn) {
         user: Schema.Types.String,
         purpose: Schema.Types.String,
         name: Schema.Types.String,
-        owner: Schema.Types.String,
         isSubmap: Schema.Types.Boolean,
         archived: Schema.Types.Boolean,
         workspace: {
@@ -163,6 +162,16 @@ module.exports = function(conn) {
             ref: 'Node'
         }]
     });
+
+    _MapSchema.methods.verifyAccess = function(user, callback) {
+        var mapID = this._id;
+        Workspace.findOne({
+            owner: user,
+            maps: mapID
+        }).exec(function(err, result) {
+            callback(err, result !== null);
+        });
+    };
 
     _CapabilitySchema.pre('remove', function(next) {
         var promises = [];
