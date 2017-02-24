@@ -7,11 +7,15 @@ module.exports = {
   devtool: 'eval-source-map',
 
   context: path.join(__dirname, 'src-ui'),
-  entry: ['./app'],
+
+  entry: {
+    app : './app',
+    local : './app-local'
+  },
 
   output: {
     path: path.join(__dirname, 'build-ui/js'),
-    filename: 'app.js',
+    filename: '[name].js',
     publicPath: '/js'
   },
   module: {
