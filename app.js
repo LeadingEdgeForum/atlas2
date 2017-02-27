@@ -37,8 +37,8 @@ if (debug){
     var webpack = require('webpack');
     var config = require('./webpack.config');
     var compiler = webpack(config);
-    webpack_middleware = require('webpack-dev-middleware')(compiler);
-    app.use(webpack_middleware);
+    app.webpack_middleware = require('webpack-dev-middleware')(compiler);
+    app.use(app.webpack_middleware);
   }catch(e){
     console.log(e);
   }

@@ -1,7 +1,7 @@
 {
     "userProvider": {
-        "type": "stormpath",
-        "strategy": "ldap",
+        "type": "passport",
+        "strategy": "anonymous",
         "server": {
             "url": "ldap://ldap.forumsys.com:389",
             "bindDn": "cn=read-only-admin,dc=example,dc=com",

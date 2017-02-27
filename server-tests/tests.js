@@ -16,16 +16,11 @@ limitations under the License.*/
 var should = require('should');
 var app = require('../app');
 var request = require('supertest');
-
-
-//maybe automate getting test users and test keys from stormpath in the future
-var stormpathId = process.env.WM_STORMPATH_TEST_ACCOUNT1_KEY;
-var stormpathKey = process.env.WM_STORMPATH_TEST_ACCOUNT1_SECRET;
+var userAgent1 = request.agent(app);
 
 
 describe('Workspaces & maps', function() {
 
-    var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
     var workspaceID;
     var mapID;
     var node1ID, node2ID;
@@ -34,30 +29,38 @@ describe('Workspaces & maps', function() {
 
     before(function(done) {
         this.timeout(2 * 60 * 1000);
-        app.___app.on('stormpath.ready', function() {
-            console.log('stormpath ready for tests');
+        if(app.___app.webpack_middleware){
+          app.___app.webpack_middleware.waitUntilValid(function(){
             done();
-        });
+          });
+        } else {
+          //no webpack, nothing to wait for
+          done();
+        }
     });
 
     it('verify login', function(done) {
-        request(app).
-        get('/api/workspaces')
-            .set('Content-type', 'application/json')
-            .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
-            .expect(200)
+        userAgent1.post('/login').
+        send({
+                login: 'test1@test.test',
+                password: 'password'
+            })
+            .expect(302)
+            .expect(function(res){
+              if(res.headers.location !== '/'){
+                throw new Error('Login unsuccessful');
+              }
+            })
             .end(function(err, res) {
                 done(err);
             });
     });
 
     it('create workspace', function(done) {
-        request(app).
+        userAgent1.
         post('/api/workspace')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send({
                 name: "Testworkspace1",
                 description: "I hate long descriptions"
@@ -75,11 +78,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('get workspaces and confirm creation', function(done) {
-        request(app).
+        userAgent1.
         get('/api/workspaces')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 if (!res.body.workspaces) {
@@ -104,11 +106,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('get workspace', function(done) {
-        request(app).
+        userAgent1.
         get('/api/workspace/' + workspaceID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
               res.body.workspace.capabilityCategories.length.should.not.equal(0);
@@ -119,11 +120,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('create a map', function(done) {
-        request(app).
+        userAgent1.
         post('/api/map')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send({
                 workspaceID: workspaceID,
                 user: "Sample user",
@@ -142,11 +142,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('verify map created (/api/map/mapID)', function(done) {
-        request(app).
+        userAgent1.
         get('/api/map/' + mapID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 if (!(res.body.map && res.body.map._id)) {
@@ -165,11 +164,10 @@ describe('Workspaces & maps', function() {
 
 
     it('verify map created (/api/workspace/workspaceID)', function(done) {
-        request(app).
+        userAgent1.
         get('/api/workspace/' + workspaceID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 var found = null;
@@ -195,11 +193,10 @@ describe('Workspaces & maps', function() {
         var nodeName = "name";
         var node = {name:nodeName,coords:{x:0.5,y:0.5},type:"INTERNAL"};
         copyOfMap.nodes.push(node);
-        request(app).
+        userAgent1.
         post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send(node)
             .expect(200)
             .expect(function(res) {
@@ -216,11 +213,10 @@ describe('Workspaces & maps', function() {
     it('change a node in a map', function(done) {
         var nodeName = "name2";
         var node = {name:nodeName,x:0.5,y:0.5,type:"INTERNAL"};
-        request(app).
+        userAgent1.
         put('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send(node)
             .expect(200)
             .expect(function(res) {
@@ -235,11 +231,10 @@ describe('Workspaces & maps', function() {
     it('change a node in a map', function(done) {
         var nodeName = "name3";
         var node = {name:nodeName};
-        request(app).
+        userAgent1.
         put('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send(node)
             .expect(200)
             .expect(function(res) {
@@ -253,11 +248,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('delete a node in a map', function(done) {
-        request(app).
+        userAgent1.
         del('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
@@ -272,11 +266,10 @@ describe('Workspaces & maps', function() {
         var nodeName = "name_1";
         var node = {name:nodeName,coords:{x:0.5,y:0.5},type:"INTERNAL"};
         copyOfMap.nodes.push(node);
-        request(app).
+        userAgent1.
         post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send(node)
             .expect(200)
             .expect(function(res) {
@@ -293,11 +286,10 @@ describe('Workspaces & maps', function() {
         var nodeName = "name_2";
         var node = {name:nodeName,coords:{x:0.5,y:0.5},type:"INTERNAL"};
         copyOfMap.nodes.push(node);
-        request(app).
+        userAgent1.
         post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node')
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .send(node)
             .expect(200)
             .expect(function(res) {
@@ -311,11 +303,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('connect nodes', function(done) {
-        request(app).
+        userAgent1.
         post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID + '/outgoingDependency/' + node2ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
@@ -329,11 +320,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('delete a connection', function(done) {
-        request(app).
+        userAgent1.
         del('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID + '/outgoingDependency/' + node2ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
@@ -347,11 +337,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('connect nodes again', function(done) {
-        request(app).
+        userAgent1.
         post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node1ID + '/outgoingDependency/' + node2ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
@@ -365,11 +354,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('delete the second node', function(done) {
-        request(app).
+        userAgent1.
         del('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + node2ID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 copyOfMap = res.body.map;
@@ -383,7 +371,7 @@ describe('Workspaces & maps', function() {
 
     describe('Submaps', function() {
 
-        var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
+        // var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
         var workspaceID;
         var mapID;
         var nodeID = [];
@@ -394,11 +382,10 @@ describe('Workspaces & maps', function() {
         var createNodeInAMap = function(index, done) {
             var nodeName = "name";
             var node = {name:nodeName,x:0.5,y:0.5,type:"INTERNAL"};
-            request(app).
+            userAgent1.
             post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send(node)
                 .expect(200)
                 .expect(function(res) {
@@ -414,14 +401,13 @@ describe('Workspaces & maps', function() {
         };
 
         var connectNodes = function(source, target, done) {
-            request(app).
+            userAgent1.
             post( '/api/workspace/' + workspaceID +
                   '/map/' + mapID +
                   '/node/' + nodeID[source] +
                   '/outgoingDependency/' + nodeID[target])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                     res.body.map.nodes[source].outboundDependencies[0].should.equal(res.body.map.nodes[target]._id);
@@ -433,11 +419,10 @@ describe('Workspaces & maps', function() {
         };
 
         it('create workspace', function(done) {
-            request(app).
+            userAgent1.
             post('/api/workspace')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     name: "Testworkspace1",
                     description: "I hate long descriptions"
@@ -455,11 +440,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('create a map', function(done) {
-            request(app).
+            userAgent1.
             post('/api/map')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     workspaceID: workspaceID,
                     user: "Sample user",
@@ -485,14 +469,13 @@ describe('Workspaces & maps', function() {
         it('connect nodes', connectNodes.bind(this, 0, 1));
         //try to duplcate the connection
         it('connect nodes and verify duplicates are not created', function(done){
-          request(app).
+          userAgent1.
           post( '/api/workspace/' + workspaceID +
                 '/map/' + mapID +
                 '/node/' + nodeID[0] +
                 '/outgoingDependency/' + nodeID[1])
               .set('Content-type', 'application/json')
               .set('Accept', 'application/json')
-              .set('Authorization', authorizationHeader)
               .expect(400)
               .expect(function(res) {
                   res.body.map.nodes[0].outboundDependencies.length.should.equal(1);
@@ -509,11 +492,10 @@ describe('Workspaces & maps', function() {
 
         var submapID;
         it('create a submap', function(done) {
-            request(app).
+            userAgent1.
             put('/api/map/' + mapID + '/submap')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     name: submapName,
                     listOfNodesToSubmap: [nodeID[1],nodeID[2]]
@@ -542,11 +524,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('verify the submap', function(done) {
-          request(app).
+          userAgent1.
             get('/api/map/' + submapID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res2){
                   submapName.should.equal(res2.body.map.name);
@@ -566,11 +547,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('verify submap usage info', function(done) {
-          request(app).
+          userAgent1.
             get('/api/submap/' + submapID + '/usage')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res2){
                   // console.log(res2.body);
@@ -582,11 +562,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('verify suggestion', function(done) {
-          request(app).
+          userAgent1.
               get('/api/submaps/map/' + mapID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res2){
                   res2.body.listOfAvailableSubmaps.length.should.equal(1);
@@ -597,11 +576,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('delete submap', function(done) {
-          request(app).
+          userAgent1.
             delete('/api/map/' + submapID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res2){
                   should.not.exist(res2.body.map);
@@ -611,11 +589,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('verify suggestion again', function(done) {
-          request(app).
+          userAgent1.
               get('/api/submaps/map/' + mapID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res2){
                   res2.body.listOfAvailableSubmaps.length.should.equal(0);
@@ -629,7 +606,6 @@ describe('Workspaces & maps', function() {
 
     describe('Duplication', function() {
 
-        var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
         var workspaceID;
         var mapID;
         var nodeID = [];
@@ -640,11 +616,10 @@ describe('Workspaces & maps', function() {
         var createNodeInAMap = function(index, done) {
             var nodeName = "name";
             var node = {name:nodeName,x:0.5,y:0.5,type:"INTERNAL"};
-            request(app).
+            userAgent1.
             post('/api/workspace/' + workspaceID + '/map/' + mapID + '/node')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send(node)
                 .expect(200)
                 .expect(function(res) {
@@ -660,14 +635,13 @@ describe('Workspaces & maps', function() {
         };
 
         var connectNodes = function(source, target, done) {
-            request(app).
+            userAgent1.
             post( '/api/workspace/' + workspaceID +
                   '/map/' + mapID +
                   '/node/' + nodeID[source] +
                   '/outgoingDependency/' + nodeID[target])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                     res.body.map.nodes[source].outboundDependencies[0].should.equal(res.body.map.nodes[target]._id);
@@ -679,11 +653,10 @@ describe('Workspaces & maps', function() {
         };
 
         it('create workspace', function(done) {
-            request(app).
+            userAgent1.
             post('/api/workspace')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     name: "Testworkspace1",
                     description: "I hate long descriptions"
@@ -701,11 +674,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('create a map', function(done) {
-            request(app).
+            userAgent1.
             post('/api/map')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     workspaceID: workspaceID,
                     user: "Sample user",
@@ -724,11 +696,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('create another map', function(done) {
-            request(app).
+            userAgent1.
             post('/api/map')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     workspaceID: workspaceID,
                     user: "Sample user",
@@ -751,11 +722,10 @@ describe('Workspaces & maps', function() {
 
         var submapID;
         it('create a submap', function(done) {
-            request(app).
+            userAgent1.
             put('/api/map/' + mapID + '/submap')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .send({
                     name: submapName,
                     listOfNodesToSubmap: [nodeID[1],nodeID[2]]
@@ -784,11 +754,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('verify unprocessed components', function(done) {
-            request(app).
+            userAgent1.
             get('/api/workspace/' + workspaceID + '/components/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                     res.body.maps.length.should.equal(2);
@@ -801,11 +770,10 @@ describe('Workspaces & maps', function() {
 
         var category = null;
         it('verify categories are present', function(done) {
-            request(app).
+            userAgent1.
             get('/api/workspace/' + workspaceID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   res.body.workspace.capabilityCategories.length.should.not.equal(0);
@@ -818,11 +786,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('create a capability', function(done) {
-            request(app).
+            userAgent1.
             post('/api/workspace/' + workspaceID + '/capabilitycategory/' + category + '/node/' + nodeID[0])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
@@ -834,11 +801,10 @@ describe('Workspaces & maps', function() {
 
         var capabilityID = null;
         it('check capability creation', function(done) {
-            request(app).
+            userAgent1.
             get('/api/workspace/' + workspaceID + '/components/processed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0]);
@@ -852,11 +818,10 @@ describe('Workspaces & maps', function() {
 
         var aliasID = null;
         it('add a node to capability', function(done) {
-            request(app).
+            userAgent1.
             put('/api/workspace/' + workspaceID + '/capability/' + capabilityID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
@@ -872,11 +837,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('add a node to an alias', function(done) {
-            request(app).
+            userAgent1.
             put('/api/workspace/' + workspaceID + '/alias/' + aliasID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
@@ -890,11 +854,10 @@ describe('Workspaces & maps', function() {
                 });
         });
         it('get info', function(done) {
-            request(app).
+            userAgent1.
             get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   console.log(res.body);
@@ -906,11 +869,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('delete capability', function(done) {
-            request(app).
+            userAgent1.
             delete('/api/workspace/' + workspaceID + '/capability/' + capabilityID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
@@ -922,11 +884,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('verify unprocessed components', function(done) {
-            request(app).
+            userAgent1.
             get('/api/workspace/' + workspaceID + '/components/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                     console.log(res.body.maps);
@@ -938,11 +899,10 @@ describe('Workspaces & maps', function() {
         });
 
         it('get info', function(done) {
-            request(app).
+            userAgent1.
             get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
-                .set('Authorization', authorizationHeader)
                 .expect(200)
                 .expect(function(res) {
                   console.log(res.body);
@@ -956,11 +916,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('archive a map (/api/map/mapID)', function(done) {
-        request(app).
+        userAgent1.
         del('/api/map/' + mapID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .end(function(err, res) {
                 done(err);
@@ -968,11 +927,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('verify map does not exist (directly)', function(done) {
-        request(app).
+        userAgent1.
         get('/api/workspace/' + workspaceID + '/map/' + mapID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 if (res.body.map) {
@@ -985,11 +943,10 @@ describe('Workspaces & maps', function() {
     });
 
     it('verify map does not exist (through workspace)', function(done) {
-        request(app).
+        userAgent1.
         get('/api/workspace/' + workspaceID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
-            .set('Authorization', authorizationHeader)
             .expect(200)
             .expect(function(res) {
                 var found = null;
