@@ -3,6 +3,6 @@
 
 A new mapping tool, this time by [LEF](http://www.wardleymaps.com)
 
-CC-BY-SA
+CC-BY-SA, except atlas2/build-ui/img/LEF_logo.png.
 
 [Developer's setup](https://github.com/cdaniel/atlas2/wiki/Set-up-for-developers)
