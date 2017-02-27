@@ -131,13 +131,14 @@ var removeEmptyCapabilities = function(workspace){
 };
 
 module.exports = function(authGuardian, mongooseConnection) {
-  var Model = require('./model')(mongooseConnection);
-  var WardleyMap = Model.WardleyMap;
-  var Workspace = Model.Workspace;
-  var Node = Model.Node;
-  var Alias = Model.Alias;
-  var CapabilityCategory = Model.CapabilityCategory;
-  var Capability = Model.Capability;
+  var Capability = require('./model/capability-schema')(mongooseConnection);
+  var CapabilityCategory = require('./model/capability-category-schema')(mongooseConnection);
+  var WardleyMap = require('./model/map-schema')(mongooseConnection);
+  var Workspace = require('./model/workspace-schema')(mongooseConnection);
+  var Node = require('./model/node-schema')(mongooseConnection);
+  var Alias = require('./model/alias-schema')(mongooseConnection);
+  
+  
 
   var module = {};
 
