@@ -10,9 +10,6 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 
-var StormpathHelper = require('./stormpath-helper');
-var stormpath = require('express-stormpath');
-
 
 var guard = null;
 
@@ -45,6 +42,8 @@ function renderProperStormpathLoginForm(app){
 /*
  */
 function registerStormpathPassportStrategy(app, passport, name) {
+    var StormpathHelper = require('./stormpath-helper');
+    var stormpath = require('express-stormpath');
     var StormpathStrategy = require('passport-stormpath').Strategy;
     var stormpathStrategy = new StormpathStrategy({
         apiKeyId: StormpathHelper.stormpathId,
