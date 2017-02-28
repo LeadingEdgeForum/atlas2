@@ -25,21 +25,22 @@ var modelLogger = require('./log').getLogger('User-Model');
 
 var UnifiedUser = null;
 module.exports = function(conn) {
+        if (!UnifiedUser) {
 
-    var _UnifiedUserSchema = new Schema({
-        type : {
-          type: String,
-          enum : ['Stormpath','Passport']
-        },
-        href: String,
-        username : String,
-        email : String,
-        fullName : String
-    });
-    if(!UnifiedUser){
-      UnifiedUser = conn.model('UnifiedUser', _UnifiedUserSchema); //jshint ignore:line
-    }
-    return {
-        UnifiedUser: UnifiedUser
-    };
+            var _UnifiedUserSchema = new Schema({
+                type: {
+                    type: String,
+                    enum: ['Stormpath', 'Passport']
+                },
+                href: String,
+                username: String,
+                email: String,
+                fullName: String
+            });
+
+            UnifiedUser = conn.model('UnifiedUser', _UnifiedUserSchema); //jshint ignore:line
+        }
+        return {
+            UnifiedUser: UnifiedUser
+        };
 };

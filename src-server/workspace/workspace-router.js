@@ -131,206 +131,141 @@ var removeEmptyCapabilities = function(workspace){
 };
 
 module.exports = function(authGuardian, mongooseConnection) {
-  var Model = require('./model')(mongooseConnection);
-  var WardleyMap = Model.WardleyMap;
-  var Workspace = Model.Workspace;
-  var Node = Model.Node;
-  var Alias = Model.Alias;
-  var CapabilityCategory = Model.CapabilityCategory;
-  var Capability = Model.Capability;
+  var Capability = require('./model/capability-schema')(mongooseConnection);
+  var CapabilityCategory = require('./model/capability-category-schema')(mongooseConnection);
+  var WardleyMap = require('./model/map-schema')(mongooseConnection);
+  var Workspace = require('./model/workspace-schema')(mongooseConnection);
+  var Node = require('./model/node-schema')(mongooseConnection);
+  var Alias = require('./model/alias-schema')(mongooseConnection);
+
 
   var module = {};
 
   module.router = require('express').Router();
 
+  var defaultAccessDenied = function(res, err){
+    console.error('default error handler', err);
+      if(err){
+          return res.send(500);
+      }
+      res.send(403);
+  };
+
   // this is so shitty.... the name should be calculated client side
   // TODO: fix this
   module.router.get('/map/:mapID/name', authGuardian.authenticationRequired, function(req, res) {
     var owner = getUserIdFromReq(req);
-    WardleyMap.findOne({_id: req.params.mapID, archived: false}).select('user purpose name workspace').exec(function(err, result) {
-      result.verifyAccess(owner, function(err2, access){
-        if(err2){
-          res.status(500).json(err2);
-          return;
-        }
-        if(access){
-          if(result.user && result.purpose){
-            res.json({map: {_id : result._id, name:'As ' + result.user + ', I want to ' + result.purpose + '.'}});
-          } else {
-            res.json({map: {_id : result._id, name:result.name + '.'}});
-          }
-        } else {
-          res.send(403);
-        }
-      });
+    WardleyMap
+        .findOne({_id: req.params.mapID, archived: false})
+        .select('user purpose name workspace')
+        .exec(function(err, result) {
+            if(!result){
+                return res.status(404);
+            }
+            result.verifyAccess(owner,function(){
+                if(result.user && result.purpose){
+                    res.json({map: {_id : result._id, name:'As ' + result.user + ', I want to ' + result.purpose + '.'}});
+                  } else {
+                    res.json({map: {_id : result._id, name:result.name + '.'}});
+                  }
+            }, defaultAccessDenied.bind(null, res));
 
     });
   });
 
 
   module.router.get('/workspaces/', authGuardian.authenticationRequired, function(req, res) {
-
-    Workspace.find({
-      owner: getUserIdFromReq(req),
-      archived: false
-    }, function(err, results) {
-      console.error(err);
-      var responseObject = {
-        workspaces: []
-      };
-      results.forEach(workspace => responseObject.workspaces.push({workspace: workspace}));
-      res.json(responseObject);
-    });
+      Workspace.find({
+          owner: getUserIdFromReq(req),
+          archived: false
+      }, function(err, results) {
+          if (err) {
+              return res.send(500);
+          }
+          var responseObject = {
+              workspaces: []
+          };
+          results.forEach(workspace => responseObject.workspaces.push({
+              workspace: workspace
+          }));
+          res.json(responseObject);
+      });
   });
 
   module.router.post('/workspace/', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-    var name = req.body.name;
-    if (!name) {
-      name = "Anonymous workspace";
-    }
-    var description = req.body.description;
-    if (!description) {
-      description = "I am too lazy to fill this field even when I know it causes organizational mess";
-    }
-    var purpose = req.body.purpose;
-    if (!purpose) {
-      purpose = "No apparent purpose";
-    }
-    var wkspc = new Workspace({
-      name: name,
-      description: description,
-      purpose:purpose,
-      owner: [owner],
-      archived: false
-    });
-    var promisesToSave = [];
-    var capabilityCategories = ['Customer Service','Product','Administrative','Quality','Operational','Marketing', 'Research','Finances'];
-    capabilityCategories.forEach(function(name){
-      promisesToSave.push((new CapabilityCategory({name})).save());
-    });
-    q.all(promisesToSave)
-      .then(function(results){
-        wkspc.capabilityCategories = results;
-        return wkspc.save();
-      })
-      .fail(function(e){
-          res.status(500).json(e);
-      })
-      .done(function(wkspc){
+      var owner = getUserIdFromReq(req);
+      Workspace.initWorkspace(req.body.name, req.body.description, req.body.purpose, owner, function(err, wkspc) {
+          if (err) {
+              return res.status(500);
+          }
           res.json(wkspc);
       });
   });
 
   module.router.get('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
-    Workspace.findOne({owner: getUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).populate('maps capabilityCategories').exec(function(err, result) {
-      res.json({workspace: result});
-    });
+      Workspace
+          .findOne({
+              owner: getUserIdFromReq(req),
+              _id: req.params.workspaceID,
+              archived: false
+          })
+          .populate('maps capabilityCategories')
+          .exec(function(err, result) {
+              if (err) {
+                  return res.send(500);
+              }
+              res.json({
+                  workspace: result.toObject()
+              });
+          });
   });
 
   module.router.get('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
     WardleyMap.findOne({
-        _id: req.params.mapID,
-        archived: false})
-    .populate('nodes')
-    .exec(function(err, result) {
-      if(err){
-        console.error(err);
-        res.statusCode = 500;
-        res.json(err);
-        return;
-      }
-      if(!result){
-        res.send(404);
-        return;
-      }
-      result.verifyAccess(getUserIdFromReq(req), function(err, granted) {
-          if (granted) {
-              res.json({
-                  map: result
-              });
-          } else {
-              res.send(403);
-          }
-      });
-
-    });
-  });
-
-  module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res){
-    var owner = getUserIdFromReq(req);
-    WardleyMap.findOne({
-      _id: req.params.mapID,
-      archived: false
-    }).exec(function(err, targetMap) {
-      if(err){
-        res.send(500);
-        return;
-      }
-      if(!targetMap){
-        res.send(404);
-        return;
-      }
-      targetMap.verifyAccess(owner, function(err2, granted){
-          if(!granted) {
-            res.send(403);
-            return;
-          }
-          if(err2){
-            res.send(500);
-            return;
-          }
-
-          // so we have a map that has a workspaceID, now it is time to look for all the maps within the workspace that has submap flag
-          // we obviously miss a case where the map is already referenced, but let's leave it for future
-          WardleyMap.find({
-            workspace : targetMap.workspace,
-            archived: false,
-            isSubmap : true
-          }).exec(function(err, results){
-            //handle the results - repack them into something useful.
-            // no need to verify access to individual maps as we have confirmed the access to the workspace
-            var listOfAvailableSubmaps = [];
-            for(var i = 0; i < results.length; i++){
-              listOfAvailableSubmaps.push({_id:results[i]._id, name:results[i].name});
+            _id: req.params.mapID,
+            archived: false
+        })
+        .populate('nodes')
+        .exec(function(err, result) {
+            if (err) {
+                res.statusCode = 500;
+                res.json(err);
+                return;
             }
-            res.json({listOfAvailableSubmaps:listOfAvailableSubmaps});
-          });
-      });
+            if (!result) {
+                res.send(404);
+                return;
+            }
+            result.verifyAccess(getUserIdFromReq(req), function() {
+                res.json({
+                    map: result.toObject()
+                });
+            }, defaultAccessDenied.bind(this,res));
+        });
     });
+
+  module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
+      Workspace.getAvailableSubmapsForMap(req.params.mapID, owner, function(listOfAvailableSubmaps) {
+          res.json({
+              listOfAvailableSubmaps: listOfAvailableSubmaps
+          });
+      }, defaultAccessDenied.bind(res));
   });
 
   module.router.get('/submap/:submapID/usage', authGuardian.authenticationRequired, function(req, res){
-    Node.find({type:'SUBMAP', submapID : req.params.submapID}).select('parentMap').exec(function(e,r){
-      var ids = [];
-      r.forEach(item => ids.push(item.parentMap));
-      WardleyMap
-        .find({
-          archived: false,
-          _id : {$in : ids}
-        })
-        .populate('nodes')
-        .select('name user purpose _id').exec(function(err, availableMaps) {
-            // TODO: access check
-            res.json(availableMaps);
-        });
-    });
+    var owner = getUserIdFromReq(req);
+    Workspace.getSubmapUsage(req.params.submapID, owner, function(availableMaps) {
+        res.json(availableMaps);
+    }, defaultAccessDenied.bind(res));
   });
 
   module.router.put('/map/:mapID/submap/:submapID', authGuardian.authenticationRequired, function(req, res) {
     var owner = getUserIdFromReq(req);
     WardleyMap.findOne({_id: req.params.mapID, archived: false}).exec(function(err0, map) {
       WardleyMap.findOne({_id: req.params.submapID, archived: false}).exec(function(err1, submap) {
-      map.verifyAccess(owner, function(err2, granted1){
-          submap.verifyAccess(owner, function(err3, granted2){
-              if(err2 || err3){
-                res.send(500);
-                return;
-              }
-              if(granted1 && granted2) {
-                res.send(403);
-                return;
-              }
+      map.verifyAccess(owner, function(){
+          submap.verifyAccess(owner, function(){
 
               var x = req.body.coords.x;
               var y = req.body.coords.y;
@@ -364,8 +299,8 @@ module.exports = function(authGuardian, mongooseConnection) {
                     });
                 });
               });
-          });
-      });
+          }, defaultAccessDenied.bind(this,res));
+      }, defaultAccessDenied.bind(this,res));
     });
   });
 });
@@ -388,13 +323,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           archived: false})
       .populate('nodes')
       .exec(function(err, affectedMap) {
-          affectedMap.verifyAccess(owner, function(accesserror, granted){
-              if(accesserror){
-                return res.send(500);
-              }
-              if(!granted){
-                return res.send(403);
-              }
+          affectedMap.verifyAccess(owner, function(){
               //check that we actually own the map, and if yes
               var submap = new WardleyMap({
                 name      : submapName,
@@ -492,7 +421,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                                   res.status(500).json([e1,e2,e3,e4]);
                                   return;
                                 }
-                                res.json({map:p});
+                                res.json({map:p.toObject()});
                               });
                         });
                       });
@@ -501,46 +430,30 @@ module.exports = function(authGuardian, mongooseConnection) {
                 });
 
               });
-          });
+          }, defaultAccessDenied.bind(this,res));
     });
   });
 
   module.router.put('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-    WardleyMap.findOne({_id: req.params.mapID, archived: false}).exec(function(err, result) {
-      // console.log('map found', err, result, req.body.map);
-      //check that we actually own the map, and if yes
-      if (!result) {
-          return res.send(404);
-      }
-      result.verifyAccess(owner, function(accesserror, granted){
-        if(accesserror){
-          return res.send(500);
-        }
-        if(!granted){
-          return res.send(403);
-        }
-
-        _.extend(result, req.body.map);
-        _.extend(result.archived, false);
-
-        result.save(function(err2, result2) {
-          if (err2) {
-            res.status(500);
+      var owner = getUserIdFromReq(req);
+      WardleyMap.findOne({
+          _id: req.params.mapID,
+          archived: false
+      }).exec(function(err, result) {
+          // console.log('map found', err, result, req.body.map);
+          //check that we actually own the map, and if yes
+          if (!result) {
+              return res.send(404);
           }
-          WardleyMap
-            .findOne({_id:result2._id})
-            .populate('nodes')
-            .exec(function(e3,mapresult){
-              res.json(err2
-                ? err2 // jshint ignore:line
-                : {
-                  map: mapresult
-                });
-          });
-        });
+          result.verifyAccess(owner, function() {
+
+              result.newBody(req.body.map, function() {
+                  result.formJSON(function(json) {
+                      res.json(json);
+                  }, defaultAccessDenied.bind(this,res));
+              }, defaultAccessDenied.bind(this,res));
+          }, defaultAccessDenied.bind(this,res));
       });
-    });
   });
 
   module.router.put('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
@@ -567,41 +480,38 @@ module.exports = function(authGuardian, mongooseConnection) {
   module.router.delete('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
     var owner = getUserIdFromReq(req);
     WardleyMap
-      .findOne({
-          _id: req.params.mapID,
-          archived: false})
-      .populate('workspace')
-      .exec(function(err, result) {
-      //check that we actually own the map, and if yes
-      if (err) {
-        res.status(500).json(err);
-        return;
-      }
-      if (result) {
-        result.verifyAccess(owner, function(accesserror, granted){
-          if(accesserror){
-            return res.send(500);
-          }
-          if(!granted){
-            return res.send(403);
-          }
-
-          result.archived = true;
-          var worskpace = result.workspace;
-          worskpace.maps.pull(result._id);
-          worskpace.save(function(e1, savedWorkspace){
-            result.save(function(e2, savedMap) {
-              if(e1 || e2){
-                res.status(500).json([e1,e2]);
+        .findOne({
+            _id: req.params.mapID,
+            archived: false
+        })
+        .populate('workspace')
+        .exec(function(err, result) {
+            //check that we actually own the map, and if yes
+            if (err) {
+                res.status(500).json(err);
                 return;
-              }
-              res.json({map: null});
-            });
-          });
+            }
+            if (result) {
+                result.verifyAccess(owner, function() {
+
+                    result.archived = true;
+                    var worskpace = result.workspace;
+                    worskpace.maps.pull(result._id);
+                    worskpace.save(function(e1, savedWorkspace) {
+                        result.save(function(e2, savedMap) {
+                            if (e1 || e2) {
+                                res.status(500).json([e1, e2]);
+                                return;
+                            }
+                            res.json({
+                                map: null
+                            });
+                        });
+                    });
+                }, defaultAccessDenied.bind(this, res));
+            }
         });
-      }
-    });
-  });
+});
 
   module.router.delete('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
     Workspace.findOne({owner: getUserIdFromReq(req), _id: req.params.workspaceID, archived: false}).exec(function(err, result) {
@@ -624,51 +534,13 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-    var user = req.body.user;
-    if (!user) {
-      user = "your competitor";
-    }
-    var purpose = req.body.purpose;
-    if (!purpose) {
-      purpose = "be busy with nothing";
-    }
-    var workspaceID = req.body.workspaceID;
-    if (!workspaceID) {
-      res.send('Missing workspaceID');
-      return;
-    }
-
-    Workspace.findOne({ //this is check that the person logged in can actually write to workspace
-      _id: workspaceID,
-      owner: owner,
-      archived: false
-    }, function(err, result) {
-      // console.log('workspace found', err, result);
-      if (err) {
-        res.send(err);
-        // console.error(err);
-        return;
-      }
-      if (!result) {
-        // res.send("workspace not found");
-        return;
-      }
-      var wm = new WardleyMap({user: user, purpose: purpose, owner: owner, workspace: result._id, archived: false});
-      wm.save(function(err, savedMap) {
-        // console.log('map saved', err, savedMap);
-        if (err) {
-          res.send(err);
-          return;
-        }
-        result.maps.push(savedMap._id);
-        result.save(function(err, saveResult) {
-          // console.log('workspace saved', err, saveResult);
-          res.json({map: savedMap});
+    var editor = getUserIdFromReq(req);
+    Workspace.createMap(req.body.workspaceID, editor, req.body.user, req.body.purpose, function(result) {
+        res.json({
+            map: result
         });
-      });
-    });
-  });
+    }, defaultAccessDenied.bind(res));
+});
 
 
   module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
@@ -682,55 +554,25 @@ module.exports = function(authGuardian, mongooseConnection) {
     var parentMap = new ObjectId(mapID);
 
     WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-      _id: mapID,
-      archived: false,
-      workspace : workspaceID
+        _id: mapID,
+        archived: false,
+        workspace: workspaceID
     }, function(err, mapResult) {
-      if (err) {
-        res.send(err);
-        return;
-      }
-      if(!mapResult){
-        res.statusCode = 404;
-        res.send('Map not found in a workspace');
-      }
-      mapResult.verifyAccess(owner, function(err, granted){
-          if(!granted){
-            res.send(403);
-            return;
-          }
-          var newNode = new Node({
-            name : name,
-            x : x,
-            y : y,
-            type : type,
-            workspace : new ObjectId(workspaceID),
-            parentMap : parentMap
-          });
-          newNode.save(function(errNewNode, resultNewNode){
-            if(errNewNode){
-              res.statusCode = 500;
-              res.send(errNewNode);
-              return;
-            }
-            mapResult.nodes.push(resultNewNode._id);
-            mapResult.save(function(errModifiedMap, resultModifiedMap){
-              if(errModifiedMap){
-                console.error('Inconsistent database node created but not added to map');
-                res.statusCode = 500;
-                res.send(errModifiedMap);
-              }
-              WardleyMap.populate(
-                resultModifiedMap,
-                {path:'nodes', model: 'Node'},
-                function(popError, popResult){
-                  res.json({map: popResult});
+        if (err) {
+            return defaultAccessDenied(res, err);
+        }
+        if (!mapResult) {
+            return defaultAccessDenied(res, err);
+        }
+        mapResult.verifyAccess(owner, function() {
+            mapResult.addNode(name, x, y, type, new ObjectId(workspaceID), parentMap, function(success_result) {
+                res.json({
+                    map: success_result.toObject()
                 });
-              });
-          });
-      });
+            }, defaultAccessDenied.bind(this, res));
+        }, defaultAccessDenied.bind(this, res));
     });
-  });
+});
 
   module.router.put('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
     var owner = getUserIdFromReq(req);
@@ -797,241 +639,167 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-    var workspaceID = req.params.workspaceID;
-    var mapID = req.params.mapID;
-    var name = req.body.name;
-    var x = req.body.x;
-    var y = req.body.y;
-    var type = req.body.type;
-    var parentMap = new ObjectId(mapID);
-    var desiredNodeId = new ObjectId(req.params.nodeID);
-
-    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-      _id: mapID,
-      archived: false,
-      workspace : workspaceID,
-    })
-    .populate('nodes')
-    .exec(function(err, mapResult) {
-      if (err) {
-        res.send(err);
-        return;
-      }
-      if(!mapResult){
-        res.statusCode = 404;
-        res.send('Map not found in a workspace');
-      }
-      mapResult.verifyAccess(owner, function(accesserr, granted){
-        if(accesserr){
-          return res.send(403);
-        }
-        if(!granted){
-          res.send(403);
-          return;
-        }
-        var found = false;
-        for(var i = 0; i < mapResult.nodes.length; i++){
-          if(desiredNodeId.equals(mapResult.nodes[i]._id)){
-            found = true;
-            var modifiedNode = mapResult.nodes[i];
-
-            if (name) {
-              modifiedNode.name = name;
-            }
-            if (x) {
-              modifiedNode.x = x;
-            }
-            if (y) {
-              modifiedNode.y = y;
-            }
-            if (type) {
-              modifiedNode.type = type;
-            }
-
-            modifiedNode.save(
-              function(errNodeSave, resultNodeSave){ //jshint ignore:line
-                if(errNodeSave){
-                  res.statusCode = 500;
-                  res.send(errNodeSave);
-                  return;
-                }
-                WardleyMap.findOne({
-                  _id: mapID,
-                  archived: false,
-                  workspace : workspaceID,
-                })
-                .populate('nodes')
-                .exec(function(err2, mapResult2) {
-                    if(err2){
-                      res.statusCode = 500;
-                      res.send(err2);
-                      return;
-                    }
-                    res.json({map: mapResult2});
-                });
-              }
-            );
-            break;
-          }
-        }
-        if(!found){
-          res.statusCode = 404;
-          res.send('Node not found in a map');
-        }
-      });
-    });
-  });
-
-  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-    var workspaceID = req.params.workspaceID;
-    var mapID = req.params.mapID;
-    var parentMap = new ObjectId(mapID);
-    var desiredNodeId = new ObjectId(req.params.nodeID);
-
-    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-      _id: mapID,
-      archived: false,
-      workspace : workspaceID,
-    }).exec(function(err, mapResult) {
-      if (err) {
-        res.send(err);
-        return;
-      }
-      if(!mapResult){
-        res.statusCode = 404;
-        res.send('Map not found in a workspace');
-      }
-      mapResult.verifyAccess(owner, function(accesserr, granted){
-        if(!granted){
-          res.send(403);
-          return;
-        }
-        Node.findById(desiredNodeId)
-          .exec(function(err,result){
-            if(err){
-              res.statusCode = 500;
-              res.send(err);
-              return;
-            }
-            result.remove(function(e, r){
-              WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-                // all owners should be replaced with some sort of accessibility check
-                _id: mapID,
-                archived: false,
-                workspace : workspaceID,
-              })
-              .populate('nodes')
-              .exec(function(err2, mapResult2) {
-                  if(err2){
-                    res.statusCode = 500;
-                    res.send(err2);
-                    return;
-                  }
-                  res.json({map: mapResult2});
-              });
-            });
-          });
-      });
-    });
-  });
-
-  module.router.post(
-    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
-    authGuardian.authenticationRequired,
-    function(req, res) {
-        var owner = getUserIdFromReq(req);
-        var workspaceID = req.params.workspaceID;
-        var mapID = req.params.mapID;
-        var nodeID1 = new ObjectId(req.params.nodeID1);
-        var nodeID2 = new ObjectId(req.params.nodeID2);
-        var parentMap = new ObjectId(mapID);
-
-        Node
-            .findById(nodeID1) //two ids we are looking for
-            .exec(function(err, node) {
-                if (err) {
-                    res.statusCode = 500;
-                    res.json(err);
-                    return;
-                }
-                node.makeDependencyTo(nodeID2, function(err, result) {
-                    WardleyMap.findOne({
-                            _id: mapID,
-                            archived: false,
-                            workspace: workspaceID,
-                        })
-                        .populate('nodes')
-                        .exec(function(err2, mapResult2) {
-                            if (err2) {
-                                res.statusCode = 500;
-                                res.send(err2);
-                                return;
-                            }
-                            if (err === 400) {
-                                res.statusCode = 400;
-                            }
-                            mapResult2.verifyAccess(owner, function(erraccess, granted) {
-                                if (!granted) {
-                                    res.send(403);
-                                    return;
-                                }
-                                res.json({
-                                    map: mapResult2
-                                });
-                            });
-
-                        });
-                });
-            });
-    });
-
-  module.router.delete(
-    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
-    authGuardian.authenticationRequired,
-    function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var mapID = req.params.mapID;
-      var nodeID1 = new ObjectId(req.params.nodeID1);
-      var nodeID2 = new ObjectId(req.params.nodeID2);
-      var parentMap = new ObjectId(mapID);
+      var name = req.body.name;
+      var x = req.body.x;
+      var y = req.body.y;
+      var type = req.body.type;
+      var desiredNodeId = new ObjectId(req.params.nodeID);
 
-      Node
-        .findById(nodeID1)
-        .exec(function(err, node){
-          if(err){
-            res.statusCode = 500;
-            res.json(err);
-            return;
-          }
-          node.removeDependencyTo(nodeID2, function(err, result){
-            WardleyMap.findOne({
+      // find a map with a node
+      WardleyMap.findOne({
               _id: mapID,
               archived: false,
-              workspace : workspaceID,
-            })
-            .populate('nodes')
-            .exec(function(err2, mapResult2) {
-                if(err2){
-                  res.statusCode = 500;
-                  res.send(err2);
-                  return;
-                }
-                mapResult2.verifyAccess(owner, function(erraccess, granted) {
-                    if (!granted) {
-                        res.send(403);
-                        return;
-                    }
-                    res.json({
-                        map: mapResult2
-                    });
-                });
-            });
+              workspace: workspaceID,
+              nodes: desiredNodeId
+          })
+          .exec(function(err, mapResult) {
+              if (err) {
+                  return defaultAccessDenied(res, err);
+              }
+              if (!mapResult) {
+                  return defaultAccessDenied(res, err);
+              }
+              mapResult.verifyAccess(owner, function() {
+                  mapResult.changeNode(name, x, y, type, desiredNodeId, function(success_result) {
+                      res.json({
+                          map: success_result.toObject()
+                      });
+                  }, defaultAccessDenied.bind(this, res));
+              }, defaultAccessDenied.bind(this, res));
           });
-        });
   });
+
+  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var mapID = req.params.mapID;
+      var parentMap = new ObjectId(mapID);
+      var desiredNodeId = new ObjectId(req.params.nodeID);
+
+      // find a map with that node
+      WardleyMap.findOne({
+          _id: mapID,
+          archived: false,
+          workspace: workspaceID,
+          nodes: desiredNodeId
+      }).exec(function(err, mapResult) {
+          if (err) {
+              res.send(err);
+              return;
+          }
+          if (!mapResult) {
+              res.statusCode = 404;
+              res.send('Map not found in a workspace');
+          }
+          mapResult.verifyAccess(owner, function() {
+              Node.findById(desiredNodeId)
+                  .exec(function(err2, result) {
+                      if (err2) {
+                          return defaultAccessDenied(res, err2);
+                      }
+                      if (!result) {
+                          return defaultAccessDenied(res);
+                      }
+                      result.remove(function(e, r) {
+                          mapResult.formJSON(function(success_result) {
+                              res.json(success_result);
+                          }, defaultAccessDenied.bind(this.res));
+                      });
+                  });
+          }, defaultAccessDenied.bind(this, res));
+      });
+  });
+
+  module.router.post(
+      '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+      authGuardian.authenticationRequired,
+      function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var mapID = req.params.mapID;
+          var nodeID1 = new ObjectId(req.params.nodeID1);
+          var nodeID2 = new ObjectId(req.params.nodeID2);
+          var parentMap = new ObjectId(mapID);
+
+          Node
+              .findById(nodeID1) //two ids we are looking for
+              .exec(function(err, node) {
+                  if (err) {
+                      res.statusCode = 500;
+                      res.json(err);
+                      return;
+                  }
+                  node.makeDependencyTo(nodeID2, function(err, result) {
+                      WardleyMap.findOne({
+                              _id: mapID,
+                              archived: false,
+                              workspace: workspaceID,
+                          })
+                          .populate('nodes')
+                          .exec(function(err2, mapResult2) {
+                              if (err2) {
+                                  res.statusCode = 500;
+                                  res.send(err2);
+                                  return;
+                              }
+                              if (err === 400) {
+                                  res.statusCode = 400;
+                              }
+                              mapResult2.verifyAccess(owner, function() {
+                                  res.json({
+                                      map: mapResult2.toObject()
+                                  });
+                              }, defaultAccessDenied.bind(this, res));
+
+                          });
+                  });
+              });
+      });
+
+  module.router.delete(
+      '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+      authGuardian.authenticationRequired,
+      function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var mapID = req.params.mapID;
+          var nodeID1 = new ObjectId(req.params.nodeID1);
+          var nodeID2 = new ObjectId(req.params.nodeID2);
+          var parentMap = new ObjectId(mapID);
+
+          Node
+              .findById(nodeID1)
+              .exec(function(err, node) {
+                  if (err) {
+                      res.statusCode = 500;
+                      res.json(err);
+                      return;
+                  }
+                  node.removeDependencyTo(nodeID2, function(err, result) {
+                      WardleyMap.findOne({
+                              _id: mapID,
+                              archived: false,
+                              workspace: workspaceID,
+                          })
+                          .populate('nodes')
+                          .exec(function(err2, mapResult2) {
+                              if (err2) {
+                                  res.statusCode = 500;
+                                  res.send(err2);
+                                  return;
+                              }
+                              mapResult2.verifyAccess(owner, function() {
+                                  res.json({
+                                      map: mapResult2.toObject()
+                                  });
+                              }, defaultAccessDenied.bind(this, res));
+                          });
+                  });
+              });
+      });
 
   module.router.get(
       '/workspace/:workspaceID/components/unprocessed',
