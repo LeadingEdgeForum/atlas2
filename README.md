@@ -10,5 +10,6 @@ The code is licenced under creative commons (CC-BY-SA), except the LEF logo (atl
 
 
 # Contributing
+This is a community based project. Any help is really appreciated. Read [here](https://github.com/cdaniel/atlas2/wiki/Contributing) how to contribute.
 
 [Set up for developers](https://github.com/cdaniel/atlas2/wiki/Set-up-for-developers)
