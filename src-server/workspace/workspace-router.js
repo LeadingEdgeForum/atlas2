@@ -597,6 +597,13 @@ module.exports = function(authGuardian, mongooseConnection) {
             return;
           }
           res.json({workspace: result2});
+          var helper = require('../sendgrid-helper');
+          helper.sendInvitation({
+              owner : owner,
+              editor : email,
+              workspaceID : workspaceID,
+              service : 'https://atlas2.wardleymaps.com'
+          });
         });
       }
     });
