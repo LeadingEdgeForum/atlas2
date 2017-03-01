@@ -143,10 +143,20 @@ export default class MapEditor extends React.Component {
   }
 
   componentDidMount() {
+    var _this = this;
     WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.io.emit('map', {
+      type: 'sub',
+      id: _this.props.params.mapID
+    });
   }
 
   componentWillUnmount() {
+    var _this = this;
+    WorkspaceStore.io.emit('map', {
+      type: 'unsub',
+      id: _this.props.params.mapID
+    });
     WorkspaceStore.removeChangeListener(this._onChange.bind(this));
   }
 
@@ -157,21 +167,26 @@ export default class MapEditor extends React.Component {
 
   render() {
     var nodes = this.state.map.nodes;
-    var name = this.state.workspace ? this.state.workspace.name : "no name";
-    var purpose = this.state.workspace ? this.state.workspace.purpose : "no purpose";
+    var name = this.state.workspace
+      ? this.state.workspace.name
+      : "no name";
+    var purpose = this.state.workspace
+      ? this.state.workspace.purpose
+      : "no purpose";
     var workspaceID = this.state.map.workspace || "";
     var mapName = calculateMapName("I like being lost.", this.state.map.user, this.state.map.purpose, this.state.map.name);
     return (
       <Grid fluid={true}>
-      <Breadcrumb>
-        <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
-        <Breadcrumb.Item href={"/workspace/"+workspaceID}>
-          {name} - {purpose}
-        </Breadcrumb.Item>
-        <Breadcrumb.Item active>
-          {mapName}
-        </Breadcrumb.Item>
-      </Breadcrumb>
+        <Breadcrumb>
+          <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
+          <Breadcrumb.Item href={"/workspace/" + workspaceID}>
+            {name}
+            - {purpose}
+          </Breadcrumb.Item>
+          <Breadcrumb.Item active>
+            {mapName}
+          </Breadcrumb.Item>
+        </Breadcrumb>
         <Row className="show-grid">
           <Col xs={3} sm={2} md={2} lg={1}>
             <Palette mapID={this.props.params.mapID}></Palette>
@@ -196,7 +211,7 @@ export default class MapEditor extends React.Component {
                 <div style={axisSupport3}/>
               </div>
             </div>
-            <CreateNewNodeDialog mapID={this.props.params.mapID}  workspaceID={workspaceID}/>
+            <CreateNewNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <CreateNewSubmapDialog/>
             <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <SubmapReferencesDialog/>

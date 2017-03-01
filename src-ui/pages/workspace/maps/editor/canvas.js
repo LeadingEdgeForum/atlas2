@@ -1,4 +1,4 @@
- /*jshint esversion: 6 */
+/*jshint esversion: 6 */
 
 import React, {PropTypes} from 'react';
 import DocumentTitle from 'react-document-title';
@@ -25,7 +25,6 @@ import {endpointOptions} from './component-styles';
 require('jsplumb');
 var jsPlumb = window.jsPlumb;
 /*jshint -W117 */
-
 
 var mapCanvasStyle = { //this is style applied to the place where actuall components can be drawn
   position: 'relative',
@@ -130,6 +129,8 @@ export default class MapCanvas extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     this.reconcileDependencies();
+    jsPlumb.revalidate(this.input);
+    jsPlumb.repaintEverything();
   }
 
   getOverlays() {
@@ -159,19 +160,17 @@ export default class MapCanvas extends React.Component {
 
   reconcileDependencies() {
     var modelConnections = [];
-    if(!this.props.nodes){
+    if (!this.props.nodes) {
       return;
     }
 
-    for(var i = 0; i < this.props.nodes.length; i++){
+    for (var i = 0; i < this.props.nodes.length; i++) {
       var _node = this.props.nodes[i];
-      var iterator_length = _node.outboundDependencies ? _node.outboundDependencies.length : 0;
-      for(var j = 0; j < iterator_length;j++){
-        modelConnections.push({
-            source: _node._id,
-            target: _node.outboundDependencies[j],
-            scope: jsPlumb.Defaults.Scope
-        });
+      var iterator_length = _node.outboundDependencies
+        ? _node.outboundDependencies.length
+        : 0;
+      for (var j = 0; j < iterator_length; j++) {
+        modelConnections.push({source: _node._id, target: _node.outboundDependencies[j], scope: jsPlumb.Defaults.Scope});
       }
     }
 
@@ -240,8 +239,8 @@ export default class MapCanvas extends React.Component {
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
         var focused = false;
-        for(var i = 0; i < state.currentlySelectedNodes.length; i++){
-          if(component._id === state.currentlySelectedNodes[i]){
+        for (var i = 0; i < state.currentlySelectedNodes.length; i++) {
+          if (component._id === state.currentlySelectedNodes[i]) {
             focused = true;
           }
         }

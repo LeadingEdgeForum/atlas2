@@ -8,6 +8,8 @@ var express = require('express');
 var userProvider = require('./src-server/user-provider.js');
 
 var app = express();
+var io = null;
+
 var webpack_middleware = null;
 
 if(process.env.PRODUCTION){
@@ -139,6 +141,29 @@ var appEnv = cfenv.getAppEnv();
 var server = app.listen(appEnv.port, '0.0.0.0', function() {
     // print a message when the server starts listening
     console.log("server starting on " + appEnv.url);
+
 });
+
+io = require('socket.io').listen(server);
+
+io.on('connection', function(socket) {
+
+    socket.on('disconnect', function() {
+    });
+
+    socket.on('map', function(msg){
+      if(msg.type === 'sub'){
+        socket.join(msg.id);
+      }
+      if(msg.type === 'unsub'){
+        socket.leave(msg.id);
+      }
+      if(msg.type === 'change'){
+        socket.broadcast.to(msg.id).emit('mapchange', msg);
+      }
+    });
+});
+
 server.___app = app;
+server.___app.io = io;
 module.exports=server;

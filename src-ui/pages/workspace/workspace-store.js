@@ -5,6 +5,7 @@ import CanvasStore from './maps/editor/canvas-store';
 import Dispatcher from '../../dispatcher';
 import Constants from '../../constants';
 import $ from 'jquery';
+var io = require('socket.io-client')();
 
 let appState = {
   newWorkspaceDialog: {
@@ -48,6 +49,7 @@ class WorkspaceStore extends Store {
 
   constructor() {
     super();
+    this.io = require('socket.io-client')();
   }
   getMapInfo(mapID) {
     if (!mapID) {
@@ -251,6 +253,15 @@ class WorkspaceStore extends Store {
 }
 let workspaceStoreInstance = new WorkspaceStore();
 
+workspaceStoreInstance.io.on('mapchange', function(msg) {
+    console.log('change discovered', msg);
+    workspaceStoreInstance.serverRequest = $.get('/api/map/' + msg.id, function(result) {
+        appState.w_maps[msg.id] = result;
+        workspaceStoreInstance.emitChange();
+    }.bind(workspaceStoreInstance));
+
+});
+
 let ActionTypes = Constants.ACTION_TYPES;
 
 workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
@@ -337,6 +348,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       appState.w_maps[action.data.mapID].map.purpose = action.data.mapData.purpose;
       appState.w_maps[action.data.mapID].map.name = action.data.mapData.name;
       workspaceStoreInstance.saveMap(action.data.mapID, function() {
+        workspaceStoreInstance.io.emit('map', {
+          type: 'change',
+          id: action.data.mapID
+        });
         appState.editMapDialog.open = false;
         appState.editMapDialog.mapID = null;
         workspaceStoreInstance.fetchSingleWorkspaceInfo(appState.w_maps[action.data.mapID].map.workspace);
@@ -363,6 +378,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           type : action.data.params.type
         },
         success: function(data2) {
+          workspaceStoreInstance.io.emit('map', {
+            type: 'change',
+            id: action.data.mapID
+          });
           appState.editNodeDialog.open = false;
           appState.editNodeDialog.mapID = null;
           appState.editNodeDialog.nodeID = null;
@@ -443,6 +462,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           y: action.data.coords.y
         },
         success: function(data2) {
+          workspaceStoreInstance.io.emit('map', {
+            type: 'change',
+            id: action.data.mapID
+          });
           appState.newNodeDialog = { //cleans up by overwriting any current data
             open: false
           };
@@ -460,6 +483,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             y : CanvasStore.normalizeHeight(action.data.newPos[1])
           },
           success: function(data2) {
+            workspaceStoreInstance.io.emit('map', {
+              type: 'change',
+              id: action.data.mapID
+            });
             appState.w_maps[action.data.mapID] = data2;
             workspaceStoreInstance.emitChange();
           }.bind(this)
@@ -470,6 +497,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             type: 'DELETE',
             url: '/api/workspace/' + action.data.workspaceID+ '/map/' + action.data.mapID + '/node/' + action.data.nodeID,
             success: function(data2) {
+              workspaceStoreInstance.io.emit('map', {
+                type: 'change',
+                id: action.data.mapID
+              });
               appState.w_maps[action.data.mapID] = data2;
               workspaceStoreInstance.emitChange();
             }.bind(this)
@@ -484,6 +515,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
               '/outgoingDependency/' + action.data.targetID,
         success: function(data2) {
           appState.w_maps[action.data.mapID] = data2;
+          workspaceStoreInstance.io.emit('map', {
+            type: 'change',
+            id: action.data.mapID
+          });
           workspaceStoreInstance.emitChange();
         }.bind(this)
       });
@@ -497,6 +532,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
               '/outgoingDependency/' + action.data.targetID,
         success: function(data2) {
           appState.w_maps[action.data.mapID] = data2;
+          workspaceStoreInstance.io.emit('map', {
+            type: 'change',
+            id: action.data.mapID
+          });
           workspaceStoreInstance.emitChange();
         }.bind(this)
       });
@@ -515,6 +554,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         type: 'DELETE',
         url: '/api/map/' + action.data.mapID,
         success: function(data2) {
+          workspaceStoreInstance.io.emit('map', {
+            type: 'change',
+            id: action.data.mapID
+          });
           workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
           workspaceStoreInstance.updateWorkspaces(); // this emits change
         }.bind(this)
@@ -541,6 +584,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             coords: appState.createSubmapDialog.coords
           },
           success: function(data2) {
+            workspaceStoreInstance.io.emit('map', {
+              type: 'change',
+              id: appState.createSubmapDialog.mapID
+            });
             appState.w_maps[appState.createSubmapDialog.mapID] = data2;
             appState.createSubmapDialog = {open:false};
             workspaceStoreInstance.updateWorkspaces(); // this emits change
@@ -556,6 +603,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             coords: appState.createSubmapDialog.coords
           },
           success: function(data2) {
+            workspaceStoreInstance.io.emit('map', {
+              type: 'change',
+              id: appState.createSubmapDialog.mapID
+            });
             appState.w_maps[appState.createSubmapDialog.mapID] = data2;
             appState.createSubmapDialog = {open:false};
             workspaceStoreInstance.updateWorkspaces(); // this emits change
