@@ -33,7 +33,7 @@ var CreateNewNodeDialog = React.createClass({
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {
@@ -52,10 +52,10 @@ var CreateNewNodeDialog = React.createClass({
     this.internalState[parameterName] = event.target.value;
   },
   // catch enter and consider it to be 'submit'
-  _enterInterceptor(e){
-    if(e.nativeEvent.keyCode===13){
-        e.preventDefault();
-        e.stopPropagation()
+  _enterInterceptor(e) {
+    if (e.nativeEvent.keyCode === 13) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   },
   render: function() {
@@ -75,7 +75,7 @@ var CreateNewNodeDialog = React.createClass({
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor.bind(this)}/>
+                  <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor}/>
                 </Col>
               </FormGroup>
             </Form>

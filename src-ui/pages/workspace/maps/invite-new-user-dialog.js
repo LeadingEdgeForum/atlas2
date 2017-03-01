@@ -27,11 +27,11 @@ var InviteNewUserDialog = React.createClass({
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {

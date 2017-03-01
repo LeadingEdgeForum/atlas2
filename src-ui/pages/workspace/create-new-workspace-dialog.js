@@ -28,11 +28,11 @@ var CreateNewWorkspaceDialog = React.createClass({
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {
@@ -75,12 +75,12 @@ var CreateNewWorkspaceDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="textarea" placeholder="Enter purpose (this is very recommended)" onChange={this._handleDialogChange.bind(this, 'purpose')}/>
-                  <HelpBlock>Purpose consists of scope (f.e. 'We do electric cars') and moral imperative (f.e. 'because we want to speed up migration to renewable energy sources').
-                  Examples include:
-                  <ul>
-                  <li>Transportation as reliable as running water, everywhere, for everyone. (Uber)</li>
-                  <li>We accelerate world’s transition to sustainable energy. (Tesla)</li>
-                  </ul></HelpBlock>
+                  <HelpBlock>Purpose consists of scope (f.e. 'We do electric cars') and moral imperative (f.e. 'because we want to speed up migration to renewable energy sources'). Examples include:
+                    <ul>
+                      <li>Transportation as reliable as running water, everywhere, for everyone. (Uber)</li>
+                      <li>We accelerate world’s transition to sustainable energy. (Tesla)</li>
+                    </ul>
+                  </HelpBlock>
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">
@@ -89,11 +89,13 @@ var CreateNewWorkspaceDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="textarea" placeholder="Enter description (this is optional, but usefull)" onChange={this._handleDialogChange.bind(this, 'description')}/>
-                  <HelpBlock>This should express why you analyse certain unit. It may be f.e. <ul>
-                  <li>I want to find a meaningful strategy for this company.</li>
-                  <li>I want to find out if I can disrupt them.</li>
-                  <li>I want to look for sources of inertia.</li>
-                  </ul></HelpBlock>
+                  <HelpBlock>This should express why you analyse certain unit. It may be f.e.
+                    <ul>
+                      <li>I want to find a meaningful strategy for this company.</li>
+                      <li>I want to find out if I can disrupt them.</li>
+                      <li>I want to look for sources of inertia.</li>
+                    </ul>
+                  </HelpBlock>
                 </Col>
               </FormGroup>
             </Form>

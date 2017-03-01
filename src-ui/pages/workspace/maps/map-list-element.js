@@ -33,32 +33,37 @@ export default class MapListElement extends React.Component {
       type: 'GET',
       url: '/api/submap/' + mapID + '/usage',
       success: function(referencingMaps) {
-        this.setState({referencingMaps:referencingMaps})
+        this.setState({referencingMaps: referencingMaps})
       }.bind(this)
     });
   }
 
-  computeSubmapReferencesMessage(){
-    if(!this.state || !this.state.referencingMaps){
+  computeSubmapReferencesMessage() {
+    if (!this.state || !this.state.referencingMaps) {
       return null;
     }
-    if(this.state.referencingMaps.length === 0){
+    if (this.state.referencingMaps.length === 0) {
       return <div>No other map uses this submap. It&#39;s undesired.</div>;
     }
     var mapsList = [];
-    for(var i = 0; i < this.state.referencingMaps.length; i++){
+    for (var i = 0; i < this.state.referencingMaps.length; i++) {
       var href = '/map/' + this.state.referencingMaps[i]._id;
-      var name = calculateMapName('Unknown',this.state.referencingMaps[i].user, this.state.referencingMaps[i].purpose,this.state.referencingMaps[i].name );
+      var name = calculateMapName('Unknown', this.state.referencingMaps[i].user, this.state.referencingMaps[i].purpose, this.state.referencingMaps[i].name);
       var punctuation = ', ';
-      if(i === this.state.referencingMaps.length - 1){
+      if (i === this.state.referencingMaps.length - 1) {
         punctuation = null;
       }
-      if(i === this.state.referencingMaps.length - 2){
+      if (i === this.state.referencingMaps.length - 2) {
         punctuation = ' and ';
       }
-      mapsList.push(<span>&#39;<a href={href}>{name}</a>&#39;{punctuation}</span>);
+      mapsList.push(
+        <span key={href}>&#39;<a href={href}>{name}</a>&#39;{punctuation}</span>
+      );
     }
-    return (<div>Maps {mapsList} use this submap.</div>);
+    return (
+      <div>Maps {mapsList}
+        use this submap.</div>
+    );
   }
   render() {
     var mapid = this.props.id;
@@ -66,12 +71,15 @@ export default class MapListElement extends React.Component {
     var href = '/map/' + mapid;
     var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose, this.props.name);
 
-    var deleteButton = (<Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
-      <Glyphicon glyph="remove"></Glyphicon> Delete
-    </Button>);
+    var deleteButton = (
+      <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
+        <Glyphicon glyph="remove"></Glyphicon>
+        Delete
+      </Button>
+    );
 
     var mapsUsingThisSubmapInfo = null;
-    if(this.props.isSubmap){
+    if (this.props.isSubmap) {
       mapsUsingThisSubmapInfo = this.computeSubmapReferencesMessage();
     }
     return (
@@ -81,9 +89,12 @@ export default class MapListElement extends React.Component {
             <Col xs={9}>{mapsUsingThisSubmapInfo}</Col>
             <Col xs={3}>
               <ButtonGroup>
-                <LinkContainer to={{ pathname: href }}>
+                <LinkContainer to={{
+                  pathname: href
+                }}>
                   <Button bsStyle="default" href={href}>
-                    <Glyphicon glyph="edit"></Glyphicon> Edit
+                    <Glyphicon glyph="edit"></Glyphicon>
+                    Edit
                   </Button>
                 </LinkContainer>
                 {deleteButton}

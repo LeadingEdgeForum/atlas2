@@ -35,7 +35,7 @@ var CreateNewSubmapDialog = React.createClass({
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {
@@ -53,13 +53,13 @@ var CreateNewSubmapDialog = React.createClass({
     this.internalState[parameterName] = event.target.value;
   },
   // catch enter and consider it to be 'submit'
-  _enterInterceptor(e){
-    if(e.nativeEvent.keyCode===13){
-        e.preventDefault();
-        e.stopPropagation()
+  _enterInterceptor(e) {
+    if (e.nativeEvent.keyCode === 13) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   },
-  renderNewSubmapDialogOnly : function(show){
+  renderNewSubmapDialogOnly: function(show) {
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -75,7 +75,7 @@ var CreateNewSubmapDialog = React.createClass({
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor.bind(this)}/>
+                  <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor}/>
                 </Col>
               </FormGroup>
             </Form>
@@ -88,15 +88,19 @@ var CreateNewSubmapDialog = React.createClass({
       </div>
     );
   },
-  renderListOfAvailableSubmaps : function (){
+  renderListOfAvailableSubmaps: function() {
     var finalList = [];
-    for(var i = 0; i < this.state.listOfAvailableSubmaps.length; i++){
-        var refID = '' + this.state.listOfAvailableSubmaps[i]._id;
-        finalList.push(<p><Button bsSize="small" block onClick={Actions.createReferencedSubmap.bind(Actions, refID)}>{this.state.listOfAvailableSubmaps[i].name}</Button></p>)
+    for (var i = 0; i < this.state.listOfAvailableSubmaps.length; i++) {
+      var refID = '' + this.state.listOfAvailableSubmaps[i]._id;
+      finalList.push(
+        <p>
+          <Button bsSize="small" block onClick={Actions.createReferencedSubmap.bind(Actions, refID)}>{this.state.listOfAvailableSubmaps[i].name}</Button>
+        </p>
+      )
     };
     return finalList;
   },
-  renderNewSubmapDialogWitSubmapList : function(show){
+  renderNewSubmapDialogWitSubmapList: function(show) {
     var finalList = this.renderListOfAvailableSubmaps();
     return (
       <div>
@@ -118,8 +122,11 @@ var CreateNewSubmapDialog = React.createClass({
                 </Col>
               </FormGroup>
             </Form>
-            <div className="well" style={{maxWidth: 400, margin: '0 auto 10px'}}>
-            {finalList}
+            <div className="well" style={{
+              maxWidth: 400,
+              margin: '0 auto 10px'
+            }}>
+              {finalList}
             </div>
           </Modal.Body>
           <Modal.Footer>
@@ -132,7 +139,7 @@ var CreateNewSubmapDialog = React.createClass({
   },
   render: function() {
     var show = this.state.open;
-    if(!this.state.listOfAvailableSubmaps || this.state.listOfAvailableSubmaps.length === 0){
+    if (!this.state.listOfAvailableSubmaps || this.state.listOfAvailableSubmaps.length === 0) {
       return this.renderNewSubmapDialogOnly(show);
 
     }

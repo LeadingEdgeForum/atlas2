@@ -231,7 +231,8 @@ class WorkspaceStore extends Store {
 
   getWorkspaceInfo(workspaceID) {
     if (!workspaceID) {
-      console.error('No worksapceId in getWorkspaceInfo');
+      console.error('No workspaceID in getWorkspaceInfo');
+      return;
     }
 
     if (appState.singleWorkspace[workspaceID]) {

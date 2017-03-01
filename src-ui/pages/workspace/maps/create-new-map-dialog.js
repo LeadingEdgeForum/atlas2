@@ -28,11 +28,11 @@ var CreateNewMapDialog = React.createClass({
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {
@@ -51,7 +51,7 @@ var CreateNewMapDialog = React.createClass({
     this.forceUpdate();
   },
 
-  _summary: function(){
+  _summary: function() {
     return calculateMapName("Create a new map", this.internalState.user, this.internalState.purpose);
   },
   render: function() {
