@@ -222,6 +222,8 @@ function createUserProvider(app, config, conn) {
       properly configured (2FA and such).
     */
     if (config.userProvider.type === 'stormpath') {
+        var stormpath = require('express-stormpath');
+        var StormpathHelper = require('./stormpath-helper');
         var provider = stormpath.init(app, {
             debug: 'debug',
             web: {
