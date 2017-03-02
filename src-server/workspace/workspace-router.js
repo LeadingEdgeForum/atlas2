@@ -602,7 +602,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               owner : owner,
               editor : email,
               workspaceID : workspaceID,
-              service : 'https://atlas2.wardleymaps.com'
+              name : result.name,
+              purpose : result.purpose,
+              description : result.description
           });
         });
       }

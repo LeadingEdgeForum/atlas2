@@ -14,13 +14,15 @@ if (process.env.SENDGRID) {
 //     owner : owner,
 //     editor : email,
 //     workspaceID : workspaceID,
-//     service : 'https://atlas2.wardleymaps.com'
+//     name : name,
+//     purpose : purpose
 // }
 
 var sendInvitation = function(params) {
     if (!sg) {
         return;
     }
+    params.service = 'https://atlas2.wardleymaps.com';
 
     var helper = require('sendgrid').mail;
     var from_email = new helper.Email('noreply@atlas2.wardleymaps.com');
@@ -37,6 +39,12 @@ var sendInvitation = function(params) {
         new helper.Substitution('%url%', params.service));
     personalization.addSubstitution(
         new helper.Substitution('%wkspc%', params.service + '/workspace/' + params.workspaceID));
+    personalization.addSubstitution(
+        new helper.Substitution('%name%', params.name));
+    personalization.addSubstitution(
+        new helper.Substitution('%purpose%', params.purpose));
+    personalization.addSubstitution(
+        new helper.Substitution('%description%', params.description));
     mail.setTemplateId('5a95a87e-45ea-4b1e-990a-def91dda678c');
     mail.addPersonalization(personalization);
 
@@ -48,8 +56,6 @@ var sendInvitation = function(params) {
 
     sg.API(request, function(error, response) {
         console.log(response.statusCode);
-        console.log(response.body);
-        console.log(response.headers);
     });
 };
 
