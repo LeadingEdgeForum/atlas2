@@ -541,6 +541,24 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         }.bind(this)
       });
       break;
+      case ActionTypes.CANVAS_ACTION_CREATED:
+          $.ajax({
+              type: 'POST',
+              url: '/api/workspace/' + action.data.workspaceID +
+                  '/map/' + action.data.mapID +
+                  '/node/' + action.data.sourceID +
+                  '/action/',
+              data: CanvasStore.normalizeComponentCoord(action.data.pos),
+              success: function(data2) {
+                  appState.w_maps[action.data.mapID] = data2;
+                  workspaceStoreInstance.io.emit('map', {
+                      type: 'change',
+                      id: action.data.mapID
+                  });
+                  workspaceStoreInstance.emitChange();
+              }.bind(this)
+          });
+          break;
     case ActionTypes.WORKSPACE_ARCHIVE:
       $.ajax({
         type: 'DELETE',

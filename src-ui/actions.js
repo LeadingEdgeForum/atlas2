@@ -170,6 +170,18 @@ export default class Actions {
     });
   }
 
+  static recordAction(workspaceID, mapID, sourceId, pos) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_ACTION_CREATED,
+      data: {
+        mapID: mapID,
+        sourceID: sourceId,
+        pos: pos,
+        workspaceID : workspaceID
+      }
+    });
+  }
+
   static removeNode(workspaceID, mapID, nodeID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_REMOVE_NODE,

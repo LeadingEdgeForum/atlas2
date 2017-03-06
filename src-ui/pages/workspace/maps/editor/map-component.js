@@ -7,6 +7,7 @@ import Actions from '../../../../actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
+import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 import CanvasStore from './canvas-store';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
@@ -97,6 +98,9 @@ var MapComponent = React.createClass({
            workspaceID:workspaceID);
       }
     }
+    if(this.state.hover === 'action'){
+      console.log('action!!!');
+    }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {
         CanvasActions.deselectNode(this.props.id);
@@ -125,7 +129,7 @@ var MapComponent = React.createClass({
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
         jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeTarget(this.input, endpointOptions, {anchor: "TopCenter"});
+        jsPlumb.makeTarget(this.input, endpointOptions, {anchor: "TopCenter"}); 
       }
       return null;
     }
@@ -231,9 +235,9 @@ var MapComponent = React.createClass({
     }
     var infoStyle = {
       position: "absolute",
-      top: "-30px",
+      top: "-33px",
       color: "silver",
-      left: "-5px",
+      left: "-4px",
       fontSize: "20px",
       zIndex: "30"
     };
@@ -245,11 +249,29 @@ var MapComponent = React.createClass({
         jsPlumb.unmakeSource(this.input);
       }
     }
+    var actionStyle = {
+      position: "absolute",
+      top: "-5px",
+      color: "silver",
+      left: "22px",
+      fontSize: "20px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "action") {
+      actionStyle = _.extend(actionStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
+        jsPlumb.makeSource(this.input, actionEndpointOptions, {anchor: "Right"});
+      }
+    };
     var menuItems = [];
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
     if(this.props.node.type === Constants.SUBMAP){
       var href = "/map/" + this.props.node.submapID;
       var linkContainer = (

@@ -18,7 +18,8 @@ import $ from 'jquery';
 import Actions from '../../../../actions';
 import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
-import {endpointOptions} from './component-styles';
+var ArrowEnd = require('./arrow-end');
+import {endpointOptions, actionEndpointOptions} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -52,6 +53,8 @@ export default class MapCanvas extends React.Component {
     this.handleResize = this.handleResize.bind(this);
     this.setContainer = this.setContainer.bind(this);
     this.beforeDropListener = this.beforeDropListener.bind(this);
+    this.connectionDragStop = this.connectionDragStop.bind(this);
+    this.putScope = this.putScope.bind(this);
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
     this.reconcileDependencies = this.reconcileDependencies.bind(this);
@@ -80,6 +83,21 @@ export default class MapCanvas extends React.Component {
     return false;
   }
 
+  putScope(source){
+    return {
+      scope : source.endpoint.scope,
+      established : false
+    };
+  }
+
+  connectionDragStop(info, e) {
+      if (info.getData().scope === 'WM_Action') {
+          Actions.recordAction(this.props.workspaceID, this.props.mapID, info.sourceId, {
+              pos: [e.x, e.y]
+          });
+      }
+  }
+
   setContainer(input) {
     this.input = input;
     if (input === null) {
@@ -89,7 +107,13 @@ export default class MapCanvas extends React.Component {
     jsPlumb.setContainer(input);
     //this method is called multiple times, and we want to have only one listener attached at every point of time
     jsPlumb.unbind("beforeDrop", this.beforeDropListener);
+    jsPlumb.unbind("beforeDrag", this.putScope);
+    jsPlumb.unbind("beforeStartDetach", this.putScope);
+    jsPlumb.unbind("connectionDragStop", this.connectionDragStop);
     jsPlumb.bind("beforeDrop", this.beforeDropListener);
+    jsPlumb.bind("beforeDrag", this.putScope);
+    jsPlumb.bind("beforeStartDetach", this.putScope);
+    jsPlumb.bind("connectionDragStop", this.connectionDragStop);
   }
 
   handleResize() {
@@ -133,18 +157,20 @@ export default class MapCanvas extends React.Component {
     jsPlumb.repaintEverything();
   }
 
-  getOverlays() {
-    return [
-      [
-        "Custom", {
-          create: function(component) {
-            return $("<div><span class='glyphicon glyphicon-remove' style='color: #a98c74;z-index: 50;cursor: pointer'></span></div>");
-          },
-          location: 0.5,
-          id: "deleteOverlay"
-        }
-      ]
-    ];
+  getOverlays(fromStyle) {
+    if(!fromStyle){
+      fromStyle = [];
+    }
+    fromStyle.push([
+      "Custom", {
+        create: function(component) {
+          return $("<div><span class='glyphicon glyphicon-remove' style='color: #a98c74;z-index: 50;cursor: pointer'></span></div>");
+        },
+        location: 0.5,
+        id: "deleteOverlay"
+      }
+    ]);
+    return fromStyle;
   }
   overlayClickHandler(obj) {
     if (obj.component) {
@@ -214,6 +240,31 @@ export default class MapCanvas extends React.Component {
     for (var z = 0; z < canvasConnections.length; z++) {
       jsPlumb.detach(canvasConnections[z]);
     }
+
+
+
+    // Actions
+    for (var ii = 0; ii < this.props.nodes.length; ii++) {
+      var __node = this.props.nodes[ii];
+      var connection = jsPlumb.connect({
+        source: __node._id,
+        target: __node._id + "_action0",
+        scope: "WM_Action",
+        anchors: [
+          "Right", "Left"
+        ],
+        paintStyle: actionEndpointOptions.connectorStyle,
+        endpoint: actionEndpointOptions.endpoint,
+        connector: actionEndpointOptions.connector,
+        endpointStyles: [
+          actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
+        ],
+        overlays: actionEndpointOptions.connectorOverlays
+      });
+      // connection.___overlayVisible = false;
+      // connection.getOverlay("deleteOverlay").hide();
+      // connection.bind('click', this.overlayClickHandler);
+    }
   }
 
   render() {
@@ -247,9 +298,38 @@ export default class MapCanvas extends React.Component {
         return (<MapComponent workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} multi={state.multiNodeSelection}/>);
       });
     }
+    var arrowends = [];
+if (this.props.nodes) {
+    for (var i = 0; i < this.props.nodes.length; i++) {
+        var n = this.props.nodes[i];
+        if (n.action) {
+            //TODO: better id required
+            arrowends.push( < ArrowEnd workspaceID = {
+                    workspaceID
+                }
+                mapID = {
+                    mapID
+                }
+                node = {
+                    n
+                }
+                size = {
+                    size
+                }
+                id = {
+                    n._id + "_action0"
+                }
+                key = {
+                    n._id + "action0"
+                }
+                />);
+            }
+        }
+    }
     return (
       <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
+        {arrowends}
       </div>
     );
   }

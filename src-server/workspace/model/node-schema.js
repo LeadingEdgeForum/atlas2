@@ -53,6 +53,10 @@ module.exports = function(conn){
             type: Schema.Types.ObjectId,
             ref: 'Node'
         }],
+        action: {
+            x : Schema.Types.Number,
+            y : Schema.Types.Number
+        },
         submapID: {
             type: Schema.Types.ObjectId,
             ref: 'WardleyMap'
@@ -92,6 +96,16 @@ module.exports = function(conn){
         }, function(err) {
             callback(err, null);
         });
+    };
+
+    NodeSchema.methods.makeAction = function(dataPos, callback /**err, node*/ ) {
+        var relativeX = dataPos.x - this.x;
+        var relativeY = dataPos.y - this.y;
+
+        this.action.x = relativeX;
+        this.action.y = relativeY;
+
+        this.save(callback);
     };
 
     NodeSchema.methods.removeDependencyTo = function(_targetId, callback /**err, node*/ ) {
