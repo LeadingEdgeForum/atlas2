@@ -245,22 +245,32 @@ export default class MapCanvas extends React.Component {
 
     // Actions
     for (var ii = 0; ii < this.props.nodes.length; ii++) {
-      var __node = this.props.nodes[ii];
-      var connection = jsPlumb.connect({
-        source: __node._id,
-        target: __node._id + "_action0",
-        scope: "WM_Action",
-        anchors: [
-          "Right", "Left"
-        ],
-        paintStyle: actionEndpointOptions.connectorStyle,
-        endpoint: actionEndpointOptions.endpoint,
-        connector: actionEndpointOptions.connector,
-        endpointStyles: [
-          actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
-        ],
-        overlays: actionEndpointOptions.connectorOverlays
-      });
+        var __node = this.props.nodes[ii];
+        var actions = __node.action;
+        for (var jj = 0; jj < actions.length; jj++) {
+            if (jsPlumb.getConnections({
+                    scope: "WM_Action",
+                    source: ''+__node._id,
+                    target: '' + __node._id + "_action" + jj
+                }).length === 0) {
+                var connection = jsPlumb.connect({
+                    source: __node._id,
+                    target: __node._id + "_action" + jj,
+                    scope: "WM_Action",
+                    anchors: [
+                        "Right", "Left"
+                    ],
+                    paintStyle: actionEndpointOptions.connectorStyle,
+                    endpoint: actionEndpointOptions.endpoint,
+                    connector: actionEndpointOptions.connector,
+                    endpointStyles: [
+                        actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
+                    ],
+                    overlays: actionEndpointOptions.connectorOverlays
+                });
+            }
+        }
+
       // connection.___overlayVisible = false;
       // connection.getOverlay("deleteOverlay").hide();
       // connection.bind('click', this.overlayClickHandler);
@@ -302,28 +312,30 @@ export default class MapCanvas extends React.Component {
 if (this.props.nodes) {
     for (var i = 0; i < this.props.nodes.length; i++) {
         var n = this.props.nodes[i];
-        if (n.action) {
-            //TODO: better id required
-            arrowends.push( < ArrowEnd workspaceID = {
-                    workspaceID
-                }
-                mapID = {
-                    mapID
-                }
-                node = {
-                    n
-                }
-                size = {
-                    size
-                }
-                id = {
-                    n._id + "_action0"
-                }
-                key = {
-                    n._id + "action0"
-                }
-                />);
-            }
+        for(var j = 0; j < n.action.length;j++){
+          arrowends.push( < ArrowEnd workspaceID = {
+                  workspaceID
+              }
+              mapID = {
+                  mapID
+              }
+              node = {
+                  n
+              }
+              size = {
+                  size
+              }
+              id = {
+                  n._id + "_action" + j
+              }
+              key = {
+                  n._id + "action" + j
+              }
+              seq = {
+                j
+              }
+              />);
+        }
         }
     }
     return (

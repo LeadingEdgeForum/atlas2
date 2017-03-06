@@ -820,7 +820,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               var nodeID1 = new ObjectId(req.params.nodeID1);
               var parentMap = new ObjectId(mapID);
               var actionPos = req.body;
-              
+
               Node
                   .findById(nodeID1) //two ids we are looking for
                   .exec(function(err, node) {
@@ -855,6 +855,99 @@ module.exports = function(authGuardian, mongooseConnection) {
                       });
                   });
           });
+
+          module.router.put(
+              '/workspace/:workspaceID/map/:mapID/node/:nodeID1/action/:seq',
+              authGuardian.authenticationRequired,
+              function(req, res) {
+                  var owner = getUserIdFromReq(req);
+                  var workspaceID = req.params.workspaceID;
+                  var mapID = req.params.mapID;
+                  var nodeID1 = new ObjectId(req.params.nodeID1);
+                  var parentMap = new ObjectId(mapID);
+                  var seq = req.params.seq;
+                  var actionPos = req.body;
+
+                  Node
+                      .findById(nodeID1) //two ids we are looking for
+                      .exec(function(err, node) {
+                          if (err) {
+                              res.statusCode = 500;
+                              res.json(err);
+                              return;
+                          }
+                          node.updateAction(seq, actionPos, function(err, result) {
+                              WardleyMap.findOne({
+                                      _id: mapID,
+                                      archived: false,
+                                      workspace: workspaceID,
+                                  })
+                                  .populate('nodes')
+                                  .exec(function(err2, mapResult2) {
+                                      if (err2) {
+                                          res.statusCode = 500;
+                                          res.send(err2);
+                                          return;
+                                      }
+                                      if (err === 400) {
+                                          res.statusCode = 400;
+                                      }
+                                      mapResult2.verifyAccess(owner, function() {
+                                          res.json({
+                                              map: mapResult2.toObject()
+                                          });
+                                      }, defaultAccessDenied.bind(this, res));
+
+                                  });
+                          });
+                      });
+              });
+
+              module.router.delete(
+                  '/workspace/:workspaceID/map/:mapID/node/:nodeID1/action/:seq',
+                  authGuardian.authenticationRequired,
+                  function(req, res) {
+                      var owner = getUserIdFromReq(req);
+                      var workspaceID = req.params.workspaceID;
+                      var mapID = req.params.mapID;
+                      var nodeID1 = new ObjectId(req.params.nodeID1);
+                      var parentMap = new ObjectId(mapID);
+                      var seq = req.params.seq;
+
+                      Node
+                          .findById(nodeID1) //two ids we are looking for
+                          .exec(function(err, node) {
+                              if (err) {
+                                  res.statusCode = 500;
+                                  res.json(err);
+                                  return;
+                              }
+                              node.deleteAction(seq, function(err, result) {
+                                  WardleyMap.findOne({
+                                          _id: mapID,
+                                          archived: false,
+                                          workspace: workspaceID,
+                                      })
+                                      .populate('nodes')
+                                      .exec(function(err2, mapResult2) {
+                                          if (err2) {
+                                              res.statusCode = 500;
+                                              res.send(err2);
+                                              return;
+                                          }
+                                          if (err === 400) {
+                                              res.statusCode = 400;
+                                          }
+                                          mapResult2.verifyAccess(owner, function() {
+                                              res.json({
+                                                  map: mapResult2.toObject()
+                                              });
+                                          }, defaultAccessDenied.bind(this, res));
+
+                                      });
+                              });
+                          });
+                  });
 
   module.router.get(
       '/workspace/:workspaceID/components/unprocessed',

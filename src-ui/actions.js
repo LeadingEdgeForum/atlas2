@@ -182,6 +182,31 @@ export default class Actions {
     });
   }
 
+  static updateAction(workspaceID, mapID, sourceId, seq, pos) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_ACTION_UPDATED,
+      data: {
+        mapID: mapID,
+        sourceID: sourceId,
+        pos: pos,
+        seq: seq,
+        workspaceID : workspaceID
+      }
+    });
+  }
+
+  static deleteAction(workspaceID, mapID, sourceId, seq) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_ACTION_DELETED,
+      data: {
+        mapID: mapID,
+        sourceID: sourceId,
+        seq: seq,
+        workspaceID : workspaceID
+      }
+    });
+  }
+
   static removeNode(workspaceID, mapID, nodeID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_REMOVE_NODE,

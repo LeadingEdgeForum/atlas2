@@ -53,10 +53,10 @@ module.exports = function(conn){
             type: Schema.Types.ObjectId,
             ref: 'Node'
         }],
-        action: {
+        action: [{
             x : Schema.Types.Number,
             y : Schema.Types.Number
-        },
+        }],
         submapID: {
             type: Schema.Types.ObjectId,
             ref: 'WardleyMap'
@@ -101,9 +101,39 @@ module.exports = function(conn){
     NodeSchema.methods.makeAction = function(dataPos, callback /**err, node*/ ) {
         var relativeX = dataPos.x - this.x;
         var relativeY = dataPos.y - this.y;
+        // if(!this.action){
+        //   this.action = [];
+        // }
+        // console.log('pre',this.action);
+        this.action.push({
+          x : relativeX,
+          y : relativeY
+        });
+        // this.markModified('action');
+        // console.log('post',this.action);
+        this.save(callback);
+    };
 
-        this.action.x = relativeX;
-        this.action.y = relativeY;
+    NodeSchema.methods.updateAction = function(seq, dataPos, callback /**err, node*/ ) {
+        if(!(this.action && this.action.length > seq)){
+          return callback(500, null);
+        }
+        var relativeX = dataPos.x - this.x;
+        var relativeY = dataPos.y - this.y;
+
+        this.action[seq].set('x',relativeX);
+        this.action[seq].set('y',relativeY);
+
+        this.save(callback);
+    };
+
+    NodeSchema.methods.deleteAction = function(seq, dataPos, callback /**err, node*/ ) {
+        if(!(this.action && this.action.length > seq)){
+          return callback(500, null);
+        }
+        var relativeX = dataPos.x - this.x;
+        var relativeY = dataPos.y - this.y;
+        this.action = this.action.splice(seq,1);
 
         this.save(callback);
     };

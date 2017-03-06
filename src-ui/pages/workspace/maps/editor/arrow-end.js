@@ -126,10 +126,12 @@ var ArrowEnd = React.createClass({
 
   render: function() {
     var node = this.props.node;
+    var seq = this.props.seq;
 
     var style = getStyleForType("ArrowEnd");
-    var left = (node.x + node.action.x) * this.props.size.width;
-    var top = (node.y + node.action.y) * this.props.size.height;
+
+    var left = (node.x + node.action[seq].x) * this.props.size.width;
+    var top = (node.y + node.action[seq].y) * this.props.size.height;
     style = _.extend(style, {
       left: left,
       top: top,
@@ -141,6 +143,8 @@ var ArrowEnd = React.createClass({
     var mapID = this.props.mapID;
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
+    var node_id = node._id;
+
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
         if (input) {
@@ -149,15 +153,17 @@ var ArrowEnd = React.createClass({
         if (!input) {
           return;
         }
-        // jsPlumb.draggable(input, {
-        //   containment: true,
-        //   grid: [
-        //     50, 50
-        //   ],
-        //   stop: function(event) {
-        //     Actions.nodeDragged(workspaceID, mapID, id, event.finalPos);
-        //   }
-        // });
+        jsPlumb.draggable(input, {
+          containment: true,
+          grid: [
+            50, 50
+          ],
+          stop: function(event) {
+            var x = event.e.pageX;
+            var y = event.e.pageY;
+            Actions.updateAction(workspaceID, mapID, node_id, seq, {pos:[x,y]});
+          }
+        });
       }}>
       </div>
     );

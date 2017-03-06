@@ -98,7 +98,7 @@ var actionEndpointOptions= {
   connectorStyle: {
     strokeWidth: 2,
     stroke: 'gray',
-    outlineStroke: 'white',
+    outlineStroke: 'transparent',
     outlineWidth: 10
   },
   endpoint: [

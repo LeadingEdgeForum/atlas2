@@ -32,6 +32,8 @@ module.exports  = keyMirror({
       CANVAS_CONNECTION_CREATED : null,
       CANVAS_CONNECTION_DELETE : null,
       CANVAS_ACTION_CREATED : null,
+      CANVAS_ACTION_UPDATED : null,
+      CANVAS_ACTION_DELETED : null,
       CANVAS_REMOVE_NODE : null,
       WORKSPACE_ARCHIVE : null,
       MAP_ARCHIVE : null,
