@@ -101,39 +101,38 @@ module.exports = function(conn){
     NodeSchema.methods.makeAction = function(dataPos, callback /**err, node*/ ) {
         var relativeX = dataPos.x - this.x;
         var relativeY = dataPos.y - this.y;
-        // if(!this.action){
-        //   this.action = [];
-        // }
-        // console.log('pre',this.action);
         this.action.push({
           x : relativeX,
           y : relativeY
         });
-        // this.markModified('action');
-        // console.log('post',this.action);
         this.save(callback);
     };
 
     NodeSchema.methods.updateAction = function(seq, dataPos, callback /**err, node*/ ) {
-        if(!(this.action && this.action.length > seq)){
-          return callback(500, null);
-        }
         var relativeX = dataPos.x - this.x;
         var relativeY = dataPos.y - this.y;
 
-        this.action[seq].set('x',relativeX);
-        this.action[seq].set('y',relativeY);
+        for(var i = 0; i < this.action.length; i++){
+          if('' + this.action[i]._id === seq){
+            this.action[i].set('x',relativeX);
+            this.action[i].set('y',relativeY);
+          }
+        }
+
+
 
         this.save(callback);
     };
 
-    NodeSchema.methods.deleteAction = function(seq, dataPos, callback /**err, node*/ ) {
-        if(!(this.action && this.action.length > seq)){
-          return callback(500, null);
+    NodeSchema.methods.deleteAction = function(seq, callback /**err, node*/ ) {
+
+        for(var i = 0; i < this.action.length; i++){
+          if('' + this.action[i]._id === seq){
+            this.action.splice(seq,1);
+            break;
+          }
         }
-        var relativeX = dataPos.x - this.x;
-        var relativeY = dataPos.y - this.y;
-        this.action = this.action.splice(seq,1);
+        this.markModified('action');
 
         this.save(callback);
     };

@@ -18,120 +18,17 @@ require('jsplumb');
 var jsPlumb = window.jsPlumb;
 /*jshint -W117 */
 
-var activeStyle = {
-  boxShadow: "0 0 10px #00789b",
-  color: "#00789b"
-};
-
-var nonInlinedStyle = {
-  position: 'absolute'
-};
-
-var itemCaptionStyle = {
-  top: -10,
-  left: 10,
-  position: 'absolute',
-  zIndex: 20,
-  textShadow: '2px 2px white',
-  height: 22,
-  maxWidth: 100,
-  maxHeight: 22,
-  marginBottom: -20,
-  fontSize: 10,
-  lineHeight: '11px'
-};
-
 var ArrowEnd = React.createClass({
-  getInitialState: function() {
-    return {focus: false};
-  },
 
-  componentWillUnmount: function() {},
-
-  shouldComponentUpdate(nextProps, nextState){
-    if(nextProps.focused === false){
-      nextState.hover = null;
-    }
-    return true;
-  },
-
-  onClickHandler: function(e) {
-    // if (this.state.hover === "submap") {
-    //   return; //pass the event to link
-    // }
-    // e.preventDefault();
-    // e.stopPropagation();
-    // if (this.state.hover === "remove") {
-    //   var id = this.props.id;
-    //   var mapID = this.props.mapID;
-    //   var workspaceID = this.props.workspaceID;
-    //   Actions.removeNode(workspaceID, mapID, id);
-    // }
-    // if (this.state.hover === "pencil") {
-    //   var nodeID = this.props.id; //jshint ignore:line
-    //   var mapID = this.props.mapID; //jshint ignore:line
-    //   Actions.openEditNodeDialog(mapID, nodeID);
-    // }
-    // if (this.state.hover === "group") {
-    //   var mapID = this.props.mapID; //jshint ignore:line
-    //   Actions.openCreateSubmapDialog({
-    //     mapID:mapID,
-    //     nodes:CanvasStore.getCanvasState().currentlySelectedNodes});
-    // }
-    // if (this.state.hover === "info") {
-    //   var mapID = this.props.mapID; //jshint ignore:line
-    //   var submapID = this.props.node.submapID;
-    //   var currentName = this.props.node.name;
-    //   var node = this.props.node; //jshint ignore:line
-    //   var workspaceID = this.props.workspaceID;
-    //   if(submapID){
-    //     Actions.openSubmapReferencesDialog(
-    //        currentName: currentName,
-    //        mapID:mapID,
-    //        submapID:submapID,
-    //        node :node,
-    //        workspaceID:workspaceID);
-    //   } else {
-    //     Actions.openReferencesDialog(
-    //        currentName: currentName,
-    //        node:node,
-    //        workspaceID:workspaceID);
-    //   }
-    // }
-    // if(this.state.hover === 'action'){
-    //   console.log('action!!!');
-    // }
-    if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
-      if (this.props.focused) {
-        CanvasActions.deselectNode(this.props.id);
-      } else {
-        CanvasActions.focusAdditionalNode(this.props.id);
-      }
-    } else if (this.props.focused) {
-      CanvasActions.deselectNodesAndConnections();
-    } else {
-      CanvasActions.focusNode(this.props.id);
-    }
-  },
-
-  mouseOver: function(target) {
-    // if(this.props.focused){
-    //   this.setState({hover: target});
-    // }
-  },
-
-  mouseOut: function(target) {
-    // this.setState({hover: null});
-  },
 
   render: function() {
     var node = this.props.node;
-    var seq = this.props.seq;
+    var action = this.props.action;
 
     var style = getStyleForType("ArrowEnd");
 
-    var left = (node.x + node.action[seq].x) * this.props.size.width;
-    var top = (node.y + node.action[seq].y) * this.props.size.height;
+    var left = (node.x + action.x) * this.props.size.width;
+    var top = (node.y + action.y) * this.props.size.height;
     style = _.extend(style, {
       left: left,
       top: top,
@@ -161,7 +58,7 @@ var ArrowEnd = React.createClass({
           stop: function(event) {
             var x = event.e.pageX;
             var y = event.e.pageY;
-            Actions.updateAction(workspaceID, mapID, node_id, seq, {pos:[x,y]});
+            Actions.updateAction(workspaceID, mapID, node_id, id, {pos:[x,y]});
           }
         });
       }}>

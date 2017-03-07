@@ -579,7 +579,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
               break;
           case ActionTypes.CANVAS_ACTION_DELETED:
               $.ajax({
-                  type: 'DEL',
+                  type: 'DELETE',
                   url: '/api/workspace/' + action.data.workspaceID +
                       '/map/' + action.data.mapID +
                       '/node/' + action.data.sourceID +

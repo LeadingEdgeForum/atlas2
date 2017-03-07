@@ -173,9 +173,15 @@ export default class MapCanvas extends React.Component {
     return fromStyle;
   }
   overlayClickHandler(obj) {
-    if (obj.component) {
+    if (obj.component && obj.component.scope === jsPlumb.Defaults.Scope) {
       //hurray, overlay clicked. So far there is only one, so it is not an issue
       Actions.deleteConnection(this.props.workspaceID, this.props.mapID, obj.component.sourceId, obj.component.targetId);
+      return;
+    }
+    if (obj.component && obj.component.scope === "WM_Action") {
+      //hurray, overlay clicked. So far there is only one, so it is not an issue
+
+      Actions.deleteAction(this.props.workspaceID, this.props.mapID, obj.component.sourceId, obj.component.targetId);
       return;
     }
     // we got pure connection
@@ -241,41 +247,61 @@ export default class MapCanvas extends React.Component {
       jsPlumb.detach(canvasConnections[z]);
     }
 
-
-
-    // Actions
-    for (var ii = 0; ii < this.props.nodes.length; ii++) {
-        var __node = this.props.nodes[ii];
-        var actions = __node.action;
-        for (var jj = 0; jj < actions.length; jj++) {
-            if (jsPlumb.getConnections({
-                    scope: "WM_Action",
-                    source: ''+__node._id,
-                    target: '' + __node._id + "_action" + jj
-                }).length === 0) {
-                var connection = jsPlumb.connect({
-                    source: __node._id,
-                    target: __node._id + "_action" + jj,
-                    scope: "WM_Action",
-                    anchors: [
-                        "Right", "Left"
-                    ],
-                    paintStyle: actionEndpointOptions.connectorStyle,
-                    endpoint: actionEndpointOptions.endpoint,
-                    connector: actionEndpointOptions.connector,
-                    endpointStyles: [
-                        actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
-                    ],
-                    overlays: actionEndpointOptions.connectorOverlays
-                });
+jsPlumb.setSuspendDrawing(true);
+// iterate over all nodes
+for (var ii = 0; ii < this.props.nodes.length; ii++) {
+    var __node = this.props.nodes[ii];
+    var desiredActions = __node.action;
+    var existingActions = jsPlumb.getConnections({
+        scope: "WM_Action",
+        source: '' + __node._id
+    });
+    // for every existing action
+    for (var jj = 0; jj < existingActions.length; jj++) {
+        var desired = false;
+        for (var kk = 0; kk < desiredActions.length; kk++) {
+            if (existingActions[jj].targetId === desiredActions[kk]._id) {
+                desired = true;
             }
         }
-
-      // connection.___overlayVisible = false;
-      // connection.getOverlay("deleteOverlay").hide();
-      // connection.bind('click', this.overlayClickHandler);
+        // if not desired - remove it
+        if (!desired) {
+            jsPlumb.detach(existingActions[jj]);
+        }
     }
-  }
+    // now we have only desired connections, but some may be missing
+    for (var ll = 0; ll < desiredActions.length; ll++) {
+        var existingNodeConnection = jsPlumb.getConnections({
+            scope: "WM_Action",
+            source: '' + __node._id,
+            target: '' + desiredActions[ll]._id
+        });
+        if (existingNodeConnection.length === 0) {
+            var connection = jsPlumb.connect({
+                source: __node._id,
+                target: desiredActions[ll]._id,
+                scope: "WM_Action",
+                anchors: [
+                    "Right", "Left"
+                ],
+                paintStyle: actionEndpointOptions.connectorStyle,
+                endpoint: actionEndpointOptions.endpoint,
+                connector: actionEndpointOptions.connector,
+                endpointStyles: [
+                    actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
+                ],
+                overlays: this.getOverlays(actionEndpointOptions.connectorOverlays)
+            });
+            connection.___overlayVisible = false;
+            connection.getOverlay("deleteOverlay").hide();
+            connection.bind('click', this.overlayClickHandler);
+        }
+    }
+
+}
+jsPlumb.setSuspendDrawing(false, true);
+
+}
 
   render() {
     var style = _.clone(mapCanvasStyle);
@@ -326,13 +352,13 @@ if (this.props.nodes) {
                   size
               }
               id = {
-                  n._id + "_action" + j
+                  n.action[j]._id
               }
               key = {
-                  n._id + "action" + j
+                  n.action[j]._id
               }
-              seq = {
-                j
+              action = {
+                n.action[j]
               }
               />);
         }
