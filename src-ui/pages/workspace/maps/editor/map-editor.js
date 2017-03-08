@@ -215,7 +215,7 @@ export default class MapEditor extends React.Component {
               </div>
             </div>
             <CreateNewNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
-            <CreateNewSubmapDialog/>
+            <CreateNewSubmapDialog workspaceID={workspaceID}/>
             <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <NewGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <EditGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
@@ -223,7 +223,7 @@ export default class MapEditor extends React.Component {
             <ReferencesDialog/>
           </Col>
         </Row>
-        <EditMapDialog/>
+        <EditMapDialog workspaceID={workspaceID}/>
       </Grid>
     );
   }

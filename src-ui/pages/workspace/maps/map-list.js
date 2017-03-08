@@ -30,11 +30,21 @@ export default class MapList extends React.Component {
   }
 
   componentDidMount() {
+    var _this = this;
     WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    WorkspaceStore.io.emit('workspace', {
+      type: 'sub',
+      id: _this.props.params.workspaceID
+    });
   }
 
   componentWillUnmount() {
+    var _this = this;
     WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    WorkspaceStore.io.emit('workspace', {
+      type: 'unsub',
+      id: _this.props.params.workspaceID
+    });
   }
 
   _onChange() {
@@ -53,7 +63,7 @@ export default class MapList extends React.Component {
       name = this.state.workspace.name;
       if (this.state.workspace.owner) {
           editors = this.state.workspace.owner.map(owner => < li className = "list-group-item" key={owner}> {owner}
-          <Button bsSize="xsmall" onClick={Actions.deleteUser.bind(Actions,{workspaceID:workspaceID, email:owner})}> X </Button> 
+          <Button bsSize="xsmall" onClick={Actions.deleteUser.bind(Actions,{workspaceID:workspaceID, email:owner})}> X </Button>
           </li>);
           }
     } else {
@@ -94,7 +104,7 @@ export default class MapList extends React.Component {
           </Col>
         </Row>
         <CreateNewMapDialog workspaceID={workspaceID}/>
-        <EditWorkspaceDialog/>
+        <EditWorkspaceDialog workspaceID={workspaceID}/>
       </Grid>
     );
   }

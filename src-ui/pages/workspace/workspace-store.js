@@ -223,6 +223,10 @@ class WorkspaceStore extends Store {
       success: function(data) {
         appState.editWorkspaceDialog.open = false;
         appState.editWorkspaceDialog.editedWorkspace = null;
+        workspaceStoreInstance.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
         this.updateWorkspaces();
       }.bind(this)
     });
@@ -254,6 +258,10 @@ class WorkspaceStore extends Store {
       data: data,
       success: function(data2) {
         appState.newMapDialog.open = false;
+        workspaceStoreInstance.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
         this.fetchSingleWorkspaceInfo(data.workspaceID);
       }.bind(this)
     });
@@ -289,7 +297,13 @@ workspaceStoreInstance.io.on('mapchange', function(msg) {
         appState.w_maps[msg.id] = result;
         workspaceStoreInstance.emitChange();
     }.bind(workspaceStoreInstance));
+});
 
+workspaceStoreInstance.io.on('workspacechange', function(msg) {
+    workspaceStoreInstance.serverRequest = $.get('/api/workspace/' + msg.id, function(result) {
+      workspaceStoreInstance.fetchSingleWorkspaceInfo(msg.id);
+      workspaceStoreInstance.updateWorkspaces(); // this emits change
+    }.bind(workspaceStoreInstance));
 });
 
 let ActionTypes = Constants.ACTION_TYPES;
@@ -323,6 +337,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           url: '/api/workspace/' + action.data.workspaceID + '/editor/' + action.data.email,
           success: function(data2) {
             appState.inviteDialog.open = false;
+            workspaceStoreInstance.io.emit('workspace', {
+              type: 'change',
+              id: action.data.workspaceID
+            });
             workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
             workspaceStoreInstance.updateWorkspaces(); // this emits change
           }.bind(this)
@@ -333,6 +351,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           type: 'DELETE',
           url: '/api/workspace/' + action.data.workspaceID + '/editor/' + action.data.email,
           success: function(data2) {
+            workspaceStoreInstance.io.emit('workspace', {
+              type: 'change',
+              id: action.data.workspaceID
+            });
             workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
             workspaceStoreInstance.updateWorkspaces(); // this emits change
           }.bind(this)
@@ -381,6 +403,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         workspaceStoreInstance.io.emit('map', {
           type: 'change',
           id: action.data.mapID
+        });
+        workspaceStoreInstance.io.emit('workspace', {
+          type: 'change',
+          id: action.data.workspaceID
         });
         appState.editMapDialog.open = false;
         appState.editMapDialog.mapID = null;
@@ -484,7 +510,6 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.OPEN_EDIT_GENERIC_COMMENT_DIALOG:
         action.data.open = true;
         appState.editGenericCommentDialog = action.data;
-        console.log('opening', action.data);
         workspaceStoreInstance.emitChange();
         break;
     case ActionTypes.CLOSE_EDIT_GENERIC_COMMENT_DIALOG:
@@ -732,6 +757,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         type: 'DELETE',
         url: '/api/workspace/' + action.data,
         success: function(data2) {
+          workspaceStoreInstance.io.emit('workspace', {
+            type: 'change',
+            id: action.data
+          });
           workspaceStoreInstance.updateWorkspaces(); // this emits change
         }.bind(this)
       });
@@ -744,6 +773,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           workspaceStoreInstance.io.emit('map', {
             type: 'change',
             id: action.data.mapID
+          });
+          workspaceStoreInstance.io.emit('workspace', {
+            type: 'change',
+            id: action.data.workspaceID
           });
           workspaceStoreInstance.fetchSingleWorkspaceInfo(action.data.workspaceID);
           workspaceStoreInstance.updateWorkspaces(); // this emits change
@@ -776,6 +809,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             workspaceStoreInstance.io.emit('map', {
               type: 'change',
               id: appState.createSubmapDialog.mapID
+            });
+            workspaceStoreInstance.io.emit('workspace', {
+              type: 'change',
+              id: action.workspaceID
             });
             appState.w_maps[appState.createSubmapDialog.mapID] = data2;
             appState.createSubmapDialog = {open:false};

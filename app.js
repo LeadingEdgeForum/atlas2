@@ -162,6 +162,18 @@ io.on('connection', function(socket) {
         socket.broadcast.to(msg.id).emit('mapchange', msg);
       }
     });
+
+    socket.on('workspace', function(msg){
+      if(msg.type === 'sub'){
+        socket.join(msg.id);
+      }
+      if(msg.type === 'unsub'){
+        socket.leave(msg.id);
+      }
+      if(msg.type === 'change'){
+        socket.broadcast.to(msg.id).emit('workspacechange', msg);
+      }
+    });
 });
 
 server.___app = app;
