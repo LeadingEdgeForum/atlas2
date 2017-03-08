@@ -136,7 +136,7 @@ var Comment = React.createClass({
           stop: function(event) {
             var x = event.e.pageX;
             var y = event.e.pageY;
-            Actions.updateComment(workspaceID, mapID, id, {pos:[x,y]}, txt);
+            Actions.updateComment(workspaceID, mapID, id, {pos:[x,y]});
           }
         });
       }}> {txt} {menu}
