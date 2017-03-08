@@ -15,6 +15,7 @@ class CanvasStore extends Store {
     this.state = {
       currentlySelectedNodes : [],
       currentlySelectedConnections : [],
+      currentlySelectedComments : [],
       multiNodeSelection : false,
       dropTargetHighlight : false, // the canvas should highlight when pallette drag is initiated,
       initialized : false,
@@ -66,7 +67,7 @@ class CanvasStore extends Store {
   }
 
   emitChange() {
-    this.state.multiNodeSelection = this.state.currentlySelectedNodes.length > 1;
+    this.state.multiNodeSelection = this.state.currentlySelectedNodes.length + this.state.currentlySelectedComments.length > 1;
     super.emitChange();
   }
 }
@@ -93,12 +94,14 @@ canvasStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.DESELECT_NODES_AND_CONNECTIONS:
       canvasStoreInstance.state.currentlySelectedNodes = [];
       canvasStoreInstance.state.currentlySelectedConnections = [];
+      canvasStoreInstance.state.currentlySelectedComments = [];
       canvasStoreInstance.emitChange();
       break;
     case ActionTypes.CANVAS_FOCUS_SINGLE_NODE:
       canvasStoreInstance.state.currentlySelectedNodes = [];
       canvasStoreInstance.state.currentlySelectedNodes.push(action.data);
       canvasStoreInstance.state.currentlySelectedConnections = [];
+      canvasStoreInstance.state.currentlySelectedComments = [];
       canvasStoreInstance.emitChange();
       break;
     case ActionTypes.CANVAS__ADD_FOCUS_SINGLE_NODE:
@@ -112,6 +115,23 @@ canvasStoreInstance.dispatchToken = Dispatcher.register(action => {
       canvasStoreInstance.state.currentlySelectedConnections = [];
       canvasStoreInstance.emitChange();
       break;
+    case ActionTypes.CANVAS_FOCUS_SINGLE_COMMENT:
+        canvasStoreInstance.state.currentlySelectedNodes = [];
+        canvasStoreInstance.state.currentlySelectedConnections = [];
+        canvasStoreInstance.state.currentlySelectedComments = [];
+        canvasStoreInstance.state.currentlySelectedComments.push(action.data);
+        canvasStoreInstance.emitChange();
+        break;
+    case ActionTypes.CANVAS_FOCUS_ADD_COMMENT:
+        canvasStoreInstance.state.currentlySelectedConnections = [];
+        canvasStoreInstance.state.currentlySelectedComments.push(action.data);
+        canvasStoreInstance.emitChange();
+        break;
+    case ActionTypes.CANVAS_FOCUS_REMOVE_COMMENT:
+        var pos = canvasStoreInstance.state.currentlySelectedComments.indexOf(action.data);
+        canvasStoreInstance.state.currentlySelectedComments.splice(pos,1);
+        canvasStoreInstance.emitChange();
+        break;
     default:
       return;
   }

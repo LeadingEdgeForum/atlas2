@@ -10,6 +10,9 @@ module.exports  = keyMirror({
       DESELECT_NODES_AND_CONNECTIONS : null,
       CANVAS_FOCUS_SINGLE_NODE : null,
       CANVAS_REMOVE_FOCUS_SINGLE_NODE : null,
-      CANVAS__ADD_FOCUS_SINGLE_NODE : null
+      CANVAS__ADD_FOCUS_SINGLE_NODE : null,
+      CANVAS_FOCUS_SINGLE_COMMENT : null,
+      CANVAS_FOCUS_ADD_COMMENT : null,
+      CANVAS_FOCUS_REMOVE_COMMENT : null
   }
 });

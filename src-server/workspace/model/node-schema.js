@@ -53,6 +53,10 @@ module.exports = function(conn){
             type: Schema.Types.ObjectId,
             ref: 'Node'
         }],
+        action: [{
+            x : Schema.Types.Number,
+            y : Schema.Types.Number
+        }],
         submapID: {
             type: Schema.Types.ObjectId,
             ref: 'WardleyMap'
@@ -92,6 +96,45 @@ module.exports = function(conn){
         }, function(err) {
             callback(err, null);
         });
+    };
+
+    NodeSchema.methods.makeAction = function(dataPos, callback /**err, node*/ ) {
+        var relativeX = dataPos.x - this.x;
+        var relativeY = dataPos.y - this.y;
+        this.action.push({
+          x : relativeX,
+          y : relativeY
+        });
+        this.save(callback);
+    };
+
+    NodeSchema.methods.updateAction = function(seq, dataPos, callback /**err, node*/ ) {
+        var relativeX = dataPos.x - this.x;
+        var relativeY = dataPos.y - this.y;
+
+        for(var i = 0; i < this.action.length; i++){
+          if('' + this.action[i]._id === seq){
+            this.action[i].set('x',relativeX);
+            this.action[i].set('y',relativeY);
+          }
+        }
+
+
+
+        this.save(callback);
+    };
+
+    NodeSchema.methods.deleteAction = function(seq, callback /**err, node*/ ) {
+
+        for(var i = 0; i < this.action.length; i++){
+          if('' + this.action[i]._id === seq){
+            this.action.splice(seq,1);
+            break;
+          }
+        }
+        this.markModified('action');
+
+        this.save(callback);
     };
 
     NodeSchema.methods.removeDependencyTo = function(_targetId, callback /**err, node*/ ) {

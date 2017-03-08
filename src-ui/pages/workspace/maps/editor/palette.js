@@ -16,7 +16,7 @@ import Actions from '../../../../actions';
 import CanvasActions from './canvas-actions';
 import Constants from '../../../../constants';
 var _ = require('underscore');
-import {userNeedStyle, externalStyle, internalStyle, submapStyle} from './component-styles';
+import {userNeedStyle, externalStyle, internalStyle, submapStyle, genericCommentPalletteStyle} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
 /*jshint -W117 */
@@ -101,6 +101,15 @@ export default class Palette extends React.Component {
             <Button href="#" style={buttonStyle} bsStyle={null}>
               <div ref={makeDraggable.bind(this, Constants.SUBMAP, mapID)} style={HigherMargins}>
                 <div style={submapStyle}></div>&nbsp;Submap
+              </div>
+            </Button>
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={12}>
+            <Button href="#" style={buttonStyle} bsStyle={null}>
+              <div ref={makeDraggable.bind(this, Constants.GENERIC_COMMENT, mapID)} style={HigherMargins}>
+                <div style={genericCommentPalletteStyle}></div>&nbsp;Comment
               </div>
             </Button>
           </Col>

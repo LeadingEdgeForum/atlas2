@@ -22,6 +22,12 @@ let appState = {
   newNodeDialog: {
     open: false
   },
+  newGenericCommentDialog : {
+    open: false
+  },
+  editGenericCommentDialog : {
+    open: false
+  },
   editWorkspaceDialog: {
     open: false
   },
@@ -139,6 +145,22 @@ class WorkspaceStore extends Store {
     }
   }
 
+  isNewGenericCommentDialogOpen() {
+    if (appState && appState.newGenericCommentDialog) {
+      return appState.newGenericCommentDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
+  isEditGenericCommentDialogOpen() {
+    if (appState && appState.editGenericCommentDialog) {
+      return appState.editGenericCommentDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
   isMapEditDialogOpen() {
     if (appState && appState.editMapDialog) {
       return appState.editMapDialog;
@@ -159,12 +181,20 @@ class WorkspaceStore extends Store {
     return appState.createSubmapDialog;
   }
 
+  getNewCommentDialogState(){
+    return appState.newGenericCommentDialog;
+  }
+
   getSubmapReferencesDialogState() {
     return appState.showReferencesDialog;
   }
 
   getReferencesDialogState() {
     return appState.showReferences2Dialog;
+  }
+
+  getEditCommentDialogState() {
+    return appState.editGenericCommentDialog;
   }
 
   submitNewWorkspaceDialog(data) {
@@ -255,7 +285,6 @@ class WorkspaceStore extends Store {
 let workspaceStoreInstance = new WorkspaceStore();
 
 workspaceStoreInstance.io.on('mapchange', function(msg) {
-    console.log('change discovered', msg);
     workspaceStoreInstance.serverRequest = $.get('/api/map/' + msg.id, function(result) {
         appState.w_maps[msg.id] = result;
         workspaceStoreInstance.emitChange();
@@ -407,6 +436,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
             workspaceStoreInstance.emitChange();
           }.bind(this)
         });
+      } else if (action.type === Constants.GENERIC_COMMENT){
+        appState.newGenericCommentDialog.coords = coords;
+        appState.newGenericCommentDialog.type = action.type;
+        appState.newGenericCommentDialog.open = true;
       } else {
         appState.newNodeDialog.coords = coords;
         appState.newNodeDialog.type = action.type;
@@ -420,6 +453,106 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       };
       workspaceStoreInstance.emitChange();
       break;
+    case ActionTypes.CLOSE_NEW_GENERIC_COMMENT_DIALOG:
+        appState.newGenericCommentDialog = {
+            open: false
+        };
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.SUBMIT_NEW_GENERIC_COMMENT_DIALOG:
+        $.ajax({
+            type: 'POST',
+            url: '/api/workspace/' + action.data.workspaceID + '/map/' + action.data.mapID + '/comment/',
+            data: {
+              x : action.data.coords.x,
+              y : action.data.coords.y,
+              text : action.data.comment
+            },
+            success: function(data2) {
+                workspaceStoreInstance.io.emit('map', {
+                    type: 'change',
+                    id: action.data.mapID
+                });
+                appState.newGenericCommentDialog = {
+                    open: false
+                };
+                appState.w_maps[action.data.mapID] = data2;
+                workspaceStoreInstance.emitChange();
+            }.bind(this)
+        });
+        break;
+    case ActionTypes.OPEN_EDIT_GENERIC_COMMENT_DIALOG:
+        action.data.open = true;
+        appState.editGenericCommentDialog = action.data;
+        console.log('opening', action.data);
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.CLOSE_EDIT_GENERIC_COMMENT_DIALOG:
+        appState.editGenericCommentDialog = {
+            open: false
+        };
+        workspaceStoreInstance.emitChange();
+        break;
+    case ActionTypes.UPDATE_GENERIC_COMMENT:
+        var coords = CanvasStore.normalizeComponentCoord({pos: [action.data.coords.x,action.data.coords.y]});
+        $.ajax({
+            type: 'PUT',
+            url: '/api/workspace/' + action.data.workspaceID + '/map/' + action.data.mapID + '/comment/' + action.data.commentID,
+            data: {
+              x : coords.x,
+              y : coords.y,
+              text : action.data.comment
+            },
+            success: function(data2) {
+                workspaceStoreInstance.io.emit('map', {
+                    type: 'change',
+                    id: action.data.mapID
+                });
+                appState.editGenericCommentDialog = {
+                    open: false
+                };
+                appState.w_maps[action.data.mapID] = data2;
+                workspaceStoreInstance.emitChange();
+            }.bind(this)
+        });
+        break;
+    case ActionTypes.SUBMIT_EDIT_GENERIC_COMMENT_DIALOG:
+        $.ajax({
+            type: 'PUT',
+            url: '/api/workspace/' + action.data.workspaceID + '/map/' + action.data.mapID + '/comment/' + action.data.id,
+            data: {
+              text : action.data.comment
+            },
+            success: function(data2) {
+                workspaceStoreInstance.io.emit('map', {
+                    type: 'change',
+                    id: action.data.mapID
+                });
+                appState.editGenericCommentDialog = {
+                    open: false
+                };
+                appState.w_maps[action.data.mapID] = data2;
+                workspaceStoreInstance.emitChange();
+            }.bind(this)
+        });
+        break;
+    case ActionTypes.DELETE_GENERIC_COMMENT:
+            $.ajax({
+                type: 'DELETE',
+                url: '/api/workspace/' + action.data.workspaceID + '/map/' + action.data.mapID + '/comment/' + action.data.commentID,
+                success: function(data2) {
+                    workspaceStoreInstance.io.emit('map', {
+                        type: 'change',
+                        id: action.data.mapID
+                    });
+                    appState.newGenericCommentDialog = {
+                        open: false
+                    };
+                    appState.w_maps[action.data.mapID] = data2;
+                    workspaceStoreInstance.emitChange();
+                }.bind(this)
+            });
+            break;
     case ActionTypes.SHOW_REFERENCES_SUBMAP:
       appState.showReferencesDialog.open = true;
       appState.showReferencesDialog.mapID = action.mapID;
@@ -541,6 +674,59 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         }.bind(this)
       });
       break;
+      case ActionTypes.CANVAS_ACTION_CREATED:
+          $.ajax({
+              type: 'POST',
+              url: '/api/workspace/' + action.data.workspaceID +
+                  '/map/' + action.data.mapID +
+                  '/node/' + action.data.sourceID +
+                  '/action/',
+              data: CanvasStore.normalizeComponentCoord(action.data.pos),
+              success: function(data2) {
+                  appState.w_maps[action.data.mapID] = data2;
+                  workspaceStoreInstance.io.emit('map', {
+                      type: 'change',
+                      id: action.data.mapID
+                  });
+                  workspaceStoreInstance.emitChange();
+              }.bind(this)
+          });
+          break;
+          case ActionTypes.CANVAS_ACTION_UPDATED:
+              $.ajax({
+                  type: 'PUT',
+                  url: '/api/workspace/' + action.data.workspaceID +
+                      '/map/' + action.data.mapID +
+                      '/node/' + action.data.sourceID +
+                      '/action/' + action.data.seq,
+                  data: CanvasStore.normalizeComponentCoord(action.data.pos),
+                  success: function(data2) {
+                      appState.w_maps[action.data.mapID] = data2;
+                      workspaceStoreInstance.io.emit('map', {
+                          type: 'change',
+                          id: action.data.mapID
+                      });
+                      workspaceStoreInstance.emitChange();
+                  }.bind(this)
+              });
+              break;
+          case ActionTypes.CANVAS_ACTION_DELETED:
+              $.ajax({
+                  type: 'DELETE',
+                  url: '/api/workspace/' + action.data.workspaceID +
+                      '/map/' + action.data.mapID +
+                      '/node/' + action.data.sourceID +
+                      '/action/' + action.data.seq,
+                  success: function(data2) {
+                      appState.w_maps[action.data.mapID] = data2;
+                      workspaceStoreInstance.io.emit('map', {
+                          type: 'change',
+                          id: action.data.mapID
+                      });
+                      workspaceStoreInstance.emitChange();
+                  }.bind(this)
+              });
+              break;
     case ActionTypes.WORKSPACE_ARCHIVE:
       $.ajax({
         type: 'DELETE',
@@ -571,6 +757,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.SHOW_SUBMAP_DIALOG:
       appState.createSubmapDialog.open=true;
       appState.createSubmapDialog.listOfNodesToSubmap=action.data.nodes;
+      appState.createSubmapDialog.listOfCommentsToSubmap = action.data.comments;
       appState.createSubmapDialog.mapID=action.data.mapID;
       workspaceStoreInstance.emitChange();
       break;
@@ -582,6 +769,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           data : {
             name : action.name,
             listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap,
+            listOfCommentsToSubmap : appState.createSubmapDialog.listOfCommentsToSubmap,
             coords: appState.createSubmapDialog.coords
           },
           success: function(data2) {

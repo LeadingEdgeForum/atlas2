@@ -31,6 +31,9 @@ module.exports  = keyMirror({
       CANVAS_NODE_DRAGGED : null,
       CANVAS_CONNECTION_CREATED : null,
       CANVAS_CONNECTION_DELETE : null,
+      CANVAS_ACTION_CREATED : null,
+      CANVAS_ACTION_UPDATED : null,
+      CANVAS_ACTION_DELETED : null,
       CANVAS_REMOVE_NODE : null,
       WORKSPACE_ARCHIVE : null,
       MAP_ARCHIVE : null,
@@ -41,10 +44,17 @@ module.exports  = keyMirror({
       SHOW_REFERENCES_SUBMAP : null,
       CLOSE_REFERENCES_SUBMAP : null,
       SHOW_REFERENCES : null,
-      CLOSE_REFERENCES : null
+      CLOSE_REFERENCES : null,
+      CLOSE_NEW_GENERIC_COMMENT_DIALOG : null,
+      UPDATE_GENERIC_COMMENT : null,
+      DELETE_GENERIC_COMMENT : null,
+      OPEN_EDIT_GENERIC_COMMENT_DIALOG : null,
+      CLOSE_EDIT_GENERIC_COMMENT_DIALOG : null,
+      SUBMIT_EDIT_GENERIC_COMMENT_DIALOG : null
   },
   USERNEED : null,
   EXTERNAL : null,
   INTERNAL : null,
-  SUBMAP : null
+  SUBMAP : null,
+  GENERIC_COMMENT : null
 });
