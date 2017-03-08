@@ -46,7 +46,7 @@ var CreateNewSubmapDialog = React.createClass({
   },
   _submit: function() {
     this.internalState.mapID = this.props.mapID;
-    Actions.createSubmap(this.internalState.name);
+    Actions.createSubmap(this.props.workspaceID, this.internalState.name);
   },
 
   _handleDialogChange: function(parameterName, event) {

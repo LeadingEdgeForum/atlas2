@@ -45,6 +45,7 @@ var CreateNewMapDialog = React.createClass({
       this.internalState.user = this.internalState.map.user;
       this.internalState.purpose = this.internalState.map.purpose;
       this.internalState.name = this.internalState.map.name;
+      this.internalState.workspaceID = this.props.workspaceID;
     }
     //dialog is going to be closed, clean internal state
     if (!newState.open) {

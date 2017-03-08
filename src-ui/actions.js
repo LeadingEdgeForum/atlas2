@@ -139,6 +139,7 @@ export default class Actions {
       actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG,
       data: {
         mapID: data.map._id,
+        workspaceID : data.workspaceID,
         mapData: {
           user: data.user,
           purpose: data.purpose,
@@ -304,10 +305,11 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_SUBMAP_DIALOG});
   }
 
-  static createSubmap(name){
+  static createSubmap(workspaceID, name){
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_SUBMAP,
-      name : name
+      name : name,
+      workspaceID : workspaceID
     });
   }
 
