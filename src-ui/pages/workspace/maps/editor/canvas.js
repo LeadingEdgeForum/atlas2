@@ -19,6 +19,7 @@ import Actions from '../../../../actions';
 import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
 var ArrowEnd = require('./arrow-end');
+var Comment = require('./comment');
 import {endpointOptions, actionEndpointOptions} from './component-styles';
 
 //one day - make it proper require, but JsPlumb 2.2.0 must be released
@@ -247,7 +248,6 @@ export default class MapCanvas extends React.Component {
       jsPlumb.detach(canvasConnections[z]);
     }
 
-jsPlumb.setSuspendDrawing(true);
 // iterate over all nodes
 for (var ii = 0; ii < this.props.nodes.length; ii++) {
     var __node = this.props.nodes[ii];
@@ -299,7 +299,6 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
     }
 
 }
-jsPlumb.setSuspendDrawing(false, true);
 
 }
 
@@ -364,10 +363,35 @@ if (this.props.nodes) {
         }
         }
     }
+    var comments = [];
+    if (this.props.comments) {
+        for (var i = 0; i < this.props.comments.length; i++) {
+              comments.push( <Comment workspaceID = {
+                      workspaceID
+                  }
+                  mapID = {
+                      mapID
+                  }
+                  comment = {
+                      this.props.comments[i]
+                  }
+                  id = {
+                      this.props.comments[i]._id
+                  }
+                  key = {
+                      this.props.comments[i]._id
+                  }
+                  size = {
+                      size
+                  }
+                  />);
+            }
+        }
     return (
       <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
         {arrowends}
+        {comments}
       </div>
     );
   }

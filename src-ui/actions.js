@@ -25,6 +25,63 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_CLOSE_INVITE_DIALOG});
   }
 
+  static closeNewGenericCommentDialog(){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CLOSE_NEW_GENERIC_COMMENT_DIALOG});
+  }
+
+  static submitNewGenericCommentDialog(data){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.SUBMIT_NEW_GENERIC_COMMENT_DIALOG, data:data});
+  }
+
+  static updateComment(workspaceID, mapID, id, pos, txt) {
+      var x = pos.pos[0];
+      var y = pos.pos[1];
+      Dispatcher.dispatch({
+          actionType: Constants.ACTION_TYPES.UPDATE_GENERIC_COMMENT,
+          data: {
+              workspaceID: workspaceID,
+              mapID: mapID,
+              coords: {
+                  x: x,
+                  y: y
+              },
+              comment: txt,
+              commentID: id
+          }
+      });
+  }
+
+  static deleteComment(workspaceID, mapID, id) {
+      Dispatcher.dispatch({
+          actionType: Constants.ACTION_TYPES.DELETE_GENERIC_COMMENT,
+          data: {
+              workspaceID: workspaceID,
+              mapID: mapID,
+              commentID: id
+          }
+      });
+  }
+
+  static openEditGenericCommentDialog(workspaceID, mapID, id, txt) {
+      Dispatcher.dispatch({
+          actionType: Constants.ACTION_TYPES.OPEN_EDIT_GENERIC_COMMENT_DIALOG,
+          data: {
+              workspaceID: workspaceID,
+              mapID: mapID,
+              id: id,
+              comment: txt
+          }
+      });
+  }
+
+  static closeEditGenericCommentDialog() {
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CLOSE_EDIT_GENERIC_COMMENT_DIALOG});
+  }
+
+  static submitEditGenericCommentDialog(data){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.SUBMIT_EDIT_GENERIC_COMMENT_DIALOG, data:data});
+  }
+
   static submitInviteNewUserDialog(data) {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_INVITE_DIALOG, data: data});
   }

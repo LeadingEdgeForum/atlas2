@@ -43,8 +43,44 @@ module.exports = function(conn){
         nodes: [{
             type: Schema.Types.ObjectId,
             ref: 'Node'
-        }]
+        }],
+        comments : [{
+            x : Schema.Types.Number,
+            y : Schema.Types.Number,
+            text : Schema.Types.String
+        }],
     });
+
+    _MapSchema.methods.makeComment = function(data, callback /**err, map*/ ) {
+        this.comments.push(data);
+        this.save(callback);
+    };
+
+    _MapSchema.methods.updateComment = function(seq, dataPos, callback /**err, map*/ ) {
+        for(var i = 0; i < this.comments.length; i++){
+          if('' + this.comments[i]._id === seq){
+            if(dataPos.x && dataPos.y){
+              this.comments[i].set('x',dataPos.x);
+              this.comments[i].set('y',dataPos.y);
+            }
+            if(dataPos.text){
+              this.comments[i].set('text',dataPos.text);
+            }
+          }
+        }
+        this.save(callback);
+    };
+
+    _MapSchema.methods.deleteComment = function(seq, callback /**err, node*/ ) {
+        for(var i = 0; i < this.comments.length; i++){
+          if('' + this.comments[i]._id === seq){
+            this.comments.splice(i,1);
+            break;
+          }
+        }
+        this.markModified('comments');
+        this.save(callback);
+    };
 
     _MapSchema.methods.verifyAccess = function(user, callback_granted, callback_denied) {
         var Workspace = require('./workspace-schema')(conn);

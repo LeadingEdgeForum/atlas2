@@ -44,10 +44,17 @@ module.exports  = keyMirror({
       SHOW_REFERENCES_SUBMAP : null,
       CLOSE_REFERENCES_SUBMAP : null,
       SHOW_REFERENCES : null,
-      CLOSE_REFERENCES : null
+      CLOSE_REFERENCES : null,
+      CLOSE_NEW_GENERIC_COMMENT_DIALOG : null,
+      UPDATE_GENERIC_COMMENT : null,
+      DELETE_GENERIC_COMMENT : null,
+      OPEN_EDIT_GENERIC_COMMENT_DIALOG : null,
+      CLOSE_EDIT_GENERIC_COMMENT_DIALOG : null,
+      SUBMIT_EDIT_GENERIC_COMMENT_DIALOG : null
   },
   USERNEED : null,
   EXTERNAL : null,
   INTERNAL : null,
-  SUBMAP : null
+  SUBMAP : null,
+  GENERIC_COMMENT : null
 });

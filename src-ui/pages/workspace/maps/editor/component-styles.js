@@ -44,6 +44,32 @@ var arrowEndStyle = _.extend(_.clone(mapComponentStyle), {
   maxHeight: _diameter/2,
 });
 
+var genericCommentPalletteStyle = {
+  minHeight: _diameter * 1.2,
+  minWidth: _diameter * 1.2,
+  maxWidth: _diameter * 1.2,
+  maxHeight: _diameter * 1.2,
+  borderRadius: _diameter / 3,
+  zIndex: 5,
+  border: '1px solid orange',
+  backgroundColor: 'yellow',
+  float: 'left'
+};
+
+var genericCommentStyle = {
+  minHeight: _diameter * 1.2,
+  minWidth: _diameter * 1.2,
+  borderRadius: _diameter / 3,
+  zIndex: 5,
+  border: '1px solid orange',
+  backgroundColor: 'yellow',
+  fontSize: 10,
+  lineHeight: '11px',
+  padding: '1px',
+  float: 'left',
+  maxWidth : '150px'
+};
+
 var getStyleForType = function(type) {
   var style = null;
   switch (type) {
@@ -61,6 +87,9 @@ var getStyleForType = function(type) {
       break;
     case "ArrowEnd":
       style = arrowEndStyle;
+      break;
+    case "GenericComment":
+      style = genericCommentStyle;
       break;
   }
   return _.clone(style);
@@ -123,6 +152,7 @@ export {
     externalStyle,
     internalStyle,
     submapStyle,
+    genericCommentPalletteStyle,
     getStyleForType,
     endpointOptions,
     actionEndpointOptions

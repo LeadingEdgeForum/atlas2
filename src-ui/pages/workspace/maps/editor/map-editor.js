@@ -20,6 +20,8 @@ import CreateNewSubmapDialog from './create-new-submap-dialog';
 import SubmapReferencesDialog from './submap-references-dialog';
 import ReferencesDialog from './references-dialog';
 import EditNodeDialog from './edit-node-dialog';
+import NewGenericCommentDialog from './create-new-comment-dialog';
+import EditGenericCommentDialog from './edit-comment-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
 import {calculateMapName} from './../map-name-calculator';
@@ -167,6 +169,7 @@ export default class MapEditor extends React.Component {
 
   render() {
     var nodes = this.state.map.nodes;
+    var comments = this.state.map.comments;
     var name = this.state.workspace
       ? this.state.workspace.name
       : "no name";
@@ -193,7 +196,7 @@ export default class MapEditor extends React.Component {
           </Col>
           <Col xs={9} sm={10} md={10} lg={11}>
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} mapID={this.props.params.mapID} workspaceID={workspaceID}></MapCanvas>
+              <MapCanvas nodes={nodes} comments={comments} mapID={this.props.params.mapID} workspaceID={workspaceID}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>
@@ -214,6 +217,8 @@ export default class MapEditor extends React.Component {
             <CreateNewNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <CreateNewSubmapDialog/>
             <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
+            <NewGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
+            <EditGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <SubmapReferencesDialog/>
             <ReferencesDialog/>
           </Col>

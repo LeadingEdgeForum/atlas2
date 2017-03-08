@@ -647,6 +647,92 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   });
 
+  module.router.post('/workspace/:workspaceID/map/:mapID/comment', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var x = req.body.x;
+    var y = req.body.y;
+    var text = req.body.text;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapID,
+        archived: false,
+        workspace: workspaceID
+    }, function(err, mapResult) {
+        if (err) {
+            return defaultAccessDenied(res, err);
+        }
+        if (!mapResult) {
+            return defaultAccessDenied(res, err);
+        }
+        mapResult.verifyAccess(owner, function() {
+            mapResult.makeComment({x:x,y:y,text:text}, function(err, success_result) {
+              success_result.formJSON(function(formed){
+                res.json(formed);
+              }, defaultAccessDenied.bind(this, res));
+            }, defaultAccessDenied.bind(this, res));
+        }, defaultAccessDenied.bind(this, res));
+    });
+  });
+
+  module.router.put('/workspace/:workspaceID/map/:mapID/comment/:commentID', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var x = req.body.x;
+    var y = req.body.y;
+    var text = req.body.text;
+    var commentID = req.params.commentID;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapID,
+        archived: false,
+        workspace: workspaceID
+    }, function(err, mapResult) {
+        if (err) {
+            return defaultAccessDenied(res, err);
+        }
+        if (!mapResult) {
+            return defaultAccessDenied(res, err);
+        }
+        mapResult.verifyAccess(owner, function() {
+            mapResult.updateComment(commentID,{x:x,y:y,text:text}, function(err, success_result) {
+              success_result.formJSON(function(formed){
+                res.json(formed);
+              }, defaultAccessDenied.bind(this, res));
+            }, defaultAccessDenied.bind(this, res));
+        }, defaultAccessDenied.bind(this, res));
+    });
+  });
+
+  module.router.delete('/workspace/:workspaceID/map/:mapID/comment/:commentID', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var commentID = req.params.commentID;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapID,
+        archived: false,
+        workspace: workspaceID
+    }, function(err, mapResult) {
+        if (err) {
+            return defaultAccessDenied(res, err);
+        }
+        if (!mapResult) {
+            return defaultAccessDenied(res, err);
+        }
+        mapResult.verifyAccess(owner, function() {
+            mapResult.deleteComment(commentID, function(err, success_result) {
+              success_result.formJSON(function(formed){
+                res.json(formed);
+              }, defaultAccessDenied.bind(this, res));
+            }, defaultAccessDenied.bind(this, res));
+        }, defaultAccessDenied.bind(this, res));
+    });
+  });
+
   module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
