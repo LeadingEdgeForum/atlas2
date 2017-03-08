@@ -45,6 +45,13 @@ var Comment = React.createClass({
       Actions.openEditGenericCommentDialog(workspaceID, mapID, id, this.props.comment.text);
       return;
     }
+    if (this.state.hover === "group") {
+      var mapID = this.props.mapID; //jshint ignore:line
+      Actions.openCreateSubmapDialog({
+        mapID:mapID,
+        nodes:CanvasStore.getCanvasState().currentlySelectedNodes,
+        comments: CanvasStore.getCanvasState().currentlySelectedComments});
+    }
 
     if((event.nativeEvent.ctrlKey || event.nativeEvent.altKey)){
       if (this.props.focused) {

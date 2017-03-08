@@ -757,6 +757,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
     case ActionTypes.SHOW_SUBMAP_DIALOG:
       appState.createSubmapDialog.open=true;
       appState.createSubmapDialog.listOfNodesToSubmap=action.data.nodes;
+      appState.createSubmapDialog.listOfCommentsToSubmap = action.data.comments;
       appState.createSubmapDialog.mapID=action.data.mapID;
       workspaceStoreInstance.emitChange();
       break;
@@ -768,6 +769,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           data : {
             name : action.name,
             listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap,
+            listOfCommentsToSubmap : appState.createSubmapDialog.listOfCommentsToSubmap,
             coords: appState.createSubmapDialog.coords
           },
           success: function(data2) {

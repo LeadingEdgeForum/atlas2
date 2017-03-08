@@ -307,6 +307,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   module.router.put('/map/:mapID/submap', authGuardian.authenticationRequired, function(req, res) {
     var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
+    var listOfCommentsToSubmap = req.body.listOfCommentsToSubmap ? req.body.listOfCommentsToSubmap : [];
     var submapName = req.body.name;
     var coords = req.body.coords;
     var owner = getUserIdFromReq(req);
@@ -314,7 +315,8 @@ module.exports = function(authGuardian, mongooseConnection) {
       submapName:submapName,
       coords:coords,
       owner:owner,
-      listOfNodesToSubmap:listOfNodesToSubmap });
+      listOfNodesToSubmap:listOfNodesToSubmap,
+      listOfCommentsToSubmap : listOfCommentsToSubmap});
     var toSave = [];
     var transferredNodes = [];
 
@@ -399,6 +401,20 @@ module.exports = function(authGuardian, mongooseConnection) {
                   nodesToSave.push(savedNode);
 
                   removeDuplicatesDependencies(nodesToSave);
+
+                  //before save - migrate comments
+                  for(var ii = affectedMap.comments.length - 1; ii > -1; ii--){
+                    var toBeTransfered = false;
+                    for(var jj = 0; jj < listOfCommentsToSubmap.length; jj++){
+                      if(listOfCommentsToSubmap[jj] === '' + affectedMap.comments[ii]._id){
+                        toBeTransfered = true;
+                      }
+                    }
+                    if(toBeTransfered){
+                      var commentToTransfer = affectedMap.comments.splice(ii,1)[0];
+                      submap.comments.push(commentToTransfer);
+                    }
+                  }
 
                   // console.log(nodesToSave);
                   multiSave(nodesToSave.concat(transferredNodes), function(e1, r1){

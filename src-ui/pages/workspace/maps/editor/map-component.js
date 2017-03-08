@@ -76,7 +76,8 @@ var MapComponent = React.createClass({
       var mapID = this.props.mapID; //jshint ignore:line
       Actions.openCreateSubmapDialog({
         mapID:mapID,
-        nodes:CanvasStore.getCanvasState().currentlySelectedNodes});
+        nodes:CanvasStore.getCanvasState().currentlySelectedNodes,
+        comments: CanvasStore.getCanvasState().currentlySelectedComments});
     }
     if (this.state.hover === "info") {
       var mapID = this.props.mapID; //jshint ignore:line
@@ -129,7 +130,7 @@ var MapComponent = React.createClass({
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
         jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeTarget(this.input, endpointOptions, {anchor: "TopCenter"}); 
+        jsPlumb.makeTarget(this.input, endpointOptions, {anchor: "TopCenter"});
       }
       return null;
     }
