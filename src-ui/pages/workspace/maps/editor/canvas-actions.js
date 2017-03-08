@@ -28,4 +28,16 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_SINGLE_NODE, data: nodeID});
   }
 
+  static focusComment(commentID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_SINGLE_COMMENT, data: commentID});
+  }
+
+  static focusAddComment(commentID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_ADD_COMMENT, data: commentID});
+  }
+
+  static focusRemoveComment(commentID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_REMOVE_COMMENT, data: commentID});
+  }
+
 }

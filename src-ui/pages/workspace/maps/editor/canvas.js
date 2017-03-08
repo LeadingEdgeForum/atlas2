@@ -366,6 +366,12 @@ if (this.props.nodes) {
     var comments = [];
     if (this.props.comments) {
         for (var i = 0; i < this.props.comments.length; i++) {
+              var focused = false;
+              for (var ii = 0; ii < state.currentlySelectedComments.length; ii++) {
+                if (this.props.comments[i]._id === state.currentlySelectedComments[ii]) {
+                  focused = true;
+                }
+              }
               comments.push( <Comment workspaceID = {
                       workspaceID
                   }
@@ -384,6 +390,10 @@ if (this.props.nodes) {
                   size = {
                       size
                   }
+                  focused = {
+                    focused
+                  }
+                  multi={state.multiNodeSelection}
                   />);
             }
         }
