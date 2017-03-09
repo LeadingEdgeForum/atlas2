@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "should": "11.1.2",
+    "should": "11.2.1",
     "supertest": "*",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.2.4",
