@@ -22,7 +22,7 @@
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
     "log4js": "*",
-    "mongoose": "4.8.5",
+    "mongoose": "4.8.6",
     "morgan": "^1.7.0",
     "passport": "^0.3.2",
     "passport-google-oauth20": "^1.0.0",
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "mocha": "*",
-    "should": "11.1.2",
+    "should": "11.2.1",
     "supertest": "*",
     "babel-core": "^6.23.1",
     "babel-loader": "^6.2.4",
