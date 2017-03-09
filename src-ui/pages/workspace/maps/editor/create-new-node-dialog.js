@@ -10,7 +10,8 @@ import {
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Radio
 } from 'react-bootstrap';
 var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./../../../../constants');
@@ -76,6 +77,33 @@ var CreateNewNodeDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="text" placeholder="Enter name of the component" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor}/>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="responsiblePerson">
+                <Col sm={2}>
+                  <ControlLabel>Owner</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="text" placeholder="Responsible Person" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')} onKeyDown={this._enterInterceptor}/>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="inertia">
+                <Col sm={2}>
+                  <ControlLabel>Inertia</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                    <Radio inline checked value={0} onChange={this._handleDialogChange.bind(this, 'inertia')}>None</Radio>{' '}
+                    <Radio inline value={0.33} onChange={this._handleDialogChange.bind(this, 'inertia')}>Small</Radio>{' '}
+                    <Radio inline value={0.66} onChange={this._handleDialogChange.bind(this, 'inertia')}>Considerable</Radio>{' '}
+                    <Radio inline value={1} onChange={this._handleDialogChange.bind(this, 'inertia')}>Huge</Radio>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="description">
+                <Col sm={2}>
+                  <ControlLabel>Description</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" componentClass="textarea" placeholder="Describing what the component does will help other people" onChange={this._handleDialogChange.bind(this, 'description')} onKeyDown={this._enterInterceptor}/>
                 </Col>
               </FormGroup>
             </Form>

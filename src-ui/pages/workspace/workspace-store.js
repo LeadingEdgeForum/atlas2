@@ -399,6 +399,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
       appState.w_maps[action.data.mapID].map.user = action.data.mapData.user;
       appState.w_maps[action.data.mapID].map.purpose = action.data.mapData.purpose;
       appState.w_maps[action.data.mapID].map.name = action.data.mapData.name;
+      appState.w_maps[action.data.mapID].map.responsiblePerson = action.data.mapData.responsiblePerson;
       workspaceStoreInstance.saveMap(action.data.mapID, function() {
         workspaceStoreInstance.io.emit('map', {
           type: 'change',
@@ -431,7 +432,10 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         url: '/api/workspace/' + action.data.workspaceID+ '/map/' + action.data.mapID + '/node/' + action.data.nodeID,
         data: {
           name: action.data.params.name,
-          type : action.data.params.type
+          type : action.data.params.type,
+          responsiblePerson : action.data.params.responsiblePerson,
+          inertia: action.data.params.inertia,
+          description : action.data.params.description,
         },
         success: function(data2) {
           workspaceStoreInstance.io.emit('map', {
@@ -616,6 +620,9 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         url: '/api/workspace/' + action.data.workspaceID+ '/map/' + action.data.mapID + '/node/',
         data: {
           name:  action.data.name,
+          responsiblePerson : action.data.responsiblePerson,
+          inertia: action.data.inertia,
+          description : action.data.description,
           type: action.data.type,
           x: action.data.coords.x,
           y: action.data.coords.y
@@ -801,6 +808,7 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           dataType: 'json',
           data : {
             name : action.name,
+            responsiblePerson : action.responsiblePerson,
             listOfNodesToSubmap : appState.createSubmapDialog.listOfNodesToSubmap,
             listOfCommentsToSubmap : appState.createSubmapDialog.listOfCommentsToSubmap,
             coords: appState.createSubmapDialog.coords
