@@ -431,7 +431,6 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
         url: '/api/workspace/' + action.data.workspaceID+ '/map/' + action.data.mapID + '/node/' + action.data.nodeID,
         data: {
           name: action.data.params.name,
-          type : action.data.params.type
         },
         success: function(data2) {
           workspaceStoreInstance.io.emit('map', {

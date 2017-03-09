@@ -49,6 +49,7 @@ module.exports = function(conn){
             y : Schema.Types.Number,
             text : Schema.Types.String
         }],
+        responsiblePerson : Schema.Types.String
     });
 
     _MapSchema.methods.makeComment = function(data, callback /**err, map*/ ) {
@@ -111,7 +112,7 @@ module.exports = function(conn){
       });
     };
 
-    _MapSchema.methods.addNode = function(name, x, y, type, workspace, parentMap, callback_success, callback_error) {
+    _MapSchema.methods.addNode = function(name, x, y, type, workspace, parentMap, description, inertia, responsiblePerson, callback_success, callback_error) {
         var wardleyMapObject = this;
         var Node = require('./node-schema')(conn);
         var newNode = new Node({
@@ -120,7 +121,10 @@ module.exports = function(conn){
             y: y,
             type: type,
             workspace: workspace,
-            parentMap: parentMap
+            parentMap: parentMap,
+            description : description,
+            inertia : inertia,
+            responsiblePerson : responsiblePerson
         });
         newNode.save(function(errNewNode, resultNewNode){
           if(errNewNode){
@@ -145,7 +149,7 @@ module.exports = function(conn){
         });
     };
 
-    _MapSchema.methods.changeNode = function(name, x, y, type,desiredNodeId, callback_success, callback_error) {
+    _MapSchema.methods.changeNode = function(name, x, y, type,desiredNodeId, description, inertia, responsiblePerson, callback_success, callback_error) {
         var wardleyMapObject = this;
         var Node = require('./node-schema')(conn);
         Node.findOne({_id:desiredNodeId}).exec(function(err, node){
@@ -167,6 +171,15 @@ module.exports = function(conn){
           }
           if (type) {
             node.type = type;
+          }
+          if(description){
+            node.description = description;
+          }
+          if(inertia){
+            node.inertia = inertia;
+          }
+          if(responsiblePerson){
+            node.responsiblePerson = responsiblePerson;
           }
           node.save(function(errNewNode, resultNewNode){
             if(errNewNode){

@@ -330,7 +330,7 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
             focused = true;
           }
         }
-        return (<MapComponent workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} multi={state.multiNodeSelection}/>);
+        return (<MapComponent workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} inertia={component.inertia} multi={state.multiNodeSelection}/>);
       });
     }
     var arrowends = [];

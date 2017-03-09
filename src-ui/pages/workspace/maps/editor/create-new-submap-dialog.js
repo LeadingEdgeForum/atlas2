@@ -46,7 +46,7 @@ var CreateNewSubmapDialog = React.createClass({
   },
   _submit: function() {
     this.internalState.mapID = this.props.mapID;
-    Actions.createSubmap(this.props.workspaceID, this.internalState.name);
+    Actions.createSubmap(this.props.workspaceID, this.internalState.name, this.internalState.responsiblePerson);
   },
 
   _handleDialogChange: function(parameterName, event) {
@@ -79,6 +79,15 @@ var CreateNewSubmapDialog = React.createClass({
                 </Col>
               </FormGroup>
             </Form>
+            <FormGroup controlId="responsiblePerson">
+              <Col sm={2}>
+                <ControlLabel>Responsible Person</ControlLabel>
+              </Col>
+              <Col sm={9}>
+                <FormControl type="textarea" placeholder="Enter this person's email" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')} onKeyDown={this._enterInterceptor}/>
+                <HelpBlock>Who will be held responsible for this map?</HelpBlock>
+              </Col>
+            </FormGroup>
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
@@ -119,6 +128,15 @@ var CreateNewSubmapDialog = React.createClass({
                 </Col>
                 <Col sm={9}>
                   <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor.bind(this)}/>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="responsiblePerson">
+                <Col sm={2}>
+                  <ControlLabel>Responsible Person</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" placeholder="Enter this person's email" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')}/>
+                  <HelpBlock>Who will be held responsible for this map?</HelpBlock>
                 </Col>
               </FormGroup>
             </Form>

@@ -85,6 +85,15 @@ var CreateNewMapDialog = React.createClass({
                   <HelpBlock>What is this user trying to accomplish?</HelpBlock>
                 </Col>
               </FormGroup>
+              <FormGroup controlId="responsiblePerson">
+                <Col sm={2}>
+                  <ControlLabel>Responsible Person</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" placeholder="Enter this person's email" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')}/>
+                  <HelpBlock>Who will be held responsible for this map?</HelpBlock>
+                </Col>
+              </FormGroup>
             </Form>
           </Modal.Body>
           <Modal.Footer>

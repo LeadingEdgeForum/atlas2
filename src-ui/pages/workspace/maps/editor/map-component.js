@@ -32,13 +32,22 @@ var itemCaptionStyle = {
   left: 10,
   position: 'absolute',
   zIndex: 20,
-  textShadow: '2px 2px white',
+  textShadow: '0 0 5px white, 0 0 3px white, 0 0 7px white, 0 0 1px white',
   height: 22,
   maxWidth: 100,
   maxHeight: 22,
   marginBottom: -20,
   fontSize: 10,
   lineHeight: '11px'
+};
+
+var inertiaStyle = {
+  top: -15,
+  left: 15,
+  position: 'absolute',
+  zIndex: 10,
+  backgroundColor: 'grey',
+  height: 40
 };
 
 var MapComponent = React.createClass({
@@ -291,6 +300,17 @@ var MapComponent = React.createClass({
       </div>
     );
   },
+  renderInertia: function(inertia){
+    if(inertia === 0 || inertia === null || inertia === undefined){
+      return null;
+    }
+    var width = 15* inertia;
+
+    var style = _.extend(inertiaStyle, {
+        width : width
+    });
+    return <div style={style}></div>;
+  },
   render: function() {
     var node = this.props.node;
 
@@ -311,6 +331,7 @@ var MapComponent = React.createClass({
     var mapID = this.props.mapID;
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
+    var inertia = this.renderInertia(this.props.inertia);
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
         if (input) {
@@ -330,6 +351,7 @@ var MapComponent = React.createClass({
         });
       }}>
         <div style={itemCaptionStyle}>{name}</div>
+        {inertia}
         {menu}
       </div>
     );

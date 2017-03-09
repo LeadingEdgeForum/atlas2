@@ -55,12 +55,17 @@ module.exports = function(conn){
         }],
         action: [{
             x : Schema.Types.Number,
-            y : Schema.Types.Number
+            y : Schema.Types.Number,
+            shortSummary : Schema.Types.String,
+            description : Schema.Types.String
         }],
         submapID: {
             type: Schema.Types.ObjectId,
             ref: 'WardleyMap'
         },
+        responsiblePerson : Schema.Types.String,
+        inertia : Schema.Types.Number,
+        description : Schema.Types.String,
         /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
         processedForDuplication: {
             default: false,

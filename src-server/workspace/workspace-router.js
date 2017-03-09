@@ -157,7 +157,7 @@ module.exports = function(authGuardian, mongooseConnection) {
     var owner = getUserIdFromReq(req);
     WardleyMap
         .findOne({_id: req.params.mapID, archived: false})
-        .select('user purpose name workspace')
+        .select('user purpose name workspace responsiblePerson')
         .exec(function(err, result) {
             if(!result){
                 return res.status(404);
@@ -277,7 +277,8 @@ module.exports = function(authGuardian, mongooseConnection) {
                       type:'SUBMAP',
                       x:x,
                       y:y,
-                      submapID : submap._id
+                      submapID : submap._id,
+                      responsiblePerson : submap.responsiblePerson
                     });
               artificialNode.save(function(err4, savedNode){
                 if(err4){
@@ -310,6 +311,8 @@ module.exports = function(authGuardian, mongooseConnection) {
     var listOfCommentsToSubmap = req.body.listOfCommentsToSubmap ? req.body.listOfCommentsToSubmap : [];
     var submapName = req.body.name;
     var coords = req.body.coords;
+    var responsiblePerson = req.body.responsiblePerson;
+
     var owner = getUserIdFromReq(req);
     submapLogger.trace({
       submapName:submapName,
@@ -331,7 +334,8 @@ module.exports = function(authGuardian, mongooseConnection) {
                 name      : submapName,
                 isSubmap  : true,
                 workspace : affectedMap.workspace,
-                archived  : false
+                archived  : false,
+                responsiblePerson : responsiblePerson
               });
               submap.save(function(err, savedSubmap){
                 var artificialNode = new Node({
@@ -564,6 +568,9 @@ module.exports = function(authGuardian, mongooseConnection) {
     var workspaceID = req.params.workspaceID;
     var mapID = req.params.mapID;
     var name = req.body.name;
+    var description = req.body.description;
+    var inertia = req.body.inertia;
+    var responsiblePerson = req.body.responsiblePerson;
     var x = req.body.x;
     var y = req.body.y;
     var type = req.body.type;
@@ -581,7 +588,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             return defaultAccessDenied(res, err);
         }
         mapResult.verifyAccess(owner, function() {
-            mapResult.addNode(name, x, y, type, new ObjectId(workspaceID), parentMap, function(success_result) {
+            mapResult.addNode(name, x, y, type, new ObjectId(workspaceID), parentMap, description, inertia, responsiblePerson, function(success_result) {
                 res.json({
                     map: success_result.toObject()
                 });
@@ -758,6 +765,9 @@ module.exports = function(authGuardian, mongooseConnection) {
       var y = req.body.y;
       var type = req.body.type;
       var desiredNodeId = new ObjectId(req.params.nodeID);
+      var description = req.body.description;
+      var inertia = req.body.inertia;
+      var responsiblePerson = req.body.responsiblePerson;
 
       // find a map with a node
       WardleyMap.findOne({
@@ -774,7 +784,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   return defaultAccessDenied(res, err);
               }
               mapResult.verifyAccess(owner, function() {
-                  mapResult.changeNode(name, x, y, type, desiredNodeId, function(success_result) {
+                  mapResult.changeNode(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson, function(success_result) {
                       res.json({
                           map: success_result.toObject()
                       });

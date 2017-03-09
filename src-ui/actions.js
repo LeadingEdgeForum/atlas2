@@ -143,7 +143,8 @@ export default class Actions {
         mapData: {
           user: data.user,
           purpose: data.purpose,
-          name : data.name
+          name : data.name,
+          responsiblePerson : data.responsiblePerson
         }
       }
     });
@@ -172,7 +173,10 @@ export default class Actions {
         workspaceID : data.workspaceID,
         params: {
           name: data.name,
-          type: data.type
+          type: data.type,
+          responsiblePerson : data.responsiblePerson,
+          description : data.description,
+          inertia : data.inertia
         }
       }
     });
@@ -305,10 +309,11 @@ export default class Actions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_SUBMAP_DIALOG});
   }
 
-  static createSubmap(workspaceID, name){
+  static createSubmap(workspaceID, name, responsiblePerson){
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.MAP_SUBMAP,
       name : name,
+      responsiblePerson : responsiblePerson,
       workspaceID : workspaceID
     });
   }

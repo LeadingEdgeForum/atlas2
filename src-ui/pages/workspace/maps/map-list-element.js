@@ -77,16 +77,19 @@ export default class MapListElement extends React.Component {
         Delete
       </Button>
     );
-
     var mapsUsingThisSubmapInfo = null;
     if (this.props.isSubmap) {
       mapsUsingThisSubmapInfo = this.computeSubmapReferencesMessage();
+    }
+    var responsible = null;
+    if(this.props.responsible) {
+      responsible = (<span><Glyphicon glyph="user"></Glyphicon> {this.props.responsible}</span>);
     }
     return (
       <ListGroupItem header={mapName}>
         <Grid fluid={true}>
           <Row className="show-grid">
-            <Col xs={9}>{mapsUsingThisSubmapInfo}</Col>
+            <Col xs={9}>{mapsUsingThisSubmapInfo}{responsible}</Col>
             <Col xs={3}>
               <ButtonGroup>
                 <LinkContainer to={{

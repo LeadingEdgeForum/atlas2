@@ -48,6 +48,9 @@ var EditNodeDialog = React.createClass({
         if (this.internalState.map.nodes[i]._id === nodeID) {
           this.internalState.name = this.internalState.map.nodes[i].name;
           this.internalState.type = this.internalState.map.nodes[i].type;
+          this.internalState.responsiblePerson = this.internalState.map.nodes[i].responsiblePerson;
+          this.internalState.inertia = this.internalState.map.nodes[i].inertia;
+          this.internalState.description = this.internalState.map.nodes[i].description;
         }
       }
     }
@@ -85,6 +88,9 @@ var EditNodeDialog = React.createClass({
     }
     var name = this.internalState.name;
     var type = this.internalState.type;
+    var description = this.internalState.description;
+    var responsiblePerson = this.internalState.responsiblePerson;
+    var inertia = this.internalState.inertia;
 
     var typeGroup = type != Constants.SUBMAP ? (<FormGroup controlId="type">
       <Col sm={2}>
@@ -116,6 +122,33 @@ var EditNodeDialog = React.createClass({
                 </Col>
               </FormGroup>
               {typeGroup}
+              <FormGroup controlId="responsiblePerson">
+                <Col sm={2}>
+                  <ControlLabel>Owner</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="text" placeholder="Responsible Person" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')} onKeyDown={this._enterInterceptor} value={responsiblePerson}/>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="inertia">
+                <Col sm={2}>
+                  <ControlLabel>Inertia</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                    <Radio inline checked={inertia == 0 || inertia == undefined || inertia == null} value={0} onChange={this._handleDialogChange.bind(this, 'inertia')}>None</Radio>{' '}
+                    <Radio inline checked={inertia == 0.33} value={0.33} onChange={this._handleDialogChange.bind(this, 'inertia')}>Small</Radio>{' '}
+                    <Radio inline checked={inertia == 0.66} value={0.66} onChange={this._handleDialogChange.bind(this, 'inertia')}>Considerable</Radio>{' '}
+                    <Radio inline checked={inertia == 1} value={1} onChange={this._handleDialogChange.bind(this, 'inertia')}>Huge</Radio>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="description">
+                <Col sm={2}>
+                  <ControlLabel>Description</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" componentClass="textarea" placeholder="Describing what the component does will help other people" onChange={this._handleDialogChange.bind(this, 'description')} onKeyDown={this._enterInterceptor} value={description}/>
+                </Col>
+              </FormGroup>
             </Form>
           </Modal.Body>
           <Modal.Footer>
