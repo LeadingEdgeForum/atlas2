@@ -141,7 +141,7 @@ module.exports = function(conn) {
         });
     };
 
-    workspaceSchema.statics.createMap = function(workspaceID, editor, user, purpose, success_callback, error_callback) {
+    workspaceSchema.statics.createMap = function(workspaceID, editor, user, purpose, responsiblePerson, success_callback, error_callback) {
         var WardleyMap = require('./map-schema')(conn);
         var Workspace = require('./workspace-schema')(conn);
 
@@ -170,7 +170,8 @@ module.exports = function(conn) {
                 user: user,
                 purpose: purpose,
                 workspace: result._id,
-                archived: false
+                archived: false,
+                responsiblePerson : responsiblePerson
             });
             wm.save(function(err, savedMap) {
                 if (err) {
