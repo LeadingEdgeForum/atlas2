@@ -162,8 +162,10 @@ export default class MapCanvas extends React.Component {
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
-    if(!fromStyle){
-      fromStyle = [];
+    if (fromStyle) {
+        fromStyle = [].concat(fromStyle);
+    } else {
+        fromStyle = [];
     }
     var menuItems = [];
     for(var i = 0; i < menuDefinition.length; i++){
