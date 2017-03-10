@@ -28,6 +28,9 @@ let appState = {
   editGenericCommentDialog : {
     open: false
   },
+  editActionDialog : {
+    open: false
+  },
   editWorkspaceDialog: {
     open: false
   },
@@ -195,6 +198,18 @@ class WorkspaceStore extends Store {
 
   getEditCommentDialogState() {
     return appState.editGenericCommentDialog;
+  }
+
+  isEditActionDialogOpen(){
+    if (appState && appState.editActionDialog) {
+      return appState.editActionDialog;
+    } else {
+      return {open: false};
+    }
+  }
+
+  getEditActionDialogState(){
+    return appState.editActionDialog;
   }
 
   submitNewWorkspaceDialog(data) {
@@ -725,14 +740,23 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
           });
           break;
           case ActionTypes.CANVAS_ACTION_UPDATED:
+              var data = CanvasStore.normalizeComponentCoord(action.data.pos);
+              if (!data) {
+                  data = {};
+              }
+              data.shortSummary = action.data.shortSummary;
+              data.description = action.data.description;
               $.ajax({
                   type: 'PUT',
                   url: '/api/workspace/' + action.data.workspaceID +
                       '/map/' + action.data.mapID +
                       '/node/' + action.data.sourceID +
                       '/action/' + action.data.seq,
-                  data: CanvasStore.normalizeComponentCoord(action.data.pos),
+                  data: data,
                   success: function(data2) {
+                      appState.editActionDialog = {
+                          open: false
+                      };
                       appState.w_maps[action.data.mapID] = data2;
                       workspaceStoreInstance.io.emit('map', {
                           type: 'change',
@@ -758,6 +782,17 @@ workspaceStoreInstance.dispatchToken = Dispatcher.register(action => {
                       workspaceStoreInstance.emitChange();
                   }.bind(this)
               });
+              break;
+          case ActionTypes.CANVAS_ACTION_OPEN_EDIT_DIALOG:
+              appState.editActionDialog = action.data;
+              appState.editActionDialog.open = true;
+              workspaceStoreInstance.emitChange();
+              break;
+          case ActionTypes.CANVAS_ACTION_CLOSE_EDIT_DIALOG:
+              appState.editActionDialog = {
+                  open: false
+              };
+              workspaceStoreInstance.emitChange();
               break;
     case ActionTypes.WORKSPACE_ARCHIVE:
       $.ajax({
