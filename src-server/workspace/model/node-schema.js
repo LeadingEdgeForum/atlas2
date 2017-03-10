@@ -139,7 +139,7 @@ module.exports = function(conn){
 
         for(var i = 0; i < this.action.length; i++){
           if('' + this.action[i]._id === seq){
-            this.action.splice(seq,1);
+            this.action.splice(i,1);
             break;
           }
         }
