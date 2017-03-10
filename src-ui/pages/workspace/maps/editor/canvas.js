@@ -1,6 +1,8 @@
 /*jshint esversion: 6 */
 
 import React, {PropTypes} from 'react';
+import ReactDOM from 'react-dom';
+import ReactDOMServer from 'react-dom/server';
 import DocumentTitle from 'react-document-title';
 import {
   Grid,
@@ -9,7 +11,8 @@ import {
   Jumbotron,
   Button,
   Table,
-  ListGroup
+  ListGroup,
+  Glyphicon
 } from 'react-bootstrap';
 import WorkspaceStore from '../../workspace-store';
 import CanvasStore from './canvas-store';
@@ -158,37 +161,54 @@ export default class MapCanvas extends React.Component {
     jsPlumb.repaintEverything();
   }
 
-  getOverlays(fromStyle) {
+  getOverlays(fromStyle, menuDefinition, labelText) {
     if(!fromStyle){
       fromStyle = [];
     }
+    var menuItems = [];
+    for(var i = 0; i < menuDefinition.length; i++){
+      menuItems.push(<Glyphicon glyph={menuDefinition[i][0]} onClick={menuDefinition[i][1]} style={{zIndex: 50,  cursor: 'pointer'}}/>);
+      if(i != menuDefinition.length - 1){
+        menuItems.push(<span>&nbsp;</span>);
+      }
+    }
+    var menu = <div style={{color:'silver'}}>{menuItems}</div>;
+    var root = document.createElement('div');
+    var pre2 = ReactDOM.render(menu, root);
     fromStyle.push([
       "Custom", {
         create: function(component) {
-          return $("<div><span class='glyphicon glyphicon-remove' style='color: #a98c74;z-index: 50;cursor: pointer'></span></div>");
+          return pre2;
         },
         location: 0.5,
-        id: "deleteOverlay"
+        id: "menuOverlay"
       }
     ]);
+    fromStyle.push([
+        "Label", {
+          label:labelText,
+          id : "label",
+          labelStyle :{
+            font : '11px Helvetica Neue,Helvetica,Arial,sans-serif',
+            fill: 'white',
+          }
+        }
+    ]
+    );
     return fromStyle;
   }
   overlayClickHandler(obj) {
-    if (obj.component && obj.component.scope === jsPlumb.Defaults.Scope) {
-      //hurray, overlay clicked. So far there is only one, so it is not an issue
-      Actions.deleteConnection(this.props.workspaceID, this.props.mapID, obj.component.sourceId, obj.component.targetId);
-      return;
+    if(obj.component && obj.id != 'label'){
+      var conn = obj.component;
+      conn.___overlayVisible = false;
+      conn.getOverlay("menuOverlay").setVisible(conn.___overlayVisible);
+      conn.getOverlay("label").setVisible(!conn.___overlayVisible);
+      return; // this needs to be handled by the overlay itself
     }
-    if (obj.component && obj.component.scope === "WM_Action") {
-      //hurray, overlay clicked. So far there is only one, so it is not an issue
-
-      Actions.deleteAction(this.props.workspaceID, this.props.mapID, obj.component.sourceId, obj.component.targetId);
-      return;
-    }
-    // we got pure connection
-    var conn = obj;
+    var conn = obj.component ? obj.component : obj;
     conn.___overlayVisible = !conn.___overlayVisible;
-    conn.getOverlay("deleteOverlay").setVisible(conn.___overlayVisible);
+    conn.getOverlay("menuOverlay").setVisible(conn.___overlayVisible);
+    conn.getOverlay("label").setVisible(!conn.___overlayVisible);
   }
 
   reconcileDependencies() {
@@ -236,10 +256,10 @@ export default class MapCanvas extends React.Component {
           endpointStyles: [
             endpointOptions.paintStyle, endpointOptions.paintStyle
           ],
-          overlays: this.getOverlays()
+          overlays: this.getOverlays(null,[["remove", Actions.deleteConnection.bind(Actions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]])
         });
         connection.___overlayVisible = false;
-        connection.getOverlay("deleteOverlay").hide();
+        connection.getOverlay("menuOverlay").hide();
         connection.bind('click', this.overlayClickHandler);
       }
     }
@@ -290,11 +310,34 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
                 endpointStyles: [
                     actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
                 ],
-                overlays: this.getOverlays(actionEndpointOptions.connectorOverlays)
+                overlays: this.getOverlays(actionEndpointOptions.connectorOverlays,
+                  [ ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
+                    ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]],
+                  desiredActions[ll].shortSummary
+                )
             });
             connection.___overlayVisible = false;
-            connection.getOverlay("deleteOverlay").hide();
+            connection.getOverlay("menuOverlay").hide();
+            connection.getOverlay("label").show();
             connection.bind('click', this.overlayClickHandler);
+        } else {
+            existingNodeConnection[0].removeOverlay("menuOverlay");
+            existingNodeConnection[0].removeOverlay("label");
+            var overlaysToReadd = this.getOverlays(null,
+              [ ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
+                ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]],
+              desiredActions[ll].shortSummary
+            );
+            for(var zz = 0; zz < overlaysToReadd.length; zz++){
+                existingNodeConnection[0].addOverlay(overlaysToReadd[zz]);
+            }
+            if(!existingNodeConnection[0].___overlayVisible){
+              existingNodeConnection[0].getOverlay("menuOverlay").hide();
+              existingNodeConnection[0].getOverlay("label").show();
+            } else {
+              existingNodeConnection[0].getOverlay("menuOverlay").show();
+              existingNodeConnection[0].getOverlay("label").hide();
+            }
         }
     }
 

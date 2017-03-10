@@ -113,22 +113,28 @@ module.exports = function(conn){
         this.save(callback);
     };
 
-    NodeSchema.methods.updateAction = function(seq, dataPos, callback /**err, node*/ ) {
-        var relativeX = dataPos.x - this.x;
-        var relativeY = dataPos.y - this.y;
+    NodeSchema.methods.updateAction = function(seq, actionBody, callback /**err, node*/ ) {
+        if (actionBody.x && actionBody.y) {
+            var relativeX = actionBody.x - this.x;
+            var relativeY = actionBody.y - this.y;
 
-        for(var i = 0; i < this.action.length; i++){
-          if('' + this.action[i]._id === seq){
-            this.action[i].set('x',relativeX);
-            this.action[i].set('y',relativeY);
-          }
+            for (var i = 0; i < this.action.length; i++) {
+                if ('' + this.action[i]._id === seq) {
+                    this.action[i].set('x', relativeX);
+                    this.action[i].set('y', relativeY);
+                }
+            }
         }
-
-
-
+        if (actionBody.shortSummary || actionBody.description) {
+            for (var j = 0; j < this.action.length; j++) {
+                if ('' + this.action[j]._id === seq) {
+                    this.action[j].set('shortSummary', actionBody.shortSummary);
+                    this.action[j].set('description', actionBody.description);
+                }
+            }
+        }
         this.save(callback);
     };
-
     NodeSchema.methods.deleteAction = function(seq, callback /**err, node*/ ) {
 
         for(var i = 0; i < this.action.length; i++){
