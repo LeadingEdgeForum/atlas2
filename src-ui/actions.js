@@ -244,7 +244,7 @@ export default class Actions {
     });
   }
 
-  static updateAction(workspaceID, mapID, sourceId, seq, pos) {
+  static updateAction(workspaceID, mapID, sourceId, seq, pos, shortSummary, description) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.CANVAS_ACTION_UPDATED,
       data: {
@@ -252,8 +252,37 @@ export default class Actions {
         sourceID: sourceId,
         pos: pos,
         seq: seq,
-        workspaceID : workspaceID
+        workspaceID : workspaceID,
+        shortSummary : shortSummary,
+        description : description
       }
+    });
+  }
+
+  static openEditActionDialog(workspaceID, mapID, sourceId, seq, shortSummary, description){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_ACTION_OPEN_EDIT_DIALOG,
+      data: {
+        mapID: mapID,
+        sourceID: sourceId,
+        seq: seq,
+        workspaceID : workspaceID,
+        shortSummary : shortSummary,
+        description : description
+      }
+    });
+  }
+
+  static closeEditActionDialog(){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_ACTION_CLOSE_EDIT_DIALOG,
+    });
+  }
+
+  static submitEditActionDialog(data){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CANVAS_ACTION_SUBMIT_EDIT_DIALOG,
+      data: data
     });
   }
 

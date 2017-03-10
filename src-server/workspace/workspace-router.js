@@ -978,7 +978,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               var nodeID1 = new ObjectId(req.params.nodeID1);
               var parentMap = new ObjectId(mapID);
               var seq = req.params.seq;
-              var actionPos = req.body;
+              var actionBody = req.body;
 
               Node
                   .findById(nodeID1) //two ids we are looking for
@@ -988,7 +988,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                           res.json(err);
                           return;
                       }
-                      node.updateAction(seq, actionPos, function(err, result) {
+                      node.updateAction(seq, actionBody, function(err, result) {
                           WardleyMap.findOne({
                                   _id: mapID,
                                   archived: false,

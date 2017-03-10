@@ -36,6 +36,9 @@ class CanvasStore extends Store {
     This works for newly created components
   */
   normalizeComponentCoord(params) { //normalizes the drop and opens the new node dialog
+    if (!params) {
+        return null;
+    }
     let coords = this.state.coords;
     var relativeToCanvasPosX = params.pos[0]/*absolute pos of drop*/ - coords.offset.left/*absolute pos of canvas*/;
     var relativeToCanvasPosY = params.pos[1]/*absolute pos of drop*/ - coords.offset.top/*absolute pos of canvas*/;

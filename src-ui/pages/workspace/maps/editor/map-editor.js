@@ -22,6 +22,7 @@ import ReferencesDialog from './references-dialog';
 import EditNodeDialog from './edit-node-dialog';
 import NewGenericCommentDialog from './create-new-comment-dialog';
 import EditGenericCommentDialog from './edit-comment-dialog';
+import EditActionDialog from './edit-action-dialog'
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
 import {calculateMapName} from './../map-name-calculator';
@@ -219,6 +220,7 @@ export default class MapEditor extends React.Component {
             <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <NewGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <EditGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
+            <EditActionDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
             <SubmapReferencesDialog/>
             <ReferencesDialog/>
           </Col>
