@@ -555,7 +555,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
     var editor = getUserIdFromReq(req);
-    Workspace.createMap(req.body.workspaceID, editor, req.body.user, req.body.purpose, function(result) {
+    Workspace.createMap(req.body.workspaceID, editor, req.body.user, req.body.purpose, req.body.responsiblePerson, function(result) {
         res.json({
             map: result
         });
