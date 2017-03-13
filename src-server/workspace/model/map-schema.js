@@ -14,9 +14,9 @@ limitations under the License.*/
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var ObjectId = mongoose.Types.ObjectId;
-var modelLogger = require('./../../log').getLogger('AliasSchema');
+var modelLogger = require('./../../log').getLogger('MapSchema');
 var _ = require('underscore');
-
+var q = require('q');
 
 
 var wardleyMap = null;
@@ -216,6 +216,46 @@ module.exports = function(conn){
                 });
             });
     };
+
+    _MapSchema.pre('save', function(next) {
+        modelLogger.trace('pre save on', this._id, this.archived, this.isSubmap);
+        var beingArchived = this.archived;
+        if (!beingArchived) {
+            modelLogger.trace('not being archived', this._id, this.isSubmap);
+            // not being removed, so we are not processing anything any further
+            return next();
+        }
+        var promises = [];
+        var Node = require('./node-schema')(conn);
+        // remove all nodes (we may have components pointing out to other submaps)
+        for (var i = 0; i < this.nodes.length; i++) {
+            modelLogger.trace('removing node', this.nodes[i]);
+            promises.push(Node.findOneAndRemove({
+                _id: new ObjectId(this.nodes[i])
+            }).exec());
+        }
+        // if we are not a submap, then it is the end
+        if (!this.isSubmap) {
+            return next();
+        }
+        // otherwise it is necessary to find every Node that uses this map and delete it.
+        Node.find({
+            submapID: new ObjectId(this._id),
+            type: 'SUBMAP'
+        }).exec(function(err, results) {
+            for (var j = 0; j < results.length; j++) {
+                modelLogger.trace('removing submap node', results[j]._id, results[j].name);
+                promises.push(results[j].remove());
+            }
+            q.all(promises)
+                .then(function(results) {
+                    next();
+                }, function(err) {
+                    modelLogger.error(err);
+                    next(err);
+                });
+        });
+    });
 
     wardleyMap = conn.model('WardleyMap', _MapSchema);
     return wardleyMap;
