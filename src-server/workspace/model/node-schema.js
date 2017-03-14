@@ -83,23 +83,31 @@ module.exports = function(conn){
                 return;
             }
         }
-        this.outboundDependencies.push(targetId);
-        promises.push(this.save());
+        // otherwise, check who is on the top
+        var _this = this;
         var Node = require('./node-schema')(conn);
-        promises.push(Node.update({
+        Node.findOne({
             _id: targetId,
             workspace: this.workspace
-        }, {
-            $push: {
-                inboundDependencies: this._id
-            }
-        }, {
-            safe: true
-        }));
-        q.all(promises).then(function(results) {
-            callback(null, results);
-        }, function(err) {
-            callback(err, null);
+        }).exec(function(err, counterPartyNode){
+          if(!counterPartyNode){ // no other node, exit
+            callback(400, null);
+            return;
+          }
+          if(_this.y > counterPartyNode.y){
+            _this.inboundDependencies.push(targetId);
+            counterPartyNode.outboundDependencies.push(_this._id);
+          } else {
+            _this.outboundDependencies.push(targetId);
+            counterPartyNode.inboundDependencies.push(_this._id);
+          }
+          promises.push(_this.save());
+          promises.push(counterPartyNode.save());
+          q.all(promises).then(function(results) {
+              callback(null, results);
+          }, function(err) {
+              callback(err, null);
+          });
         });
     };
 
