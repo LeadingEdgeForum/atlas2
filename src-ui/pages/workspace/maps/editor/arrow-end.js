@@ -12,11 +12,7 @@ import CanvasActions from './canvas-actions';
 import CanvasStore from './canvas-store';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
-//one day - make it proper require, but JsPlumb 2.2.0 must be released
-/*jshint -W117 */
-require('jsplumb');
-var jsPlumb = window.jsPlumb;
-/*jshint -W117 */
+var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 var ArrowEnd = React.createClass({
 

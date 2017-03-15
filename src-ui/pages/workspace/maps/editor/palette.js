@@ -18,11 +18,7 @@ import Constants from '../../../../constants';
 var _ = require('underscore');
 import {userNeedStyle, externalStyle, internalStyle, submapStyle, genericCommentPalletteStyle} from './component-styles';
 
-//one day - make it proper require, but JsPlumb 2.2.0 must be released
-/*jshint -W117 */
-require('jsplumb');
-var jsPlumb = window.jsPlumb;
-/*jshint -W117 */
+var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 var makeDraggable = function(type, mapID, input) {
   if (input === null) {

@@ -5,7 +5,7 @@ applications:
   domain: eu-gb.mybluemix.net
   name: main
   host: main
-  disk_quota: 512M
+  disk_quota: 1024M
   timeout: 60
   services:
   - mongodb-atlas2main

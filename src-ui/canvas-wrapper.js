@@ -2,13 +2,13 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-var CanvasWrapper = require('./pages/workspace/maps/editor/canvas-with-background.js').default;
-/*jshint -W117 */
-require('jsplumb');
-var jsPlumb = window.jsPlumb;
-/*jshint -W117 */
+var CWB = require('./pages/workspace/maps/editor/canvas-with-background.js').default;
+var jsPlumb = require("../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+console.error('prerender',new Date().getTime());
+jsPlumb.init();
 jsPlumb.ready(function() {
-    ReactDOM.render( < CanvasWrapper nodes = {
+  console.error('jsplumb ready', new Date().getTime());
+    ReactDOM.render( < CWB nodes = {
             window.OPTS.nodes
         }
         comments = {
@@ -21,6 +21,7 @@ jsPlumb.ready(function() {
             window.OPTS.workspaceID
         }
         background = "true" / > ,
-        document.getElementById('root'));
+        document.getElementById('root'), function(){
+          console.error('postrender', new Date().getTime());
+        });
 });
-// jsPlumb.initialize();

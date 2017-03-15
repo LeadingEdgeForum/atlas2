@@ -24,17 +24,22 @@ export default class MapMenu extends React.Component {
     var mapID = this.props.params.mapID;
 
     var deduplicateHref = '/deduplicate/' + this.state.map.workspace;
-
+    var tempName = mapID + '.png';
+    var downloadMapHref = '/img/' + tempName;
     return (
       <Nav>
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this, mapID)}>
       <Glyphicon glyph="edit"></Glyphicon>&nbsp;
         Edit map info
       </NavItem>
+      <NavItem eventKey={2}  key="2" href={downloadMapHref} download={tempName}>
+      <Glyphicon glyph="download"></Glyphicon>&nbsp;
+        Download
+      </NavItem>
         <LinkContainer to={{
           pathname: deduplicateHref
         }}>
-          <NavItem eventKey={2} href={deduplicateHref} key="2">
+          <NavItem eventKey={3} href={deduplicateHref} key="2">
           <Glyphicon glyph="pawn"></Glyphicon>
           <Glyphicon glyph="pawn" style={{
             color: "silver"

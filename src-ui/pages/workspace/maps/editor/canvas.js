@@ -24,11 +24,7 @@ var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
 import {endpointOptions, actionEndpointOptions} from './component-styles';
 
-//one day - make it proper require, but JsPlumb 2.2.0 must be released
-/*jshint -W117 */
-require('jsplumb');
-var jsPlumb = window.jsPlumb;
-/*jshint -W117 */
+var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 var mapCanvasStyle = { //this is style applied to the place where actuall components can be drawn
   position: 'relative',
@@ -106,15 +102,17 @@ export default class MapCanvas extends React.Component {
       return;
     }
     jsPlumb.setContainer(input);
-    //this method is called multiple times, and we want to have only one listener attached at every point of time
-    jsPlumb.unbind("beforeDrop", this.beforeDropListener);
-    jsPlumb.unbind("beforeDrag", this.putScope);
-    jsPlumb.unbind("beforeStartDetach", this.putScope);
-    jsPlumb.unbind("connectionDragStop", this.connectionDragStop);
-    jsPlumb.bind("beforeDrop", this.beforeDropListener);
-    jsPlumb.bind("beforeDrag", this.putScope);
-    jsPlumb.bind("beforeStartDetach", this.putScope);
-    jsPlumb.bind("connectionDragStop", this.connectionDragStop);
+    if (!this.props.background) {
+        //this method is called multiple times, and we want to have only one listener attached at every point of time
+        jsPlumb.unbind("beforeDrop", this.beforeDropListener);
+        jsPlumb.unbind("beforeDrag", this.putScope);
+        jsPlumb.unbind("beforeStartDetach", this.putScope);
+        jsPlumb.unbind("connectionDragStop", this.connectionDragStop);
+        jsPlumb.bind("beforeDrop", this.beforeDropListener);
+        jsPlumb.bind("beforeDrag", this.putScope);
+        jsPlumb.bind("beforeStartDetach", this.putScope);
+        jsPlumb.bind("connectionDragStop", this.connectionDragStop);
+    }
   }
 
   handleResize() {
@@ -211,6 +209,7 @@ export default class MapCanvas extends React.Component {
   }
 
   reconcileDependencies() {
+    console.error('reconciling', new Date().getTime());
     var modelConnections = [];
     if (!this.props.nodes) {
       return;
@@ -342,13 +341,6 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
 
 }
 
-  // a very ugly hack, but when we are rendering map images server side,
-  // we have to know when connections were rendered, because otherwise we will
-  // get only nodes.
-  if(!global.window){
-    global.window = {}
-  }
-  global.window.jsplumbreconciled = true;
   }
 
   render() {
@@ -446,6 +438,7 @@ if (this.props.nodes) {
                   />);
             }
         }
+        console.error('stating canvas', new Date().getTime());
     return (
       <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}

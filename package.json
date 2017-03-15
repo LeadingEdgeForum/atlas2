@@ -7,6 +7,7 @@
     "test": "mocha server-tests/tests*"
   },
   "dependencies": {
+    "atob": "^2.0.3",
     "body-parser": "^1.15.2",
     "bootstrap": "^3.3.7",
     "cfenv": "1.0.x",
@@ -30,6 +31,8 @@
     "passport-local": "^1.0.0",
     "passport-stormpath": "^0.2.4",
     "path": "*",
+    "phantom": "^4.0.0",
+    "phantom-pool": "^1.2.0",
     "q": "*",
     "react": "^15.3.0",
     "react-bootstrap": "^0.30.6",

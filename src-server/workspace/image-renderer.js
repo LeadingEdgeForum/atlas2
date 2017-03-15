@@ -65,43 +65,32 @@ function safeStringify(obj) {
 
 var r = process.cwd();
 var script = fs.readFileSync(r + '/build-ui/js/canvas-wrapper.js');
+var css = fs.readFileSync(r + '/build-ui/css/bootstrap.min.css');
 
 function renderFullPage(opts) {
-  return "<!doctype html><html><body><div id=\"root\" style=\"background:white\">"
+  return "<!doctype html><html><head><style>" + css + "</style></head><body><div id=\"root\" style=\"background:white\">"
   + "</div><script>OPTS=" + safeStringify(opts) + ";</script><script>" + script + "</script></body></html>";
 }
 
 var atob = require('atob');
 var phantom = require('phantom');
-var multer = require('multer');
+var createPhantomPool = require('phantom-pool').default;
 
 
-var upload = multer({
-    storage: multer.memoryStorage(),
-    limits: {
-        fileSize: 1024 * 1024 * 1024,
-        files: 1
-    }
+var pool = createPhantomPool({
+  max: 1, // default
+  min: 1, // default
+  // how long a resource can stay idle in pool before being removed
+  idleTimeoutMillis: 60000, // default.
+  // maximum number of times an individual resource can be reused before being destroyed; set to 0 to disable
+  maxUses: 50, // default
+  // function to validate an instance prior to use; see https://github.com/coopernurse/node-pool#createpool
+  validator: () => Promise.resolve(true), // defaults to always resolving true
+  // validate resource before borrowing; required for `maxUses and `validator`
+  testOnBorrow: true, // default
+  // For all opts, see opts at https://github.com/coopernurse/node-pool#createpool
+  phantomArgs: [['--ignore-ssl-errors=true', '--disk-cache=true'], {/*logLevel: 'debug',*/}] // arguments passed to phantomjs-node directly, default is `[]`. For all opts, see https://github.com/amir20/phantomjs-node#phantom-object-api
 });
-
-// custom helper function
-  function wait(testFx, onReady, maxWait, start, ph) {
-    var start = start || new Date().getTime();
-    if (new Date().getTime() - start < maxWait) {
-      testFx(function(result) {
-        if (result) {
-          onReady();
-        } else {
-          setTimeout(function() {
-            wait(testFx, onReady, maxWait, start, ph);
-          }, 250);
-        }
-      });
-    } else {
-      console.error('page timed out');
-      ph.exit();
-    }
-  }
 
 module.exports = function(authGuardian, mongooseConnection) {
     var WardleyMap = require('./model/map-schema')(mongooseConnection);
@@ -153,71 +142,27 @@ module.exports = function(authGuardian, mongooseConnection) {
                     };
 
                     var pageText = renderFullPage(opts);
-                    // return res.send(pageText);
 
-                    phantom.create(['--ignore-ssl-errors=yes']).then(function(ph) {
-
-                        ph.createPage().then(function(page) {
+                    pool.use(function(instance){
+                        instance.createPage().then(function(page) {
 
                             page.property('viewportSize', {
-                                width: 800,
-                                height: 600
+                                width: 1280,
+                                height: 800
                             });
-
-
-
-                            page.property('onError', function(msg, trace) {
-                                trace.forEach(function(item) {
-                                    console.log('  ', item.file, ':', item.line);
-                                });
-                            });
-
-                            page.property('onConsoleMessage', function(msg, lineNum, sourceId) {
-                                console.log('CONSOLE: ' + msg + ' (from line #' + lineNum + ' in "' + sourceId + '")');
-                            });
-
-                            page.evaluateJavaScript("function(){ window.OPTS =" + safeStringify(opts)+ "; console.log(JSON.stringify(window.OPTS));}");
 
                             page.property('content',pageText);
 
-                            wait(function(clb) {
-                              page.evaluate(function(){
-                                console.log(window.jsplumbreconciled);
-                                return window.jsplumbreconciled;
-                              }).then(clb);
-                            },
-                            function(){
-                              //http://phantomjs.org/api/webpage/method/render-buffer.html
-                              page.renderBase64('png').then(function(content64) {
-                                  res.writeHead(200, {
-                                      'Content-Type': 'image/png'
-                                  });
-                                  res.end(atob(content64), 'binary');
-                              });
+                            page.renderBase64('png').then(function(content64) {
+                                res.writeHead(200, {
+                                    'Content-Type': 'image/png'
+                                });
+                                res.end(atob(content64), 'binary');
+                                page.close();
+                            });
 
-                              page.close();
-                              ph.exit();
-                            },
-                            10000,
-                            null,
-                            ph
-                          );
-
-
-
-                        }).catch(
-                            function(e) {
-                                console.log(e);
-                                res.end();
-                            }
-                        );
-                    }).catch(
-                        function(e) {
-                            console.log(e);
-                            res.statusCode = 500;
-                            res.end();
-                        }
-                    );
+                        });
+                    });
                 }, defaultAccessDenied.bind(null, res));
             });
     });

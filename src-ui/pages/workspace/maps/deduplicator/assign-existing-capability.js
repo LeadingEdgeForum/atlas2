@@ -17,7 +17,6 @@ import {
 var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./../../../../constants');
 import Actions from './../../../../actions.js';
-var $ = require('jquery');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from '../../workspace-store';
 import MapLink from './maplink.js';

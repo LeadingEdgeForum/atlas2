@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 // import React 'react');
-var React = require('React');
+var React = require('react');
 var PropTypes = React.PropTypes;
 var MapCanvas  = require('./canvas').default;
 var calculateMapName = require('./../map-name-calculator').calculateMapName;
@@ -135,7 +135,7 @@ export default class CanvasWithBackground extends React.Component {
     }
     return (
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID}></MapCanvas>
+              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>
