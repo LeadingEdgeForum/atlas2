@@ -12,22 +12,21 @@ var io = null;
 
 var webpack_middleware = null;
 
-if(process.env.PRODUCTION){
-  console.log('forcing https');
-  app.enable('trust proxy');
-  app.use(function (req, res, next) {
-    if (req.secure) {
+if (process.env.PRODUCTION) {
+    console.log('forcing https');
+    app.enable('trust proxy');
+    app.use(function(req, res, next) {
+        if (req.secure) {
             next();
-    } else {
+        } else {
             res.redirect('https://' + req.headers.host + req.url);
-    }
-});
+        }
+    });
 }
 
 var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
-// mongoose.set('debug', true);
 var MongoDBConnectionURL = require('./src-server/mongodb-helper');
 var conn = mongoose.connect(MongoDBConnectionURL);
 
@@ -124,6 +123,7 @@ app.get('/img/LEF_logo.png', function(req, res) {
 userProvider.installUserProvider(app, config, conn);
 
 app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
+app.use('/img', require('./src-server/workspace/image-renderer.js')(userProvider.getGuard(), conn).router);
 
 if (config.userProvider.type === 'stormpath') {
   app.get('*', function(req, res) {
