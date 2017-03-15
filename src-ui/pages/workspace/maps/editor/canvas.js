@@ -14,7 +14,6 @@ import {
   ListGroup,
   Glyphicon
 } from 'react-bootstrap';
-import WorkspaceStore from '../../workspace-store';
 import CanvasStore from './canvas-store';
 var _ = require('underscore');
 import $ from 'jquery';
@@ -38,8 +37,6 @@ var mapCanvasStyle = { //this is style applied to the place where actuall compon
   width: '98%',
   left: '2%',
   zIndex: 4
-  // backgroundColor: 'silver',
-  // backgroundImage: 'transparent url(1x1_transparent.png) repeat center top'
 };
 
 var setContainer = function(input) {
@@ -345,7 +342,14 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
 
 }
 
-}
+  // a very ugly hack, but when we are rendering map images server side,
+  // we have to know when connections were rendered, because otherwise we will
+  // get only nodes.
+  if(!global.window){
+    global.window = {}
+  }
+  global.window.jsplumbreconciled = true;
+  }
 
   render() {
     var style = _.clone(mapCanvasStyle);
