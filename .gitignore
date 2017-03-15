@@ -1,2 +1,4 @@
 /node_modules/
 /npm-debug.log
+
+src-server/workspace/logs/wardleymaps.log
