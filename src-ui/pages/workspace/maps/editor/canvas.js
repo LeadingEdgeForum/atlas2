@@ -14,9 +14,7 @@ import {
   ListGroup,
   Glyphicon
 } from 'react-bootstrap';
-import CanvasStore from './canvas-store';
 var _ = require('underscore');
-import $ from 'jquery';
 import Actions from '../../../../actions';
 import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
@@ -35,6 +33,15 @@ var mapCanvasStyle = { //this is style applied to the place where actuall compon
   zIndex: 4
 };
 
+function getElementOffset(element)
+{
+    var de = document.documentElement;
+    var box = element.getBoundingClientRect();
+    var top = box.top + window.pageYOffset - de.clientTop;
+    var left = box.left + window.pageXOffset - de.clientLeft;
+    return { top: top, left: left };
+}
+
 var setContainer = function(input) {
   if (input === null) {
     //noop - component was destroyed, no need to worry about draggable
@@ -46,7 +53,9 @@ var setContainer = function(input) {
 export default class MapCanvas extends React.Component {
   constructor(props) {
     super(props);
-    this.state = CanvasStore.getCanvasState();
+    if(this.props.canvasStore){
+      this.state = this.props.canvasStore.getCanvasState();
+    }
     this.handleResize = this.handleResize.bind(this);
     this.setContainer = this.setContainer.bind(this);
     this.beforeDropListener = this.beforeDropListener.bind(this);
@@ -119,36 +128,48 @@ export default class MapCanvas extends React.Component {
     if (!this.input) {
       return;
     }
+    console.log('resize ');
     var coord = {
       offset: {
-        top: $(this.input).offset().top,
-        left: $(this.input).offset().left
+        top: getElementOffset(this.input).top,
+        left: getElementOffset(this.input).left
       },
       size: {
-        width: $(this.input).width(),
-        height: $(this.input).height()
+        width: this.input.offsetWidth,
+        height: this.input.offsetHeight
       }
     };
+    if(global.OPTS && global.OPTS.coords){
+      coord = global.OPTS.coords;
+    }
+    this.setState({coords:coord});
+    console.log(coord);
     CanvasActions.updateCanvasSizeAndOffset(coord);
     jsPlumb.repaintEverything();
   }
 
   componentDidMount() {
-    CanvasStore.addChangeListener(this._onChange.bind(this));
+    if (this.props.canvasStore) {
+        this.props.canvasStore.addChangeListener(this._onChange.bind(this));
+    }
     this.handleResize();
     window.addEventListener('resize', this.handleResize);
     this.reconcileDependencies();
   }
 
   componentWillUnmount() {
-    CanvasStore.removeChangeListener(this._onChange.bind(this));
+    if (this.props.canvasStore) {
+        this.props.canvasStore.removeChangeListener(this._onChange.bind(this));
+    }
     jsPlumb.reset();
     window.removeEventListener('resize', this.handleResize);
   }
 
   _onChange() {
-    this.setState(CanvasStore.getCanvasState());
-  }
+    if (this.props.canvasStore) {
+        this.setState(this.props.canvasStore.getCanvasState());
+    }
+}
 
   componentDidUpdate(prevProps, prevState) {
     this.reconcileDependencies();
@@ -345,7 +366,7 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
 
   render() {
     var style = _.clone(mapCanvasStyle);
-    if (this.state.dropTargetHighlight) {
+    if (this.state && this.state.dropTargetHighlight) {
       style = _.extend(style, {
         borderColor: "#00789b",
         boxShadow: "0 0 10px #00789b",
@@ -356,22 +377,28 @@ for (var ii = 0; ii < this.props.nodes.length; ii++) {
       width: 0,
       height: 0
     };
-    if (this.state.coords && this.state.coords.size) {
+    if(global.OPTS && global.OPTS.coords){
+      size = global.OPTS.coords.size;
+    } else if (this.state.coords && this.state.coords.size) {
       size = this.state.coords.size;
     }
     var components = null;
     var mapID = this.props.mapID;
     var workspaceID = this.props.workspaceID;
     var state = this.state;
+    var canvasStore = this.props.canvasStore;
+    var multiSelection = state ? state.multiNodeSelection : false;
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
         var focused = false;
-        for (var i = 0; i < state.currentlySelectedNodes.length; i++) {
-          if (component._id === state.currentlySelectedNodes[i]) {
-            focused = true;
-          }
+        if (state && state.currentlySelectedNodes) {
+            for (var i = 0; i < state.currentlySelectedNodes.length; i++) {
+                if (component._id === state.currentlySelectedNodes[i]) {
+                    focused = true;
+                }
+            }
         }
-        return (<MapComponent workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} inertia={component.inertia} multi={state.multiNodeSelection}/>);
+        return (<MapComponent canvasStore={canvasStore} workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} inertia={component.inertia} multi={multiSelection}/>);
       });
     }
     var arrowends = [];
@@ -382,6 +409,7 @@ if (this.props.nodes) {
           arrowends.push( < ArrowEnd workspaceID = {
                   workspaceID
               }
+              canvasStore = {canvasStore}
               mapID = {
                   mapID
               }
@@ -408,14 +436,17 @@ if (this.props.nodes) {
     if (this.props.comments) {
         for (var i = 0; i < this.props.comments.length; i++) {
               var focused = false;
-              for (var ii = 0; ii < state.currentlySelectedComments.length; ii++) {
-                if (this.props.comments[i]._id === state.currentlySelectedComments[ii]) {
-                  focused = true;
-                }
+              if (state && state.currentlySelectedComments) {
+                  for (var ii = 0; ii < state.currentlySelectedComments.length; ii++) {
+                      if (this.props.comments[i]._id === state.currentlySelectedComments[ii]) {
+                          focused = true;
+                      }
+                  }
               }
               comments.push( <Comment workspaceID = {
                       workspaceID
                   }
+                  canvasStore = {canvasStore}
                   mapID = {
                       mapID
                   }
@@ -434,7 +465,7 @@ if (this.props.nodes) {
                   focused = {
                     focused
                   }
-                  multi={state.multiNodeSelection}
+                  multi={multiSelection}
                   />);
             }
         }

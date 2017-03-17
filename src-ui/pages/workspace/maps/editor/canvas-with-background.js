@@ -133,9 +133,10 @@ export default class CanvasWithBackground extends React.Component {
       outerStyle.backgroundColor = 'white';
       outerStyle.marginTop= '-7px';
     }
+    var canvasStore = this.props.canvasStore;
     return (
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background}></MapCanvas>
+              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background} canvasStore={canvasStore}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>

@@ -26,6 +26,7 @@ import EditActionDialog from './edit-action-dialog';
 var _ = require('underscore');
 var EditMapDialog = require('./../edit-map-dialog');
 import {calculateMapName} from './../map-name-calculator';
+import CanvasStore from './canvas-store';
 
 export default class MapEditor extends React.Component {
   constructor(props) {
@@ -87,7 +88,7 @@ export default class MapEditor extends React.Component {
             <Palette mapID={this.props.params.mapID}></Palette>
           </Col>
           <Col xs={9} sm={10} md={10} lg={11}>
-              <CanvasWithBackground nodes={nodes} comments={comments} mapID={this.props.params.mapID} workspaceID={workspaceID}></CanvasWithBackground>
+              <CanvasWithBackground nodes={nodes} comments={comments} mapID={this.props.params.mapID} workspaceID={workspaceID} canvasStore={CanvasStore}></CanvasWithBackground>
           </Col>
         </Row>
         <EditMapDialog workspaceID={workspaceID}/>
