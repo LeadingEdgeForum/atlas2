@@ -9,7 +9,6 @@ import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
 import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
-import CanvasStore from './canvas-store';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
 var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
@@ -45,8 +44,8 @@ var Comment = React.createClass({
       var mapID = this.props.mapID; //jshint ignore:line
       Actions.openCreateSubmapDialog({
         mapID:mapID,
-        nodes:CanvasStore.getCanvasState().currentlySelectedNodes,
-        comments: CanvasStore.getCanvasState().currentlySelectedComments});
+        nodes:this.props.canvasStore.getCanvasState().currentlySelectedNodes,
+        comments: this.props.canvasStore.getCanvasState().currentlySelectedComments});
     }
 
     if((event.nativeEvent.ctrlKey || event.nativeEvent.altKey)){
@@ -174,7 +173,7 @@ var Comment = React.createClass({
         jsPlumb.draggable(input, {
           containment: true,
           grid: [
-            50, 50
+            10, 10
           ],
           stop: function(event) {
             var x = event.e.pageX;

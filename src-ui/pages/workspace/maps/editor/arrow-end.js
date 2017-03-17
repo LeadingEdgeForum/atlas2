@@ -9,7 +9,6 @@ import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
 import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
-import CanvasStore from './canvas-store';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
 var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
@@ -49,7 +48,7 @@ var ArrowEnd = React.createClass({
         jsPlumb.draggable(input, {
           containment: true,
           grid: [
-            50, 50
+            30, 30
           ],
           stop: function(event) {
             var x = event.e.pageX;

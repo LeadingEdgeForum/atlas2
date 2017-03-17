@@ -89,7 +89,7 @@ var pool = createPhantomPool({
   // validate resource before borrowing; required for `maxUses and `validator`
   testOnBorrow: true, // default
   // For all opts, see opts at https://github.com/coopernurse/node-pool#createpool
-  phantomArgs: [['--ignore-ssl-errors=true', '--disk-cache=true'], {/*logLevel: 'debug',*/}] // arguments passed to phantomjs-node directly, default is `[]`. For all opts, see https://github.com/amir20/phantomjs-node#phantom-object-api
+  phantomArgs: [['--ignore-ssl-errors=true', '--disk-cache=true'], {logLevel: 'error'}] // arguments passed to phantomjs-node directly, default is `[]`. For all opts, see https://github.com/amir20/phantomjs-node#phantom-object-api
 });
 
 module.exports = function(authGuardian, mongooseConnection) {
@@ -138,7 +138,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                         comments: result.comments,
                         mapID: mapID,
                         workspaceID: result.workspaceID,
-                        background : true
+                        background : true,
+                        coords : {
+                          size : {
+                            width : 1280,
+                            height: 800
+                          }
+                        }
                     };
 
                     var pageText = renderFullPage(opts);
@@ -146,10 +152,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                     pool.use(function(instance){
                         instance.createPage().then(function(page) {
 
-                            page.property('viewportSize', {
-                                width: 1280,
-                                height: 800
-                            });
+                            page.property('viewportSize', opts.coords.size);
 
                             page.property('content',pageText);
 
