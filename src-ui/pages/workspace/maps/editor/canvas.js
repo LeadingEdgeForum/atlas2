@@ -2,16 +2,7 @@
 
 import React, {PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import ReactDOMServer from 'react-dom/server';
-import DocumentTitle from 'react-document-title';
 import {
-  Grid,
-  Row,
-  Col,
-  Jumbotron,
-  Button,
-  Table,
-  ListGroup,
   Glyphicon
 } from 'react-bootstrap';
 var _ = require('underscore');
@@ -128,7 +119,6 @@ export default class MapCanvas extends React.Component {
     if (!this.input) {
       return;
     }
-    console.log('resize ');
     var coord = {
       offset: {
         top: getElementOffset(this.input).top,
@@ -143,38 +133,35 @@ export default class MapCanvas extends React.Component {
       coord = global.OPTS.coords;
     }
     this.setState({coords:coord});
-    console.log(coord);
-    CanvasActions.updateCanvasSizeAndOffset(coord);
-    jsPlumb.repaintEverything();
+    if (this.props.canvasStore) { // no store means rendering on the server
+      CanvasActions.updateCanvasSizeAndOffset(coord);
+      jsPlumb.revalidate(this.input);
+    }
   }
 
   componentDidMount() {
     if (this.props.canvasStore) {
         this.props.canvasStore.addChangeListener(this._onChange.bind(this));
+        window.addEventListener('resize', this.handleResize);
     }
     this.handleResize();
-    window.addEventListener('resize', this.handleResize);
-    this.reconcileDependencies();
   }
 
   componentWillUnmount() {
     if (this.props.canvasStore) {
         this.props.canvasStore.removeChangeListener(this._onChange.bind(this));
+        window.removeEventListener('resize', this.handleResize);
     }
     jsPlumb.reset();
-    window.removeEventListener('resize', this.handleResize);
   }
 
   _onChange() {
-    if (this.props.canvasStore) {
-        this.setState(this.props.canvasStore.getCanvasState());
-    }
-}
+      this.setState(this.props.canvasStore.getCanvasState());
+  }
 
   componentDidUpdate(prevProps, prevState) {
     this.reconcileDependencies();
-    jsPlumb.revalidate(this.input);
-    jsPlumb.repaintEverything();
+    jsPlumb.setSuspendDrawing(false, true);
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
@@ -215,6 +202,7 @@ export default class MapCanvas extends React.Component {
     );
     return fromStyle;
   }
+
   overlayClickHandler(obj) {
     if(obj.component && obj.id != 'label'){
       var conn = obj.component;
@@ -230,141 +218,162 @@ export default class MapCanvas extends React.Component {
   }
 
   reconcileDependencies() {
-    console.error('reconciling', new Date().getTime());
-    var modelConnections = [];
-    if (!this.props.nodes) {
-      return;
-    }
-
-    for (var i = 0; i < this.props.nodes.length; i++) {
-      var _node = this.props.nodes[i];
-      var iterator_length = _node.outboundDependencies
-        ? _node.outboundDependencies.length
-        : 0;
-      for (var j = 0; j < iterator_length; j++) {
-        modelConnections.push({source: _node._id, target: _node.outboundDependencies[j], scope: jsPlumb.Defaults.Scope});
+      var modelConnections = [];
+      if (!this.props.nodes) {
+          return;
       }
-    }
 
-    var canvasConnections = jsPlumb.getConnections();
-    var modelIterator = modelConnections.length;
-    while (modelIterator--) {
-      var isCurrentModelConnectionInTheCanvas = false;
-      var canvasIterator = canvasConnections.length;
-      var currentModel = modelConnections[modelIterator];
-      while (canvasIterator--) {
-        var currentCanvas = canvasConnections[canvasIterator];
-        if ((currentModel.source === currentCanvas.sourceId) && (currentModel.target === currentCanvas.targetId)) {
-          isCurrentModelConnectionInTheCanvas = true;
-          //we found graphic equivalent, so we ignore further processing of this element
-          canvasConnections.splice(canvasIterator, 1);
-        }
+      for (var i = 0; i < this.props.nodes.length; i++) {
+          var _node = this.props.nodes[i];
+          var iterator_length = _node.outboundDependencies ?
+              _node.outboundDependencies.length :
+              0;
+          for (var j = 0; j < iterator_length; j++) {
+              modelConnections.push({
+                  source: _node._id,
+                  target: _node.outboundDependencies[j],
+                  scope: jsPlumb.Defaults.Scope
+              });
+          }
       }
-      // model connection not found on canvas, create it
-      if (!isCurrentModelConnectionInTheCanvas) {
-        var connection = jsPlumb.connect({
-          source: currentModel.source,
-          target: currentModel.target,
-          scope: jsPlumb.Defaults.Scope,
-          anchors: [
-            "BottomCenter", "TopCenter"
-          ],
-          paintStyle: endpointOptions.connectorStyle,
-          endpoint: endpointOptions.endpoint,
-          connector: endpointOptions.connector,
-          endpointStyles: [
-            endpointOptions.paintStyle, endpointOptions.paintStyle
-          ],
-          overlays: this.getOverlays(null,[["remove", Actions.deleteConnection.bind(Actions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]])
-        });
-        connection.___overlayVisible = false;
-        connection.getOverlay("menuOverlay").hide();
-        connection.bind('click', this.overlayClickHandler);
+
+      var canvasConnections = jsPlumb.getConnections();
+      var modelIterator = modelConnections.length;
+      while (modelIterator--) {
+          var isCurrentModelConnectionInTheCanvas = false;
+          var canvasIterator = canvasConnections.length;
+          var currentModel = modelConnections[modelIterator];
+          while (canvasIterator--) {
+              var currentCanvas = canvasConnections[canvasIterator];
+              if ((currentModel.source === currentCanvas.sourceId) && (currentModel.target === currentCanvas.targetId)) {
+                  isCurrentModelConnectionInTheCanvas = true;
+                  //we found graphic equivalent, so we ignore further processing of this element
+                  var existing = canvasConnections.splice(canvasIterator, 1)[0];
+                  existing.removeOverlay("menuOverlay");
+                  var overlaysToReadd = this.getOverlays(null, [
+                          ["remove", Actions.deleteConnection.bind(Actions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
+                      ]
+                  );
+                  for (var zz = 0; zz < overlaysToReadd.length; zz++) {
+                      existing.addOverlay(overlaysToReadd[zz]);
+                  }
+                  if(existing.___overlayVisible){
+                      existing.getOverlay("menuOverlay").show();
+                  } else {
+                      existing.getOverlay("menuOverlay").hide();
+                  }
+
+              }
+          }
+          // model connection not found on canvas, create it
+          if (!isCurrentModelConnectionInTheCanvas) {
+              var connection = jsPlumb.connect({
+                  source: currentModel.source,
+                  target: currentModel.target,
+                  scope: jsPlumb.Defaults.Scope,
+                  anchors: [
+                      "BottomCenter", "TopCenter"
+                  ],
+                  paintStyle: endpointOptions.connectorStyle,
+                  endpoint: endpointOptions.endpoint,
+                  connector: endpointOptions.connector,
+                  endpointStyles: [
+                      endpointOptions.paintStyle, endpointOptions.paintStyle
+                  ],
+                  overlays: this.getOverlays(null, [
+                      ["remove", Actions.deleteConnection.bind(Actions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
+                  ])
+              });
+              connection.___overlayVisible = false;
+              connection.getOverlay("menuOverlay").hide();
+              connection.bind('click', this.overlayClickHandler);
+          }
       }
-    }
-    //clean up unnecessary canvas connection (no counterpart in model)
-    for (var z = 0; z < canvasConnections.length; z++) {
-      jsPlumb.detach(canvasConnections[z]);
-    }
+      //clean up unnecessary canvas connection (no counterpart in model)
+      for (var z = 0; z < canvasConnections.length; z++) {
+          jsPlumb.detach(canvasConnections[z]);
+      }
 
-// iterate over all nodes
-for (var ii = 0; ii < this.props.nodes.length; ii++) {
-    var __node = this.props.nodes[ii];
-    var desiredActions = __node.action;
-    var existingActions = jsPlumb.getConnections({
-        scope: "WM_Action",
-        source: '' + __node._id
-    });
-    // for every existing action
-    for (var jj = 0; jj < existingActions.length; jj++) {
-        var desired = false;
-        for (var kk = 0; kk < desiredActions.length; kk++) {
-            if (existingActions[jj].targetId === desiredActions[kk]._id) {
-                desired = true;
-            }
-        }
-        // if not desired - remove it
-        if (!desired) {
-            jsPlumb.detach(existingActions[jj]);
-        }
-    }
-    // now we have only desired connections, but some may be missing
-    for (var ll = 0; ll < desiredActions.length; ll++) {
-        var existingNodeConnection = jsPlumb.getConnections({
-            scope: "WM_Action",
-            source: '' + __node._id,
-            target: '' + desiredActions[ll]._id
-        });
-        if (existingNodeConnection.length === 0) {
-            var connection = jsPlumb.connect({
-                source: __node._id,
-                target: desiredActions[ll]._id,
-                scope: "WM_Action",
-                anchors: [
-                    "Right", "Left"
-                ],
-                paintStyle: actionEndpointOptions.connectorStyle,
-                endpoint: actionEndpointOptions.endpoint,
-                connector: actionEndpointOptions.connector,
-                endpointStyles: [
-                    actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
-                ],
-                overlays: this.getOverlays(actionEndpointOptions.connectorOverlays,
-                  [ ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
-                    ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]],
-                  desiredActions[ll].shortSummary
-                )
-            });
-            connection.___overlayVisible = false;
-            connection.getOverlay("menuOverlay").hide();
-            connection.getOverlay("label").show();
-            connection.bind('click', this.overlayClickHandler);
-        } else {
-            existingNodeConnection[0].removeOverlay("menuOverlay");
-            existingNodeConnection[0].removeOverlay("label");
-            var overlaysToReadd = this.getOverlays(null,
-              [ ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
-                ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]],
-              desiredActions[ll].shortSummary
-            );
-            for(var zz = 0; zz < overlaysToReadd.length; zz++){
-                existingNodeConnection[0].addOverlay(overlaysToReadd[zz]);
-            }
-            if(!existingNodeConnection[0].___overlayVisible){
-              existingNodeConnection[0].getOverlay("menuOverlay").hide();
-              existingNodeConnection[0].getOverlay("label").show();
-            } else {
-              existingNodeConnection[0].getOverlay("menuOverlay").show();
-              existingNodeConnection[0].getOverlay("label").hide();
-            }
-        }
-    }
-
-}
-
+      // iterate over all nodes
+      for (var ii = 0; ii < this.props.nodes.length; ii++) {
+          var __node = this.props.nodes[ii];
+          var desiredActions = __node.action;
+          var existingActions = jsPlumb.getConnections({
+              scope: "WM_Action",
+              source: '' + __node._id
+          });
+          // for every existing action
+          for (var jj = 0; jj < existingActions.length; jj++) {
+              var desired = false;
+              for (var kk = 0; kk < desiredActions.length; kk++) {
+                  if (existingActions[jj].targetId === desiredActions[kk]._id) {
+                      desired = true;
+                  }
+              }
+              // if not desired - remove it
+              if (!desired) {
+                  jsPlumb.detach(existingActions[jj]);
+              }
+          }
+          // now we have only desired connections, but some may be missing
+          for (var ll = 0; ll < desiredActions.length; ll++) {
+              var existingNodeConnection = jsPlumb.getConnections({
+                  scope: "WM_Action",
+                  source: '' + __node._id,
+                  target: '' + desiredActions[ll]._id
+              });
+              if (existingNodeConnection.length === 0) {
+                  var connection = jsPlumb.connect({
+                      source: __node._id,
+                      target: desiredActions[ll]._id,
+                      scope: "WM_Action",
+                      anchors: [
+                          "Right", "Left"
+                      ],
+                      paintStyle: actionEndpointOptions.connectorStyle,
+                      endpoint: actionEndpointOptions.endpoint,
+                      connector: actionEndpointOptions.connector,
+                      endpointStyles: [
+                          actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
+                      ],
+                      overlays: this.getOverlays(actionEndpointOptions.connectorOverlays, [
+                              ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
+                              ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
+                          ],
+                          desiredActions[ll].shortSummary
+                      )
+                  });
+                  connection.___overlayVisible = false;
+                  connection.getOverlay("menuOverlay").hide();
+                  connection.getOverlay("label").show();
+                  connection.bind('click', this.overlayClickHandler);
+              } else {
+                  existingNodeConnection[0].removeOverlay("menuOverlay");
+                  existingNodeConnection[0].removeOverlay("label");
+                  var overlaysToReadd = this.getOverlays(null, [
+                          ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
+                          ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
+                      ],
+                      desiredActions[ll].shortSummary
+                  );
+                  for (var zz = 0; zz < overlaysToReadd.length; zz++) {
+                      existingNodeConnection[0].addOverlay(overlaysToReadd[zz]);
+                  }
+                  if (!existingNodeConnection[0].___overlayVisible) {
+                      existingNodeConnection[0].getOverlay("menuOverlay").hide();
+                      existingNodeConnection[0].getOverlay("label").show();
+                  } else {
+                      existingNodeConnection[0].getOverlay("menuOverlay").show();
+                      existingNodeConnection[0].getOverlay("label").hide();
+                  }
+              }
+          }
+      }
   }
 
+
   render() {
+    jsPlumb.setSuspendDrawing(true); // this will be cleaned in did update
     var style = _.clone(mapCanvasStyle);
     if (this.state && this.state.dropTargetHighlight) {
       style = _.extend(style, {
@@ -469,7 +478,6 @@ if (this.props.nodes) {
                   />);
             }
         }
-        console.error('stating canvas', new Date().getTime());
     return (
       <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
