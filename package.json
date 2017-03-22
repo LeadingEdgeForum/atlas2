@@ -19,7 +19,7 @@
     "globals": "^9.9.0",
     "history": "^4.4.0",
     "jquery": "*",
-    "jsplumb": "2.3.0",
+    "jsplumb": "2.3.1",
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
     "log4js": "*",
