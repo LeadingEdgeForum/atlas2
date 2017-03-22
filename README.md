@@ -1,5 +1,6 @@
 # Atlas2
-[![Build Status](https://travis-ci.org/cdaniel/atlas2.svg?branch=master)](https://travis-ci.org/cdaniel/atlas2) [![Gitter](https://badges.gitter.im/Join Chat.svg)](https://gitter.im/atlas2)
+[![Build Status](https://travis-ci.org/cdaniel/atlas2.svg?branch=master)](https://travis-ci.org/cdaniel/atlas2) 
+[![Gitter](https://badges.gitter.im/Join_Chat.svg)](https://gitter.im/atlas2)
 
 A new mapping tool, this time sponsored by the [Leading Edge Forum](http://www.wardleymaps.com)
 
