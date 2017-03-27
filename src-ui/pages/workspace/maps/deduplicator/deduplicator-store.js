@@ -107,6 +107,7 @@ class DeduplicatorStore extends Store {
         dataType: 'json',
         success: function(data) {
           this.state.processedComponents = data.workspace.capabilityCategories;
+          console.log('processed',this.state);
           this.emitChange();
         }.bind(this)
       });

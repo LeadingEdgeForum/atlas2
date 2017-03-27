@@ -20,6 +20,7 @@ var ObjectId = mongoose.Types.ObjectId;
  * on maps within a workspace, and they all have identical access rights.
  */
 var workspace = null;
+
 module.exports = function(conn) {
     if (workspace) {
         return workspace;
@@ -180,6 +181,168 @@ module.exports = function(conn) {
                     }
                     success_callback(savedMap.toObject());
                 });
+            });
+        });
+    };
+
+    workspaceSchema.methods.findUnprocessedNodes = function(){
+      var WardleyMap = require('./map-schema')(conn);
+      var Node = require('./node-schema')(conn);
+
+      return WardleyMap
+          .find({ // find all undeleted maps within workspace
+              archived: false,
+              workspace: this._id
+          })
+          .select('user purpose name')
+          .then(function(maps) {
+              var loadPromises = [];
+              maps.forEach(function(cv, i, a) {
+                  loadPromises.push(Node
+                      .find({
+                          parentMap: cv,
+                          processedForDuplication: false
+                      })
+                      .then(function(nodes) {
+                          a[i].nodes = nodes;
+                          return a[i];
+                      }));
+              });
+              return q.all(loadPromises)
+                  .then(function(results) {
+                      var finalResults = [];
+                      return results.filter(function(map) {
+                          return map.nodes && map.nodes.length > 0;
+                      });
+                  });
+          });
+    };
+
+    workspaceSchema.methods.findProcessedNodes = function() {
+      console.log('populating...');
+        return this
+            .execPopulate({
+              path : 'capabilityCategories.capabilities.aliases.nodes',
+              model : 'Node'
+            });
+    };
+
+    workspaceSchema.methods.createNewCapabilityAndAliasForNode = function(categoryID, nodeID) {
+        var Node = require('./node-schema')(conn);
+
+        var promises = [];
+        var capabilityCategory = null;
+        for (var i = 0; i < this.capabilityCategories.length; i++) {
+            if (categoryID.equals(this.capabilityCategories[i]._id)) {
+                capabilityCategory = this.capabilityCategories[i];
+            }
+        }
+        capabilityCategory.capabilities.push({
+            aliases: {
+                nodes: [nodeID]
+            }
+        });
+        promises.push(this.save());
+        promises.push(Node.update({
+            _id: nodeID
+        }, {
+            processedForDuplication: true
+        }, {
+            safe: true
+        }).exec());
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.execPopulate({
+                path: 'capabilityCategories',
+                populate: {
+                    path: 'capabilities',
+                    populate: {
+                        path: 'aliases',
+                        populate: {
+                            model: 'Node',
+                            path: 'nodes'
+                        }
+                    }
+                }
+            });
+        });
+    };
+
+    workspaceSchema.methods.createNewAliasForNodeInACapability = function(capabilityID, nodeID) {
+        var Node = require('./node-schema')(conn);
+
+        var promises = [];
+        var capability = null;
+        for (var i = 0; i < this.capabilityCategories.length; i++) {
+            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = this.capabilityCategories[i].capabilities[j];
+                }
+            }
+        }
+        capability.aliases.push({
+            nodes: [nodeID]
+        });
+        promises.push(this.save());
+        promises.push(Node.update({
+            _id: nodeID
+        }, {
+            processedForDuplication: true
+        }, {
+            safe: true
+        }).exec());
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.execPopulate({
+                path: 'capabilityCategories',
+                populate: {
+                    path: 'capabilities',
+                    populate: {
+                        path: 'aliases',
+                        populate: {
+                            model: 'Node',
+                            path: 'nodes'
+                        }
+                    }
+                }
+            });
+        });
+    };
+
+    workspaceSchema.methods.addNodeToAlias = function(aliasID, nodeID) {
+        var Node = require('./node-schema')(conn);
+
+        var promises = [];
+        var alias = null;
+        for (var i = 0; i < this.capabilityCategories.length; i++) {
+          for(var j = 0; j < this.capabilityCategories[i].capabilities.length; j++){
+            for(var k = 0; k < this.capabilityCategories[i].capabilities[j].aliases.length; k++){
+              if (aliasID.equals(this.capabilityCategories[i].capabilities[j].aliases[k]._id)) {
+                  alias = this.capabilityCategories[i].capabilities[j].aliases[k];
+              }
+            }
+          }
+        }
+        alias.nodes.push(nodeID);
+        promises.push(this.save());
+        promises.push(Node.update({
+            _id: nodeID
+        }, {
+            processedForDuplication: true
+        }, {
+            safe: true
+        }).exec());
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.execPopulate({
+                path: 'capabilityCategories',
+                populate: {
+                    path: 'capabilities',
+                    populate: {
+                        path: 'aliases',
+                        populate: {
+                            model: 'Node',
+                            path: 'nodes'
+                        }
+                    }
+                }
             });
         });
     };
