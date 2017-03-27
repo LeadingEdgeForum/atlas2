@@ -1087,7 +1087,6 @@ module.exports = function(authGuardian, mongooseConnection) {
                   res.status(500).json(e);
               })
               .done(function(wk) {
-                  capabilityLogger.trace('responding get processed', wk._id ? wk.capabilityCategories[0].capabilities[0].aliases[0] : 'null');
                   res.json({
                       workspace: wk
                   });
