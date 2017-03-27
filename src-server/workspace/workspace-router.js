@@ -108,35 +108,11 @@ var removeDuplicatesDependencies = function(nodes){
     }
 };
 
-var removeEmptyCapabilities = function(workspace){
-  if(!workspace){
-    return null;
-  }
-  workspace.capabilityCategories.forEach(function(cat){
-    for(var j = cat.capabilities.length - 1; j >= 0; j--){
-      for(var k = cat.capabilities[j].aliases.length - 1; k>= 0; k--){
-        var alias = cat.capabilities[j].aliases[k];
-        if(alias.nodes.length === 0){
-          cat.capabilities[j].aliases.splice(k,1);
-          console.log('removing empty alias');
-        }
-      }
-      if(cat.capabilities[j].aliases.length === 0){
-        console.log('removing empty cap');
-        cat.capabilities.splice(j,1);
-      }
-    }
-  });
-  return workspace;
-};
 
 module.exports = function(authGuardian, mongooseConnection) {
-  var Capability = require('./model/capability-schema')(mongooseConnection);
-  var CapabilityCategory = require('./model/capability-category-schema')(mongooseConnection);
   var WardleyMap = require('./model/map-schema')(mongooseConnection);
   var Workspace = require('./model/workspace-schema')(mongooseConnection);
   var Node = require('./model/node-schema')(mongooseConnection);
-  var Alias = require('./model/alias-schema')(mongooseConnection);
 
 
   var module = {};
@@ -496,7 +472,6 @@ module.exports = function(authGuardian, mongooseConnection) {
     });
   });
 
-  // TODO: remove nodes pointing to this map if it is a submap
   module.router.delete('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
     var owner = getUserIdFromReq(req);
     WardleyMap
@@ -554,13 +529,13 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
-    var editor = getUserIdFromReq(req);
-    Workspace.createMap(req.body.workspaceID, editor, req.body.user, req.body.purpose, req.body.responsiblePerson, function(result) {
-        res.json({
-            map: result
-        });
-    }, defaultAccessDenied.bind(res));
-});
+      var editor = getUserIdFromReq(req);
+      Workspace.createMap(req.body.workspaceID, editor, req.body.user, req.body.purpose, req.body.responsiblePerson, function(result) {
+          res.json({
+              map: result
+          });
+      }, defaultAccessDenied.bind(res));
+  });
 
 
   module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
@@ -1131,13 +1106,10 @@ module.exports = function(authGuardian, mongooseConnection) {
         })
         .populate({
             path: 'capabilityCategories',
-            model: 'CapabilityCategory',
             populate : {
               path: 'capabilities',
-              model: 'Capability',
               populate : {
                 path: 'aliases',
-                model : 'Alias',
                 populate: {
                   model: 'Node',
                   path:'nodes'
@@ -1148,7 +1120,7 @@ module.exports = function(authGuardian, mongooseConnection) {
         .exec()
         .then(function(wk){
           capabilityLogger.trace('responding get', wk._id ? wk._id : 'null');
-          res.json({workspace: removeEmptyCapabilities(wk)});
+          res.json({workspace: wk});
         }).fail(function(e){
           capabilityLogger.error('responding...', e);
           res.status(500).json(e);
@@ -1157,178 +1129,152 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.post(
-    '/workspace/:workspaceID/capabilitycategory/:categoryID/node/:nodeID',
-    authGuardian.authenticationRequired,
-    function(req, res) {
-      var owner = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var categoryID = req.params.categoryID;
-      var nodeID = req.params.nodeID;
-      capabilityLogger.trace(workspaceID, categoryID, nodeID);
-      Workspace
-        .find({
-            _id : workspaceID,
-            owner : owner,
-            archived : false,
-            capabilityCategories : categoryID})
-        .exec()
-        .then(function(workspace){
-          if(!workspace){
-            res.status(404).json("workspace not found");
-            return null;
-          }
-          return Node.update({
-            _id : nodeID
-          },{
-            processedForDuplication : true
-          },{
-            safe:true
-          }).exec();
-        })
-        .then(function(node){
-          capabilityLogger.trace('creating alias');
-          return new Alias({nodes:[new ObjectId(nodeID)]}).save();
-        })
-        .then(function(alias){
-          capabilityLogger.trace('creating capability');
-          return new Capability({aliases:[alias._id]}).save();
-        })
-        .then(function(capability){
-          capabilityLogger.trace('capability created', capability._id);
-          capabilityLogger.trace('adding it to category', categoryID);
-          return CapabilityCategory.findOneAndUpdate({
-                  _id : categoryID
-                },{
-                  $push : {
-                    capabilities : new ObjectId(capability._id)
+      '/workspace/:workspaceID/capabilitycategory/:categoryID/node/:nodeID',
+      authGuardian.authenticationRequired,
+      function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var categoryID = new ObjectId(req.params.categoryID);
+          var nodeID = new ObjectId(req.params.nodeID);
+          capabilityLogger.trace(workspaceID, categoryID, nodeID);
+          Workspace
+              .findOne({
+                  _id: workspaceID,
+                  owner: owner,
+                  archived: false
+              })
+              .exec()
+              .then(function(workspace) {
+                  if (!workspace) {
+                      res.status(404).json("workspace not found");
+                      return null;
                   }
-                },{
-                  safe:true,
-                  new:true
-                }
-          ).exec();
-        })
-        .then(function(ur){
-          capabilityLogger.trace('populating response, update result', ur, ur.isModified());
-          var wkPromise =  Workspace
-            .findOne({
-              archived : false,
-              owner : owner,
-              _id : workspaceID
-            })
-            .populate({
-                path: 'capabilityCategories',
-                model: 'CapabilityCategory',
-                populate : {
-                  path: 'capabilities',
-                  model: 'Capability',
-                  populate : {
-                    path: 'aliases',
-                    model : 'Alias',
-                    populate: {
-                      model: 'Node',
-                      path:'nodes'
-                    }
+                  var promises = [];
+                  var capabilityCategory = null;
+                  for (var i = 0; i < workspace.capabilityCategories.length; i++) {
+                      if (categoryID.equals(workspace.capabilityCategories[i]._id)) {
+                          capabilityCategory = workspace.capabilityCategories[i];
+                      }
                   }
-                }
-            })
-            .exec();
-            return wkPromise;
-        })
-        .then(function(wk){
-          capabilityLogger.trace('responding ...', wk);
-          res.json({workspace: removeEmptyCapabilities(wk)});
-        })
-        .fail(function(e){
-          capabilityLogger.error('responding...', e);
-          res.status(500).json(e);
-        });
-  });
+                  capabilityCategory.capabilities.push({
+                      aliases: {
+                          nodes: [nodeID]
+                      }
+                  });
+                  promises.push(workspace.save());
+                  promises.push(Node.update({
+                      _id: nodeID
+                  }, {
+                      processedForDuplication: true
+                  }, {
+                      safe: true
+                  }).exec());
+                  return q.allSettled(promises);
+              })
+              .then(function(results) {
+                  capabilityLogger.trace('populating response, update result', results);
+                  return Workspace.findById(workspaceID)
+                      .populate({
+                          path: 'capabilityCategories',
+                          populate: {
+                              path: 'capabilities',
+                              populate: {
+                                  path: 'aliases',
+                                  populate: {
+                                      model: 'Node',
+                                      path: 'nodes'
+                                  }
+                              }
+                          }
+                      })
+                      .exec();
+              })
+              .then(function(wk) {
+                  capabilityLogger.trace('responding ...', wk);
+                  res.json({
+                      workspace: wk
+                  });
+              })
+              .fail(function(e) {
+                  capabilityLogger.error('responding with error', e);
+                  res.status(500).json(e);
+              });
+      });
 
 
   module.router.put(
-    '/workspace/:workspaceID/capability/:capabilityID/node/:nodeID',
-    authGuardian.authenticationRequired,
-    function(req, res) {
-      var owner = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var capabilityID = req.params.capabilityID;
-      var nodeID = req.params.nodeID;
-      capabilityLogger.trace(workspaceID, capabilityID, nodeID);
-      Workspace
-        .find({
-            _id : workspaceID,
-            owner : owner,
-            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
-        .exec()
-        .then(function(workspace){
-          if(!workspace){
-            res.status(404).json("workspace not found");
-            return null;
-          }
-
-          return Node.update({
-            _id : nodeID
-          },{
-            processedForDuplication : true
-          },{
-            safe:true
-          }).exec();
-        })
-        .then(function(node){
-          capabilityLogger.trace('creating alias');
-          return new Alias({nodes:[new ObjectId(nodeID)]}).save();
-        })
-        .then(function(alias){
-          capabilityLogger.trace('adding alias to capability', alias,  capabilityID);
-          return Capability.findOneAndUpdate({
-                  _id : capabilityID
-                },{
-                  $push : {
-                    aliases : new ObjectId(alias._id)
+      '/workspace/:workspaceID/capability/:capabilityID/node/:nodeID',
+      authGuardian.authenticationRequired,
+      function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var capabilityID = new ObjectId(req.params.capabilityID);
+          var nodeID = new ObjectId(req.params.nodeID);
+          capabilityLogger.trace(workspaceID, capabilityID, nodeID);
+          Workspace
+              .findOne({
+                  _id: workspaceID,
+                  owner: owner,
+                  archived: false,
+              })
+              .exec()
+              .then(function(workspace) {
+                  if (!workspace) {
+                      res.status(404).json("workspace not found");
+                      return null;
                   }
-                },{
-                  safe:true,
-                  new:true
-                }
-          ).exec();
-        })
-        .then(function(ur){
-          capabilityLogger.trace('populating response', ur);
-          var wkPromise =  Workspace
-            .findOne({
-              archived : false,
-              owner : owner,
-              _id : workspaceID
-            })
-            .populate({
-                path: 'capabilityCategories',
-                model: 'CapabilityCategory',
-                populate : {
-                  path: 'capabilities',
-                  model: 'Capability',
-                  populate : {
-                    path: 'aliases',
-                    model : 'Alias',
-                    populate: {
-                      model: 'Node',
-                      path:'nodes'
+                  var promises = [];
+                  var capability = null;
+                  for (var i = 0; i < workspace.capabilityCategories.length; i++) {
+                    for(var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++){
+                      // capabilityLogger.trace('ev', capabilityID, workspace.capabilityCategories[i].capabilities);
+                      if (capabilityID.equals(workspace.capabilityCategories[i].capabilities[j]._id)) {
+                          capability = workspace.capabilityCategories[i].capabilities[j];
+                      }
                     }
                   }
-                }
-            })
-            .exec();
-            return wkPromise;
-        })
-        .then(function(wk){
-          capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
-          res.json({workspace: removeEmptyCapabilities(wk)});
-        })
-        .fail(function(e){
-          capabilityLogger.error('responding...', e);
-          res.status(500).json(e);
-        });
-  });
+                  capability.aliases.push({
+                          nodes: [nodeID]
+                  });
+                  promises.push(workspace.save());
+                  promises.push(Node.update({
+                      _id: nodeID
+                  }, {
+                      processedForDuplication: true
+                  }, {
+                      safe: true
+                  }).exec());
+                  return q.allSettled(promises);
+              })
+              .then(function(results) {
+                  // capabilityLogger.trace('populating response, update result', results);
+                  return Workspace.findById(workspaceID)
+                      .populate({
+                          path: 'capabilityCategories',
+                          populate: {
+                              path: 'capabilities',
+                              populate: {
+                                  path: 'aliases',
+                                  populate: {
+                                      model: 'Node',
+                                      path: 'nodes'
+                                  }
+                              }
+                          }
+                      })
+                      .exec();
+              })
+              .then(function(wk) {
+                  capabilityLogger.trace('responding ...', wk);
+                  res.json({
+                      workspace: wk
+                  });
+              })
+              .fail(function(e) {
+                  capabilityLogger.error('responding...', e);
+                  res.status(500).json(e);
+              });
+      });
 
   module.router.put(
     '/workspace/:workspaceID/alias/:aliasID/node/:nodeID',
@@ -1336,77 +1282,71 @@ module.exports = function(authGuardian, mongooseConnection) {
     function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
-      var aliasID = req.params.aliasID;
-      var nodeID = req.params.nodeID;
+      var aliasID = new ObjectId(req.params.aliasID);
+      var nodeID = new ObjectId(req.params.nodeID);
       capabilityLogger.trace(workspaceID, aliasID, nodeID);
       Workspace
-        .find({
-            _id : workspaceID,
-            owner : owner,
-            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
-        .exec()
-        .then(function(workspace){
-          if(!workspace){
-            res.status(404).json("workspace not found");
-            return null;
-          }
-
-          return Node.update({
-            _id : nodeID
-          },{
-            processedForDuplication : true
-          },{
-            safe:true
-          }).exec();
-        })
-        .then(function(node){
-          capabilityLogger.trace('adding to alias');
-          return Alias.findOneAndUpdate({
-                  _id : aliasID
-                },{
-                  $push : {
-                    nodes : new ObjectId(nodeID)
-                  }
-                },{
-                  safe:true,
-                  new:true
-                }).exec();
-        })
-        .then(function(ur){
-          capabilityLogger.trace('populating response', ur);
-          var wkPromise =  Workspace
-            .findOne({
-              archived : false,
-              owner : owner,
-              _id : workspaceID
-            })
-            .populate({
-                path: 'capabilityCategories',
-                model: 'CapabilityCategory',
-                populate : {
-                  path: 'capabilities',
-                  model: 'Capability',
-                  populate : {
-                    path: 'aliases',
-                    model : 'Alias',
-                    populate: {
-                      model: 'Node',
-                      path:'nodes'
+          .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false,
+          })
+          .exec()
+          .then(function(workspace) {
+              if (!workspace) {
+                  res.status(404).json("workspace not found");
+                  return null;
+              }
+              var promises = [];
+              var alias = null;
+              for (var i = 0; i < workspace.capabilityCategories.length; i++) {
+                for(var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++){
+                  for(var k = 0; k < workspace.capabilityCategories[i].capabilities[j].aliases.length; k++){
+                    if (aliasID.equals(workspace.capabilityCategories[i].capabilities[j].aliases[k]._id)) {
+                        alias = workspace.capabilityCategories[i].capabilities[j].aliases[k];
                     }
                   }
                 }
-            })
-            .exec();
-            return wkPromise;
-        })
-        .then(function(wk){
-          capabilityLogger.trace('responding ...', wk.capabilityCategories[0]);
-          res.json({workspace: removeEmptyCapabilities(wk)});
-        })
-        .fail(function(e){
-          capabilityLogger.error('responding...', e);
-          res.status(500).json(e);
-        });
+              }
+              alias.nodes.push(nodeID);
+              promises.push(workspace.save());
+              promises.push(Node.update({
+                  _id: nodeID
+              }, {
+                  processedForDuplication: true
+              }, {
+                  safe: true
+              }).exec());
+              return q.all(promises);
+          })
+          .then(function(results) {
+              capabilityLogger.trace('populating response, update result', results);
+              return Workspace.findById(workspaceID)
+                  .populate({
+                      path: 'capabilityCategories',
+                      populate: {
+                          path: 'capabilities',
+                          populate: {
+                              path: 'aliases',
+                              populate: {
+                                  model: 'Node',
+                                  path: 'nodes'
+                              }
+                          }
+                      }
+                  })
+                  .exec();
+          })
+          .then(function(wk) {
+              capabilityLogger.trace('responding ...', wk);
+              res.json({
+                  workspace: wk
+              });
+          })
+          .fail(function(e) {
+              capabilityLogger.error('responding...', e);
+              res.status(500).json(e);
+          });
   });
 
   module.router.get(
@@ -1415,42 +1355,51 @@ module.exports = function(authGuardian, mongooseConnection) {
     function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
-      var nodeID = req.params.nodeID;
+      var nodeID = new ObjectId(req.params.nodeID);
       Workspace
-        .find({
-            _id : workspaceID,
-            owner : owner,
-            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
-        .exec()
+          .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false
+          }) // this is not the best security check as we do not check relation between workspace & cap & node
+          .populate({
+              path: 'capabilityCategories',
+              populate: {
+                  path: 'capabilities',
+                  populate: {
+                      path: 'aliases',
+                      populate: {
+                          model: 'Node',
+                          path: 'nodes',
+                          populate: {
+                            model:'WardleyMap',
+                            path: 'parentMap'
+                          }
+                      }
+                  }
+              }
+          })
+          .exec()
         .then(function(workspace){
           if(!workspace){
             res.status(404).json("workspace not found");
             return null;
           }
 
-          return Alias.findOne({nodes : nodeID}).exec();
-        })
-        .then(function(alias){
-          capabilityLogger.trace('tracking parent capability');
-          if(!alias) {return alias;}
-          return Capability.findOne({
-                  aliases : alias._id
-                }).populate({
-                  path: 'aliases',
-                  model : 'Alias',
-                  populate: {
-                    model: 'Node',
-                    path:'nodes',
-                    populate: {
-                      model:'WardleyMap',
-                      path: 'parentMap'
-                    }
+          var capability = null;
+          for (var i = 0; i < workspace.capabilityCategories.length; i++) {
+            // console.log('workspace', workspace);
+              for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
+                  for (var k = 0; k < workspace.capabilityCategories[i].capabilities[j].aliases.length; k++) {
+                      for (var l = 0; l < workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
+                          if (nodeID.equals(workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
+                              capability = workspace.capabilityCategories[i].capabilities[j];
+                          }
+                      }
                   }
-                }).exec();
-        })
-        .then(function(cp){
-          capabilityLogger.trace('responding ...', cp);
-          res.json({capability: cp});
+              }
+          }
+          return res.json({capability: capability});
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1463,62 +1412,82 @@ module.exports = function(authGuardian, mongooseConnection) {
     '/workspace/:workspaceID/capability/:capabilityID',
     authGuardian.authenticationRequired,
     function(req, res) {
-      var owner = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var capabilityID = req.params.capabilityID;
-      capabilityLogger.trace(workspaceID, capabilityID);
-      Workspace
-        .find({
-            _id : workspaceID,
-            owner : owner,
-            archived : false})// this is not the best security check as we do not check relation between workspace & cap & node
-        .exec()
-        .then(function(workspace){
-          if(!workspace){
-            res.status(404).json("workspace not found");
-            return null;
-          }
-          return Capability.findById(capabilityID).exec();
-        })
-        .then(function(cap){
-          return cap.remove();
-        })
-        .then(function(ur){
-          capabilityLogger.trace('populating response...');
-          var wkPromise =  Workspace
+        var owner = getUserIdFromReq(req);
+        var workspaceID = req.params.workspaceID;
+        var capabilityID = new ObjectId(req.params.capabilityID);
+        capabilityLogger.trace(workspaceID, capabilityID);
+        Workspace
             .findOne({
-              archived : false,
-              owner : owner,
-              _id : workspaceID
-            })
-            .populate({
-                path: 'capabilityCategories',
-                model: 'CapabilityCategory',
-                populate : {
-                  path: 'capabilities',
-                  model: 'Capability',
-                  populate : {
-                    path: 'aliases',
-                    model : 'Alias',
-                    populate: {
-                      model: 'Node',
-                      path:'nodes'
-                    }
-                  }
+                _id: workspaceID,
+                owner: owner,
+                archived: false
+            }) // this is not the best security check as we do not check relation between workspace & cap & node
+            .exec()
+            .then(function(workspace) {
+                if (!workspace) {
+                    res.status(404).json("workspace not found");
+                    return null;
                 }
+                var promises = [];
+                var capability = null;
+                for (var i = 0; i < workspace.capabilityCategories.length; i++) {
+                    for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
+                        if (capabilityID.equals(workspace.capabilityCategories[i].capabilities[j]._id)) {
+                            capability = workspace.capabilityCategories[i].capabilities[j];
+                            workspace.capabilityCategories[i].capabilities.splice(j, 1);
+                            break;
+                        }
+                    }
+                }
+                promises.push(workspace.save());
+                for (var k = 0; k < capability.aliases.length; k++) {
+                    for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
+                        promises.push(Node.findOneAndUpdate({
+                            _id: capability.aliases[k].nodes[l]
+                        }, {
+                            $set: {
+                                processedForDuplication: false
+                            }
+                        }).exec());
+                    }
+                }
+                return q.all(promises);
             })
-            .exec();
-            return wkPromise;
-        })
-        .then(function(wk){
-          capabilityLogger.trace('responding ...');
-          res.json({workspace: removeEmptyCapabilities(wk)});
-        })
-        .fail(function(e){
-          capabilityLogger.error('responding...', e);
-          res.status(500).json(e);
-        });
-  });
+            .then(function(ur) {
+                capabilityLogger.trace('populating response...');
+                var wkPromise = Workspace
+                    .findOne({
+                        archived: false,
+                        owner: owner,
+                        _id: workspaceID
+                    })
+                    .populate({
+                        path: 'capabilityCategories',
+                        populate: {
+                            path: 'capabilities',
+                            populate: {
+                                path: 'aliases',
+                                populate: {
+                                    model: 'Node',
+                                    path: 'nodes'
+                                }
+                            }
+                        }
+                    })
+                    .exec();
+                return wkPromise;
+            })
+            .then(function(wk) {
+                capabilityLogger.trace('responding ...');
+                res.json({
+                    workspace: wk
+                });
+            })
+            .fail(function(e) {
+                capabilityLogger.error('responding...', e);
+                res.status(500).json(e);
+            });
+    });
 
   return module;
 };

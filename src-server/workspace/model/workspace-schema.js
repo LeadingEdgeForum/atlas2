@@ -37,8 +37,15 @@ module.exports = function(conn) {
             ref : 'WardleyMap'
         } ],
         capabilityCategories : [ {
-            type : Schema.Types.ObjectId,
-            ref : 'CapabilityCategory'
+          name : Schema.Types.String,
+          capabilities : [ {
+            aliases: [{
+              nodes: [{
+                  type: Schema.Types.ObjectId,
+                  ref: 'Node'
+              }]
+            }]
+          } ]
         } ]
     });
 
@@ -59,29 +66,18 @@ module.exports = function(conn) {
             description: description,
             purpose: purpose,
             owner: [owner],
-            archived: false
+            archived: false,
+            capabilityCategories : [
+              { name:'Customer Service', capabilities : []},
+              { name:'Administrative', capabilities : []},
+              { name:'Quality', capabilities : []},
+              { name:'Operational', capabilities : []},
+              { name:'Sales and Marketing', capabilities : []},
+              { name:'Research', capabilities : []},
+              { name:'Finances', capabilities : []}
+            ]
         });
-        var promisesToSave = [];
-
-        // those are hardcoded now. Maybe it will be possible to manage them in the future.
-        var CapabilityCategory = require('./capability-category-schema')(conn);
-        var capabilityCategories = ['Customer Service', 'Product', 'Administrative', 'Quality', 'Operational', 'Marketing', 'Research', 'Finances'];
-        capabilityCategories.forEach(function(name) {
-            promisesToSave.push((new CapabilityCategory({
-                name
-            })).save());
-        });
-        q.all(promisesToSave)
-            .then(function(results) {
-                wkspc.capabilityCategories = results;
-                return wkspc.save();
-            })
-            .fail(function(e) {
-                callback(e, null);
-            })
-            .done(function(wkspc) {
-                callback(null, wkspc);
-            });
+        wkspc.save(callback);
     };
 
     workspaceSchema.statics.getAvailableSubmapsForMap = function(mapID, owner, success_callback, accessDenied) {

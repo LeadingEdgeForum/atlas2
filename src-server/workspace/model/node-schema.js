@@ -184,6 +184,7 @@ module.exports = function(conn){
         var Node = require('./node-schema')(conn);
         var promises = [];
         var dependencyToRemove = this._id;
+        var workspaceID = this.workspace;
         for (var i = 0; i < this.inboundDependencies.length; i++) {
             promises.push(Node.update({
                 _id: this.inboundDependencies[i]
@@ -216,27 +217,37 @@ module.exports = function(conn){
         }, {
             safe: true
         }));
-        // find and remove from all aliases
-        // find and delete empty aliases
-        // find and delete empty capabilities -- temporary workarounded by query
-        var Alias = require('./alias-schema')(conn);
-        promises.push(Alias.update({
-            nodes: this._id
-        }, {
-            $pull: {
-                nodes: this._id
-            }
-        }, {
-            safe: true,
-            new: true
-        }));
+
+
         q.all(promises)
             .then(function(results) {
-                console.error('implement cascading removal of capabilities');
+                var Workspace = require('./workspace-schema')(conn);
+                Workspace.findById(workspaceID).exec(function(err, wkspc) {
+                    for (var capabilityCategoriesCounter = wkspc.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
+                        var capabilityCategory = wkspc.capabilityCategories[capabilityCategoriesCounter];
+                        for (var capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
+                            var capability = capabilityCategory.capabilities[capabilitiesCounter];
+                            for (var aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
+                                var alias = capability.aliases[aliasCounter];
+                                for (var nodeCounter = alias.nodes.length - 1; nodeCounter >= 0; nodeCounter--) {
+                                    var node = alias.nodes[nodeCounter];
+                                    if (node._id === dependencyToRemove) {
+                                        alias.nodes.splice(nodeCounter, 1);
+                                        break;
+                                    }
+                                }
+                                if (alias.nodes.length === 0) {
+                                    capability.aliases.splice(aliasCounter, 1);
+                                }
+                            }
+                            if (capability.aliases.length === 0) {
+                                capabilityCategory.capabilities.splice(capabilitiesCounter, 1);
+                            }
+                        }
+                    }
+                    wkspc.save(next);
+                });
                 return true;
-            })
-            .then(function(results) {
-                next();
             }, function(err) {
                 modelLogger.error(err);
                 next(err);
