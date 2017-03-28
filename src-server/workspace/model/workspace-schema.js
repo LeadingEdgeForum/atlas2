@@ -194,10 +194,10 @@ module.exports = function(conn) {
 
     workspaceSchema.methods.findProcessedNodes = function() {
         return this
-            .execPopulate({
-              path : 'capabilityCategories.capabilities.aliases.nodes',
-              model : 'Node'
-            });
+        .populate({
+            path: 'capabilityCategories.capabilities.aliases.nodes',
+            model: 'Node',
+        }).execPopulate();
     };
 
     workspaceSchema.methods.createNewCapabilityAndAliasForNode = function(categoryID, nodeID) {
@@ -211,9 +211,9 @@ module.exports = function(conn) {
             }
         }
         capabilityCategory.capabilities.push({
-            aliases: {
+            aliases: [{
                 nodes: [nodeID]
-            }
+            }]
         });
         promises.push(this.save());
         promises.push(Node.update({
@@ -224,19 +224,10 @@ module.exports = function(conn) {
             safe: true
         }).exec());
         return q.allSettled(promises).then(function(res) {
-            return res[0].value.execPopulate({
-                path: 'capabilityCategories',
-                populate: {
-                    path: 'capabilities',
-                    populate: {
-                        path: 'aliases',
-                        populate: {
-                            model: 'Node',
-                            path: 'nodes'
-                        }
-                    }
-                }
-            });
+          return res[0].value.populate({
+              path: 'capabilityCategories.capabilities.aliases.nodes',
+              model: 'Node',
+          }).execPopulate();
         });
     };
 
@@ -264,19 +255,10 @@ module.exports = function(conn) {
             safe: true
         }).exec());
         return q.allSettled(promises).then(function(res) {
-            return res[0].value.execPopulate({
-                path: 'capabilityCategories',
-                populate: {
-                    path: 'capabilities',
-                    populate: {
-                        path: 'aliases',
-                        populate: {
-                            model: 'Node',
-                            path: 'nodes'
-                        }
-                    }
-                }
-            });
+            return res[0].value.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+            }).execPopulate();
         });
     };
 
@@ -304,19 +286,10 @@ module.exports = function(conn) {
             safe: true
         }).exec());
         return q.allSettled(promises).then(function(res) {
-            return res[0].value.execPopulate({
-                path: 'capabilityCategories',
-                populate: {
-                    path: 'capabilities',
-                    populate: {
-                        path: 'aliases',
-                        populate: {
-                            model: 'Node',
-                            path: 'nodes'
-                        }
-                    }
-                }
-            });
+            return res[0].value.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+            }).execPopulate();
         });
     };
 

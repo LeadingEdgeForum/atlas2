@@ -829,6 +829,7 @@ describe('Workspaces & maps', function() {
                   res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
                   res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(1);
                   aliasID = res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1]._id;
+                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes[0].should.have.property('_id');
                 })
                 .end(function(err, res) {
                     done(err);
