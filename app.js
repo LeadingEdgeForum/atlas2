@@ -28,7 +28,7 @@ var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
 var MongoDBConnectionURL = require('./src-server/mongodb-helper');
-var conn = mongoose.connect(MongoDBConnectionURL);
+var conn = mongoose.createConnection(MongoDBConnectionURL);
 
 
 var debug = false;

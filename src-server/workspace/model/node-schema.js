@@ -21,15 +21,15 @@ var ObjectId = mongoose.Types.ObjectId;
 var modelLogger = require('./../../log').getLogger('NodeSchema');
 var q = require('q');
 
-var node = null;
+var node = {};
 /**
  * see capability-category-schema for explanations.
  */
 
 
 module.exports = function(conn){
-    if(node){
-        return node;
+    if(node[conn]){
+        return node[conn];
     }
 
     var NodeSchema = new Schema({
@@ -73,55 +73,50 @@ module.exports = function(conn){
         }
     });
 
-    NodeSchema.methods.makeDependencyTo = function(_targetId, callback /**err, node*/ ) {
+    NodeSchema.methods.makeDependencyTo = function(_targetId) {
         var targetId = new ObjectId(_targetId);
         var promises = [];
         //abort if the connection is already there...
         for (var j = 0; j < this.outboundDependencies.length; j++) {
             if (targetId.equals(this.outboundDependencies[j])) {
-                callback(400, null);
-                return;
+                return null;
             }
         }
         // otherwise, check who is on the top
         var _this = this;
         var Node = require('./node-schema')(conn);
-        Node.findOne({
-            _id: targetId,
-            workspace: this.workspace
-        }).exec(function(err, counterPartyNode){
-          if(!counterPartyNode){ // no other node, exit
-            callback(400, null);
-            return;
-          }
-          if(_this.y > counterPartyNode.y){
-            _this.inboundDependencies.push(targetId);
-            counterPartyNode.outboundDependencies.push(_this._id);
-          } else {
-            _this.outboundDependencies.push(targetId);
-            counterPartyNode.inboundDependencies.push(_this._id);
-          }
-          promises.push(_this.save());
-          promises.push(counterPartyNode.save());
-          q.all(promises).then(function(results) {
-              callback(null, results);
-          }, function(err) {
-              callback(err, null);
-          });
-        });
+        return Node.findOne({
+                _id: targetId,
+                workspace: this.workspace
+            }).exec()
+            .then(function(counterPartyNode) {
+                if (!counterPartyNode) { // no other node, exit
+                    throw new Error('target node does not exists');
+                }
+                if (_this.y > counterPartyNode.y) {
+                    _this.inboundDependencies.push(targetId);
+                    counterPartyNode.outboundDependencies.push(_this._id);
+                } else {
+                    _this.outboundDependencies.push(targetId);
+                    counterPartyNode.inboundDependencies.push(_this._id);
+                }
+                promises.push(_this.save());
+                promises.push(counterPartyNode.save());
+                return q.all(promises);
+            });
     };
 
-    NodeSchema.methods.makeAction = function(dataPos, callback /**err, node*/ ) {
+    NodeSchema.methods.makeAction = function(dataPos) {
         var relativeX = dataPos.x - this.x;
         var relativeY = dataPos.y - this.y;
         this.action.push({
           x : relativeX,
           y : relativeY
         });
-        this.save(callback);
+        return this.save();
     };
 
-    NodeSchema.methods.updateAction = function(seq, actionBody, callback /**err, node*/ ) {
+    NodeSchema.methods.updateAction = function(seq, actionBody) {
         if (actionBody.x && actionBody.y) {
             var relativeX = actionBody.x - this.x;
             var relativeY = actionBody.y - this.y;
@@ -141,9 +136,10 @@ module.exports = function(conn){
                 }
             }
         }
-        this.save(callback);
+        return this.save();
     };
-    NodeSchema.methods.deleteAction = function(seq, callback /**err, node*/ ) {
+
+    NodeSchema.methods.deleteAction = function(seq) {
 
         for(var i = 0; i < this.action.length; i++){
           if('' + this.action[i]._id === seq){
@@ -153,10 +149,10 @@ module.exports = function(conn){
         }
         this.markModified('action');
 
-        this.save(callback);
+        return this.save();
     };
 
-    NodeSchema.methods.removeDependencyTo = function(_targetId, callback /**err, node*/ ) {
+    NodeSchema.methods.removeDependencyTo = function(_targetId) {
         var targetId = new ObjectId(_targetId);
         var promises = [];
         this.outboundDependencies.pull(targetId);
@@ -172,11 +168,7 @@ module.exports = function(conn){
         }, {
             safe: true
         }));
-        q.all(promises).then(function(results) {
-            callback(null, results);
-        }, function(err) {
-            callback(err, null);
-        });
+        return q.allSettled(promises);
     };
 
     NodeSchema.pre('remove', function(next) {
@@ -284,8 +276,8 @@ module.exports = function(conn){
         });
     };
 
-    node = conn.model('Node', NodeSchema);
+    node[conn] = conn.model('Node', NodeSchema);
 
-    return node;
+    return node[conn];
 
 };

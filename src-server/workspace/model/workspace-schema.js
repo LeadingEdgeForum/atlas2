@@ -19,11 +19,11 @@ var ObjectId = mongoose.Types.ObjectId;
  * refer to the same subject, for example to the company. Many people can work
  * on maps within a workspace, and they all have identical access rights.
  */
-var workspace = null;
+var workspace = {};
 
 module.exports = function(conn) {
-    if (workspace) {
-        return workspace;
+    if (workspace[conn]) {
+        return workspace[conn];
     }
     var workspaceSchema = new Schema({
         name : Schema.Types.String,
@@ -51,7 +51,7 @@ module.exports = function(conn) {
     });
 
 
-    workspaceSchema.statics.initWorkspace = function(name, description, purpose, owner, callback) {
+    workspaceSchema.statics.initWorkspace = function(name, description, purpose, owner) {
         if (!name) {
             name = "Unnamed";
         }
@@ -78,7 +78,7 @@ module.exports = function(conn) {
               { name:'Finances', capabilities : []}
             ]
         });
-        wkspc.save(callback);
+        return wkspc.save();
     };
 
     workspaceSchema.statics.getAvailableSubmapsForMap = function(mapID, owner, success_callback, accessDenied) {
@@ -122,67 +122,41 @@ module.exports = function(conn) {
         // step one - check access to the submap
         WardleyMap.findOne({
             _id: submapID
-        }).exec(function(err, result) {
-            if (err) {
-                return accessDenied(err);
-            }
-            if (!result) {
-                return accessDenied();
-            }
-            var workspaceID = result.workspace;
-            result.verifyAccess(user, function() {
-                // at this point we know we have access to the submap and workspace,
-                // so it is time to query workspace for all nodes that reference this submap
-                require('./node-schema')(conn).findSubmapUsagesInWorkspace(submapID, workspaceID, success_callback, accessDenied);
-            }, accessDenied);
+        }).exec()
+        .then(function(map){
+          return map.verifyAccess(user);
+        })
+        .fail(function(e){
+          return accessDenied(e);
+        })
+        .done(function(map){
+          require('./node-schema')(conn).findSubmapUsagesInWorkspace(submapID, map.workspace, success_callback, accessDenied);
         });
     };
 
-    workspaceSchema.statics.createMap = function(workspaceID, editor, user, purpose, responsiblePerson, success_callback, error_callback) {
+    workspaceSchema.methods.createMap = function(editor, user, purpose, responsiblePerson) {
         var WardleyMap = require('./map-schema')(conn);
         var Workspace = require('./workspace-schema')(conn);
 
-        if (!workspaceID) {
-            return error_callback();
-        }
         if (!user) {
             user = "your competitor";
         }
         if (!purpose) {
             purpose = "be busy with nothing";
         }
-        Workspace.findOne({ //this is check that the person logged in can actually write to workspace
-            _id: workspaceID,
-            owner: editor,
-            archived: false
-        }, function(err, result) {
-            if (err) {
-                return error_callback(err);
-            }
-            if (!result) {
-                return error_callback();
-            }
-
-            var wm = new WardleyMap({
-                user: user,
-                purpose: purpose,
-                workspace: result._id,
-                archived: false,
-                responsiblePerson : responsiblePerson
+        var newId = new ObjectId();
+        this.maps.push(newId);
+        return this.save()
+            .then(function(workspace) {
+                return new WardleyMap({
+                    user: user,
+                    purpose: purpose,
+                    workspace: workspace._id,
+                    archived: false,
+                    responsiblePerson: responsiblePerson,
+                    _id: newId
+                }).save();
             });
-            wm.save(function(err, savedMap) {
-                if (err) {
-                    return error_callback(err);
-                }
-                result.maps.push(savedMap._id);
-                result.save(function(err, saveResult) {
-                    if (err) {
-                        return error_callback(err);
-                    }
-                    success_callback(savedMap.toObject());
-                });
-            });
-        });
     };
 
     workspaceSchema.methods.findUnprocessedNodes = function(){
@@ -219,7 +193,6 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.findProcessedNodes = function() {
-      console.log('populating...');
         return this
             .execPopulate({
               path : 'capabilityCategories.capabilities.aliases.nodes',
@@ -347,6 +320,6 @@ module.exports = function(conn) {
         });
     };
 
-    workspace = conn.model('Workspace', workspaceSchema);
-    return workspace;
+    workspace[conn] = conn.model('Workspace', workspaceSchema);
+    return workspace[conn];
 };

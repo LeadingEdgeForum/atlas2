@@ -19,12 +19,12 @@ var _ = require('underscore');
 var q = require('q');
 
 
-var wardleyMap = null;
+var wardleyMap = {};
 
 module.exports = function(conn){
 
-    if(wardleyMap){
-        return wardleyMap;
+    if(wardleyMap[conn]){
+        return wardleyMap[conn];
     }
     /**
      * see capability-category-schema for explanations.
@@ -52,12 +52,12 @@ module.exports = function(conn){
         responsiblePerson : Schema.Types.String
     });
 
-    _MapSchema.methods.makeComment = function(data, callback /**err, map*/ ) {
+    _MapSchema.methods.makeComment = function(data) {
         this.comments.push(data);
-        this.save(callback);
+        return this.save();
     };
 
-    _MapSchema.methods.updateComment = function(seq, dataPos, callback /**err, map*/ ) {
+    _MapSchema.methods.updateComment = function(seq, dataPos) {
         for(var i = 0; i < this.comments.length; i++){
           if('' + this.comments[i]._id === seq){
             if(dataPos.x && dataPos.y){
@@ -69,10 +69,10 @@ module.exports = function(conn){
             }
           }
         }
-        this.save(callback);
+        return this.save();
     };
 
-    _MapSchema.methods.deleteComment = function(seq, callback /**err, node*/ ) {
+    _MapSchema.methods.deleteComment = function(seq) {
         for(var i = 0; i < this.comments.length; i++){
           if('' + this.comments[i]._id === seq){
             this.comments.splice(i,1);
@@ -80,141 +80,114 @@ module.exports = function(conn){
           }
         }
         this.markModified('comments');
-        this.save(callback);
+        return this.save();
     };
 
-    _MapSchema.methods.verifyAccess = function(user, callback_granted, callback_denied) {
+    _MapSchema.methods.verifyAccess = function(user) {
         var Workspace = require('./workspace-schema')(conn);
         var mapID = this._id;
-        Workspace.findOne({
+        var _this = this;
+        return Workspace.findOne({
             owner: user,
             maps: mapID
-        }).exec(function(err, result) {
-            if(err){
-                return callback_denied(err);
-            }
-            if(!result){
-                return callback_denied();
-            }
-            return callback_granted();
+        }).exec().then(function(workspace){
+          if(workspace){
+            return _this; // if we found workspace, then we have access to the map
+          }
+          throw new Error('User ' + user + ' has no access to map' + mapID);
         });
     };
 
-    _MapSchema.methods.newBody = function(body, callback_granted, callback_denied) {
+    _MapSchema.methods.newBody = function(body) {
       _.extend(this, body);
       _.extend(this.archived, false);
 
-      this.save(function(err2, result2) {
-        if (err2) {
-          return callback_denied(err2);
-        }
-        return callback_granted(result2);
-      });
+      return this.save();
     };
 
-    _MapSchema.methods.addNode = function(name, x, y, type, workspace, parentMap, description, inertia, responsiblePerson, callback_success, callback_error) {
-        var wardleyMapObject = this;
+    _MapSchema.methods.addNode = function(name, x, y, type, workspace, description, inertia, responsiblePerson) {
         var Node = require('./node-schema')(conn);
-        var newNode = new Node({
+
+        var _this = this;
+
+        return new Node({
             name: name,
             x: x,
             y: y,
             type: type,
             workspace: workspace,
-            parentMap: parentMap,
+            parentMap: _this._id,
             description : description,
             inertia : inertia,
-            responsiblePerson : responsiblePerson
-        });
-        newNode.save(function(errNewNode, resultNewNode){
-          if(errNewNode){
-            return callback_error(errNewNode);
-          }
-          wardleyMapObject.nodes.push(resultNewNode._id);
-          wardleyMapObject.save(function(errModifiedMap, resultModifiedMap){
-            if(errModifiedMap){
-              return callback_error(errModifiedMap);
-            }
-            var WardleyMap = require('./map-schema')(conn);
-            WardleyMap.populate(
-              resultModifiedMap,
-              {path:'nodes', model: 'Node'},
-              function(popError, popResult){
-                if(popError){
-                  return callback_error(popError);
-                }
-                callback_success(popResult);
-              });
-            });
+            responsiblePerson : responsiblePerson,
+        }).save()
+        .then(function(node){
+          _this.nodes.push(node._id);
+          return _this.save();
+        })
+        .then(function(savedWardleyMap){
+          return savedWardleyMap.populate({path:'nodes', model: 'Node'}).execPopulate();
         });
     };
 
-    _MapSchema.methods.changeNode = function(name, x, y, type,desiredNodeId, description, inertia, responsiblePerson, callback_success, callback_error) {
-        var wardleyMapObject = this;
+    _MapSchema.methods.changeNode = function(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson) {
+        var _this = this;
         var Node = require('./node-schema')(conn);
-        Node.findOne({_id:desiredNodeId}).exec(function(err, node){
-          if (err) {
-            return callback_error(err);
-          }
-          if (!node) {
-            return callback_error();
-          }
-
-          if (name) {
-            node.name = name;
-          }
-          if (x) {
-            node.x = x;
-          }
-          if (y) {
-            node.y = y;
-          }
-          if (type) {
-            node.type = type;
-          }
-          if(description){
-            node.description = description;
-          }
-          if(inertia){
-            node.inertia = inertia;
-          }
-          if(responsiblePerson){
-            node.responsiblePerson = responsiblePerson;
-          }
-          node.save(function(errNewNode, resultNewNode){
-            if(errNewNode){
-              return callback_error(errNewNode);
-            }
-            var WardleyMap = require('./map-schema')(conn);
-            WardleyMap.populate(
-              wardleyMapObject,
-              {path:'nodes', model: 'Node'},
-              function(popError, popResult){
-                if(popError){
-                  return callback_error(popError);
+        return Node.findOne({
+                _id: desiredNodeId
+            }).exec()
+            .then(function(node) {
+                if (name) {
+                    node.name = name;
                 }
-                callback_success(popResult);
-              });
-          });
-
-        });
+                if (x) {
+                    node.x = x;
+                }
+                if (y) {
+                    node.y = y;
+                }
+                if (type) {
+                    node.type = type;
+                }
+                if (description) {
+                    node.description = description;
+                }
+                if (inertia) {
+                    node.inertia = inertia;
+                }
+                if (responsiblePerson) {
+                    node.responsiblePerson = responsiblePerson;
+                }
+                return q.allSettled([node.save(), _this.populate({
+                    path: 'nodes',
+                    model: 'Node'
+                }).execPopulate()]);
+            });
     };
 
-    _MapSchema.methods.formJSON = function(cb_success, cb_error) {
+
+    _MapSchema.methods.removeNode = function(nodeID) {
+        var _this = this;
+        var Node = require('./node-schema')(conn);
+        return Node.findOne({
+                _id: nodeID
+            }).exec()
+            .then(function(node) {
+                return q.allSettled([node.remove(), _this.populate({
+                    path: 'nodes',
+                    model: 'Node'
+                }).execPopulate()]);
+            });
+    };
+
+    _MapSchema.methods.formJSON = function() {
         var WardleyMap = require('./map-schema')(conn);
-        WardleyMap
+        return WardleyMap
             .findOne({
                 _id: this._id
             })
             .populate('nodes')
-            .exec(function(err, mapresult) {
-                if (err) {
-                    return cb_error(err);
-                }
-                cb_success({
-                    map: mapresult.toObject()
-                });
-            });
+            .exec();
     };
 
     _MapSchema.pre('save', function(next) {
@@ -256,7 +229,6 @@ module.exports = function(conn){
                 });
         });
     });
-
-    wardleyMap = conn.model('WardleyMap', _MapSchema);
-    return wardleyMap;
+    wardleyMap[conn] = conn.model('WardleyMap', _MapSchema);
+    return wardleyMap[conn];
 };

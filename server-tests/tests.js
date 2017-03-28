@@ -371,7 +371,6 @@ describe('Workspaces & maps', function() {
 
     describe('Submaps', function() {
 
-        // var authorizationHeader = 'Basic ' + new Buffer(stormpathId + ":" + stormpathKey).toString("base64");
         var workspaceID;
         var mapID;
         var nodeID = [];
@@ -476,7 +475,7 @@ describe('Workspaces & maps', function() {
                 '/outgoingDependency/' + nodeID[1])
               .set('Content-type', 'application/json')
               .set('Accept', 'application/json')
-              .expect(400)
+              .expect(200)
               .expect(function(res) {
                   res.body.map.nodes[0].outboundDependencies.length.should.equal(1);
                   res.body.map.nodes[1].inboundDependencies.length.should.equal(1);
