@@ -125,49 +125,49 @@ module.exports = function(authGuardian, mongooseConnection) {
                 archived: false
             })
             .populate('nodes')
-            .exec(function(err, result) {
-                if (!result) {
-                    return res.status(404);
-                }
-                if (err) {
-                    return res.status(500);
-                }
-                result.verifyAccess(owner, function() {
-                    var opts = {
-                        nodes: result.nodes,
-                        comments: result.comments,
-                        mapID: mapID,
-                        workspaceID: result.workspaceID,
-                        background : true,
-                        coords : {
-                          size : {
-                            width : 1280,
+            .exec()
+            .then(function(map) {
+                return map.verifyAccess(owner);
+            })
+            .then(function(map) {
+                var opts = {
+                    nodes: map.nodes,
+                    comments: map.comments,
+                    mapID: mapID,
+                    workspaceID: map.workspace,
+                    background: true,
+                    coords: {
+                        size: {
+                            width: 1280,
                             height: 800
-                          }
                         }
-                    };
+                    }
+                };
 
-                    var pageText = renderFullPage(opts);
+                var pageText = renderFullPage(opts);
 
-                    pool.use(function(instance){
-                        instance.createPage().then(function(page) {
+                pool.use(function(instance) {
+                    instance.createPage().then(function(page) {
 
-                            page.property('viewportSize', opts.coords.size);
+                        page.property('viewportSize', opts.coords.size);
 
-                            page.property('content',pageText);
+                        page.property('content', pageText);
 
-                            page.renderBase64('png').then(function(content64) {
-                                res.writeHead(200, {
-                                    'Content-Type': 'image/png'
-                                });
-                                res.end(atob(content64), 'binary');
-                                page.close();
+                        page.renderBase64('png').then(function(content64) {
+                            res.writeHead(200, {
+                                'Content-Type': 'image/png'
                             });
-
+                            res.end(atob(content64), 'binary');
+                            page.close();
                         });
+
                     });
-                }, defaultAccessDenied.bind(null, res));
-            });
+                });
+            })
+            .fail(function(e) {
+                defaultAccessDenied(res, e);
+            })
+            .done();
     });
 
     return module;
