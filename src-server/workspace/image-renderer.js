@@ -170,5 +170,11 @@ module.exports = function(authGuardian, mongooseConnection) {
             .done();
     });
 
+    module.shutdown = function(){
+        pool.drain().then(function(){
+            pool.clear();
+        });
+    };
+
     return module;
 };

@@ -123,7 +123,14 @@ app.get('/img/LEF_logo.png', function(req, res) {
 userProvider.installUserProvider(app, config, conn);
 
 app.use('/api', require('./src-server/workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
-app.use('/img', require('./src-server/workspace/image-renderer.js')(userProvider.getGuard(), conn).router);
+
+var imageRendererModule = require('./src-server/workspace/image-renderer.js')(userProvider.getGuard(), conn);
+app.use('/img', imageRendererModule.router);
+process.on('SIGINT', function(){
+    console.log('shutting down');
+    imageRendererModule.shutdown();
+    process.exit();
+});
 
 if (config.userProvider.type === 'stormpath') {
   app.get('*', function(req, res) {
