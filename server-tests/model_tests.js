@@ -32,6 +32,7 @@ var Node = require('../src-server/workspace/model/node-schema')(mongooseConnecti
 var currentWorkspace = null;
 var currentMap1 = null;
 var currentMap2 = null;
+var emptySubmap = null;
 
 describe('Usage tests', function() {
 
@@ -42,11 +43,8 @@ describe('Usage tests', function() {
             .then(function(workspace) {
                 currentWorkspace = workspace;
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
@@ -66,11 +64,8 @@ describe('Usage tests', function() {
                 currentMap1 = map;
                 should.exist(currentMap1);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
@@ -80,28 +75,21 @@ describe('Usage tests', function() {
                 currentMap2 = map;
                 should.exist(currentMap2);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
     it("add 1 node to map 1", function(done) {
         currentMap1.addNode("name1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner)
             .then(function(map) {
-              console.log('what is the map', map);
                 currentMap1 = map;
                 should.exist(currentMap1);
                 should.exist(currentMap1.nodes[0]);
                 should.exist(currentMap1.nodes[0]._id);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
@@ -113,11 +101,8 @@ describe('Usage tests', function() {
                 should.exist(currentMap1.nodes[1]);
                 should.exist(currentMap1.nodes[1]._id);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
@@ -128,12 +113,10 @@ describe('Usage tests', function() {
                 should.exist(currentMap2);
                 should.exist(currentMap2.nodes[0]);
                 should.exist(currentMap2.nodes[0]._id);
+                currentMap2.nodes.length.should.be.equal(1);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
@@ -144,12 +127,10 @@ describe('Usage tests', function() {
                 should.exist(currentMap2);
                 should.exist(currentMap2.nodes[1]);
                 should.exist(currentMap2.nodes[1]._id);
+                currentMap2.nodes.length.should.be.equal(2);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
@@ -165,14 +146,102 @@ describe('Usage tests', function() {
                 should.exist(currentMap2.nodes[1]._id);
                 should.exist(currentMap2.nodes[1].name);
                 currentMap2.nodes[1].name.should.equal("2");
+                currentMap2.nodes.length.should.be.equal(2);
             })
-            .fail(function(e) {
+            .done(function(v, e) {
                 done(e);
-            })
-            .done(function() {
-                done();
             });
     });
 
+    it("add 3 node to map 2", function(done) {
+        currentMap2.addNode("name3", 0.7, 0.7, "INTERNAL", currentWorkspace._id, "description", 0, owner)
+            .then(function(map) {
+                currentMap2 = map;
+                should.exist(currentMap2);
+                should.exist(currentMap2.nodes[2]);
+                should.exist(currentMap2.nodes[2]._id);
+                currentMap2.nodes.length.should.be.equal(3);
+            })
+            .done(function(v, e) {
+                done(e);
+            });
+    });
+
+    it("check available submaps", function(done) {
+        currentMap2.getAvailableSubmaps()
+            .then(function(result) {
+              result.length.should.be.equal(0);
+            })
+            .done(function(v, e) {
+                done(e);
+            });
+    });
+
+
+    it("create a submap from map 2", function(done) {
+        var params = {
+            submapName: 'submapName',
+            coords: {
+                x: 0.1,
+                y: 0.1
+            },
+            owner: owner,
+            listOfNodesToSubmap: [],
+            listOfCommentsToSubmap: []
+        };
+        currentMap2.populate('workspace').execPopulate()
+            .then(function(populated) {
+                return populated.formASubmap(params);
+            })
+            .then(function(result) {
+                should.exist(result);
+                should.exist(result.nodes);
+                result.nodes.length.should.be.equal(4);
+                should.exist(result._id);
+                result._id.should.be.equal(currentMap2._id);
+            })
+            .done(function(v, e) {
+                done(e);
+            });
+    });
+
+    it("check available submaps after empty submap was created from map 2 point of view", function(done) {
+        currentMap2.getAvailableSubmaps()
+            .then(function(result) {
+              result.length.should.be.equal(1);
+              result[0].name.should.equal('submapName');
+              emptySubmap = result[0];
+            })
+            .done(function(v, e) {
+                done(e);
+            });
+    });
+
+
+    it("check available submaps after empty submap was created from map 1 point of view", function(done) {
+        currentMap1.getAvailableSubmaps()
+            .then(function(result) {
+              result.length.should.be.equal(1);
+              result[0].name.should.equal('submapName');
+            })
+            .done(function(v, e) {
+                done(e);
+            });
+    });
+
+    it("check empty submap usage", function(done) {
+        emptySubmap.getSubmapUsage()
+            .then(function(result) {
+                result.length.should.be.equal(1);
+                should.exist(result[0]._id);
+                // probably there is some good explanation of why
+                // currentMap2._id.should.be.equal(result[0]._id);
+                // does not work
+                ('' + currentMap2._id).should.be.equal('' + result[0]._id);
+            })
+            .done(function(v, e) {
+                done(e);
+            });
+    });
 
 });

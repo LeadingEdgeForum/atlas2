@@ -81,59 +81,6 @@ module.exports = function(conn) {
         return wkspc.save();
     };
 
-    workspaceSchema.statics.getAvailableSubmapsForMap = function(mapID, owner, success_callback, accessDenied) {
-        var Workspace = require('./workspace-schema')(conn);
-        Workspace.findOne({
-            owner: owner,
-            maps: mapID
-        }).exec(function(err, result) {
-            if (err) {
-                return accessDenied(err);
-            }
-            if (!result) {
-                return accessDenied();
-            }
-            var WardleyMap = require('./map-schema')(conn);
-            // so we have a map that has a workspaceID, now it is time to look for all the maps within the workspace that has submap flag
-            // we obviously miss a case where the map is already referenced, but let's leave it for future
-            WardleyMap.find({
-              workspace : result._id,
-              archived: false,
-              isSubmap : true
-            }).exec(function(err, results){
-              if(err){
-                return accessDenied(err);
-              }
-              //handle the results - repack them into something useful.
-              // no need to verify access to individual maps as we have confirmed the access to the workspace
-              var listOfAvailableSubmaps = [];
-              for(var i = 0; i < results.length; i++){
-                listOfAvailableSubmaps.push({_id:results[i]._id, name:results[i].name});
-              }
-              success_callback(listOfAvailableSubmaps);
-            });
-        });
-
-    };
-
-
-    workspaceSchema.statics.getSubmapUsage = function(submapID, user, success_callback, accessDenied) {
-        var WardleyMap = require('./map-schema')(conn);
-        // step one - check access to the submap
-        WardleyMap.findOne({
-            _id: submapID
-        }).exec()
-        .then(function(map){
-          return map.verifyAccess(user);
-        })
-        .fail(function(e){
-          return accessDenied(e);
-        })
-        .done(function(map){
-          require('./node-schema')(conn).findSubmapUsagesInWorkspace(submapID, map.workspace, success_callback, accessDenied);
-        });
-    };
-
     workspaceSchema.methods.createMap = function(editor, user, purpose, responsiblePerson) {
         var WardleyMap = require('./map-schema')(conn);
         var Workspace = require('./workspace-schema')(conn);

@@ -246,36 +246,6 @@ module.exports = function(conn){
             });
     });
 
-    NodeSchema.statics.findSubmapUsagesInWorkspace = function(submapID, workspaceID, success_callback, failure_callback) {
-        var Node = require('./node-schema')(conn);
-        Node.find({
-            type: 'SUBMAP',
-            submapID: submapID
-        }).select('parentMap').exec(function(e, r) {
-            if (e) {
-                return failure_callback(e);
-            }
-            var ids = [];
-            r.forEach(item => ids.push(item.parentMap));
-            var WardleyMap = require('./map-schema')(conn);
-            WardleyMap
-                .find({
-                    archived: false,
-                    _id: {
-                        $in: ids
-                    },
-                    workspace : workspaceID
-                })
-                .populate('nodes')
-                .select('name user purpose _id').exec(function(err, availableMaps) {
-                    if (err) {
-                        return failure_callback(err);
-                    }
-                    return success_callback(availableMaps);
-                });
-        });
-    };
-
     node[conn] = conn.model('Node', NodeSchema);
 
     return node[conn];

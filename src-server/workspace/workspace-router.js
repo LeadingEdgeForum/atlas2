@@ -26,7 +26,7 @@ var q = require('q');
 var _async = require('async');
 
 var log4js = require('log4js');
-submapLogger.setLevel(log4js.levels.WARN);
+// submapLogger.setLevel(log4js.levels.WARN);
 
 
 var getUserIdFromReq = function(req) {
@@ -37,42 +37,6 @@ var getUserIdFromReq = function(req) {
   console.error('user.email not present');
   return null;
 };
-
-
-var calculateMean = function(list, field){
-  // submapLogger.trace('multisave', list, field);
-  if(!list || list.length === 0){
-    return 0.5;
-  }
-  var mean = 0;
-  for(var i = 0; i < list.length; i++){
-    mean += list[i][field];
-  }
-  return mean / list.length;
-};
-
-var removeDuplicatesDependenciesFromList = function(dependencies){
-  var mySet = new Set();
-  for(var i = 0; i < dependencies.length; i++){
-    mySet.add(''+dependencies[i]);
-  }
-  for(var j = dependencies.length - 1; j >= 0; j--){
-    if(mySet.has(''+dependencies[j])){
-      mySet.delete(''+dependencies[j]);
-    } else {
-      dependencies.splice(j,1);
-      j--;
-    }
-  }
-};
-
-var removeDuplicatesDependencies = function(nodes){
-    for(var i = 0 ; i < nodes.length; i++){
-        removeDuplicatesDependenciesFromList(nodes[i].outboundDependencies);
-        removeDuplicatesDependenciesFromList(nodes[i].inboundDependencies);
-    }
-};
-
 
 module.exports = function(authGuardian, mongooseConnection) {
   var WardleyMap = require('./model/map-schema')(mongooseConnection);
@@ -201,19 +165,57 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      Workspace.getAvailableSubmapsForMap(req.params.mapID, owner, function(listOfAvailableSubmaps) {
-          res.json({
-              listOfAvailableSubmaps: listOfAvailableSubmaps
+      WardleyMap.findOne({
+              _id: req.params.mapID,
+              archived: false
+          })
+          .exec()
+          .then(function(result) {
+              return result.verifyAccess(getUserIdFromReq(req));
+          })
+          .then(function(result) {
+              return result.getAvailableSubmaps();
+          })
+          .then(function(listOfSubmaps) {
+              var listOfAvailableSubmaps = [];
+              for (var i = 0; i < listOfSubmaps.length; i++) {
+                  listOfAvailableSubmaps.push({
+                      _id: listOfSubmaps[i]._id,
+                      name: listOfSubmaps[i].name
+                  });
+              }
+              return listOfAvailableSubmaps;
+          })
+          .fail(function(e) {
+              defaultAccessDenied(res, e);
+          })
+          .done(function(listOfAvailableSubmaps) {
+              res.json({
+                  listOfAvailableSubmaps: listOfAvailableSubmaps
+              });
           });
-      }, defaultAccessDenied.bind(res));
   });
 
   module.router.get('/submap/:submapID/usage', authGuardian.authenticationRequired, function(req, res){
     var owner = getUserIdFromReq(req);
-    Workspace.getSubmapUsage(req.params.submapID, owner, function(availableMaps) {
-        res.json(availableMaps);
-    }, defaultAccessDenied.bind(res));
+
+    WardleyMap.findOne({
+            _id: req.params.submapID,
+            archived: false
+        })
+        .exec()
+        .then(function(result) {
+            return result.verifyAccess(getUserIdFromReq(req));
+        })
+        .then(function(result) {
+            return result.getSubmapUsage();
+        })
+        .fail(function(e) {
+            defaultAccessDenied(res, e);
+        })
+        .done(function(listOfMaps) {
+            res.json(listOfMaps);
+        });
   });
 
   module.router.put('/map/:mapID/submap/:submapID', authGuardian.authenticationRequired, function(req, res) {
@@ -270,153 +272,47 @@ module.exports = function(authGuardian, mongooseConnection) {
 });
 
   module.router.put('/map/:mapID/submap', authGuardian.authenticationRequired, function(req, res) {
-    var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
-    var listOfCommentsToSubmap = req.body.listOfCommentsToSubmap ? req.body.listOfCommentsToSubmap : [];
-    var submapName = req.body.name;
-    var coords = req.body.coords;
-    var responsiblePerson = req.body.responsiblePerson;
+      var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
+      var listOfCommentsToSubmap = req.body.listOfCommentsToSubmap ? req.body.listOfCommentsToSubmap : [];
+      var submapName = req.body.name;
+      var coords = req.body.coords;
+      var responsiblePerson = req.body.responsiblePerson;
 
-    var owner = getUserIdFromReq(req);
+      var owner = getUserIdFromReq(req);
 
-    submapLogger.trace({
-        submapName: submapName,
-        coords: coords,
-        owner: owner,
-        listOfNodesToSubmap: listOfNodesToSubmap,
-        listOfCommentsToSubmap: listOfCommentsToSubmap
-    });
+      var params = {
+          submapName: submapName,
+          coords: coords,
+          owner: owner,
+          listOfNodesToSubmap: listOfNodesToSubmap,
+          listOfCommentsToSubmap: listOfCommentsToSubmap
+      };
 
-    WardleyMap.findOne({
-          _id: req.params.mapID,
-          archived: false})
-      .populate('nodes workspace')
-      .exec()
-      .then(function(map){
-        return map.verifyAccess(owner);
-      })
-      .then(function(map){
-        //create structures
-        var submapID = new ObjectId();
-        var submap = new WardleyMap({
-          _id : submapID,
-          name      : submapName,
-          isSubmap  : true,
-          workspace : map.workspace,
-          archived  : false,
-          responsiblePerson : responsiblePerson
-        });
+      submapLogger.trace(params);
 
-        var submapNodeID = new ObjectId();
-        var submapNode = new Node({
-            _id: submapNodeID,
-            name: submapName,
-            workspace: map.workspace,
-            parentMap: map,
-            type: 'SUBMAP',
-            submapID: submapID
-        });
-
-        map.workspace.maps.push(submap);
-        map.nodes.push(submapNode);
-
-        // move comments
-        for (var ii = map.comments.length - 1; ii > -1; ii--) {
-            var toBeTransfered = false;
-            for (var jj = 0; jj < listOfCommentsToSubmap.length; jj++) {
-                if (listOfCommentsToSubmap[jj] === '' + map.comments[ii]._id) {
-                    toBeTransfered = true;
-                }
-            }
-            if (toBeTransfered) {
-                var commentToTransfer = map.comments.splice(ii, 1)[0];
-                submap.comments.push(commentToTransfer);
-            }
-        }
-
-
-        // move nodes and fix connections
-        var nodesToSave = [];
-        var transferredNodes = [];
-
-        for(var i = map.nodes.length -1; i>= 0; i--){
-          var index = listOfNodesToSubmap.indexOf(''+map.nodes[i]._id);
-          if(index === -1){ // node not on the list to transfer
-            var notTransferredNode = map.nodes[i];
-            // if a node from the parent map depends on a node just transfered to the submap
-            // it is necessary to replace that dependency
-            for(var j = notTransferredNode.outboundDependencies.length - 1; j >= 0; j--){
-              if(listOfNodesToSubmap.indexOf(''+ notTransferredNode.outboundDependencies[j]) > -1){
-                notTransferredNode.outboundDependencies.set(j,submapNode);
-                submapLogger.trace('fixing outboundDependencies for nonTransfer');
-                nodesToSave.push(notTransferredNode);
-              }
-            }
-
-            // if a transferred node depends on non-transfered
-            // make the submap node depend on non-transfered
-            for(var jjj = notTransferredNode.inboundDependencies.length - 1; jjj >= 0; jjj--){
-              if(listOfNodesToSubmap.indexOf(''+ notTransferredNode.inboundDependencies[jjj]) > -1){
-                notTransferredNode.inboundDependencies.set(jjj,submapNode);
-                submapLogger.trace('fixing inboundDependencies for nonTransfer');
-                nodesToSave.push(notTransferredNode);
-              }
-            }
-          } else {
-
-            var transferredNode = map.nodes.splice(i, 1)[0];
-            transferredNode.parentMap = submap;  // transfer the node
-            submap.nodes.push(transferredNode);
-            transferredNodes.push(transferredNode);
-            submapLogger.trace('transfering' ,transferredNode._id);
-
-            // if a transfered node depends on a non-transferred node
-            for(var k = transferredNode.outboundDependencies.length - 1; k >= 0; k--){
-              if(listOfNodesToSubmap.indexOf(''+ transferredNode.outboundDependencies[k]) === -1){
-                var dependencyAlreadyEstablished = false;
-                submapNode.outboundDependencies.push(transferredNode.outboundDependencies[k]); // the submap node will replace the transfered node
-                transferredNode.outboundDependencies.splice(k,1); // and the node will loose that connection
-                submapLogger.trace('fixing outboundDependencies for transfer');
-              }
-            }
-
-            // if a transfered node is required by non-transfered node
-            for(var kk = transferredNode.inboundDependencies.length - 1; kk >= 0; kk--){
-              if(listOfNodesToSubmap.indexOf(''+ transferredNode.inboundDependencies[kk]) === -1){
-                submapNode.inboundDependencies.push(transferredNode.inboundDependencies[kk]);
-                transferredNode.inboundDependencies.splice(kk,1);
-                submapLogger.trace('fixing inboundDependencies for transfer');
-              }
-            }
-          }
-        }
-
-        // calculate position of the submap node
-        submapNode.x = coords ? coords.x : calculateMean(transferredNodes, 'x');
-        submapNode.y = coords ? coords.y : calculateMean(transferredNodes, 'y');
-        submapLogger.trace('coords calculated', submapNode.x, submapNode.y);
-
-        removeDuplicatesDependencies(nodesToSave);
-
-        var totalNodesToSave = nodesToSave.concat(transferredNodes);
-        var promises = [];
-        for(var z = 0; z < totalNodesToSave.length;z++){
-          promises.push(totalNodesToSave[z].save());
-        }
-        promises.push(submapNode.save());
-        promises.push(submap.save());
-        promises.push(map.workspace.save());
-        promises.push(map.save());
-        return q.allSettled(promises);
-      })
-      .then(function(results){
-        // last element in the array is map
-        return results[results.length-1].value.formJSON();
-      })
-      .fail(function(e){
-        return defaultAccessDenied(res,e);
-      }).done(function(json){
-        res.json({map:json});
-      });
+      WardleyMap.findOne({
+              _id: req.params.mapID,
+              archived: false
+          })
+          .populate('nodes')
+          .populate('workspace')
+          .exec()
+          .then(function(map) {
+              return map.verifyAccess(owner);
+          })
+          .then(function(map) {
+              return map.formASubmap(params);
+          })
+          .then(function(map) {
+              return map.formJSON();
+          })
+          .fail(function(e) {
+              return defaultAccessDenied(res, e);
+          }).done(function(json) {
+              res.json({
+                  map: json
+              });
+          });
   });
 
   module.router.put('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
