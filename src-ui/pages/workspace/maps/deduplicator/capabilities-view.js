@@ -124,7 +124,7 @@ export default class CapabilitiesView extends React.Component {
     style.top = "10px";
     var workspaceID = this.props.workspace._id;
     var _popover = <Popover id={node._id} title="Component details">
-            <UsageInfo node={node} workspaceID={workspaceID}/>
+            <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={true} alternativeNames={false}/>
         </Popover>;
     return (
       <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
@@ -176,10 +176,10 @@ export default class CapabilitiesView extends React.Component {
       );
 
       category.capabilities.forEach(function(capability){
-        console.log('rendering',capability );
+        console.log('rendering capability',capability );
         var _itemsToDisplay = [];
         capability.aliases.forEach(function(alias){
-          console.log('rendering',alias );
+          console.log('rendering alias',alias );
             _itemsToDisplay.push(
               _this.renderSingleNode(alias.nodes[0])
             );
