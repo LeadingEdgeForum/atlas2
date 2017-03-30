@@ -16,7 +16,7 @@ import {
 } from 'react-bootstrap';
 import MapLink from './maplink.js';
 
-var WMPopover = React.createClass({
+var UsageInfo = React.createClass({
   render() {
     var node = this.props.node;
     var capability= this.state ? this.state.capability : null;
@@ -53,4 +53,4 @@ var WMPopover = React.createClass({
   }
 });
 
-module.exports = WMPopover;
+module.exports = UsageInfo;

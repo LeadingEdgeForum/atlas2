@@ -21,7 +21,7 @@ var _ = require('underscore');
 var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from './../../workspace-store';
 import {calculateMapName} from './../map-name-calculator';
-var WMPopover = require('../deduplicator/wm-popover');
+var UsageInfo = require('../deduplicator/usage-info');
 
 //TODO: validation of the workspace dialog
 
@@ -91,7 +91,7 @@ var SubmapReferencesDialog = React.createClass({
               </div>
               Additionally:
               <div>
-              <WMPopover node={node} workspaceID={workspaceID}/>
+              <UsageInfo node={node} workspaceID={workspaceID}/>
               </div>
           </Modal.Body>
           <Modal.Footer>

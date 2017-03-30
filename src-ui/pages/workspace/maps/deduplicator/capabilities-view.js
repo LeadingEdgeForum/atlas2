@@ -18,7 +18,7 @@ import _ from "underscore";
 var AssignExistingCapabilityDialog = require('./assign-existing-capability');
 import {getStyleForType} from './../editor/component-styles';
 import MapLink from './maplink.js';
-var WMPopover = require('./wm-popover');
+var UsageInfo = require('./usage-info');
 
 var acceptorStyle = {
   width: "100%",
@@ -120,7 +120,7 @@ export default class CapabilitiesView extends React.Component {
     style.top = "10px";
     var workspaceID = this.props.workspace._id;
     var _popover = <Popover id={node._id} title="Component details">
-            <WMPopover node={node} workspaceID={workspaceID}/>
+            <UsageInfo node={node} workspaceID={workspaceID}/>
         </Popover>;
     return (
       <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
