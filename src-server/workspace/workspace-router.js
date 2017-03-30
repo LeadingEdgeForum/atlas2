@@ -1101,47 +1101,16 @@ module.exports = function(authGuardian, mongooseConnection) {
               owner: owner,
               archived: false
           }) // this is not the best security check as we do not check relation between workspace & cap & node
-          .populate({
-              path: 'capabilityCategories',
-              populate: {
-                  path: 'capabilities',
-                  populate: {
-                      path: 'aliases',
-                      populate: {
-                          model: 'Node',
-                          path: 'nodes',
-                          populate: {
-                            model:'WardleyMap',
-                            path: 'parentMap'
-                          }
-                      }
-                  }
-              }
-          })
           .exec()
         .then(function(workspace){
-          if(!workspace){
-            res.status(404).json("workspace not found");
-            return null;
-          }
-
-          var capability = null;
-          for (var i = 0; i < workspace.capabilityCategories.length; i++) {
-              for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
-                  for (var k = 0; k < workspace.capabilityCategories[i].capabilities[j].aliases.length; k++) {
-                      for (var l = 0; l < workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
-                          if (nodeID.equals(workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
-                              capability = workspace.capabilityCategories[i].capabilities[j];
-                          }
-                      }
-                  }
-              }
-          }
-          return res.json({capability: capability});
+          return workspace.getNodeUsageInfo(nodeID);
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
           res.status(500).json(e);
+        })
+        .done(function(capability){
+            res.json({capability: capability});
         });
   });
 

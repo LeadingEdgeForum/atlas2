@@ -235,9 +235,38 @@ module.exports = function(conn) {
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
                 path: 'capabilityCategories.capabilities.aliases.nodes',
-                model: 'Node',
+                model: 'Node'
             }).execPopulate();
         });
+    };
+
+    workspaceSchema.methods.getNodeUsageInfo = function(nodeID) {
+        var _this = this;
+        return this.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+                populate: {
+                    model: 'WardleyMap',
+                    path: 'parentMap'
+                }
+            })
+            .execPopulate()
+            .then(function(workspace) {
+                var capability = null;
+                for (var i = 0; i < workspace.capabilityCategories.length; i++) {
+                    for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
+                        for (var k = 0; k < workspace.capabilityCategories[i].capabilities[j].aliases.length; k++) {
+                            for (var l = 0; l < workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
+                                if (nodeID.equals(workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
+                                    capability = workspace.capabilityCategories[i].capabilities[j];
+                                }
+                            }
+                        }
+                    }
+                }
+                return capability;
+            });
+
     };
 
     workspace[conn] = conn.model('Workspace', workspaceSchema);
