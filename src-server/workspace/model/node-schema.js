@@ -172,7 +172,7 @@ module.exports = function(conn){
     };
 
     NodeSchema.pre('remove', function(next) {
-        modelLogger.trace('pre remove on node');
+        modelLogger.trace('pre remove on node', this._id);
         var Node = require('./node-schema')(conn);
         var promises = [];
         var dependencyToRemove = this._id;

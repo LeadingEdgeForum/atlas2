@@ -173,7 +173,7 @@ describe('Duplication tests', function() {
         currentWorkspace.getNodeUsageInfo(maps[0].nodes[0]._id)
             .then(function(capability) {
                 should.exist(capability);
-                console.log(currentWorkspace.capabilityCategories[0].capabilities[0]._id, capability._id);
+                (currentWorkspace.capabilityCategories[0].capabilities[0]._id === capability._id).should.ok;
             })
             .done(function(v, e) {
                 done(e);
@@ -184,7 +184,8 @@ describe('Duplication tests', function() {
     it("verify removed", function(done) {
         var promises = [];
         for (var i = 0; i < maps.length; i++) {
-            promises.push(maps[i].remove());
+            maps[i].archived = true;
+            promises.push(maps[i].save());
         }
         q.all(promises).then(function() {
             return currentWorkspace.findUnprocessedNodes()

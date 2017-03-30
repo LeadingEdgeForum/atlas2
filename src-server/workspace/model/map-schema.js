@@ -388,7 +388,7 @@ module.exports = function(conn) {
     };
 
     _MapSchema.pre('save', function(next) {
-        modelLogger.trace('pre save on', this._id, this.archived, this.isSubmap);
+        modelLogger.trace('pre save on', this._id, this.archived, this.nodes.length);
         var beingArchived = this.archived;
         if (!beingArchived) {
             modelLogger.trace('not being archived', this._id, this.isSubmap);
@@ -399,10 +399,10 @@ module.exports = function(conn) {
         var Node = require('./node-schema')(conn);
         // remove all nodes (we may have components pointing out to other submaps)
         for (var i = 0; i < this.nodes.length; i++) {
-            modelLogger.trace('removing node', this.nodes[i]);
-            promises.push(Node.findOneAndRemove({
-                _id: new ObjectId(this.nodes[i])
-            }).exec());
+            promises.push(
+                Node.findById(this.nodes[i]._id || this.nodes[i]).exec().then(function(node) {
+                    return node.remove();
+                }));
         }
         // if we are not a submap, then it is the end
         if (!this.isSubmap) {
