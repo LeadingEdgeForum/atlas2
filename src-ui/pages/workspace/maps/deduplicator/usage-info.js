@@ -78,12 +78,12 @@ var UsageInfo = React.createClass({
       }
     }
     var alternativeAliasesInfo = null;
-    if(alternativeAliases.length > 0){
+    if(alternativeNames && alternativeAliases.length > 0){
       alternativeAliasesInfo = <div>Other components with similar functionalities are represented by:<ul>{alternativeAliases}</ul></div>;
     }
 
     return  (<div><div>
-        This node is also known as:<ul>
+        This node is  known as:<ul>
           {aliasLinks}</ul></div>
           {alternativeAliasesInfo}
     </div>);
