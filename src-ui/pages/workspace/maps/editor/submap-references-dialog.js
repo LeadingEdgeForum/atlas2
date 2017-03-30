@@ -4,21 +4,7 @@ var React = require('react');
 var Input = require('react-bootstrap').Input;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
-import {
-  Form,
-  FormGroup,
-  FormControl,
-  ControlLabel,
-  HelpBlock,
-  Col,
-  Radio
-} from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
 import Actions from './../../../../actions.js';
-var $ = require('jquery');
-var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from './../../workspace-store';
 import {calculateMapName} from './../map-name-calculator';
 var UsageInfo = require('../deduplicator/usage-info');
@@ -47,13 +33,13 @@ var SubmapReferencesDialog = React.createClass({
   },
   constructMessage : function(){
     if(!this.state.referencingMaps){
-      return 'Loading... please wait.'
+      return <div>Loading... please wait.</div>;
     }
     if(this.state.referencingMaps.length === 0){
-      return 'No map uses this submap';
+      return <div>Nothing else seems to be using this submap</div>;
     }
     if(this.state.referencingMaps.length === 1 && this.state.referencingMaps[0]._id === this.state.mapID){
-      return 'No other map uses this submap';
+      return <div>Nothing else seems to be using this submap</div>;
     }
     var otherMaps = [];
     for(var i = 0; i < this.state.referencingMaps.length; i++){
@@ -62,11 +48,14 @@ var SubmapReferencesDialog = React.createClass({
       } else {
         var href = '/map/' + this.state.referencingMaps[i]._id;
         var name = calculateMapName('Unknown',this.state.referencingMaps[i].user, this.state.referencingMaps[i].purpose,this.state.referencingMaps[i].name );
-        otherMaps.push(<p><a href={href}>{name}</a></p>);
+        otherMaps.push(<li><a href={href}>{name}</a></li>);
       }
     }
-    return otherMaps;
+    var message = (<div>Following maps are using this node, too:<ul>{otherMaps}</ul></div>);
+    return message;
   },
+
+
   render: function() {
     var show = this.state.open;
     if (!show) {
@@ -76,23 +65,18 @@ var SubmapReferencesDialog = React.createClass({
     var node = this.state.node;
     var workspaceID = this.state.workspaceID;
     var message = this.constructMessage();
-    console.log(node, workspaceID);
+
     return (
       <div>
         <Modal show={show} onHide={this._close} animation={false}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Other maps using submap <b>&#39;{currentName}&#39;</b>.
+              Usage info about submap <b>&#39;{currentName}&#39;</b>.
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-              <div>
               {message}
-              </div>
-              Additionally:
-              <div>
-              <UsageInfo node={node} workspaceID={workspaceID}/>
-              </div>
+              <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={false} alternativeNames={true} excludeList={this.state.referencingMaps}/>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>

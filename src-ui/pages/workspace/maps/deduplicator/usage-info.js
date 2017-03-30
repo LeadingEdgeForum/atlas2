@@ -20,9 +20,17 @@ var UsageInfo = React.createClass({
   render() {
     var node = this.props.node;
     var capability= this.state ? this.state.capability : null;
-    if(!capability){
-      return <div>No additional info :-(</div>;
+    var emptyInfo = this.props.emptyInfo;
+    var alternativeNames = this.props.alternativeNames;
+    var excludedList = this.props.excludeList ? this.props.excludeList : [];
+
+    if(!capability && emptyInfo){
+      return <div>No insights available.</div>;
     }
+    if(!capability && !emptyInfo){
+      return <span></span>;
+    }
+
     var alias = null;
     for(var i = 0; i < capability.aliases.length; i++){
       for(var j = 0; j < capability.aliases[i].nodes.length; j++){
@@ -31,16 +39,53 @@ var UsageInfo = React.createClass({
         }
       }
     }
+
     if(alias.nodes.length === 1){
       return <div>This node comes from map <MapLink mapID={alias.nodes[0].parentMap._id}/></div>;
     }
+
     var aliasLinks = [];
-    alias.nodes.forEach(function(node){
-      aliasLinks.push((<div><b>{node.name}</b> coming from <MapLink mapID={node.parentMap._id}/><br/></div>));
+    alias.nodes.forEach(function(_node){
+      var onExlucedList = false;
+      for(var i = 0; i < excludedList.length; i++){
+        if(excludedList[i]._id === _node.parentMap._id){
+          onExlucedList = true;
+        }
+      }
+      if ((_node._id !== node._id) && (!onExlucedList)) {
+          aliasLinks.push(( <li><b> {_node.name}</b>, from map <MapLink mapID={_node.parentMap._id}/><br/></li>));
+      }
     });
-    return  (<div>
-        This node is known as:<br/>
-        {aliasLinks}
+
+    var alternativeAliases = [];
+    for(var i = 0; i < capability.aliases.length; i++){
+      if(capability.aliases[i]._id !== alias._id){
+          var _alias = capability.aliases[i];
+          for(var j = 0; j < _alias.nodes.length; j++){
+            var _node = _alias.nodes[j];
+            var onExlucedList = false;
+            for(var ii = 0; ii < excludedList.length; ii++){
+              console.log('checking exclusion',excludedList[ii]._id , _node.parentMap._id);
+              if(excludedList[ii]._id === _node.parentMap._id){
+                onExlucedList = true;
+              }
+            }
+            if ((_node._id !== node._id) && (!onExlucedList)) {
+                alternativeAliases.push(( <li><b> {_node.name}</b>, from map <MapLink mapID={_node.parentMap._id}/><br/></li>));
+                break;
+            }
+          }
+      }
+    }
+    var alternativeAliasesInfo = null;
+    if(alternativeAliases.length > 0){
+      alternativeAliasesInfo = <div>Other components with similar functionalities are represented by:<ul>{alternativeAliases}</ul></div>;
+    }
+
+    return  (<div><div>
+        This node is also known as:<ul>
+          {aliasLinks}</ul></div>
+          {alternativeAliasesInfo}
     </div>);
   },
 

@@ -4,21 +4,7 @@ var React = require('react');
 var Input = require('react-bootstrap').Input;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
-import {
-  Form,
-  FormGroup,
-  FormControl,
-  ControlLabel,
-  HelpBlock,
-  Col,
-  Radio
-} from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
 import Actions from './../../../../actions.js';
-var $ = require('jquery');
-var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
 import WorkspaceStore from './../../workspace-store';
 import {calculateMapName} from './../map-name-calculator';
 var UsageInfo = require('../deduplicator/usage-info');
@@ -57,11 +43,11 @@ var ReferencesDialog = React.createClass({
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Other maps using node <b>&#39;{currentName}&#39;</b>.
+              The node <b>&#39;{currentName}&#39;</b> usage info
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-              <UsageInfo node={node} workspaceID={workspaceID}/>
+              <UsageInfo node={node} workspaceID={workspaceID} alternativeNames={true} emptyInfo={true}/>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>

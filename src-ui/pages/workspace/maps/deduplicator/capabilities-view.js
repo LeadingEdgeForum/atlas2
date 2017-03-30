@@ -114,6 +114,10 @@ export default class CapabilitiesView extends React.Component {
 
 
   renderSingleNode(node){
+    if(!node){
+      console.error('this node should not be null');
+      return null;
+    }
     var style = getStyleForType(node.type);
     style.left = node.x * 100 + '%';
     style.position = 'absolute';
