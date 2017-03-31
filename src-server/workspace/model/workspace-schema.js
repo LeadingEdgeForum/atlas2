@@ -21,6 +21,17 @@ var ObjectId = mongoose.Types.ObjectId;
  */
 var workspace = {};
 
+
+var defaultCapabilityCategories = [
+  { name:'Customer Service', capabilities : []},
+  { name:'Administrative', capabilities : []},
+  { name:'Quality', capabilities : []},
+  { name:'Operational', capabilities : []},
+  { name:'Sales and Marketing', capabilities : []},
+  { name:'Research', capabilities : []},
+  { name:'Finances', capabilities : []}
+];
+
 module.exports = function(conn) {
     if (workspace[conn]) {
         return workspace[conn];
@@ -68,15 +79,7 @@ module.exports = function(conn) {
             purpose: purpose,
             owner: [owner],
             archived: false,
-            capabilityCategories : [
-              { name:'Customer Service', capabilities : []},
-              { name:'Administrative', capabilities : []},
-              { name:'Quality', capabilities : []},
-              { name:'Operational', capabilities : []},
-              { name:'Sales and Marketing', capabilities : []},
-              { name:'Research', capabilities : []},
-              { name:'Finances', capabilities : []}
-            ]
+            capabilityCategories : defaultCapabilityCategories
         });
         return wkspc.save();
     };
@@ -140,11 +143,28 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.findProcessedNodes = function() {
-        return this
-        .populate({
-            path: 'capabilityCategories.capabilities.aliases.nodes',
-            model: 'Node',
-        }).execPopulate();
+        console.log(this.capabilityCategories);
+        var _this = this;
+        //this is a temporary mechanism that should be removed when the database is properly migrated
+        if (!this.capabilityCategories[0].name) { // rough check, no name -> needs migration
+            var Node = require('./node-schema')(conn);
+            return Node.update({
+                workspace: _this.id
+            }, {
+                processedForDuplication: true
+            }, {
+                safe: true
+            }).exec().then(function() {
+                _this.capabilityCategories = defaultCapabilityCategories;
+                return _this.save();
+            });
+        } else {
+            return this
+                .populate({
+                    path: 'capabilityCategories.capabilities.aliases.nodes',
+                    model: 'Node',
+                }).execPopulate();
+        }
     };
 
     workspaceSchema.methods.createNewCapabilityAndAliasForNode = function(categoryID, nodeID) {
