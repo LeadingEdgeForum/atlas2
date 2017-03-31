@@ -79,12 +79,17 @@ export default class Deduplicator extends React.Component {
   renderAvailableComponents(map) {
     var nodes = [];
     nodes = map.nodes.map(node =>
-      (<div data-item={node} draggable="true" style={draggableComponentStyle} onDragEnd={this.handleDragStop.bind(this, node)} onDragStart={this.handleDragStart.bind(this, node)}>
+      (<div data-item={node}
+        draggable="true"
+        style={draggableComponentStyle}
+        onDragEnd={this.handleDragStop.bind(this, node)}
+        onDragStart={this.handleDragStart.bind(this, node)}
+        key={node._id}>
         <div style={getStyleForType(node.type)}></div>
             {node.name}
          </div>
       ));
-    return (<div><h5><MapLink mapID={map._id}/></h5>{nodes}</div>);
+    return (<div key={map._id}><h5><MapLink mapID={map._id}/></h5>{nodes}</div>);
   }
 
   render() {
