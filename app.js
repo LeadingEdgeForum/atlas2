@@ -27,8 +27,8 @@ if (process.env.PRODUCTION) {
 var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
-var MongoDBConnectionURL = require('./src-server/mongodb-helper');
-var conn = mongoose.createConnection(MongoDBConnectionURL);
+var MongoDBConnection = require('./src-server/mongodb-helper');
+var conn = mongoose.createConnection(MongoDBConnection.connectionURL, MongoDBConnection.options);
 
 
 var debug = false;

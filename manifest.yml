@@ -8,7 +8,7 @@ applications:
   disk_quota: 512M
   timeout: 60
   services:
-  - mongodb-atlas2main
+  - mongo-for-atlas
   - performance-monitoring-auto
   - atlas2-stormpath-credentials
   buildpack: sdk-for-nodejs
