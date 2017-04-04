@@ -312,10 +312,15 @@ function createUserProvider(app, config, conn) {
             registerAnonymousPassportStrategy(app, passport, config.userProvider.strategy, conn);
         }
 
-        app.post('/login', passport.authenticate(config.userProvider.strategy, {
-            successRedirect: '/',
-            failureRedirect: '/login'
-        }));
+        app.post('/login', passport.authenticate(config.userProvider.strategy), function(req, res){
+          if(req.isAuthenticated()){
+            res.location('/');
+            res.json(200,{});
+          } else {
+            res.location('/login');
+            res.json(400,{"status":400,"message":"Invalid username or password."});
+          }
+        });
 
         // guard compatible with stormpath api
         guard = new function() { //jshint ignore:line
