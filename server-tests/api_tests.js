@@ -45,7 +45,7 @@ describe('Workspaces & maps', function() {
                 login: 'test1@test.test',
                 password: 'password'
             })
-            .expect(302)
+            .expect(200)
             .expect(function(res){
               if(res.headers.location !== '/'){
                 throw new Error('Login unsuccessful');

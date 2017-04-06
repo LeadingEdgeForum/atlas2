@@ -12,6 +12,7 @@ limitations under the License.*/
 
 var logger = require('./log.js').getLogger('user-provider');
 var guard = null;
+var track = require('./tracker-helper');
 
 function renderProperStormpathLoginForm(app){
   app.get('/login', function(req, res, next) {
@@ -242,6 +243,14 @@ function createUserProvider(app, config, conn) {
             },
             application: {
                 href: StormpathHelper.stormpathApplication
+            },
+            postLoginHandler: function(account, req, res, next) {
+                track(account.email,'login',account);
+                next();
+            },
+            postRegistrationHandler: function(account, req, res, next) {
+                track(account.email, 'registered', account);
+                next();
             }
         });
 
@@ -312,10 +321,15 @@ function createUserProvider(app, config, conn) {
             registerAnonymousPassportStrategy(app, passport, config.userProvider.strategy, conn);
         }
 
-        app.post('/login', passport.authenticate(config.userProvider.strategy, {
-            successRedirect: '/',
-            failureRedirect: '/login'
-        }));
+        app.post('/login', passport.authenticate(config.userProvider.strategy), function(req, res){
+          if(req.isAuthenticated()){
+            res.location('/');
+            res.json(200,{});
+          } else {
+            res.location('/login');
+            res.json(400,{"status":400,"message":"Invalid username or password."});
+          }
+        });
 
         // guard compatible with stormpath api
         guard = new function() { //jshint ignore:line

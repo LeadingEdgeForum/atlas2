@@ -26,8 +26,8 @@ var q = require('q');
 var _async = require('async');
 
 var log4js = require('log4js');
-// submapLogger.setLevel(log4js.levels.WARN);
 
+var track = require('../tracker-helper');
 
 var getUserIdFromReq = function(req) {
   if (req && req.user && req.user.email) {
@@ -120,6 +120,10 @@ module.exports = function(authGuardian, mongooseConnection) {
         })
         .done(function(workspace){
             res.json(workspace);
+            track(owner,'create_workspace',{
+              'id' : workspace._id,
+              body : req.body
+            });
         });
   });
 
@@ -388,6 +392,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               res.json({
                   map: null
               });
+              track(owner,'delete_map',{
+                'id' : req.params.mapID,
+              });
           });
   });
 
@@ -406,6 +413,9 @@ module.exports = function(authGuardian, mongooseConnection) {
             return;
           }
           res.json({workspace: null});
+          track(getUserIdFromReq(req),'delete_workspace',{
+            'id' : req.params.workspaceID,
+          });
         });
       }
     });
@@ -431,6 +441,10 @@ module.exports = function(authGuardian, mongooseConnection) {
           .done(function(result) {
               res.json({
                   map: result
+              });
+              track(editor,'create_map',{
+                'id' : result._id,
+                'body' : req.body
               });
           });
   });
@@ -467,6 +481,10 @@ module.exports = function(authGuardian, mongooseConnection) {
               res.json({
                   map: map.toObject()
               });
+              track(owner,'create_node',{
+                'map_id' : req.params.mapID,
+                'body' : req.body
+              });
           });
   });
 
@@ -500,6 +518,10 @@ module.exports = function(authGuardian, mongooseConnection) {
                   name: workspace.name,
                   purpose: workspace.purpose,
                   description: workspace.description
+              });
+              track(owner,'share_workspace',{
+                'editor' : email,
+                'workspace_id' : workspaceID
               });
           });
   });
@@ -568,6 +590,10 @@ module.exports = function(authGuardian, mongooseConnection) {
           .done(function(jsonResult) {
               res.json({
                   map: jsonResult
+              });
+              track(owner,'create_comment',{
+                'map_id' : req.params.mapID,
+                'body' : req.body
               });
           });
   });

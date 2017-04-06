@@ -24,7 +24,7 @@ var _async = require('async');
 var React = require('react');
 var ReactDom = require('react-dom');
 var fs = require('fs');
-
+var track = require('../tracker-helper');
 
 var log4js = require('log4js');
 rendererLogger.setLevel(log4js.levels.WARN);
@@ -167,7 +167,13 @@ module.exports = function(authGuardian, mongooseConnection) {
             .fail(function(e) {
                 defaultAccessDenied(res, e);
             })
-            .done();
+            .done(function(v,e){
+              track(owner,'download',{
+                'format' : 'png',
+                'type' : 'map',
+                'id' : splitMapName[0]
+              });
+            });
     });
 
     module.shutdown = function(){
