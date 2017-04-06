@@ -12,6 +12,7 @@ limitations under the License.*/
 
 var logger = require('./log.js').getLogger('user-provider');
 var guard = null;
+var track = require('./tracker-helper');
 
 function renderProperStormpathLoginForm(app){
   app.get('/login', function(req, res, next) {
@@ -242,6 +243,14 @@ function createUserProvider(app, config, conn) {
             },
             application: {
                 href: StormpathHelper.stormpathApplication
+            },
+            postLoginHandler: function(account, req, res, next) {
+                track(account.email,'login',account);
+                next();
+            },
+            postRegistrationHandler: function(account, req, res, next) {
+                track(account.email, 'registered', account);
+                next();
             }
         });
 
