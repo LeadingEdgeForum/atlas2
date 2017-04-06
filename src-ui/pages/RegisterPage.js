@@ -17,6 +17,7 @@ export default class RegisterPage extends React.Component {
             </div>
           </div>
           <RegistrationForm />
+          <Footer/>
         </div>
       </DocumentTitle>
     );

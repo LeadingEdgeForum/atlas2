@@ -4,6 +4,7 @@ import React from 'react';
 import DocumentTitle from 'react-document-title';
 
 import { LoginForm } from 'react-stormpath';
+import Footer from './footer';
 
 export default class LoginPage extends React.Component {
   render() {
@@ -17,6 +18,7 @@ export default class LoginPage extends React.Component {
             </div>
           </div>
           <LoginForm />
+          <Footer/>
         </div>
       </DocumentTitle>
     );
