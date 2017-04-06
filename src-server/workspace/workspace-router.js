@@ -122,7 +122,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             res.json(workspace);
             track(owner,'create_workspace',{
               'id' : workspace._id,
-              body : req.body
+              body : JSON.stringify(req.body)
             });
         });
   });
@@ -444,7 +444,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(editor,'create_map',{
                 'id' : result._id,
-                'body' : req.body
+                'body' : JSON.stringify(req.body)
               });
           });
   });
@@ -483,7 +483,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(owner,'create_node',{
                 'map_id' : req.params.mapID,
-                'body' : req.body
+                'body' : JSON.stringify(req.body)
               });
           });
   });
@@ -593,7 +593,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(owner,'create_comment',{
                 'map_id' : req.params.mapID,
-                'body' : req.body
+                'body' : JSON.stringify(req.body)
               });
           });
   });
