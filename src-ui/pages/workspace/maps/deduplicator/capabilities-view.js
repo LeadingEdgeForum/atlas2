@@ -124,7 +124,7 @@ export default class CapabilitiesView extends React.Component {
     style.top = "10px";
     var workspaceID = this.props.workspace._id;
     var _popover = <Popover id={node._id} title="Component details">
-            <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={true} alternativeNames={false}/>
+            <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={true} alternativeNames={false} originInfo={true}/>
         </Popover>;
     return (
       <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>

@@ -23,6 +23,7 @@ var UsageInfo = React.createClass({
     var emptyInfo = this.props.emptyInfo;
     var alternativeNames = this.props.alternativeNames;
     var excludedList = this.props.excludeList ? this.props.excludeList : [];
+    var originInfo = this.props.originInfo;
 
     if(!capability && emptyInfo){
       return <div>No insights available.</div>;
@@ -40,8 +41,17 @@ var UsageInfo = React.createClass({
       }
     }
 
-    if(alias.nodes.length === 1){
-      return <div>This node comes from map <MapLink mapID={alias.nodes[0].parentMap._id}/></div>;
+    // one alias with one node inside. this component cannot have other names nor duplications
+    if(alias.nodes.length === 1 && capability.aliases.length === 1){
+      if(emptyInfo){
+          if(originInfo){
+            return <div>This node,<b> {alias.nodes[0].name}</b>, comes from map <MapLink mapID={alias.nodes[0].parentMap._id}/></div>;
+          } else {
+            return <div>This node seems to be used only in this map/></div>;
+          }
+      } else {
+          return <span></span>;
+      }
     }
 
     var aliasLinks = [];
@@ -56,6 +66,15 @@ var UsageInfo = React.createClass({
           aliasLinks.push(( <li><b> {_node.name}</b>, from map <MapLink mapID={_node.parentMap._id}/><br/></li>));
       }
     });
+
+    var aliasLinkInfo = null;
+    if(aliasLinks.length === 0){
+      aliasLinkInfo = <div>This component does not seem to have alternative names.</div>;
+    } else {
+      aliasLinkInfo = <div>
+          This node is also known as:<ul>
+            {aliasLinks}</ul></div>
+    }
 
     var alternativeAliases = [];
     for(var i = 0; i < capability.aliases.length; i++){
@@ -82,9 +101,13 @@ var UsageInfo = React.createClass({
       alternativeAliasesInfo = <div>Other components with similar functionalities are represented by:<ul>{alternativeAliases}</ul></div>;
     }
 
-    return  (<div><div>
-        This node is  known as:<ul>
-          {aliasLinks}</ul></div>
+    var originMessage = null;
+    if (originInfo) {
+        originMessage = ( <div>This node,<b> {alias.nodes[0].name}</b>, comes from map < MapLink mapID = {alias.nodes[0].parentMap._id} /></div > );
+    };
+
+    return  (<div> {originMessage}
+          {aliasLinkInfo}
           {alternativeAliasesInfo}
     </div>);
   },
