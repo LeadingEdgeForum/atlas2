@@ -6,6 +6,7 @@ var morgan = require('morgan');
 var path = require('path');
 var express = require('express');
 var userProvider = require('./src-server/user-provider.js');
+var freshdesk = require('./src-server/freshdesk-helper');
 
 var app = express();
 var io = null;
@@ -119,6 +120,8 @@ app.get('/img/LEF_logo.png', function(req, res) {
         console.log('local');
         res.sendFile(path.join(__dirname, '/build-ui/js/local.js'));
     });
+
+app.get('/js/freshdesk.js', freshdesk);
 
 userProvider.installUserProvider(app, config, conn);
 
