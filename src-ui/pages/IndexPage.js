@@ -1,7 +1,6 @@
 /*jshint esversion: 6 */
 
 import React, {PropTypes} from 'react';
-import DocumentTitle from 'react-document-title';
 import {
   Grid,
   Row,
@@ -10,31 +9,24 @@ import {
   Button,
   Table
 } from 'react-bootstrap';
-import {NotAuthenticated, Authenticated} from 'react-stormpath';
 import WorkspaceList from './workspace/workspace-list';
 
 export default class IndexPage extends React.Component {
+  signUp(){
+    this.props.auth.signUp();
+  }
   render() {
+    var loggedIn = this.props.auth.loggedIn();
+    var content = loggedIn ? <WorkspaceList/> : (<Jumbotron>
+      <h1>Welcome, Cartographer!</h1>
+      <p>You are about to start a wonderful journey.</p>
+      <p><Button href="#" bsStyle="primary" bsSize="lg" onClick={this.signUp.bind(this)}> Register now </Button></p>
+    </Jumbotron>);
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
           <Col xs={12}>
-            <NotAuthenticated>
-              <Jumbotron>
-                <h1>
-                  Welcome, Cartographer!
-                </h1>
-                <p>
-                  You are about to start a wonderful journey.
-                </p>
-                <p>
-                  <Button href="/register" bsStyle="primary" bsSize="lg">Register now</Button>
-                </p>
-              </Jumbotron>
-            </NotAuthenticated>
-            <Authenticated>
-              <WorkspaceList/>
-            </Authenticated>
+            {content}
           </Col>
         </Row>
       </Grid>

@@ -111,15 +111,9 @@ app.get('/img/LEF_logo.png', function(req, res) {
 });
 
 
-    app.get('/app.js', function(req, res) {
-        console.log('stormpath');
-        res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
-    });
-
-    app.get('/app.js', function(req, res) {
-        console.log('local');
-        res.sendFile(path.join(__dirname, '/build-ui/js/local.js'));
-    });
+app.get('/app.js', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
+});
 
 app.get('/js/freshdesk.js', freshdesk);
 
@@ -135,15 +129,9 @@ process.on('SIGINT', function(){
     process.exit();
 });
 
-if (config.userProvider.type === 'stormpath') {
-  app.get('*', function(req, res) {
-      res.sendFile(path.join(__dirname, '/build-ui/index.html'));
-  });
-} else {
-  app.get('*', function(req, res) {
-      res.sendFile(path.join(__dirname, '/build-ui/local.html'));
-  });
-}
+app.get('*', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/index.html'));
+});
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();
