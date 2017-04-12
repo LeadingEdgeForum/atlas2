@@ -43,7 +43,7 @@ var freshdesk = function(req, res) {
       res.setHeader('content-type', 'application/javascript');
       res.end(script);
     } else {
-      res.send(200);
+      res.status(200).send(';');
     }
 };
 module.exports = freshdesk;
