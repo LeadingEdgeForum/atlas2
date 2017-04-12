@@ -188,12 +188,12 @@ function createUserProvider(app, config, conn) {
                 cache: true,
                 rateLimit: true,
                 jwksRequestsPerMinute: 5,
-                jwksUri: 'https://wardleymaps.eu.auth0.com/.well-known/jwks.json'
+                jwksUri: 'https://' + config.userProvider.auth0.issuer +'/.well-known/jwks.json'
             }),
 
             // Validate the audience and the issuer.
-            audience: '2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9',
-            issuer: 'https://wardleymaps.eu.auth0.com/',
+            audience: config.userProvider.auth0.audience,
+            issuer: 'https://' + config.userProvider.auth0.issuer +'/',
             algorithms: ['RS256']
         });
         guard = {authenticationRequired : authenticate};
