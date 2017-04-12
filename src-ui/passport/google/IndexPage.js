@@ -9,18 +9,15 @@ import {
   Button,
   Table
 } from 'react-bootstrap';
-import WorkspaceList from './workspace/workspace-list';
+import WorkspaceList from '../../pages/workspace/workspace-list';
 
 export default class IndexPage extends React.Component {
-  signUp(){
-    this.props.auth.signUp();
-  }
   render() {
-    var loggedIn = this.props.auth.loggedIn();
+    var loggedIn = this.props.authStore.isLoggedIn();
     var content = loggedIn ? <WorkspaceList/> : (<Jumbotron>
       <h1>Welcome, Cartographer!</h1>
       <p>You are about to start a wonderful journey.</p>
-      <p><Button href="#" bsStyle="primary" bsSize="lg" onClick={this.signUp.bind(this)}> Register now </Button></p>
+      <p><Button href="/login" bsStyle="primary" bsSize="lg"> Login using Google </Button></p>
     </Jumbotron>);
     return (
       <Grid fluid={true}>

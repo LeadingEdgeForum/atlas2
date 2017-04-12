@@ -110,9 +110,16 @@ app.get('/img/LEF_logo.png', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/img/LEF_logo.png'));
 });
 
-
+var appJs = path.join(__dirname, '/build-ui/js/app.js');
+var index = path.join(__dirname, '/build-ui/index.html');
+if(config.userProvider.type === 'passport'){
+  if(config.userProvider.strategy === 'google'){
+    appJs = path.join(__dirname, '/build-ui/js/google-app.js');
+    index = path.join(__dirname, '/build-ui/google-index.html');
+  }
+}
 app.get('/app.js', function(req, res) {
-    res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
+    res.sendFile(appJs);
 });
 
 app.get('/js/freshdesk.js', freshdesk);
@@ -130,7 +137,7 @@ process.on('SIGINT', function(){
 });
 
 app.get('*', function(req, res) {
-    res.sendFile(path.join(__dirname, '/build-ui/index.html'));
+    res.sendFile(index);
 });
 
 // get the app environment from Cloud Foundry

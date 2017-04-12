@@ -10,7 +10,7 @@ module.exports = {
 
   entry: {
     app : './app',
-    // local : './app-local',
+    'google-app' : './google-app',
     'canvas-wrapper' : './canvas-wrapper'
   },
 

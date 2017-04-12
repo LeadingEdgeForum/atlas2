@@ -3,52 +3,32 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import {IndexRoute, Route, browserHistory, IndexRedirect, Router, Redirect} from 'react-router';
-import MasterPage from './auth0/MasterPage';
-import IndexPage from './auth0/IndexPage';
+import MasterPage from './passport/google/MasterPage';
+import IndexPage from './passport/google/IndexPage';
 import WorkspaceList from './pages/workspace/workspace-list';
 import MapList from './pages/workspace/maps/map-list.js';
 import Deduplicator from './pages/workspace/maps/deduplicator/deduplicator.js';
 import WorkspaceMenu from './pages/workspace/workspace-menu.js';
 import MapEditor from './pages/workspace/maps/editor/map-editor.js';
 import MapMenu from './pages/workspace/maps/map-menu.js';
-import AuthService from './auth0/AuthService';
-import Login from './auth0/LoginPage';
 import $ from 'jquery';
+import AuthStore from './passport/auth-store';
 
-const auth = new AuthService('2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9', 'wardleymaps.eu.auth0.com');
+var authStore = new AuthStore();
 
 const requireAuth = (nextState, replace) => {
-  if (!auth.loggedIn()) {
+  if (!authStore.isLoggedIn()) {
     replace({ pathname: '/' });
   }
 };
 
-const parseAuthHash = (nextState, replace) => {
-  if (/access_token|id_token|error/.test(nextState.location.hash)) {
-    auth.parseHash(nextState.location.hash);
-  }
-};
-
-
-$.ajaxSetup({
-    beforeSend: function(xhr) {
-        if (localStorage.getItem('id_token')) {
-            xhr.setRequestHeader('authorization',
-                'bearer ' + localStorage.getItem('id_token'));
-        }
-    }
-});
-
 ReactDOM.render(
   <Router history={browserHistory}>
-  <Route path='/' component={MasterPage} auth={auth}>
+  <Route path='/' component={MasterPage} authStore={authStore}>
     <IndexRedirect to="/" />
     <IndexRoute components={{
       mainContent: IndexPage
-    }} auth={auth}/>
-    <Route path="/login" components={{
-      mainContent : Login
-    }} onEnter={parseAuthHash}/>
+    }} authStore={AuthStore}/>
     <Route path='workspace/:workspaceID' components={{
       mainContent: MapList,
       navMenu: WorkspaceMenu
