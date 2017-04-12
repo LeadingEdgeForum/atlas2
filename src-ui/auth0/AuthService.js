@@ -23,8 +23,10 @@ export default class AuthService {
         primaryColor : '#00789b'
       },
       languageDictionary : {
-        title : 'Welcome to Atlas'
-      }
+        title : 'Welcome to Atlas',
+        // signUpTerms: "I agree to the <a href='/terms' target='_new'>terms of service</a> and <a href='/privacy' target='_new'>privacy policy</a>.",
+      },
+      // mustAcceptTerms : true
     });
 
     this.login = this.login.bind(this);
