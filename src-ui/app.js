@@ -14,7 +14,7 @@ import MapMenu from './pages/workspace/maps/map-menu.js';
 import AuthService from './auth0/AuthService';
 import $ from 'jquery';
 
-const auth = new AuthService('2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9', 'wardleymaps.eu.auth0.com');
+const auth = new AuthService(___AUTH0_AUDIENCE___, ___AUTH0_ISSUER___);
 
 const requireAuth = (nextState, replace) => {
   if (!auth.loggedIn()) {

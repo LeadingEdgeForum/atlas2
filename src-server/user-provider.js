@@ -225,7 +225,6 @@ function createUserProvider(app, config, conn) {
           }
         });
 
-        // guard compatible with stormpath api
         guard = new function() { //jshint ignore:line
             this.loginRequired = function(req, res, next) {
                 if (req.isAuthenticated()) {
