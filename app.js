@@ -120,7 +120,7 @@ if(config.userProvider.type === 'passport'){
       index = path.join(__dirname, '/build-ui/google-index.html');
     }
   } else if(config.userProvider.strategy === 'ldap' || config.userProvider.strategy === 'anonymous'){
-    console.log('using l-p')
+    console.log('using l-p');
     appJs = path.join(__dirname, '/build-ui/js/l-p-app.js');
     if(debug){
       index = path.join(__dirname, '/build-ui/l-p-index.html');
