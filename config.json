@@ -1,6 +1,6 @@
 {
     "userProvider": {
-        "type": "auth0",
+        "type": "passport",
         "strategy": "anonymous",
         "auth0": {
           "audience" : "from_auth0__change_me_config_json",
