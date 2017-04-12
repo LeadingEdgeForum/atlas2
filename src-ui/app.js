@@ -12,7 +12,6 @@ import WorkspaceMenu from './pages/workspace/workspace-menu.js';
 import MapEditor from './pages/workspace/maps/editor/map-editor.js';
 import MapMenu from './pages/workspace/maps/map-menu.js';
 import AuthService from './auth0/AuthService';
-import Login from './auth0/LoginPage';
 import $ from 'jquery';
 
 const auth = new AuthService('2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9', 'wardleymaps.eu.auth0.com');
@@ -20,12 +19,6 @@ const auth = new AuthService('2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9', 'wardleymaps.eu
 const requireAuth = (nextState, replace) => {
   if (!auth.loggedIn()) {
     replace({ pathname: '/' });
-  }
-};
-
-const parseAuthHash = (nextState, replace) => {
-  if (/access_token|id_token|error/.test(nextState.location.hash)) {
-    auth.parseHash(nextState.location.hash);
   }
 };
 
@@ -46,9 +39,6 @@ ReactDOM.render(
     <IndexRoute components={{
       mainContent: IndexPage
     }} auth={auth}/>
-    <Route path="/login" components={{
-      mainContent : Login
-    }} onEnter={parseAuthHash}/>
     <Route path='workspace/:workspaceID' components={{
       mainContent: MapList,
       navMenu: WorkspaceMenu

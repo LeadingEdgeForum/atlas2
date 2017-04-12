@@ -36,6 +36,9 @@ export default class MasterPage extends React.Component {
     this.props.route.auth.logout();
     this.props.router.push('/');
   }
+  login(){
+    this.props.route.auth.login();
+  }
   render() {
     this.navMenu = this.props.navMenu;
     this.mainContent = this.props.mainContent;
@@ -59,7 +62,7 @@ export default class MasterPage extends React.Component {
       <LinkContainer to={{
         pathname: '/login'
       }}>
-        <NavItem eventKey={8} href="/login">
+        <NavItem eventKey={8} href="#" onClick={this.login.bind(this)}>
           <Glyphicon glyph="king"></Glyphicon>
           Login
         </NavItem>
