@@ -77075,6 +77075,7 @@ var AuthStore = function (_Store) {
 
     _this.loggedIn = false;
     _this.inProgress = false;
+    _this.meQueried = false;
     _this.isLoggedIn.bind(_this);
     _this.logout.bind(_this);
     return _this;
@@ -77086,6 +77087,10 @@ var AuthStore = function (_Store) {
       if (this.loggedIn) {
         return true;
       }
+      if (this.meQueried) {
+        // not logged in, me queried, no point in querying again
+        return false;
+      }
       if (!this.inProgress) {
         this.inProgress = true;
         _jquery2.default.ajax({
@@ -77094,6 +77099,13 @@ var AuthStore = function (_Store) {
           success: function (data2) {
             this.loggedIn = true;
             this.inProgress = false;
+            this.meQueried = true;
+            this.emitChange();
+          }.bind(this),
+          error: function (err) {
+            this.inProgress = false;
+            this.loggedIn = false;
+            this.meQueried = true;
             this.emitChange();
           }.bind(this)
         });
@@ -77111,13 +77123,21 @@ var AuthStore = function (_Store) {
         _jquery2.default.ajax({
           type: 'POST',
           url: '/login',
-          data: JSON.stringify({
+          data: {
             login: login,
             password: password
-          }),
+          },
           success: function (data2) {
             this.loggedIn = true;
             this.inProgress = false;
+            this.meQueried = true;
+            this.emitChange();
+            if (next) next();
+          }.bind(this),
+          error: function (err) {
+            this.inProgress = false;
+            this.loggedIn = false;
+            this.meQueried = true;
             this.emitChange();
           }.bind(this)
         });

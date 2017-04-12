@@ -44,7 +44,7 @@ export class Login extends React.Component {
           <Form onSubmit={this.login.bind(this)}>
             <FormGroup controlId="email">
               <ControlLabel>Email, or for LDAP, Login</ControlLabel>
-              <FormControl type="email" ref="email" placeholder="yours@example.com" required />
+              <FormControl type="text" ref="email" placeholder="yours@example.com" required />
             </FormGroup>
 
             <FormGroup controlId="password">

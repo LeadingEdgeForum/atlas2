@@ -77075,6 +77075,7 @@ var AuthStore = function (_Store) {
 
     _this.loggedIn = false;
     _this.inProgress = false;
+    _this.meQueried = false;
     _this.isLoggedIn.bind(_this);
     _this.logout.bind(_this);
     return _this;
@@ -77086,6 +77087,10 @@ var AuthStore = function (_Store) {
       if (this.loggedIn) {
         return true;
       }
+      if (this.meQueried) {
+        // not logged in, me queried, no point in querying again
+        return false;
+      }
       if (!this.inProgress) {
         this.inProgress = true;
         _jquery2.default.ajax({
@@ -77094,6 +77099,13 @@ var AuthStore = function (_Store) {
           success: function (data2) {
             this.loggedIn = true;
             this.inProgress = false;
+            this.meQueried = true;
+            this.emitChange();
+          }.bind(this),
+          error: function (err) {
+            this.inProgress = false;
+            this.loggedIn = false;
+            this.meQueried = true;
             this.emitChange();
           }.bind(this)
         });
@@ -77111,13 +77123,21 @@ var AuthStore = function (_Store) {
         _jquery2.default.ajax({
           type: 'POST',
           url: '/login',
-          data: JSON.stringify({
+          data: {
             login: login,
             password: password
-          }),
+          },
           success: function (data2) {
             this.loggedIn = true;
             this.inProgress = false;
+            this.meQueried = true;
+            this.emitChange();
+            if (next) next();
+          }.bind(this),
+          error: function (err) {
+            this.inProgress = false;
+            this.loggedIn = false;
+            this.meQueried = true;
             this.emitChange();
           }.bind(this)
         });
@@ -77208,7 +77228,7 @@ var IndexPage = function (_React$Component) {
   _createClass(IndexPage, [{
     key: 'render',
     value: function render() {
-      var loggedIn = this.props.authStore.loggedIn();
+      var loggedIn = this.props.authStore.isLoggedIn();
       var content = loggedIn ? _react2.default.createElement(_workspaceList2.default, null) : _react2.default.createElement(
         _reactBootstrap.Jumbotron,
         null,
@@ -77342,9 +77362,9 @@ var Login = exports.Login = function (_React$Component) {
                 _react2.default.createElement(
                   _reactBootstrap.ControlLabel,
                   null,
-                  'Email'
+                  'Email, or for LDAP, Login'
                 ),
-                _react2.default.createElement(_reactBootstrap.FormControl, { type: 'email', ref: 'email', placeholder: 'yours@example.com', required: true })
+                _react2.default.createElement(_reactBootstrap.FormControl, { type: 'text', ref: 'email', placeholder: 'yours@example.com', required: true })
               ),
               _react2.default.createElement(
                 _reactBootstrap.FormGroup,
