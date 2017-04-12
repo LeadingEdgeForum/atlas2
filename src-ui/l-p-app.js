@@ -4,7 +4,8 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import {IndexRoute, Route, browserHistory, IndexRedirect, Router, Redirect} from 'react-router';
 import MasterPage from './passport/MasterPage';
-import IndexPage from './passport/google/IndexPage';
+import IndexPage from './passport/l-p/IndexPage';
+import LoginPage from './passport/l-p/LoginPage';
 import WorkspaceList from './pages/workspace/workspace-list';
 import MapList from './pages/workspace/maps/map-list.js';
 import Deduplicator from './pages/workspace/maps/deduplicator/deduplicator.js';
@@ -22,6 +23,12 @@ const requireAuth = (nextState, replace) => {
   }
 };
 
+const requireNotAuth = (nextState, replace) => {
+  if (authStore.isLoggedIn()) {
+    replace({ pathname: '/' });
+  }
+};
+
 ReactDOM.render(
   <Router history={browserHistory}>
   <Route path='/' component={MasterPage} authStore={authStore}>
@@ -29,6 +36,9 @@ ReactDOM.render(
     <IndexRoute components={{
       mainContent: IndexPage
     }} authStore={AuthStore}/>
+    <Route path="/login" components={{
+      mainContent : LoginPage
+    }} onEnter={requireNotAuth}/>
     <Route path='workspace/:workspaceID' components={{
       mainContent: MapList,
       navMenu: WorkspaceMenu

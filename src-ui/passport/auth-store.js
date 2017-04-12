@@ -9,6 +9,7 @@ class AuthStore extends Store {
     super();
     this.loggedIn = false;
     this.inProgress = false;
+    this.meQueried = false;
     this.isLoggedIn.bind(this);
     this.logout.bind(this);
   }
@@ -16,6 +17,9 @@ class AuthStore extends Store {
   isLoggedIn(){
     if(this.loggedIn){
       return true;
+    }
+    if(this.meQueried){ // not logged in, me queried, no point in querying again
+      return false;
     }
     if(!this.inProgress){
       this.inProgress = true;
@@ -25,11 +29,48 @@ class AuthStore extends Store {
         success: function(data2) {
           this.loggedIn = true;
           this.inProgress = false;
+          this.meQueried = true;
+          this.emitChange();
+        }.bind(this),
+        error: function(err) {
+          this.inProgress = false;
+          this.loggedIn = false;
+          this.meQueried = true;
           this.emitChange();
         }.bind(this)
       });
     }
     return this.loggedIn;
+  }
+
+  loginPasswordLogin(login, password, next){
+    if(this.loggedIn){
+      return; //no op if already logged in
+    }
+    if(!this.inProgress){
+      this.inProgress = true;
+      $.ajax({
+        type: 'POST',
+        url: '/login',
+        data: {
+          login:login,
+          password:password
+        },
+        success: function(data2) {
+          this.loggedIn = true;
+          this.inProgress = false;
+          this.meQueried = true;
+          this.emitChange();
+          if(next) next();
+        }.bind(this),
+        error: function(err) {
+          this.inProgress = false;
+          this.loggedIn = false;
+          this.meQueried = true;
+          this.emitChange();
+        }.bind(this)
+      });
+    }
   }
 
   logout(next){

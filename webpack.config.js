@@ -10,7 +10,8 @@ module.exports = {
 
   entry: {
     app : './app',
-    'google-app' : './google-app',
+    'google-app' : './google-app', // google
+    'l-p-app' : './l-p-app', //login password, ldap & anonymous
     'canvas-wrapper' : './canvas-wrapper'
   },
 

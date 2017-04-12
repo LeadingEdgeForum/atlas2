@@ -63,7 +63,7 @@
 /******/ 	__webpack_require__.p = "/js";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 690);
+/******/ 	return __webpack_require__(__webpack_require__.s = 691);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -77165,7 +77165,8 @@ exports.default = AuthStore;
 /* 641 */,
 /* 642 */,
 /* 643 */,
-/* 644 */
+/* 644 */,
+/* 645 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77207,7 +77208,7 @@ var IndexPage = function (_React$Component) {
   _createClass(IndexPage, [{
     key: 'render',
     value: function render() {
-      var loggedIn = this.props.authStore.isLoggedIn();
+      var loggedIn = this.props.authStore.loggedIn();
       var content = loggedIn ? _react2.default.createElement(_workspaceList2.default, null) : _react2.default.createElement(
         _reactBootstrap.Jumbotron,
         null,
@@ -77227,7 +77228,7 @@ var IndexPage = function (_React$Component) {
           _react2.default.createElement(
             _reactBootstrap.Button,
             { href: '/login', bsStyle: 'primary', bsSize: 'lg' },
-            ' Login using Google '
+            ' Login now! '
           )
         )
       );
@@ -77253,8 +77254,130 @@ var IndexPage = function (_React$Component) {
 exports.default = IndexPage;
 
 /***/ }),
-/* 645 */,
-/* 646 */,
+/* 646 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Login = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(0);
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactDom = __webpack_require__(21);
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
+
+var _reactBootstrap = __webpack_require__(9);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /*jshint esversion: 6 */
+
+var Login = exports.Login = function (_React$Component) {
+  _inherits(Login, _React$Component);
+
+  function Login() {
+    _classCallCheck(this, Login);
+
+    return _possibleConstructorReturn(this, (Login.__proto__ || Object.getPrototypeOf(Login)).apply(this, arguments));
+  }
+
+  _createClass(Login, [{
+    key: 'getAuthParams',
+    value: function getAuthParams() {
+      return {
+        email: _reactDom2.default.findDOMNode(this.refs.email).value,
+        password: _reactDom2.default.findDOMNode(this.refs.password).value
+      };
+    }
+  }, {
+    key: 'login',
+    value: function login(e) {
+      e.preventDefault();
+
+      var _getAuthParams = this.getAuthParams(),
+          email = _getAuthParams.email,
+          password = _getAuthParams.password;
+
+      var _this = this;
+      this.props.authStore.loginPasswordLogin(email, password, function () {
+        _this.props.router.push('/');
+      });
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      return _react2.default.createElement(
+        _reactBootstrap.Grid,
+        { fluid: true },
+        _react2.default.createElement(
+          _reactBootstrap.Row,
+          { className: 'show-grid' },
+          _react2.default.createElement(
+            _reactBootstrap.Col,
+            { sm: 6, smOffset: 3, lg: 4, lgOffset: 4 },
+            _react2.default.createElement(
+              'h2',
+              null,
+              'Login'
+            ),
+            _react2.default.createElement(
+              _reactBootstrap.Form,
+              { onSubmit: this.login.bind(this) },
+              _react2.default.createElement(
+                _reactBootstrap.FormGroup,
+                { controlId: 'email' },
+                _react2.default.createElement(
+                  _reactBootstrap.ControlLabel,
+                  null,
+                  'Email'
+                ),
+                _react2.default.createElement(_reactBootstrap.FormControl, { type: 'email', ref: 'email', placeholder: 'yours@example.com', required: true })
+              ),
+              _react2.default.createElement(
+                _reactBootstrap.FormGroup,
+                { controlId: 'password' },
+                _react2.default.createElement(
+                  _reactBootstrap.ControlLabel,
+                  null,
+                  'Password'
+                ),
+                _react2.default.createElement(_reactBootstrap.FormControl, { type: 'password', ref: 'password', placeholder: 'Password', required: true })
+              ),
+              _react2.default.createElement(
+                _reactBootstrap.ButtonToolbar,
+                null,
+                _react2.default.createElement(
+                  _reactBootstrap.Button,
+                  { type: 'submit', bsStyle: 'primary' },
+                  'Log In'
+                )
+              )
+            )
+          )
+        )
+      );
+    }
+  }]);
+
+  return Login;
+}(_react2.default.Component);
+
+exports.default = Login;
+
+/***/ }),
 /* 647 */,
 /* 648 */,
 /* 649 */,
@@ -77298,7 +77421,8 @@ exports.default = IndexPage;
 /* 687 */,
 /* 688 */,
 /* 689 */,
-/* 690 */
+/* 690 */,
+/* 691 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -77318,9 +77442,13 @@ var _MasterPage = __webpack_require__(623);
 
 var _MasterPage2 = _interopRequireDefault(_MasterPage);
 
-var _IndexPage = __webpack_require__(644);
+var _IndexPage = __webpack_require__(645);
 
 var _IndexPage2 = _interopRequireDefault(_IndexPage);
+
+var _LoginPage = __webpack_require__(646);
+
+var _LoginPage2 = _interopRequireDefault(_LoginPage);
 
 var _workspaceList = __webpack_require__(252);
 
@@ -77356,10 +77484,18 @@ var _authStore2 = _interopRequireDefault(_authStore);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var authStore = new _authStore2.default(); /*jshint esversion: 6 */
+/*jshint esversion: 6 */
+
+var authStore = new _authStore2.default();
 
 var requireAuth = function requireAuth(nextState, replace) {
   if (!authStore.isLoggedIn()) {
+    replace({ pathname: '/' });
+  }
+};
+
+var requireNotAuth = function requireNotAuth(nextState, replace) {
+  if (authStore.isLoggedIn()) {
     replace({ pathname: '/' });
   }
 };
@@ -77374,6 +77510,9 @@ _reactDom2.default.render(_react2.default.createElement(
     _react2.default.createElement(_reactRouter.IndexRoute, { components: {
         mainContent: _IndexPage2.default
       }, authStore: _authStore2.default }),
+    _react2.default.createElement(_reactRouter.Route, { path: '/login', components: {
+        mainContent: _LoginPage2.default
+      }, onEnter: requireNotAuth }),
     _react2.default.createElement(_reactRouter.Route, { path: 'workspace/:workspaceID', components: {
         mainContent: _mapList2.default,
         navMenu: _workspaceMenu2.default

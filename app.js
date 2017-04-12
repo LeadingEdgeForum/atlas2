@@ -113,14 +113,35 @@ app.get('/img/LEF_logo.png', function(req, res) {
 var appJs = path.join(__dirname, '/build-ui/js/app.js');
 var index = path.join(__dirname, '/build-ui/index.html');
 if(config.userProvider.type === 'passport'){
+  console.log('using password');
   if(config.userProvider.strategy === 'google'){
     appJs = path.join(__dirname, '/build-ui/js/google-app.js');
-    index = path.join(__dirname, '/build-ui/google-index.html');
+    if(debug){ // for debug use local names
+      index = path.join(__dirname, '/build-ui/google-index.html');
+    }
+  } else if(config.userProvider.strategy === 'ldap' || config.userProvider.strategy === 'anonymous'){
+    console.log('using l-p')
+    appJs = path.join(__dirname, '/build-ui/js/l-p-app.js');
+    if(debug){
+      index = path.join(__dirname, '/build-ui/l-p-index.html');
+    }
+  } else {
+    console.error('unrecognized auth strategy', config.userProvider.strategy);
   }
 }
 app.get('/app.js', function(req, res) {
     res.sendFile(appJs);
 });
+
+if(debug){// for debug use local names
+    app.get('/google-app.js', function(req, res) {
+        res.sendFile(appJs);
+    });
+
+    app.get('/l-p-app.js', function(req, res) {
+        res.sendFile(appJs);
+    });
+}
 
 app.get('/js/freshdesk.js', freshdesk);
 

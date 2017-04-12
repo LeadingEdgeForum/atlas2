@@ -84,7 +84,7 @@ function registerLdapPassportStrategy(app, passport, config, conn) {
     var LDAPStrategy = require('passport-ldapauth').Strategy;
     var ldapStrategy = new LDAPStrategy({
         server: config.userProvider.server,
-        usernameField: 'email'
+        usernameField: 'login'
     }, function(user, done) {
         var UnifiedUser = require('./user-model')(conn).UnifiedUser;
         UnifiedUser.findOne({
@@ -125,9 +125,10 @@ function registerLdapPassportStrategy(app, passport, config, conn) {
 function registerAnonymousPassportStrategy(app, passport, name, conn) {
     var LocalStrategy = require('passport-local');
     var localStrategy = new LocalStrategy({
-        usernameField: 'email',
+        usernameField: 'login',
         session: true
     }, function(user, pass, done) {
+      console.log(user, pass);
         var UnifiedUser = require('./user-model')(conn).UnifiedUser;
         UnifiedUser.findOne({
             type: 'Passport',
