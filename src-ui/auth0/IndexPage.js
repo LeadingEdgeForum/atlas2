@@ -20,12 +20,12 @@ export default class IndexPage extends React.Component {
   render() {
     var loggedIn = this.props.auth.loggedIn();
     var contentIn = (<Row className="show-grid"><Col xs={12}><WorkspaceList/></Col></Row>);
-    var contentOut = (<Row className="show-grid"><Col xs={8}><Jumbotron>
+    var contentOut = (<Row className="show-grid"><Col xs={10}><Jumbotron>
       <h1>Welcome, Cartographer!</h1>
       <p>You are about to start a wonderful journey.</p>
       <p><Button href="#" bsStyle="primary" bsSize="lg" onClick={this.signUp.bind(this)}> Register now </Button></p>
     </Jumbotron></Col>
-    <Col xs={4}><Timeline
+    <Col xs={2}><Timeline
       dataSource={{
         sourceType: 'profile',
         screenName: 'atlas2_news'
