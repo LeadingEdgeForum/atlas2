@@ -110,16 +110,38 @@ app.get('/img/LEF_logo.png', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/img/LEF_logo.png'));
 });
 
+var appJs = path.join(__dirname, '/build-ui/js/app.js');
+var index = path.join(__dirname, '/build-ui/index.html');
+if(config.userProvider.type === 'passport'){
+  console.log('using password');
+  if(config.userProvider.strategy === 'google'){
+    appJs = path.join(__dirname, '/build-ui/js/google-app.js');
+    if(debug){ // for debug use local names
+      index = path.join(__dirname, '/build-ui/google-index.html');
+    }
+  } else if(config.userProvider.strategy === 'ldap' || config.userProvider.strategy === 'anonymous'){
+    console.log('using l-p');
+    appJs = path.join(__dirname, '/build-ui/js/l-p-app.js');
+    if(debug){
+      index = path.join(__dirname, '/build-ui/l-p-index.html');
+    }
+  } else {
+    console.error('unrecognized auth strategy', config.userProvider.strategy);
+  }
+}
+app.get('/app.js', function(req, res) {
+    res.sendFile(appJs);
+});
 
-    app.get('/app.js', function(req, res) {
-        console.log('stormpath');
-        res.sendFile(path.join(__dirname, '/build-ui/js/app.js'));
+if(debug){// for debug use local names
+    app.get('/google-app.js', function(req, res) {
+        res.sendFile(appJs);
     });
 
-    app.get('/app.js', function(req, res) {
-        console.log('local');
-        res.sendFile(path.join(__dirname, '/build-ui/js/local.js'));
+    app.get('/l-p-app.js', function(req, res) {
+        res.sendFile(appJs);
     });
+}
 
 app.get('/js/freshdesk.js', freshdesk);
 
@@ -135,15 +157,9 @@ process.on('SIGINT', function(){
     process.exit();
 });
 
-if (config.userProvider.type === 'stormpath') {
-  app.get('*', function(req, res) {
-      res.sendFile(path.join(__dirname, '/build-ui/index.html'));
-  });
-} else {
-  app.get('*', function(req, res) {
-      res.sendFile(path.join(__dirname, '/build-ui/local.html'));
-  });
-}
+app.get('*', function(req, res) {
+    res.sendFile(index);
+});
 
 // get the app environment from Cloud Foundry
 var appEnv = cfenv.getAppEnv();

@@ -30,6 +30,7 @@ var log4js = require('log4js');
 var track = require('../tracker-helper');
 
 var getUserIdFromReq = function(req) {
+  console.log('user', req.user);
   if (req && req.user && req.user.email) {
     return req.user.email;
   }

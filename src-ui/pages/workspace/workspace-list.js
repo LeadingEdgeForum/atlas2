@@ -12,7 +12,6 @@ import {
   ListGroup,
   Breadcrumb
 } from 'react-bootstrap';
-import {NotAuthenticated, Authenticated} from 'react-stormpath';
 import WorkspaceStore from './workspace-store';
 import WorkspaceListElement from './workspace-list-element.js';
 import WorkspaceListElementNew from './workspace-list-element-new.js';

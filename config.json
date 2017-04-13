@@ -2,6 +2,10 @@
     "userProvider": {
         "type": "passport",
         "strategy": "anonymous",
+        "auth0": {
+          "audience" : "from_auth0__change_me_config_json",
+          "issuer" : "from_auth0__change_me_config_json"
+        },
         "server": {
             "url": "ldap://ldap.forumsys.com:389",
             "bindDn": "cn=read-only-admin,dc=example,dc=com",

@@ -6,7 +6,6 @@ import {LinkContainer} from 'react-router-bootstrap';
 import React, {PropTypes} from 'react';
 import ReactDOM from 'react-dom';
 import DocumentTitle from 'react-document-title';
-import {NotAuthenticated, Authenticated} from 'react-stormpath';
 import {
   Grid,
   Row,
@@ -33,9 +32,42 @@ export default class MasterPage extends React.Component {
     this.navMenu = props.navMenu;
     this.mainContent = props.mainContent;
   }
+  logout(){
+    this.props.route.auth.logout();
+    this.props.router.push('/');
+  }
+  login(){
+    this.props.route.auth.login();
+  }
   render() {
     this.navMenu = this.props.navMenu;
     this.mainContent = this.props.mainContent;
+    if(this.navMenu){
+      this.navMenu = React.cloneElement(this.navMenu, {
+        auth: this.props.route.auth //sends auth instance from route to children
+      });
+    }
+    if(this.mainContent){
+      this.mainContent = React.cloneElement(this.mainContent, {
+        auth: this.props.route.auth //sends auth instance from route to children
+      });
+    }
+    var auth  = this.props.route.auth;
+    var additionalMenu = this.props.route.auth.loggedIn() ? (<Nav pullRight>
+      <NavItem eventKey={9} href="#" onClick={this.logout.bind(this)}>
+        <Glyphicon glyph="log-out"></Glyphicon>
+        Logout
+      </NavItem>
+    </Nav>) : (<Nav pullRight>
+      <LinkContainer to={{
+        pathname: '/login'
+      }}>
+        <NavItem eventKey={8} href="#" onClick={this.login.bind(this)}>
+          <Glyphicon glyph="king"></Glyphicon>
+          Login
+        </NavItem>
+      </LinkContainer>
+    </Nav>);
     return (
       <DocumentTitle title='Atlas2, the new, revamped Mapping Tool'>
         <Grid fluid={true}>
@@ -50,42 +82,7 @@ export default class MasterPage extends React.Component {
                   </NavbarBrand>
                 </NavbarHeader>
                 {this.navMenu}
-                <Authenticated>
-                  <Nav pullRight>
-                    <LinkContainer to={{
-                      pathname: '/profile'
-                    }}>
-                      <NavItem eventKey={8} href="/profile">
-                        <Glyphicon glyph="user"></Glyphicon>
-                        My Account
-                      </NavItem>
-                    </LinkContainer>
-                    <NavItem eventKey={9} href="/logout">
-                      <Glyphicon glyph="log-out"></Glyphicon>
-                      Logout
-                    </NavItem>
-                  </Nav>
-                </Authenticated>
-                <NotAuthenticated>
-                  <Nav pullRight>
-                    <LinkContainer to={{
-                      pathname: '/register'
-                    }}>
-                      <NavItem eventKey={8} href="/register">
-                        <Glyphicon glyph="knight"></Glyphicon>
-                        Create Account
-                      </NavItem>
-                    </LinkContainer>
-                    <LinkContainer to={{
-                      pathname: '/login'
-                    }}>
-                      <NavItem eventKey={8} href="/login">
-                        <Glyphicon glyph="king"></Glyphicon>
-                        Login
-                      </NavItem>
-                    </LinkContainer>
-                  </Nav>
-                </NotAuthenticated>
+                {additionalMenu}
               </Navbar>
             </Col>
           </Row>

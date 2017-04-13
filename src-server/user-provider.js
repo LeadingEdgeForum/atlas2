@@ -14,54 +14,6 @@ var logger = require('./log.js').getLogger('user-provider');
 var guard = null;
 var track = require('./tracker-helper');
 
-function renderProperStormpathLoginForm(app){
-  app.get('/login', function(req, res, next) {
-      if (!req.get('X-Stormpath-Agent')) {
-          // no stormpath agent, process normally
-          return next();
-      }
-      res.status(200).send({
-          "form": {
-              "fields": [{
-                  "label": "Username or Email",
-                  "placeholder": "Username or Email",
-                  "required": true,
-                  "type": "text",
-                  "name": "login"
-              }, {
-                  "label": "Password",
-                  "placeholder": "Password",
-                  "required": true,
-                  "type": "password",
-                  "name": "password"
-              }]
-          },
-          "accountStores": []
-      });
-  });
-}
-/*
- */
-function registerStormpathPassportStrategy(app, passport, name) {
-    var StormpathHelper = require('./stormpath-helper');
-    var stormpath = require('express-stormpath');
-    var StormpathStrategy = require('passport-stormpath').Strategy;
-    var stormpathStrategy = new StormpathStrategy({
-        apiKeyId: StormpathHelper.stormpathId,
-        apiKeySecret: StormpathHelper.stormpathKey,
-        appHref: StormpathHelper.stormpathApplication,
-        usernameField: 'login'
-    });
-    passport.use(name, stormpathStrategy);
-    passport.serializeUser(stormpathStrategy.serializeUser);
-    passport.deserializeUser(stormpathStrategy.deserializeUser);
-
-    app.use(passport.initialize());
-    app.use(passport.session());
-
-    return renderProperStormpathLoginForm(app);
-}
-
 function registerGooglePassportStrategy(app, passport, config, conn) {
     var GoogleStrategy = require('passport-google-oauth20').Strategy;
     var googleStrategy = new GoogleStrategy({
@@ -168,7 +120,6 @@ function registerLdapPassportStrategy(app, passport, config, conn) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    return renderProperStormpathLoginForm(app);
 }
 
 function registerAnonymousPassportStrategy(app, passport, name, conn) {
@@ -177,6 +128,7 @@ function registerAnonymousPassportStrategy(app, passport, name, conn) {
         usernameField: 'login',
         session: true
     }, function(user, pass, done) {
+      console.log(user, pass);
         var UnifiedUser = require('./user-model')(conn).UnifiedUser;
         UnifiedUser.findOne({
             type: 'Passport',
@@ -212,94 +164,39 @@ function registerAnonymousPassportStrategy(app, passport, name, conn) {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    return renderProperStormpathLoginForm(app);
 }
 
 
 function createUserProvider(app, config, conn) {
     logger.trace('Using', config.userProvider.type, config.userProvider.strategy, 'user provider');
     /*
-      The default provider - uses stormpath to manage users. Stormpath has to be
+      The default provider - uses auth0 to manage users. Auth0 has to be
       properly configured (2FA and such).
     */
-    if (config.userProvider.type === 'stormpath') {
-        var stormpath = require('express-stormpath');
-        var StormpathHelper = require('./stormpath-helper');
-        var provider = stormpath.init(app, {
-            debug: 'debug',
-            web: {
-                produces: ['application/json'],
-                logout: {
-                    enabled: true,
-                    uri: '/logout',
-                    nextUri: '/'
-                }
-            },
-            client: {
-                apiKey: {
-                    id: StormpathHelper.stormpathId,
-                    secret: StormpathHelper.stormpathKey
-                }
-            },
-            application: {
-                href: StormpathHelper.stormpathApplication
-            },
-            postLoginHandler: function(account, req, res, next) {
-                track(account.email,'login',account);
-                next();
-            },
-            postRegistrationHandler: function(account, req, res, next) {
-                track(account.email, 'registered', account);
-                next();
-            }
+    if (config.userProvider.type === 'auth0') {
+        const jwt = require('express-jwt');
+        const jwksRsa = require('jwks-rsa');
+
+        // Authentication middleware. When used, the
+        // access token must exist and be verified against
+        // the Auth0 JSON Web Key Set
+        const authenticate = jwt({
+            // Dynamically provide a signing key
+            // based on the kid in the header and
+            // the singing keys provided by the JWKS endpoint.
+            secret: jwksRsa.expressJwtSecret({
+                cache: true,
+                rateLimit: true,
+                jwksRequestsPerMinute: 5,
+                jwksUri: 'https://' + config.userProvider.auth0.issuer +'/.well-known/jwks.json'
+            }),
+
+            // Validate the audience and the issuer.
+            audience: config.userProvider.auth0.audience,
+            issuer: 'https://' + config.userProvider.auth0.issuer +'/',
+            algorithms: ['RS256']
         });
-
-        app.post('/me', stormpath.loginRequired, function(req, res) {
-            function writeError(message) {
-                res.status(400);
-                res.json({
-                    message: message,
-                    status: 400
-                });
-                res.end();
-            }
-
-            function saveAccount() {
-                req.user.givenName = req.body.givenName;
-                req.user.surname = req.body.surname;
-                req.user.email = req.body.email;
-
-                req.user.save(function(err) {
-                    if (err) {
-                        return writeError(err.userMessage || err.message);
-                    }
-                    res.end();
-                });
-            }
-
-            if (req.body.password) {
-                var application = req.app.get('stormpathApplication');
-
-                application.authenticateAccount({
-                    username: req.user.username,
-                    password: req.body.existingPassword
-                }, function(err) {
-                    if (err) {
-                        return writeError('The existing password that you entered was incorrect.');
-                    }
-                    req.user.password = req.body.password;
-                    saveAccount();
-                });
-            } else {
-                saveAccount();
-            }
-        });
-
-        app.on('stormpath.ready', function() {
-            console.log('Stormpath Ready');
-        });
-        guard = stormpath;
-        app.use(provider);
+        guard = {authenticationRequired : authenticate};
         return;
     }
 
@@ -308,9 +205,6 @@ function createUserProvider(app, config, conn) {
 
 
         var passport = require('passport');
-        if (config.userProvider.strategy === 'stormpath') {
-            registerStormpathPassportStrategy(app, passport, config.userProvider.strategy, conn);
-        }
         if (config.userProvider.strategy === 'google') {
             registerGooglePassportStrategy(app, passport, config, conn);
         }
@@ -331,7 +225,6 @@ function createUserProvider(app, config, conn) {
           }
         });
 
-        // guard compatible with stormpath api
         guard = new function() { //jshint ignore:line
             this.loginRequired = function(req, res, next) {
                 if (req.isAuthenticated()) {
