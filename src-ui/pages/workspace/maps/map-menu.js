@@ -5,6 +5,9 @@ import {Nav, NavItem, Navbar, Glyphicon} from 'react-bootstrap';
 import WorkspaceStore from './../workspace-store';
 import {LinkContainer} from 'react-router-bootstrap';
 import Actions from '../../../actions';
+import $ from 'jquery';
+var Blob = require('blob');
+
 export default class MapMenu extends React.Component {
   constructor(props) {
     super(props);
@@ -20,6 +23,23 @@ export default class MapMenu extends React.Component {
     Actions.openEditMapDialog(mapid);
   }
 
+  download(maplink, tempName) {
+    $.ajax({
+      url: maplink,
+      type: 'GET',
+      xhrFields: {
+        responseType: 'blob'
+      },
+      success: function(data, textStatus, jqxhr) {
+        var file = new Blob([data], {"type": jqxhr.getResponseHeader("Content-Type")});
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(file);
+        link.download = tempName;
+        link.click();
+      }
+    });
+  }
+
   render() {
     var mapID = this.props.params.mapID;
 
@@ -28,14 +48,12 @@ export default class MapMenu extends React.Component {
     var downloadMapHref = '/img/' + tempName;
     return (
       <Nav>
-      <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this, mapID)}>
-      <Glyphicon glyph="edit"></Glyphicon>&nbsp;
-        Edit map info
-      </NavItem>
-      <NavItem eventKey={2}  key="2" href={downloadMapHref} download={tempName}>
-      <Glyphicon glyph="download"></Glyphicon>&nbsp;
-        Download
-      </NavItem>
+        <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this, mapID)}>
+          <Glyphicon glyph="edit"></Glyphicon>&nbsp; Edit map info
+        </NavItem>
+        <NavItem eventKey={2} key="2" href="#" download={tempName} onClick={this.download.bind(this, downloadMapHref, tempName)}>
+          <Glyphicon glyph="download"></Glyphicon>&nbsp; Download
+        </NavItem>
         <LinkContainer to={{
           pathname: deduplicateHref
         }}>

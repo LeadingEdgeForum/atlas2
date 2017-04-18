@@ -11,6 +11,7 @@
     "auth0": "^2.6.0",
     "auth0-js": "^8.5.0",
     "auth0-lock": "^10.14.0",
+    "blob": "0.0.4",
     "body-parser": "^1.15.2",
     "bootstrap": "^3.3.7",
     "cfenv": "1.0.x",
