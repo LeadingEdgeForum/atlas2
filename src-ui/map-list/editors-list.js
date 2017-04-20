@@ -32,7 +32,7 @@ export default class MapList extends React.Component {
       <li className = "list-group-item" key={owner}>
         {owner}
         <Button bsSize="xsmall"
-          onClick={Actions.deleteUser.bind(Actions,{workspaceID:workspaceID, email:owner})}> X </Button>
+          onClick={Actions.deleteInvitedEditor.bind(Actions,{email:owner})}> X </Button>
       </li>);
 
     return (

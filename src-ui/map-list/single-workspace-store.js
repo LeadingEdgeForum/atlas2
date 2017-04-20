@@ -52,7 +52,7 @@ export default class SingleWorkspaceStore extends Store {
                   //no change, because it will go only after the submission is successful
                   break;
               case ActionTypes.MAP_DELETE:
-                  this.deleteMap(action.workspaceID);
+                  console.error('not implemented');
                   break;
               case ActionTypes.WORKSPACE_OPEN_INVITE_DIALOG:
                   this.inviteDialog.open = true;
@@ -63,8 +63,10 @@ export default class SingleWorkspaceStore extends Store {
                   this.emitChange();
                   break;
               case ActionTypes.WORKSPACE_SUBMIT_INVITE_DIALOG:
-                  console.error('not implemented');
-                  //no change, because it will go only after the submission is successful
+                  this.inviteEditor(action.data);
+                  break;
+              case ActionTypes.WORKSPACE_DELETE_USER:
+                  this.removeEditor(action.data);
                   break;
               case ActionTypes.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG:
                   this.editWorkspaceDialog.open = true;
@@ -149,6 +151,37 @@ export default class SingleWorkspaceStore extends Store {
         });
       }.bind(this)
     });
+  }
 
+  inviteEditor(data){
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + this.workspaceID + '/editor/' + data.email,
+      success: function(data) {
+        this.workspace = data;
+        this.inviteDialog.open = false;
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
+      }.bind(this)
+    });
+  }
+
+  removeEditor(data){
+    $.ajax({
+      type: 'DELETE',
+      url: '/api/workspace/' + this.workspaceID + '/editor/' + data.email,
+      success: function(data) {
+        this.workspace = data;
+        this.inviteDialog.open = false;
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
+      }.bind(this)
+    });
   }
 }

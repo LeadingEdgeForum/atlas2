@@ -512,6 +512,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               workspace.owner.push(email);
               return workspace.save();
           })
+          .then(function(workspace){
+            return workspace.populate('maps capabilityCategories').execPopulate();
+          })
           .fail(function(e){
             return defaultAccessDenied(res, e);
           })
@@ -555,8 +558,11 @@ module.exports = function(authGuardian, mongooseConnection) {
             archived: false
         }).exec()
         .then(function(workspace) {
-            workspace.owner.pop(email);
+            workspace.owner.pull(email);
             return workspace.save();
+        })
+        .then(function(workspace){
+          return workspace.populate('maps capabilityCategories').execPopulate();
         })
         .fail(function(e) {
             return defaultAccessDenied(res, e);

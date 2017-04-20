@@ -51,14 +51,9 @@ var SingleWorkspaceActions = {
     },
 
     submitInviteDialog: function(data) {
-      console.error('implement me');
-      return;
-      if(!data){
-        console.error('Missing new workspace data, aborting...');
+      if(!data || !data.email){
+        console.error('unspecified user email', data);
         return;
-      }
-      if(!data.name || !data.purpose || !data.description){
-        console.log('Incomplete new workspace data', data);
       }
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.WORKSPACE_SUBMIT_INVITE_DIALOG,
@@ -66,15 +61,11 @@ var SingleWorkspaceActions = {
       });
     },
 
-    deleteUser : function(){
-      console.error('implement me');
-      return;
-      if(!data){
-        console.error('Missing new workspace data, aborting...');
+    deleteInvitedEditor : function(data){
+      console.log('deleting', data);
+      if(!data || !data.email){
+        console.error('unspecified user email', data);
         return;
-      }
-      if(!data.name || !data.purpose || !data.description){
-        console.log('Incomplete new workspace data', data);
       }
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.WORKSPACE_DELETE_USER,
