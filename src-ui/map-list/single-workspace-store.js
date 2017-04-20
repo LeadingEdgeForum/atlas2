@@ -16,7 +16,8 @@ export default class SingleWorkspaceStore extends Store {
       this.workspace = null;
 
       this.editWorkspaceDialog = {
-          open : false
+          open : false,
+          workspaceID : this.workspaceID
       };
 
       this.inviteDialog = {
@@ -47,7 +48,7 @@ export default class SingleWorkspaceStore extends Store {
                   this.emitChange();
                   break;
               case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
-                  this.submitNewWorkspaceDialog(action.data);
+                  console.error('not implemented');
                   //no change, because it will go only after the submission is successful
                   break;
               case ActionTypes.MAP_DELETE:
@@ -77,7 +78,7 @@ export default class SingleWorkspaceStore extends Store {
                   this.emitChange();
                   break;
               case ActionTypes.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG:
-                  console.error('not implemented');
+                  this.submitNewWorkspaceDialog(action.data);
                   //no change, because it will go only after the submission is successful
                   break;
               default:
@@ -126,5 +127,28 @@ export default class SingleWorkspaceStore extends Store {
       };
     }
     return this.workspace;
+  }
+
+  submitNewWorkspaceDialog(data){
+    if(data.workspaceID !== this.workspaceID){
+      console.error('workspaceID mismatch, aborting');
+      return;
+    }
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + data.workspaceID,
+      dataType: 'json',
+      data: data,
+      success: function(data) {
+        this.workspace = data;
+        this.editWorkspaceDialog.open = false;
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
+      }.bind(this)
+    });
+
   }
 }

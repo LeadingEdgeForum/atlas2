@@ -359,7 +359,16 @@ module.exports = function(authGuardian, mongooseConnection) {
           if (err2) {
             res.status(500).json(err2);
           }
-          res.json({map: result2});
+          Workspace.populate(result2, {
+              path: 'maps capabilityCategories'
+          }, function(err, result3) {
+              if (err) {
+                  return res.send(500);
+              }
+              res.json({
+                  workspace: result3.toObject()
+              });
+          });
         });
       }
     });

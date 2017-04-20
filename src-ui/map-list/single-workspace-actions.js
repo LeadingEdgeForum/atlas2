@@ -18,16 +18,19 @@ var SingleWorkspaceActions = {
       });
     },
 
-    submitEditWorkspaceDialog: function(data) {
-      console.error('implement me');
-      return;
+    submitEditWorkspaceDialog: function(workspaceID, data) {
+      if(!workspaceID){
+        console.error('No workspace id');
+        return;
+      }
       if(!data){
-        console.error('Missing new workspace data, aborting...');
+        console.error('Missing workspace data, aborting...');
         return;
       }
       if(!data.name || !data.purpose || !data.description){
-        console.log('Incomplete new workspace data', data);
+        console.log('Incomplete workspace data', data);
       }
+      data.workspaceID = workspaceID;
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG,
           data : data
