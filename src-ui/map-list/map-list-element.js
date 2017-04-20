@@ -24,11 +24,10 @@ export default class MapListElement extends React.Component {
     this.computeSubmapReferencesMessage = this.computeSubmapReferencesMessage.bind(this);
   }
 
-  archive(workspace, id) {
-    SingleWorkspaceActions.deleteMap(workspace, id);
+  delete(id) {
+    SingleWorkspaceActions.deleteMap({mapID : id});
   }
 
-  
   componentDidMount() {
     var mapID = this.props.id;
 
@@ -75,7 +74,7 @@ export default class MapListElement extends React.Component {
     var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose, this.props.name);
 
     var deleteButton = (
-      <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID, mapid)}>
+      <Button bsStyle="default" href="#" onClick={this.delete.bind(this, mapid)}>
         <Glyphicon glyph="remove"></Glyphicon>
         Delete
       </Button>

@@ -52,7 +52,7 @@ export default class SingleWorkspaceStore extends Store {
                   //no change, because it will go only after the submission is successful
                   break;
               case ActionTypes.MAP_DELETE:
-                  console.error('not implemented');
+                  this.deleteMap(action.data);
                   break;
               case ActionTypes.WORKSPACE_OPEN_INVITE_DIALOG:
                   this.inviteDialog.open = true;
@@ -180,6 +180,26 @@ export default class SingleWorkspaceStore extends Store {
         this.io.emit('workspace', {
           type: 'change',
           id: data.workspaceID
+        });
+      }.bind(this)
+    });
+  }
+
+  deleteMap(data){
+    $.ajax({
+      type: 'DELETE',
+      url: '/api/map/' + data.mapID,
+      success: function(data) {
+        this.workspace = data;
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
+        // null maps of every person who was editing it
+        this.io.emit('map', {
+          type: 'change',
+          id: data.mapID
         });
       }.bind(this)
     });

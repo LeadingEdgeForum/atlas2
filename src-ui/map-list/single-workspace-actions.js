@@ -73,8 +73,6 @@ var SingleWorkspaceActions = {
       });
     },
 
-
-
     openNewMapDialog: function() {
         Dispatcher.dispatch({
             actionType: ACTION_TYPES.MAP_OPEN_NEW_MAP_DIALOG
@@ -103,15 +101,10 @@ var SingleWorkspaceActions = {
       });
     },
 
-    deleteMap : function(){
-      console.error('implement me');
-      return;
-      if(!data){
-        console.error('Missing new workspace data, aborting...');
+    deleteMap : function(data){
+      if(!data || !data.mapID){
+        console.error('Missing delete map data, aborting...', data);
         return;
-      }
-      if(!data.name || !data.purpose || !data.description){
-        console.log('Incomplete new workspace data', data);
       }
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.MAP_DELETE,

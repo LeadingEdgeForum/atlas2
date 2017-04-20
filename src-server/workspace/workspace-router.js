@@ -388,7 +388,10 @@ module.exports = function(authGuardian, mongooseConnection) {
           })
           .then(function(map) {
               map.workspace.maps.pull(map._id);
-              var workspacePromise = map.workspace.save();
+              var workspacePromise = map.workspace.save()
+              .then(function(workspace){
+                  return workspace.populate('maps capabilityCategories').execPopulate();
+              });
 
               map.archived = true;
               var mapPromise = map.save();
@@ -398,9 +401,9 @@ module.exports = function(authGuardian, mongooseConnection) {
           .fail(function(e) {
               return defaultAccessDenied(res, e);
           })
-          .done(function() {
+          .done(function(args) {
               res.json({
-                  map: null
+                  workspace: args[0]
               });
               track(owner,'delete_map',{
                 'id' : req.params.mapID,
