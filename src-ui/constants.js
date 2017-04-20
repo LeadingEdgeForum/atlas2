@@ -4,19 +4,6 @@ var keyMirror = require('key-mirror-nested');
 
 module.exports  = keyMirror({
   ACTION_TYPES : {
-      WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG : null,
-      WORKSPACE_CLOSE_NEW_WORKSPACE_DIALOG : null,
-      WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG : null,
-      WORKSPACE_OPEN_INVITE_DIALOG : null,
-      WORKSPACE_CLOSE_INVITE_DIALOG : null,
-      WORKSPACE_SUBMIT_INVITE_DIALOG : null,
-      WORKSPACE_DELETE_USER : null,
-      WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG : null,
-      WORKSPACE_CLOSE_EDIT_WORKSPACE_DIALOG : null,
-      WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG : null,
-      MAP_OPEN_NEW_MAP_DIALOG : null,
-      MAP_CLOSE_NEW_MAP_DIALOG : null,
-      MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG : null,
       MAP_OPEN_EDIT_MAP_DIALOG : null,
       MAP_CLOSE_EDIT_MAP_DIALOG : null,
       MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG : null,
@@ -38,8 +25,6 @@ module.exports  = keyMirror({
       CANVAS_ACTION_CLOSE_EDIT_DIALOG : null,
       CANVAS_ACTION_SUBMIT_EDIT_DIALOG : null,
       CANVAS_REMOVE_NODE : null,
-      WORKSPACE_ARCHIVE : null,
-      MAP_ARCHIVE : null,
       MAP_REF_SUBMAP : null,
       MAP_SUBMAP : null,
       MAP_CLOSE_NEW_SUBMAP_DIALOG : null,

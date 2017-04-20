@@ -13,32 +13,31 @@ import {
   Col
 } from 'react-bootstrap';
 var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../constants');
-import Actions from './../../actions.js';
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './workspace-store';
+var Constants = require('./workspace-constants');
+import Actions from './workspace-actions.js';
 
 //TODO: validation of the workspace dialog
 
 var CreateNewWorkspaceDialog = React.createClass({
   getInitialState: function() {
-    return {open: false};
+    return this.props.workspaceListStore.isWorkspaceNewDialogOpen();
   },
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.workspaceListStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.workspaceListStore.removeChangeListener(this._onChange);
   },
   internalState: {},
   _onChange: function() {
-    this.setState(WorkspaceStore.isWorkspaceNewDialogOpen());
+    this.setState(this.props.workspaceListStore.isWorkspaceNewDialogOpen());
   },
   _close: function() {
     Actions.closeNewWorkspaceDialog();
+    this.internalState = {};
   },
   _submit: function() {
     Actions.submitNewWorkspaceDialog(this.internalState);

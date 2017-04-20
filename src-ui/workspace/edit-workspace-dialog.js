@@ -1,65 +1,63 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../constants');
-import Actions from './../../actions.js';
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './workspace-store';
+import Actions from '../map-list/single-workspace-actions';
 
 //TODO: validation of the workspace dialog
 
 var EditWorkspaceDialog = React.createClass({
+
   getInitialState: function() {
-    return {open: false};
+    return this.props.singleWorkspaceStore.getWorkspaceEditDialogState();
   },
 
   componentDidMount: function() {
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleWorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.singleWorkspaceStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    var newState = WorkspaceStore.isWorkspaceEditDialogOpen();
-    var workspace = WorkspaceStore.getWorkspaceInfo(newState.editedWorkspace);
-    //load the workspace only once after it is loadeds
-    if (!this.internalState.workspace && workspace && workspace.workspace && !workspace.loading) {
-      this.internalState.workspace = workspace.workspace;
-      this.internalState.name = this.internalState.workspace.name;
-      this.internalState.description = this.internalState.workspace.description;
-      this.internalState.purpose = this.internalState.workspace.purpose;
-    }
-    //dialog is going to be closed, clean internal state
-    if (!newState.open) {
-      this.internalState = {};
-    }
+    var newState = this.props.singleWorkspaceStore.getWorkspaceEditDialogState();
+
+    this.internalState.name = newState.name;
+    this.internalState.description = newState.description;
+    this.internalState.purpose = newState.purpose;
+
     this.setState(newState);
-  },
+},
+
   _close: function() {
     Actions.closeEditWorkspaceDialog();
+    this.internalState = {};
   },
+
   _submit: function() {
-    Actions.submitEditWorkspaceDialog(this.state.editedWorkspace, this.internalState);
+    Actions.submitEditWorkspaceDialog(this.state.workspaceID, this.internalState);
+    this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
     this.forceUpdate();
   },
+
   render: function() {
     var show = this.state.open;
     if (!show) {

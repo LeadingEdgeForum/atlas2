@@ -14,11 +14,11 @@ import {
   Glyphicon
 } from 'react-bootstrap';
 import {LinkContainer} from 'react-router-bootstrap';
-import Actions from '../../actions';
+import Actions from './workspace-actions';
 
 export default class WorkspaceListElement extends React.Component {
-  archive(id) {
-    Actions.archiveWorkspace(id);
+  delete(id) {
+    Actions.deleteWorkspace(id);
   }
   render() {
     var workspaceID = this.props.id;
@@ -28,7 +28,7 @@ export default class WorkspaceListElement extends React.Component {
     var mapsCountInfo = "";
     if(mapsCount === 0){
       mapsCountInfo = "(no maps)";
-    } else if(mapsCount == 1){
+    } else if(mapsCount === 1){
       mapsCountInfo = "(1 map)";
     } else {
       mapsCountInfo = "(" + mapsCount + " maps)";
@@ -42,10 +42,10 @@ export default class WorkspaceListElement extends React.Component {
               <ButtonGroup>
                 <LinkContainer to={{ pathname: hrefOpen }}>
                   <Button bsStyle="default" href={hrefOpen}>
-                    <Glyphicon glyph="edit"></Glyphicon> Edit
+                    <Glyphicon glyph="edit"></Glyphicon> Open
                   </Button>
                 </LinkContainer>
-                <Button bsStyle="default" href="#" onClick={this.archive.bind(this, workspaceID)}>
+                <Button bsStyle="default" href="#" onClick={this.delete.bind(this, workspaceID)}>
                   <Glyphicon glyph="remove"></Glyphicon> Remove
                 </Button>
               </ButtonGroup>

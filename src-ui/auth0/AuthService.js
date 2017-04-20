@@ -3,8 +3,8 @@
 import Auth0Lock from 'auth0-lock';
 import { browserHistory } from 'react-router';
 import { isTokenExpired } from './jwtHelper';
-// import auth0 from 'auth0-js';
-
+/* globals localStorage */
+/* globals window */
 
 export default class AuthService {
   constructor(clientId, domain) {
@@ -31,14 +31,26 @@ export default class AuthService {
 
     this.login = this.login.bind(this);
     this.signUp = this.signUp.bind(this);
-    this.auth0.on('authenticated', this._doAuthentication.bind(this));
+    this.setHistory = this.setHistory.bind(this);
+    this._doAuthentication = this._doAuthentication.bind(this);
+    this.setToken = this.setToken.bind(this);
+    this.getToken = this.getToken.bind(this);
+    this.loggedIn = this.loggedIn.bind(this);
+    this.logout = this.logout.bind(this);
+    this.auth0.on('authenticated', this._doAuthentication);
   }
 
   _doAuthentication(authResult) {
       // Saves the user token
-      this.setToken(authResult.idToken)
+      this.setToken(authResult.idToken);
       // navigate to the home route
-      browserHistory.replace('/')
+      if(this.history){
+        this.history.replace('/');
+      }
+  }
+
+  setHistory(history){
+    this.history = history;
   }
 
   setProfile(profile) {
@@ -54,18 +66,21 @@ export default class AuthService {
       return profile ? JSON.parse(localStorage.profile) : {};
   }
 
-  login(username, password) {
+  login(history) {
+    this.history = history;
+    this.auth0.removeAllListeners();
     this.auth0.show({
       allowSignUp : false,
       allowLogin	 : true
     });
   }
 
-  signUp(email, password){
+  signUp(history){
     this.auth0.show({
       allowSignUp : true,
       allowLogin	 : false
     });
+    this.history = history;
   }
 
   loggedIn() {
@@ -82,9 +97,12 @@ export default class AuthService {
     return localStorage.getItem('id_token');
   }
 
-  logout() {
+  logout(history) {
     // Clear user token and profile data from local storage
     localStorage.removeItem('id_token');
     localStorage.removeItem('profile');
+    if(history){
+      history.replace('/');
+    }
   }
 }
