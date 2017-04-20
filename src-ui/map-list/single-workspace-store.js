@@ -48,8 +48,7 @@ export default class SingleWorkspaceStore extends Store {
                   this.emitChange();
                   break;
               case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
-                  console.error('not implemented');
-                  //no change, because it will go only after the submission is successful
+                  this.submitNewMapDialog(action.data);
                   break;
               case ActionTypes.MAP_DELETE:
                   this.deleteMap(action.data);
@@ -176,6 +175,24 @@ export default class SingleWorkspaceStore extends Store {
       success: function(data) {
         this.workspace = data;
         this.inviteDialog.open = false;
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
+      }.bind(this)
+    });
+  }
+
+  submitNewMapDialog(data) {
+    $.ajax({
+      type: 'POST',
+      url: '/api/map/',
+      dataType: 'json',
+      data: data,
+      success: function(data) {
+        this.fetchSingleWorkspaceInfo(); // create new map should return map, so we have to refetch workspace here
+        this.newMapDialog.open = false;
         this.emitChange();
         this.io.emit('workspace', {
           type: 'change',

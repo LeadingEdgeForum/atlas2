@@ -86,13 +86,11 @@ var SingleWorkspaceActions = {
     },
 
     submitNewMapDialog: function(data) {
-      console.error('implement me');
-      return;
       if(!data){
-        console.error('Missing new workspace data, aborting...');
+        console.error('Missing new map data, aborting...');
         return;
       }
-      if(!data.name || !data.purpose || !data.description){
+      if(!data.user || !data.purpose || !data.responsiblePerson){
         console.log('Incomplete new workspace data', data);
       }
       Dispatcher.dispatch({
