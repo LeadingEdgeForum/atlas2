@@ -11,7 +11,7 @@ import {
   Glyphicon
 } from 'react-bootstrap';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
-import Actions from '../../../actions';
+import SingleWorkspaceActions from './single-workspace-actions';
 import {calculateMapName} from './map-name-calculator';
 import $ from 'jquery';
 
@@ -25,15 +25,18 @@ export default class MapListElement extends React.Component {
   }
 
   archive(workspace, id) {
-    Actions.archiveMap(workspace, id);
+    SingleWorkspaceActions.deleteMap(workspace, id);
   }
+
+  
   componentDidMount() {
     var mapID = this.props.id;
+
     $.ajax({
       type: 'GET',
       url: '/api/submap/' + mapID + '/usage',
       success: function(referencingMaps) {
-        this.setState({referencingMaps: referencingMaps})
+        this.setState({referencingMaps: referencingMaps});
       }.bind(this)
     });
   }

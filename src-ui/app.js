@@ -39,6 +39,7 @@ import MapListPage from './map-list/MapListPage.js';
 import AuthService from './auth0/AuthService';
 import $ from 'jquery';
 import WorkspaceListStore from './workspace/workspace-list-store';
+import SingleWorkspaceStore from './map-list/single-workspace-store';
 
 const auth = new AuthService(___AUTH0_AUDIENCE___, ___AUTH0_ISSUER___);
 
@@ -70,7 +71,7 @@ ReactDOM.render(
         render={
           (props) =>
           (auth.loggedIn()
-          ? <MapListPage workspaceID={props.match.params.workspaceID} auth={auth} history={props.history}/>
+          ? <MapListPage singleWorkspaceStore={new SingleWorkspaceStore(props.match.params.workspaceID)} auth={auth} history={props.history}/>
           : AuthRedirect)
         }/>
     {/*<Route exact path="/deduplicate/:workspaceID" render={props => (auth.loggedIn() ? WorkspaceListPage : AuthRedirect)}/>

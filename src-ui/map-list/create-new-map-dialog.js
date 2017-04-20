@@ -1,48 +1,50 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Input,
+  Modal,
+  Button
 } from 'react-bootstrap';
 var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../constants');
-import Actions from './../../../actions.js';
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from '../workspace-store';
+var Constants = require('./single-workspace-constants');
+import Actions from './single-workspace-actions';
 import {calculateMapName} from './map-name-calculator';
 //TODO: validation of the workspace dialog
 
 var CreateNewMapDialog = React.createClass({
   getInitialState: function() {
-    return {open: false};
+    return this.props.singleWorkspaceStore.getNewMapDialogState();
+  },
+  componentDidMount() {
+    this.props.singleWorkspaceStore.addChangeListener(this._onChange.bind(this));
   },
 
-  componentDidMount: function() {
-    this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+  componentWillUnmount() {
+    this.props.singleWorkspaceStore.removeChangeListener(this._onChange.bind(this));
   },
 
-  componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
-  },
   internalState: {},
+
   _onChange: function() {
-    this.setState(WorkspaceStore.isMapNewDialogOpen());
+    this.setState(this.props.singleWorkspaceStore.getNewMapDialogState());
   },
+
   _close: function() {
     Actions.closeNewMapDialog();
+    this.internalState = {};
   },
+
   _submit: function() {
     this.internalState.workspaceID = this.props.workspaceID;
     Actions.submitNewMapDialog(this.internalState);
+    this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {
@@ -53,6 +55,7 @@ var CreateNewMapDialog = React.createClass({
   _summary: function() {
     return calculateMapName("Create a new map", this.internalState.user, this.internalState.purpose);
   },
+
   render: function() {
     var show = this.state.open;
     var summary = this._summary();

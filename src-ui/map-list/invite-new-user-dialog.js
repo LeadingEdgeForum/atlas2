@@ -1,47 +1,51 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Input,
+  Modal,
+  Button
 } from 'react-bootstrap';
 var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../constants');
-import Actions from './../../../actions.js';
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from '../workspace-store';
+var Constants = require('./single-workspace-constants');
+import Actions from './single-workspace-actions';
 //TODO: validation of the workspace dialog
 
 var InviteNewUserDialog = React.createClass({
+
   getInitialState: function() {
     return {open: false};
   },
 
   componentDidMount: function() {
-    this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleWorkspaceStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.singleWorkspaceStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    this.setState(WorkspaceStore.isInviteNewUserDialogOpen());
+    this.setState(this.props.singleWorkspaceStore.getInviteNewUserDialogState());
   },
+
   _close: function() {
-    Actions.closeInviteNewUserDialog();
+    Actions.closeInviteDialog();
+    this.internalState = {};
   },
+
   _submit: function() {
     this.internalState.workspaceID = this.props.workspaceID;
-    Actions.submitInviteNewUserDialog(this.internalState);
+    Actions.submitInviteDialog(this.internalState);
+    this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {

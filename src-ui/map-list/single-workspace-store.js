@@ -8,7 +8,7 @@ var io = require('socket.io-client')();
 
 const ActionTypes = Constants.ACTION_TYPES;
 
-export default class WorkspaceListStore extends Store {
+export default class SingleWorkspaceStore extends Store {
 
   constructor(workspaceID) {
       super();
@@ -32,31 +32,57 @@ export default class WorkspaceListStore extends Store {
       this.io.on('workspacechange', function(msg) {
           this.serverRequest = $.get('/api/workspace/' + msg.id, function(result) {
               this.fetchSingleWorkspaceInfo(msg.id);
-              this.updateWorkspaces(); // this emits change
+              this.emitChange();
           }.bind(this));
       });
 
       this.dispatchToken = Dispatcher.register(action => {
           switch (action.actionType) {
-              case ActionTypes.WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG:
-                  this.newWorkspaceDialog.open = true;
+              case ActionTypes.MAP_OPEN_NEW_MAP_DIALOG:
+                  this.newMapDialog.open = true;
                   this.emitChange();
                   break;
-              case ActionTypes.WORKSPACE_CLOSE_NEW_WORKSPACE_DIALOG:
-                  this.newWorkspaceDialog.open = false;
+              case ActionTypes.MAP_CLOSE_NEW_MAP_DIALOG:
+                  this.newMapDialog.open = false;
                   this.emitChange();
                   break;
-              case ActionTypes.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG:
+              case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
                   this.submitNewWorkspaceDialog(action.data);
                   //no change, because it will go only after the submission is successful
                   break;
-              case ActionTypes.WORKSPACE_DELETE:
-                  this.deleteWorkspace(action.workspaceID);
+              case ActionTypes.MAP_DELETE:
+                  this.deleteMap(action.workspaceID);
+                  break;
+              case ActionTypes.WORKSPACE_OPEN_INVITE_DIALOG:
+                  this.inviteDialog.open = true;
+                  this.emitChange();
+                  break;
+              case ActionTypes.WORKSPACE_CLOSE_INVITE_DIALOG:
+                  this.inviteDialog.open = false;
+                  this.emitChange();
+                  break;
+              case ActionTypes.WORKSPACE_SUBMIT_INVITE_DIALOG:
+                  console.error('not implemented');
+                  //no change, because it will go only after the submission is successful
+                  break;
+              case ActionTypes.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG:
+                  this.editWorkspaceDialog.open = true;
+                  this.editWorkspaceDialog.name = this.workspace.workspace.name;
+                  this.editWorkspaceDialog.description = this.workspace.workspace.description;
+                  this.editWorkspaceDialog.purpose = this.workspace.workspace.purpose;
+                  this.emitChange();
+                  break;
+              case ActionTypes.WORKSPACE_CLOSE_EDIT_WORKSPACE_DIALOG:
+                  this.editWorkspaceDialog.open = false;
+                  this.emitChange();
+                  break;
+              case ActionTypes.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG:
+                  console.error('not implemented');
+                  //no change, because it will go only after the submission is successful
                   break;
               default:
                   return;
           }
-
       });
   }
 
@@ -64,54 +90,41 @@ export default class WorkspaceListStore extends Store {
     super.emitChange();
   }
 
-  updateWorkspaces() {
-    this.serverRequest = $.get('/api/workspaces', function(result) {
-      this.workspaces = result;
-      this.emitChange();
-    }.bind(this));
-  }
-
-  getWorkspaces() {
-    if (this.workspaces) {
-        return this.workspaces;
-    } else {
-        this.updateWorkspaces();
-        return {};
-    }
-  }
-
-  isWorkspaceNewDialogOpen() {
-    return this.newWorkspaceDialog;
-  }
-
-  submitNewWorkspaceDialog(data) {
-    $.ajax({
-      type: 'POST',
-      url: '/api/workspace/',
-      dataType: 'json',
-      data: data,
-      success: function(data) {
-        this.newWorkspaceDialog.open = false;
-        this.updateWorkspaces();
-      }.bind(this)
-    });
-  }
-
-  deleteWorkspace(workspaceID){
-    $.ajax({
-        type: 'DELETE',
-        url: '/api/workspace/' + workspaceID,
-        success: function(data2) {
-            this.io.emit('workspace', {
-                type: 'change',
-                id: workspaceID
-            });
-            this.updateWorkspaces(); // this emits change
-        }.bind(this)
-    });
+  getNewMapDialogState(){
+    return this.newMapDialog;
   }
 
   getWorkspaceEditDialogState(){
     return this.editWorkspaceDialog;
+  }
+
+  getInviteNewUserDialogState(){
+    return this.inviteDialog;
+  }
+
+  getWorkspaceId(){
+    return this.workspaceID;
+  }
+
+  fetchSingleWorkspaceInfo() {
+    this.serverRequest = $.get('/api/workspace/' + this.workspaceID, function(result) {
+      this.workspace = result;
+      this.emitChange();
+    }.bind(this));
+  }
+
+  getWorkspaceInfo() {
+    if (!this.workspace) {
+      this.fetchSingleWorkspaceInfo();
+      return {
+        workspace: {
+          name: "Loading...",
+          maps: [],
+          capabilityCategories : []
+        },
+        loading: true
+      };
+    }
+    return this.workspace;
   }
 }
