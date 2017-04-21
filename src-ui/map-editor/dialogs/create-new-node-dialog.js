@@ -17,12 +17,12 @@ import {
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
 
-var $ = require('jquery');
 var _ = require('underscore');
 
 //TODO: validation of the workspace dialog
 
 var CreateNewNodeDialog = React.createClass({
+
   getInitialState: function() {
     return {open: false};
   },

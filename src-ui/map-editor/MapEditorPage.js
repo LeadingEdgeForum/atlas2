@@ -14,6 +14,7 @@ import {
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
 import CreateNewNodeDialog from './dialogs/create-new-node-dialog';
+import NewGenericCommentDialog from './dialogs/create-new-comment-dialog';
 import {LinkContainer} from 'react-router-bootstrap';
 import SingleMapActions from './single-map-actions';
 import {calculateMapName} from '../map-list/map-name-calculator';
@@ -132,9 +133,9 @@ export default class MapEditorPage extends React.Component {
           </Row>
           <EditMapDialog singleMapStore={singleMapStore}/>
           <CreateNewNodeDialog singleMapStore={singleMapStore}/>
+          <NewGenericCommentDialog singleMapStore={singleMapStore}/>
           {/*<CreateNewSubmapDialog workspaceID={workspaceID}/>
           <EditNodeDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
-          <NewGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
           <EditGenericCommentDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
           <EditActionDialog mapID={this.props.params.mapID} workspaceID={workspaceID}/>
           <SubmapReferencesDialog/>

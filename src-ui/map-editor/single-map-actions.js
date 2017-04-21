@@ -70,6 +70,42 @@ var SingleMapActions = {
       });
     },
 
+    openAddCommentDialog(coords, type){
+      if(!coords || !type){
+        console.error('No new node data, aborting...');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_ADD_COMMENT_DIALOG,
+          coords : coords,
+          type : type
+      });
+    },
+
+    closeAddCommentDialog : function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_ADD_COMMENT_DIALOG
+      });
+    },
+
+    submitAddCommentDialog : function(data){
+      if(!data){
+        console.error('missing data, aborting...');
+        return;
+      }
+      if(!data.coords){
+        console.error('incomplete data, aborting', data);
+        return;
+      }
+      if(!data.comment){
+        console.error('incomplete data', data);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_ADD_COMMENT_DIALOG,
+          data : data
+      });
+    },
+
     recordConnection : function(data){
       console.error('implement me');
     },
@@ -126,11 +162,6 @@ var SingleMapActions = {
       console.error('implement me');
     },
 
-
-
-    openAddCommentDialog :  function(data){
-      console.error('implement me');
-    },
 
     openAddSubmapDialog :  function(data){
       console.error('implement me');

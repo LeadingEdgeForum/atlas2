@@ -23,6 +23,10 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.addCommentDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', function(msg) {
@@ -59,6 +63,21 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.SUBMIT_NEW_NODE_DIALOG:
             this.submitNewNodeDialog(action.data);
             break;
+          case ActionTypes.OPEN_ADD_COMMENT_DIALOG:
+            this.addCommentDialog.open = true;
+            this.addCommentDialog.coords = action.coords;
+            this.addCommentDialog.type = action.type;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_ADD_COMMENT_DIALOG:
+            this.addCommentDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_ADD_COMMENT_DIALOG:
+            this.submitAddCommentDialog(action.data);
+            break;
           default:
             return;
         }
@@ -75,6 +94,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getNewNodeDialogState(){
     return this.newNodeDialog;
+  }
+
+  getNewCommentDialogState(){
+    return this.addCommentDialog;
   }
 
   getMapId(){
@@ -170,6 +193,29 @@ export default class SingleWorkspaceStore extends Store {
           id: this.getMapId()
         });
       }.bind(this)
+    });
+  }
+
+  submitAddCommentDialog(data){
+    $.ajax({
+        type: 'POST',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/comment/',
+        data: {
+          x : data.coords.x,
+          y : data.coords.y,
+          text : data.comment
+        },
+        success: function(data2) {
+            this.map = data2;
+            this.addCommentDialog = {
+              open : false
+            };
+            this.emitChange();
+            this.io.emit('map', {
+                type: 'change',
+                id: this.getMapId()
+            });
+        }.bind(this)
     });
   }
 

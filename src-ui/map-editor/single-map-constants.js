@@ -9,6 +9,9 @@ module.exports  = keyMirror({
       SUBMIT_EDIT_MAP_DIALOG : null,
       OPEN_NEW_NODE_DIALOG : null,
       CLOSE_NEW_NODE_DIALOG : null,
-      SUBMIT_NEW_NODE_DIALOG : null
+      SUBMIT_NEW_NODE_DIALOG : null,
+      OPEN_ADD_COMMENT_DIALOG : null,
+      CLOSE_ADD_COMMENT_DIALOG : null,
+      SUBMIT_ADD_COMMENT_DIALOG : null,
   }
 });
