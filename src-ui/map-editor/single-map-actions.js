@@ -23,9 +23,8 @@ var SingleMapActions = {
         console.error('No map data, aborting...');
         return;
       }
-      if(  !data.mapID
-        || !data.responsiblePerson
-        || !((data.user && data.purpose) || data.name)){
+      if(  !data.mapID || !data.responsiblePerson ||
+        !((data.user && data.purpose) || data.name)){
         console.log('Incomplete map data', data);
       }
       Dispatcher.dispatch({
