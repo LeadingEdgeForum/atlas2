@@ -27,6 +27,10 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.addSubmapDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', function(msg) {
@@ -78,6 +82,33 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.SUBMIT_ADD_COMMENT_DIALOG:
             this.submitAddCommentDialog(action.data);
             break;
+          case ActionTypes.OPEN_ADD_SUBMAP_DIALOG:
+            this.addSubmapDialog.open = true;
+            this.addSubmapDialog.coords = action.coords;
+            this.addSubmapDialog.type = action.type;
+            this.addSubmapDialog.listOfNodesToSubmap = [];
+            $.ajax({
+              type: 'GET',
+              url: '/api/submaps/map/' + this.getMapId(),
+              success: function(data2) {
+                this.addSubmapDialog.listOfAvailableSubmaps = data2.listOfAvailableSubmaps;
+                this.emitChange();
+              }.bind(this)
+            });
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
+            this.addSubmapDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
+            this.createSubmap(action.data);
+            break;
+          case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
+            this.addReferenceToExistingSubmap(action.refID, action.coords);
+            break;
           default:
             return;
         }
@@ -98,6 +129,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getNewCommentDialogState(){
     return this.addCommentDialog;
+  }
+
+  getNewSubmapDialogState(){
+    return this.addSubmapDialog;
   }
 
   getMapId(){
@@ -217,6 +252,58 @@ export default class SingleWorkspaceStore extends Store {
             });
         }.bind(this)
     });
+  }
+
+  addReferenceToExistingSubmap(refID, coords){
+    $.ajax({
+      type: 'PUT',
+      url: '/api/map/' + this.getMapId() + '/submap/' + refID,
+      dataType: 'json',
+      data : {
+        coords: coords
+      },
+      success: function(data2) {
+        this.map = data2;
+        this.addSubmapDialog = {open:false};
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+        this.io.emit('workspace', {
+          type: 'change',
+          id: this.getWorkspaceId()
+        });
+      }.bind(this)
+    });
+  }
+
+  createSubmap(data){
+    $.ajax({
+          type: 'PUT',
+          url: '/api/map/' + this.getMapId() + '/submap',
+          dataType: 'json',
+          data : {
+            name : data.name,
+            responsiblePerson : data.responsiblePerson,
+            listOfNodesToSubmap : data.listOfNodesToSubmap,
+            listOfCommentsToSubmap : data.listOfCommentsToSubmap,
+            coords: data.coords
+          },
+          success: function(data2) {
+            this.map = data2;
+            this.addSubmapDialog = {open:false};
+            this.emitChange();
+            this.io.emit('map', {
+              type: 'change',
+              id: this.getMapId()
+            });
+            this.io.emit('workspace', {
+              type: 'change',
+              id: this.getWorkspaceId()
+            });
+          }.bind(this)
+        });
   }
 
 }

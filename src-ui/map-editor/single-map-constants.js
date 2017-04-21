@@ -13,5 +13,9 @@ module.exports  = keyMirror({
       OPEN_ADD_COMMENT_DIALOG : null,
       CLOSE_ADD_COMMENT_DIALOG : null,
       SUBMIT_ADD_COMMENT_DIALOG : null,
+      OPEN_ADD_SUBMAP_DIALOG : null,
+      CLOSE_ADD_SUBMAP_DIALOG : null,
+      SUBMIT_ADD_SUBMAP_DIALOG : null,
+      SUBMIT_ADD_REFERENCED_SUBMAP : null,
   }
 });

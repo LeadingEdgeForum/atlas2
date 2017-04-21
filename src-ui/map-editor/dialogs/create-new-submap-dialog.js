@@ -1,9 +1,6 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
@@ -11,47 +8,52 @@ import {
   ControlLabel,
   HelpBlock,
   Col,
-  Row,
-  Checkbox
+  Radio,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
-import Actions from './../../../../actions.js';
-var $ = require('jquery');
-var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './../../workspace-store';
+var Constants = require('../single-map-constants');
+import SingleMapActions from '../single-map-actions';
 
 //TODO: validation of the workspace dialog
 
 var CreateNewSubmapDialog = React.createClass({
+
   getInitialState: function() {
     return {open: false};
   },
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    this.setState(WorkspaceStore.getNewSubmapDialogState());
+    this.setState(this.props.singleMapStore.getNewSubmapDialogState());
   },
+
   _close: function() {
-    Actions.closeNewSubmapDialog();
+    SingleMapActions.closeAddSubmapDialog();
   },
+
   _submit: function() {
-    this.internalState.mapID = this.props.mapID;
-    Actions.createSubmap(this.props.workspaceID, this.internalState.name, this.internalState.responsiblePerson);
+    this.internalState.coords = this.state.coords;
+    SingleMapActions.submitAddSubmapDialog(this.internalState);
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
+    this.forceUpdate();
   },
+
   // catch enter and consider it to be 'submit'
   _enterInterceptor(e) {
     if (e.nativeEvent.keyCode === 13) {
@@ -59,6 +61,7 @@ var CreateNewSubmapDialog = React.createClass({
       e.stopPropagation();
     }
   },
+
   renderNewSubmapDialogOnly: function(show) {
     return (
       <div>
@@ -78,16 +81,17 @@ var CreateNewSubmapDialog = React.createClass({
                   <FormControl type="text" placeholder="Enter name of the submap" onChange={this._handleDialogChange.bind(this, 'name')} onKeyDown={this._enterInterceptor}/>
                 </Col>
               </FormGroup>
+
+              <FormGroup controlId="responsiblePerson">
+                <Col sm={2}>
+                  <ControlLabel>Responsible Person</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl type="textarea" placeholder="Enter this person's email" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')} onKeyDown={this._enterInterceptor}/>
+                  <HelpBlock>Who will be held responsible for this map?</HelpBlock>
+                </Col>
+              </FormGroup>
             </Form>
-            <FormGroup controlId="responsiblePerson">
-              <Col sm={2}>
-                <ControlLabel>Responsible Person</ControlLabel>
-              </Col>
-              <Col sm={9}>
-                <FormControl type="textarea" placeholder="Enter this person's email" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')} onKeyDown={this._enterInterceptor}/>
-                <HelpBlock>Who will be held responsible for this map?</HelpBlock>
-              </Col>
-            </FormGroup>
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
@@ -97,18 +101,21 @@ var CreateNewSubmapDialog = React.createClass({
       </div>
     );
   },
+
   renderListOfAvailableSubmaps: function() {
     var finalList = [];
+    var coords = this.state.coords;
     for (var i = 0; i < this.state.listOfAvailableSubmaps.length; i++) {
       var refID = '' + this.state.listOfAvailableSubmaps[i]._id;
       finalList.push(
         <p>
-          <Button bsSize="small" block onClick={Actions.createReferencedSubmap.bind(Actions, refID)}>{this.state.listOfAvailableSubmaps[i].name}</Button>
+          <Button bsSize="small" block onClick={SingleMapActions.createReferencedSubmap.bind(SingleMapActions, refID, coords)}>{this.state.listOfAvailableSubmaps[i].name}</Button>
         </p>
-      )
-    };
+      );
+    }
     return finalList;
   },
+
   renderNewSubmapDialogWitSubmapList: function(show) {
     var finalList = this.renderListOfAvailableSubmaps();
     return (
@@ -155,6 +162,7 @@ var CreateNewSubmapDialog = React.createClass({
       </div>
     );
   },
+
   render: function() {
     var show = this.state.open;
     if (!this.state.listOfAvailableSubmaps || this.state.listOfAvailableSubmaps.length === 0) {

@@ -106,6 +106,51 @@ var SingleMapActions = {
       });
     },
 
+    openAddSubmapDialog(coords, type){
+      if(!coords || !type){
+        console.error('No new submap data, aborting...');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_ADD_SUBMAP_DIALOG,
+          coords : coords,
+          type : type
+      });
+    },
+
+    closeAddSubmapDialog : function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_ADD_SUBMAP_DIALOG
+      });
+    },
+
+    submitAddSubmapDialog : function(data){
+      if(!data){
+        console.error('missing data, aborting...');
+        return;
+      }
+      if(!data.coords || !data.name || !data.responsiblePerson){
+        console.error('incomplete data', data);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_ADD_SUBMAP_DIALOG,
+          data : data
+      });
+    },
+
+    // a reference to existing submap is added
+    createReferencedSubmap : function(refID, coords){
+      if(!refID || !coords){
+        console.error('missing data, aborting...');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_ADD_REFERENCED_SUBMAP,
+          refID : refID,
+          coords : coords
+      });
+    },
+
     recordConnection : function(data){
       console.error('implement me');
     },
@@ -159,11 +204,6 @@ var SingleMapActions = {
     },
 
     updateAction: function(data){
-      console.error('implement me');
-    },
-
-
-    openAddSubmapDialog :  function(data){
       console.error('implement me');
     },
 
