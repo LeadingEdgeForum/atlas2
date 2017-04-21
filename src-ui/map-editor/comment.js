@@ -2,8 +2,7 @@
 
 var React = require('react');
 var _ = require('underscore');
-var Constants = require('./../../../../constants');
-import Actions from '../../../../actions';
+import Actions from './single-map-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
@@ -11,7 +10,7 @@ import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
-var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 var activeStyle = {
   boxShadow: "0 0 10px #00789b",

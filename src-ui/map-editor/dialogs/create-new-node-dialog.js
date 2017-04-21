@@ -1,9 +1,6 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
@@ -11,15 +8,17 @@ import {
   ControlLabel,
   HelpBlock,
   Col,
-  Radio
+  Radio,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
-import Actions from './../../../../actions.js';
+var Constants = require('../single-map-constants');
+import SingleMapActions from '../single-map-actions';
+
 var $ = require('jquery');
 var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './../../workspace-store';
 
 //TODO: validation of the workspace dialog
 
@@ -30,28 +29,34 @@ var CreateNewNodeDialog = React.createClass({
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    this.setState(WorkspaceStore.getNewNodeDialogState());
+    this.setState(this.props.singleMapStore.getNewNodeDialogState());
   },
+
   _close: function() {
-    Actions.closeNewNodeDialog();
+    SingleMapActions.closeAddNodeDialog();
   },
+
   _submit: function() {
     this.internalState.mapID = this.props.mapID;
     this.internalState.workspaceID = this.props.workspaceID;
-    Actions.newNodeCreated(_.extend(this.state, this.internalState));
+    SingleMapActions.submitAddNodeDialog(_.extend(this.state, this.internalState));
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
+    this.forceUpdate();
   },
+
   // catch enter and consider it to be 'submit'
   _enterInterceptor(e) {
     if (e.nativeEvent.keyCode === 13) {
@@ -59,8 +64,10 @@ var CreateNewNodeDialog = React.createClass({
       e.stopPropagation();
     }
   },
+
   render: function() {
     var show = this.state.open;
+    var inertia = this.internalState.inertia;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -92,10 +99,10 @@ var CreateNewNodeDialog = React.createClass({
                   <ControlLabel>Inertia</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                    <Radio inline checked value={0} onChange={this._handleDialogChange.bind(this, 'inertia')}>None</Radio>{' '}
-                    <Radio inline value={0.33} onChange={this._handleDialogChange.bind(this, 'inertia')}>Small</Radio>{' '}
-                    <Radio inline value={0.66} onChange={this._handleDialogChange.bind(this, 'inertia')}>Considerable</Radio>{' '}
-                    <Radio inline value={1} onChange={this._handleDialogChange.bind(this, 'inertia')}>Huge</Radio>
+                    <Radio inline checked={ inertia==0 || !inertia} value={0} onChange={this._handleDialogChange.bind(this, 'inertia')}>None</Radio>{' '}
+                    <Radio inline value={0.33} checked={inertia==0.33} onChange={this._handleDialogChange.bind(this, 'inertia')}>Small</Radio>{' '}
+                    <Radio inline value={0.66} checked={inertia==0.66} onChange={this._handleDialogChange.bind(this, 'inertia')}>Considerable</Radio>{' '}
+                    <Radio inline value={1} checked={inertia==1} onChange={this._handleDialogChange.bind(this, 'inertia')}>Huge</Radio>
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">

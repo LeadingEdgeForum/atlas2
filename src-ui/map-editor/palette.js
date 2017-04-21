@@ -1,26 +1,27 @@
 /*jshint esversion: 6 */
 
 import React, {PropTypes} from 'react';
-import DocumentTitle from 'react-document-title';
 import {
   Grid,
   Row,
   Col,
-  Jumbotron,
-  Button,
-  Table,
-  ListGroup
+  Button
 } from 'react-bootstrap';
-import WorkspaceStore from '../../workspace-store';
-import Actions from '../../../../actions';
+import SingleMapActions from './single-map-actions';
 import CanvasActions from './canvas-actions';
-import Constants from '../../../../constants';
-var _ = require('underscore');
-import {userNeedStyle, externalStyle, internalStyle, submapStyle, genericCommentPalletteStyle} from './component-styles';
+import Constants from '../constants';
+import {
+  userNeedStyle,
+  externalStyle,
+  internalStyle,
+  submapStyle,
+  genericCommentPalletteStyle
+} from './component-styles';
 
-var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
-var makeDraggable = function(type, mapID, input) {
+
+var makeDraggable = function(type, mapID, canvasStore, input) {
   if (input === null) {
     //noop - component was destroyed, no need to worry about draggable
     return;
@@ -36,7 +37,15 @@ var makeDraggable = function(type, mapID, input) {
     },
     drag: function(params) {},
     stop: function(params) {
-      Actions.palletteDragStopped(type, mapID , params);
+      CanvasActions.highlightCanvas(false);
+      var coords = canvasStore.normalizeComponentCoord(params);
+      if(type === Constants.SUBMAP){
+        SingleMapActions.openAddSubmapDialog(coords, type);
+      } else if (type === Constants.GENERIC_COMMENT){
+        SingleMapActions.openAddCommentDialog(coords, type);
+      } else {
+        SingleMapActions.openAddNodeDialog(coords, type);
+      }
     }
   });
 };
@@ -52,12 +61,14 @@ var HigherMargins = {
 };
 
 export default class Palette extends React.Component {
+
   constructor(props) {
     super(props);
   }
 
   render() {
     var mapID = this.props.mapID;
+    var canvasStore = this.props.canvasStore;
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
@@ -68,7 +79,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.USERNEED,mapID)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.USERNEED,mapID,canvasStore)} style={HigherMargins}>
                 <div style={userNeedStyle}></div>&nbsp;User need
               </div>
             </Button>
@@ -77,7 +88,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.INTERNAL,mapID)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.INTERNAL,mapID, canvasStore)} style={HigherMargins}>
                 <div style={internalStyle}></div>&nbsp;Internal
               </div>
             </Button>
@@ -86,7 +97,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.EXTERNAL,mapID)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.EXTERNAL,mapID, canvasStore)} style={HigherMargins}>
                 <div style={externalStyle}></div>&nbsp;External
               </div>
             </Button>
@@ -95,7 +106,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.SUBMAP, mapID)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.SUBMAP, mapID, canvasStore)} style={HigherMargins}>
                 <div style={submapStyle}></div>&nbsp;Submap
               </div>
             </Button>
@@ -104,7 +115,7 @@ export default class Palette extends React.Component {
         <Row className="show-grid">
           <Col xs={12}>
             <Button href="#" style={buttonStyle} bsStyle={null}>
-              <div ref={makeDraggable.bind(this, Constants.GENERIC_COMMENT, mapID)} style={HigherMargins}>
+              <div ref={makeDraggable.bind(this, Constants.GENERIC_COMMENT, mapID, canvasStore)} style={HigherMargins}>
                 <div style={genericCommentPalletteStyle}></div>&nbsp;Comment
               </div>
             </Button>

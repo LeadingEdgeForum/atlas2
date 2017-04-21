@@ -1,21 +1,22 @@
 /*jshint esversion: 6 */
+/* globals document */
+/* globals window */
 
 import React, {PropTypes} from 'react';
 import ReactDOM from 'react-dom';
-import {
-  Glyphicon
-} from 'react-bootstrap';
+import {Glyphicon} from 'react-bootstrap';
 var _ = require('underscore');
-import Actions from '../../../../actions';
+import SingleMapActions from './single-map-actions';
 import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
 import {endpointOptions, actionEndpointOptions} from './component-styles';
 
-var jsPlumb = require("../../../../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
-var mapCanvasStyle = { //this is style applied to the place where actuall components can be drawn
+//this is style applied to the place where actuall components can be drawn
+var mapCanvasStyle = {
   position: 'relative',
   top: 0,
   height: '98%',
@@ -75,7 +76,7 @@ export default class MapCanvas extends React.Component {
       //connection already exists, so do not do anything
       return false;
     }
-    Actions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
+    SingleMapActions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
     //never create connection as they will be reconciled
     return false;
   }
@@ -89,7 +90,7 @@ export default class MapCanvas extends React.Component {
 
   connectionDragStop(info, e) {
       if (info.getData().scope === 'WM_Action') {
-          Actions.recordAction(this.props.workspaceID, this.props.mapID, info.sourceId, {
+          SingleMapActions.recordAction(this.props.workspaceID, this.props.mapID, info.sourceId, {
               pos: [e.x, e.y]
           });
       }
@@ -173,7 +174,7 @@ export default class MapCanvas extends React.Component {
     var menuItems = [];
     for(var i = 0; i < menuDefinition.length; i++){
       menuItems.push(<Glyphicon glyph={menuDefinition[i][0]} onClick={menuDefinition[i][1]} style={{zIndex: 50,  cursor: 'pointer'}}/>);
-      if(i != menuDefinition.length - 1){
+      if(i !== menuDefinition.length - 1){
         menuItems.push(<span>&nbsp;</span>);
       }
     }
@@ -204,7 +205,7 @@ export default class MapCanvas extends React.Component {
   }
 
   overlayClickHandler(obj) {
-    if(obj.component && obj.id != 'label'){
+    if(obj.component && obj.id !== 'label'){
       var conn = obj.component;
       conn.___overlayVisible = false;
       conn.getOverlay("menuOverlay").setVisible(conn.___overlayVisible);
@@ -251,7 +252,7 @@ export default class MapCanvas extends React.Component {
                   var existing = canvasConnections.splice(canvasIterator, 1)[0];
                   existing.removeOverlay("menuOverlay");
                   var overlaysToReadd = this.getOverlays(null, [
-                          ["remove", Actions.deleteConnection.bind(Actions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
+                          ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
                       ]
                   );
                   for (var zz = 0; zz < overlaysToReadd.length; zz++) {
@@ -281,7 +282,7 @@ export default class MapCanvas extends React.Component {
                       endpointOptions.paintStyle, endpointOptions.paintStyle
                   ],
                   overlays: this.getOverlays(null, [
-                      ["remove", Actions.deleteConnection.bind(Actions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
+                      ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
                   ])
               });
               connection.___overlayVisible = false;
@@ -337,8 +338,8 @@ export default class MapCanvas extends React.Component {
                           actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
                       ],
                       overlays: this.getOverlays(actionEndpointOptions.connectorOverlays, [
-                              ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
-                              ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
+                              ["pencil", SingleMapActions.openEditActionDialog.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
+                              ["remove", SingleMapActions.deleteAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
                           ],
                           desiredActions[ll].shortSummary
                       )
@@ -351,8 +352,8 @@ export default class MapCanvas extends React.Component {
                   existingNodeConnection[0].removeOverlay("menuOverlay");
                   existingNodeConnection[0].removeOverlay("label");
                   var overlaysToReadd = this.getOverlays(null, [
-                          ["pencil", Actions.openEditActionDialog.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
-                          ["remove", Actions.deleteAction.bind(Actions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
+                          ["pencil", SingleMapActions.openEditActionDialog.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
+                          ["remove", SingleMapActions.deleteAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
                       ],
                       desiredActions[ll].shortSummary
                   );

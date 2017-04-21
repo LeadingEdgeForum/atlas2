@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 
 var _ = require('underscore');
-var Constants = require('./../../../../constants');
+var Constants = require('./../constants');
 
 var _diameter = 10;
 var mapComponentStyle = {
@@ -38,10 +38,10 @@ var arrowEndStyle = _.extend(_.clone(mapComponentStyle), {
   border: '1px solid silver',
   backgroundColor: 'silver',
   borderRadius: _diameter / 4,
-  minHeight: _diameter/2,
-  minWidth: _diameter/2,
-  maxWidth: _diameter/2,
-  maxHeight: _diameter/2,
+  minHeight: _diameter / 2,
+  minWidth: _diameter / 2,
+  maxWidth: _diameter / 2,
+  maxHeight: _diameter / 2,
 });
 
 var genericCommentPalletteStyle = {
@@ -67,7 +67,7 @@ var genericCommentStyle = {
   lineHeight: '11px',
   padding: '1px',
   float: 'left',
-  maxWidth : '150px'
+  maxWidth: '150px'
 };
 
 var getStyleForType = function(type) {
@@ -117,7 +117,7 @@ var endpointOptions = {
   uniqueEndpoints: true
 };
 
-var actionEndpointOptions= {
+var actionEndpointOptions = {
   paintStyle: {
     fillStyle: "transparent",
     outlineColor: 'transparent'
@@ -137,23 +137,23 @@ var actionEndpointOptions= {
   ],
   deleteEndpointsOnDetach: false,
   uniqueEndpoints: true,
-  scope : "WM_Action",
+  scope: "WM_Action",
   connectorOverlays: [
-      ["Arrow", {
-          width: 10,
-          length: 10,
-          location: 1,
-          direction: 1
-      }]
+    ["Arrow", {
+      width: 10,
+      length: 10,
+      location: 1,
+      direction: 1
+    }]
   ]
-  };
+};
 export {
-    userNeedStyle,
-    externalStyle,
-    internalStyle,
-    submapStyle,
-    genericCommentPalletteStyle,
-    getStyleForType,
-    endpointOptions,
-    actionEndpointOptions
+  userNeedStyle,
+  externalStyle,
+  internalStyle,
+  submapStyle,
+  genericCommentPalletteStyle,
+  getStyleForType,
+  endpointOptions,
+  actionEndpointOptions
 };

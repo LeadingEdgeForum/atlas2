@@ -5,25 +5,6 @@ var CanvasConstants = require('./pages/workspace/maps/editor/canvas-constants');
 
 export default class Actions {
 
-  static openNewWorkspaceDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_OPEN_NEW_WORKSPACE_DIALOG});
-  }
-
-  static closeNewWorkspaceDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_CLOSE_NEW_WORKSPACE_DIALOG});
-  }
-
-  static submitNewWorkspaceDialog(newWorkspaceData) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_SUBMIT_NEW_WORKSPACE_DIALOG, data: newWorkspaceData});
-  }
-
-  static openInviteNewUserMapDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_OPEN_INVITE_DIALOG});
-  }
-
-  static closeInviteNewUserDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.WORKSPACE_CLOSE_INVITE_DIALOG});
-  }
 
   static closeNewGenericCommentDialog(){
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CLOSE_NEW_GENERIC_COMMENT_DIALOG});
@@ -108,47 +89,7 @@ export default class Actions {
     });
   }
 
-  static openNewMapDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_NEW_MAP_DIALOG});
-  }
 
-  static closeNewMapDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_NEW_MAP_DIALOG});
-  }
-
-  static submitNewMapDialog(data) {
-    if(!(data.user && data.purpose)){
-      throw new Exception('Bad payload for submitNewMapDialog, expected user and purpose, but got', data);
-    }
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG, data: data});
-  }
-
-  static openEditMapDialog(mapid) {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_OPEN_EDIT_MAP_DIALOG, data: mapid});
-  }
-
-  static closeEditMapDialog() {
-    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.MAP_CLOSE_EDIT_MAP_DIALOG});
-  }
-
-  static submitEditMapDialog(data) {
-    if(!( (data.user && data.purpose) || data.name)){
-      throw new Error('Bad payload for submitEditMapDialog, got', data);
-    }
-    Dispatcher.dispatch({
-      actionType: Constants.ACTION_TYPES.MAP_CLOSE_SUBMIT_EDIT_MAP_DIALOG,
-      data: {
-        mapID: data.map._id,
-        workspaceID : data.workspaceID,
-        mapData: {
-          user: data.user,
-          purpose: data.purpose,
-          name : data.name,
-          responsiblePerson : data.responsiblePerson
-        }
-      }
-    });
-  }
 
   static openEditNodeDialog(mapID, nodeID) {
     Dispatcher.dispatch({

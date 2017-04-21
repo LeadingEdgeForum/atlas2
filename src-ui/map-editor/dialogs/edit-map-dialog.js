@@ -10,54 +10,55 @@ import {
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../constants');
-import Actions from './../../../actions.js';
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from '../workspace-store';
-import {calculateMapName} from './map-name-calculator';
+var Constants = require('../single-map-constants');
+import SingleMapActions from '../single-map-actions';
+import {calculateMapName} from '../../map-list/map-name-calculator';
 
 //TODO: validation of the workspace dialog
 
-var CreateNewMapDialog = React.createClass({
+var EditMapDialog = React.createClass({
   getInitialState: function() {
     return {open: false};
   },
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange.bind(this));
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    var newState = WorkspaceStore.isMapEditDialogOpen();
-    var map = WorkspaceStore.getMapInfo(newState.mapID);
-    //load the map
-    if (!this.internalState.map && map && map.map && !map.map.loading) {
-      this.internalState.map = map.map;
-      this.internalState.user = this.internalState.map.user;
-      this.internalState.purpose = this.internalState.map.purpose;
-      this.internalState.responsiblePerson = this.internalState.map.responsiblePerson;
-      this.internalState.name = this.internalState.map.name;
-      this.internalState.workspaceID = this.props.workspaceID;
-    }
-    //dialog is going to be closed, clean internal state
-    if (!newState.open) {
-      this.internalState = {};
-    }
+    var newState = this.props.singleMapStore.getMapEditDialogState();
+    var map = this.props.singleMapStore.getMap().map;
+
+    this.internalState.workspaceID = this.props.singleMapStore.getWorkspaceId();
+
+    this.internalState.mapID = map._id;
+    this.internalState.user = map.user;
+    this.internalState.purpose = map.purpose;
+    this.internalState.responsiblePerson = map.responsiblePerson;
+    this.internalState.name = map.name;
+    this.internalState.isSubmap = !!map.isSubmap;
+
     this.setState(newState);
   },
+
   _close: function() {
-    Actions.closeEditMapDialog();
+    SingleMapActions.closeEditMapDialog();
+    this.internalState = {};
   },
+
   _submit: function() {
-    Actions.submitEditMapDialog(this.internalState);
+    SingleMapActions.submitEditMapDialog(this.internalState);
+    this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {
@@ -67,13 +68,15 @@ var CreateNewMapDialog = React.createClass({
   _summary: function(){
     return calculateMapName("Edit your map", this.internalState.user, this.internalState.purpose, this.internalState.name);
   },
+
   // catch enter and consider it to be 'submit'
   _enterInterceptor(e){
     if(e.nativeEvent.keyCode===13){
         e.preventDefault();
-        e.stopPropagation()
+        e.stopPropagation();
     }
   },
+
   _userPurposeEdit : function(currentUser,currentPurpose, currentResponsiblePerson){
     return (<Form horizontal>
       <FormGroup controlId="user">
@@ -105,6 +108,7 @@ var CreateNewMapDialog = React.createClass({
       </FormGroup>
     </Form>);
   },
+
   _nameEdit : function(currentName, currentResponsiblePerson){
     return (<Form horizontal>
       <FormGroup controlId="name">
@@ -137,7 +141,7 @@ var CreateNewMapDialog = React.createClass({
     var currentName = this.internalState.name;
     var currentResponsiblePerson = this.internalState.responsiblePerson;
     var summary = this._summary();
-    var form = this.internalState.map.isSubmap ? this._nameEdit(currentName, currentResponsiblePerson) : this._userPurposeEdit(currentUser, currentPurpose, currentResponsiblePerson);
+    var form = this.internalState.isSubmap ? this._nameEdit(currentName, currentResponsiblePerson) : this._userPurposeEdit(currentUser, currentPurpose, currentResponsiblePerson);
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -159,4 +163,4 @@ var CreateNewMapDialog = React.createClass({
   }
 });
 
-module.exports = CreateNewMapDialog;
+module.exports = EditMapDialog;

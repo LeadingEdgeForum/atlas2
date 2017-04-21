@@ -1,11 +1,19 @@
 /*jshint esversion: 6 */
-import Dispatcher from '../../../../dispatcher';
+import Dispatcher from '../dispatcher';
 var Constants = require('./canvas-constants');
 
-export default class Actions {
+export default class CanvasActions {
 
-  static highlightCanvas() {
-    return Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.HIGHLIGHT_CANVAS_AS_DROP_TARGET});
+  static highlightCanvas(highlight) {
+    if (highlight) {
+      Dispatcher.dispatch({
+        actionType: Constants.ACTION_TYPES.HIGHLIGHT_CANVAS_AS_DROP_TARGET
+      });
+    } else {
+      Dispatcher.dispatch({
+        actionType: Constants.ACTION_TYPES.CANCEL_HIGHLIGHT_CANVAS_AS_DROP_TARGET
+      });
+    }
   }
 
   static updateCanvasSizeAndOffset(data) {

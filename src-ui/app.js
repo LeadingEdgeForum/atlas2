@@ -19,7 +19,6 @@ limitations under the License.*/
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-// import {IndexRoute, Route, browserHistory, IndexRedirect, Router, Redirect} from 'react-router
 
 import {
   BrowserRouter as Router,
@@ -31,16 +30,15 @@ import {
 
 import SplashPage from './auth0/SplashPage';
 import WorkspaceListPage from './workspace/WorkspaceListPage';
-import MapListPage from './map-list/MapListPage.js';
-// import Deduplicator from './pages/workspace/maps/deduplicator/deduplicator.js';
-// import WorkspaceMenu from './pages/workspace/workspace-menu.js';
-// import MapEditor from './pages/workspace/maps/editor/map-editor.js';
-// import MapMenu from './pages/workspace/maps/map-menu.js';
+import MapListPage from './map-list/MapListPage';
+import MapEditorPage from './map-editor/MapEditorPage';
 import AuthService from './auth0/AuthService';
 import $ from 'jquery';
 import WorkspaceListStore from './workspace/workspace-list-store';
 import SingleWorkspaceStore from './map-list/single-workspace-store';
+import SingleMapStore from './map-editor/single-map-store';
 
+//this is injected at build time
 const auth = new AuthService(___AUTH0_AUDIENCE___, ___AUTH0_ISSUER___);
 
 
@@ -74,19 +72,16 @@ ReactDOM.render(
           ? <MapListPage singleWorkspaceStore={new SingleWorkspaceStore(props.match.params.workspaceID)} auth={auth} history={props.history}/>
           : AuthRedirect)
         }/>
-    {/*<Route exact path="/deduplicate/:workspaceID" render={props => (auth.loggedIn() ? WorkspaceListPage : AuthRedirect)}/>
-    <Route exact path="/map/:mapID" render={props => (auth.loggedIn() ? WorkspaceListPage : AuthRedirect)}/>*/}
+    {/*<Route exact path="/deduplicate/:workspaceID" render={props => (auth.loggedIn() ? WorkspaceListPage : AuthRedirect)}/> */}
+    <Route exact path="/map/:mapID"
+        render={
+          (props) =>
+          (auth.loggedIn()
+          ? <MapEditorPage auth={auth} history={props.history} singleMapStore={new SingleMapStore(props.match.params.mapID)}/>
+          : AuthRedirect)}/>
     <Redirect from="*" to="/" />
   </Switch>
   {/*<Route path='/' component={MasterPage} auth={auth}>
-    <IndexRedirect to="/" />
-    <IndexRoute components={{
-      mainContent: IndexPage
-    }} auth={auth}/>
-    <Route path='workspace/:workspaceID' components={{
-      mainContent: MapList,
-      navMenu: WorkspaceMenu
-    }} onEnter={requireAuth}/>
     <Route path='deduplicate/:workspaceID' components={{
       mainContent: Deduplicator
     }} onEnter={requireAuth}/>

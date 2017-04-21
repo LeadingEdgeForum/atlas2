@@ -1,0 +1,14 @@
+/*jshint esversion: 6 */
+
+var keyMirror = require('key-mirror-nested');
+
+module.exports  = keyMirror({
+  ACTION_TYPES : {
+      OPEN_EDIT_MAP_DIALOG : null,
+      CLOSE_EDIT_MAP_DIALOG : null,
+      SUBMIT_EDIT_MAP_DIALOG : null,
+      OPEN_NEW_NODE_DIALOG : null,
+      CLOSE_NEW_NODE_DIALOG : null,
+      SUBMIT_NEW_NODE_DIALOG : null
+  }
+});
