@@ -31,6 +31,10 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.editCommentDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', function(msg) {
@@ -109,6 +113,30 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
             this.addReferenceToExistingSubmap(action.refID, action.coords);
             break;
+
+          case ActionTypes.OPEN_EDIT_COMMENT_DIALOG:
+            this.editCommentDialog.open = true;
+            this.editCommentDialog.id = action.id;
+            this.editCommentDialog.text = action.text;
+            this.editCommentDialog.workspaceID = action.workspaceID;
+            this.editCommentDialog.mapID = action.mapID;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_EDIT_COMMENT_DIALOG:
+            this.editCommentDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_EDIT_COMMENT_DIALOG:
+            this.updateComment(action.data);
+            break;
+          case ActionTypes.DELETE_COMMENT:
+            this.deleteComment(action.id);
+            break;
+          case ActionTypes.MOVE_COMMENT:
+            this.updateComment(action.data);
+            break;
           default:
             return;
         }
@@ -133,6 +161,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getNewSubmapDialogState(){
     return this.addSubmapDialog;
+  }
+
+  getEditCommentDialogState(){
+    return this.editCommentDialog;
   }
 
   getMapId(){
@@ -304,6 +336,47 @@ export default class SingleWorkspaceStore extends Store {
             });
           }.bind(this)
         });
+  }
+
+  updateComment(data){
+    var payload = {};
+    if(data.comment){
+      payload.text = data.comment;
+    }
+    if(data.pos){
+      payload.x = data.pos.x;
+      payload.y = data.pos.y;
+    }
+    $.ajax({
+        type: 'PUT',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/comment/' + data.id,
+        data: payload,
+        success: function(data2) {
+          this.map = data2;
+          this.editCommentDialog = {open:false};
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
+  }
+
+  deleteComment(id){
+    $.ajax({
+        type: 'DELETE',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/comment/' + id,
+        success: function(data2) {
+          this.map = data2;
+          this.editCommentDialog = {open:false};
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
   }
 
 }

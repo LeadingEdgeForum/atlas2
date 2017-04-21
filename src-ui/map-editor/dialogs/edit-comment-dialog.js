@@ -1,58 +1,61 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Radio,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
-import Actions from './../../../../actions.js';
-var $ = require('jquery');
+var Constants = require('../single-map-constants');
+import SingleMapActions from '../single-map-actions';
 var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './../../workspace-store';
-
 
 var EditCommentDialog = React.createClass({
+
   getInitialState: function() {
-    return WorkspaceStore.getEditCommentDialogState();
+    return {open: false};
   },
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    var newState = WorkspaceStore.getEditCommentDialogState();
+    var newState = this.props.singleMapStore.getEditCommentDialogState();
     this.internalState.comment = newState.comment;
     this.setState(newState);
   },
+
   _close: function() {
-    Actions.closeEditGenericCommentDialog();
+    SingleMapActions.closeEditCommentDialog();
   },
+
   _submit: function() {
     this.internalState.mapID = this.props.mapID;
     this.internalState.workspaceID = this.props.workspaceID;
-    Actions.submitEditGenericCommentDialog(_.extend(this.state, this.internalState));
+    SingleMapActions.submitEditGenericCommentDialog(_.extend(this.state, this.internalState));
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
     this.forceUpdate();
   },
+
   render: function() {
     var show = this.state.open;
     var comment = this.internalState.comment;
@@ -78,7 +81,7 @@ var EditCommentDialog = React.createClass({
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Add" onClick={this._submit}>Add</Button>
+            <Button type="submit" bsStyle="primary" value="Add" onClick={this._submit}>Save</Button>
           </Modal.Footer>
         </Modal>
       </div>

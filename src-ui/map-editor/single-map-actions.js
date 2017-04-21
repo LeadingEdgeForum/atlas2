@@ -150,6 +150,66 @@ var SingleMapActions = {
       });
     },
 
+    openEditCommentDialog: function(workspaceID, mapID, id, text){
+      if(!workspaceID || !mapID || !id || !text){
+        console.error('missing data', workspaceID, mapID, id, text);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_EDIT_COMMENT_DIALOG,
+          workspaceID : workspaceID,
+          mapID : mapID,
+          id : id,
+          text : text
+      });
+    },
+
+    closeEditCommentDialog: function(data){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_COMMENT_DIALOG
+      });
+    },
+
+    submitEditGenericCommentDialog : function(data){
+      if(!data || !data.id){
+        console.error('missing id');
+        return;
+      }
+      if(!data.text){
+        console.error('missing data', data);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_EDIT_COMMENT_DIALOG,
+          data : data
+      });
+    },
+
+    deleteComment: function(workspaceID, mapID, id){
+      if(!workspaceID || !mapID || !id){
+        console.error('missing data', workspaceID, mapID, id);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.DELETE_COMMENT,
+          workspaceID : workspaceID,
+          mapID : mapID,
+          id : id,
+      });
+    },
+
+    updateComment: function(workspaceID, mapID, id, pos /*{pos:[x,y]}*/){
+      if(!workspaceID || !mapID || !id || !pos || !pos.x || !pos.y){
+        console.error('missing data', workspaceID, mapID, id, pos);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.MOVE_COMMENT,
+          data: {
+            workspaceID: workspaceID,
+            mapID: mapID,
+            id: id,
+            pos: pos
+          }
+      });
+    },
+
     recordConnection : function(data){
       console.error('implement me');
     },
@@ -163,18 +223,6 @@ var SingleMapActions = {
     },
 
     deleteAction: function(data){
-      console.error('implement me');
-    },
-
-    deleteComment: function(data){
-      console.error('implement me');
-    },
-
-    updateComment: function(data){
-      console.error('implement me');
-    },
-
-    openEditGenericCommentDialog: function(data){
       console.error('implement me');
     },
 

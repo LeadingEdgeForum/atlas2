@@ -16,11 +16,23 @@ var activeStyle = {
   boxShadow: "0 0 10px #00789b",
   color: "#00789b"
 };
+/* globals document */
+/* globals window */
+function getElementOffset(element)
+{
+    var de = document.documentElement;
+    var box = element.getBoundingClientRect();
+    var top = box.top + window.pageYOffset - de.clientTop;
+    var left = box.left + window.pageXOffset - de.clientLeft;
+    return { top: top, left: left };
+}
 
 var Comment = React.createClass({
+
   getInitialState : function(){
     return {focused:false};
   },
+
   onClickHandler : function(event){
     event.preventDefault();
     event.stopPropagation();
@@ -36,7 +48,7 @@ var Comment = React.createClass({
       var id = this.props.id; //jshint ignore:line
       var mapID = this.props.mapID; //jshint ignore:line
       var workspaceID = this.props.workspaceID;
-      Actions.openEditGenericCommentDialog(workspaceID, mapID, id, this.props.comment.text);
+      Actions.openEditCommentDialog(workspaceID, mapID, id, this.props.comment.text);
       return;
     }
     if (this.state.hover === "group") {
@@ -59,14 +71,17 @@ var Comment = React.createClass({
       CanvasActions.focusComment(this.props.id);
     }
   },
+
   mouseOver: function(target) {
     if(this.props.focused){
       this.setState({hover: target});
     }
   },
+
   mouseOut: function(target) {
     this.setState({hover: null});
   },
+
   renderMenu : function(focused){
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
@@ -160,6 +175,7 @@ var Comment = React.createClass({
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
     var menu = this.renderMenu(focused);
+    var canvasStore = this.props.canvasStore;
 
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
@@ -175,9 +191,11 @@ var Comment = React.createClass({
             10, 10
           ],
           stop: function(event) {
-            var x = event.e.pageX;
-            var y = event.e.pageY;
-            Actions.updateComment(workspaceID, mapID, id, {pos:[x,y]});
+            var offset = getElementOffset(input);
+            var x = offset.left;
+            var y = offset.top;
+            var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
+            Actions.updateComment(workspaceID, mapID, id, {x : coords.x,y:coords.y});
           }
         });
       }}> {txt} {menu}
