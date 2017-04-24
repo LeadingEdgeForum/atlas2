@@ -125,7 +125,7 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.OPEN_EDIT_COMMENT_DIALOG:
             this.editCommentDialog.open = true;
             this.editCommentDialog.id = action.id;
-            this.editCommentDialog.text = action.text;
+            this.editCommentDialog.comment = action.text;
             this.editCommentDialog.workspaceID = action.workspaceID;
             this.editCommentDialog.mapID = action.mapID;
             this.emitChange();
