@@ -375,7 +375,7 @@ export default class MapCanvas extends React.Component {
 
 
   render() {
-    jsPlumb.setSuspendDrawing(true); // this will be cleaned in did update
+    jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
     var style = _.clone(mapCanvasStyle);
     if (this.state && this.state.dropTargetHighlight) {
       style = _.extend(style, {

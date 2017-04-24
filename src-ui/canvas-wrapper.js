@@ -16,7 +16,7 @@ limitations under the License.*/
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-var CWB = require('./pages/workspace/maps/editor/canvas-with-background.js').default;
+var CWB = require('./minimal-canvas/canvas-with-background.js').default;
 var jsPlumb = require("../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 jsPlumb.init();
 
