@@ -1,9 +1,6 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
@@ -11,76 +8,71 @@ import {
   ControlLabel,
   HelpBlock,
   Col,
-  Radio
+  Radio,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
-import Actions from './../../../../actions.js';
-var $ = require('jquery');
-var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './../../workspace-store';
+var Constants = require('../../constants');
+import SingleMapActions from '../single-map-actions';
 
-//TODO: validation of the workspace dialog
 
 var EditNodeDialog = React.createClass({
+
   getInitialState: function() {
     return {open: false};
   },
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    var newState = WorkspaceStore.isNodeEditDialogOpen();
-    var map = WorkspaceStore.getMapInfo(newState.mapID);
-    var nodeID = newState.nodeID;
-    //load the map
-    if (!this.internalState.map && map && map.map && !map.map.loading) {
-      this.internalState.map = map.map;
-      for (var i = 0; i < this.internalState.map.nodes.length; i++) {
-        if (this.internalState.map.nodes[i]._id === nodeID) {
-          this.internalState.name = this.internalState.map.nodes[i].name;
-          this.internalState.type = this.internalState.map.nodes[i].type;
-          this.internalState.responsiblePerson = this.internalState.map.nodes[i].responsiblePerson;
-          this.internalState.inertia = this.internalState.map.nodes[i].inertia;
-          this.internalState.description = this.internalState.map.nodes[i].description;
-        }
-      }
-    }
-    //dialog is going to be closed, clean internal state
-    if (!newState.open) {
-      this.internalState = {};
-    }
+    var newState = this.props.singleMapStore.getNodeEditDialogState();
+    this.internalState = newState;
     this.setState(newState);
   },
+
   _close: function() {
-    Actions.closeEditNodeDialog();
+    SingleMapActions.closeEditNodeDialog();
+    this.internalState = {};
   },
+
   _submit: function() {
-    this.internalState.mapID = this.props.mapID;
-    this.internalState.workspaceID = this.props.workspaceID;
-    this.internalState.nodeID = this.state.nodeID;
-    Actions.submitEditNodeDialog(this.internalState);
+    SingleMapActions.updateNode(this.internalState.workspaceId,
+      this.internalState.mapId,
+      this.internalState.nodeId,
+      null, /*dialog does not change the pos*/
+      this.internalState.name,
+      this.internalState.type,
+      this.internalState.responsiblePerson,
+      this.internalState.inertia,
+      this.internalState.description
+    );
+    this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
     this.forceUpdate();
   },
-  // catch enter and consider it to be 'submit'
+
+  // catch enter and do not consider it to be 'submit'
   _enterInterceptor(e){
     if(e.nativeEvent.keyCode===13){
         e.preventDefault();
-        e.stopPropagation()
+        e.stopPropagation();
     }
   },
+
   render: function() {
     var show = this.state.open;
     if (!show) {

@@ -36,6 +36,17 @@ var itemCaptionStyle = {
   lineHeight: '11px'
 };
 
+/* globals document */
+/* globals window */
+function getElementOffset(element)
+{
+    var de = document.documentElement;
+    var box = element.getBoundingClientRect();
+    var top = box.top + window.pageYOffset - de.clientTop;
+    var left = box.left + window.pageXOffset - de.clientLeft;
+    return { top: top, left: left };
+}
+
 var inertiaStyle = {
   top: -15,
   left: 15,
@@ -69,7 +80,7 @@ var MapComponent = React.createClass({
       var id = this.props.id;
       var mapID = this.props.mapID;
       var workspaceID = this.props.workspaceID;
-      Actions.removeNode(workspaceID, mapID, id);
+      Actions.deleteNode(workspaceID, mapID, id);
     }
     if (this.state.hover === "pencil") {
       var nodeID = this.props.id; //jshint ignore:line
@@ -327,6 +338,7 @@ var MapComponent = React.createClass({
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);
+    var canvasStore = this.props.canvasStore;
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
         if (input) {
@@ -341,7 +353,11 @@ var MapComponent = React.createClass({
             50, 50
           ],
           stop: function(event) {
-            Actions.nodeDragged(workspaceID, mapID, id, event.finalPos);
+            var offset = getElementOffset(input);
+            var x = offset.left;
+            var y = offset.top;
+            var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
+            Actions.updateNode(workspaceID, mapID, id, {x : coords.x,y:coords.y});
           }
         });
       }}>

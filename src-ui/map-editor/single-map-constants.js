@@ -11,6 +11,10 @@ module.exports  = keyMirror({
       OPEN_NEW_NODE_DIALOG : null,
       CLOSE_NEW_NODE_DIALOG : null,
       SUBMIT_NEW_NODE_DIALOG : null,
+      OPEN_EDIT_NODE_DIALOG : null,
+      CLOSE_EDIT_NODE_DIALOG : null,
+      DELETE_NODE : null,
+      UPDATE_NODE : null,
 
       OPEN_ADD_COMMENT_DIALOG : null,
       CLOSE_ADD_COMMENT_DIALOG : null,

@@ -79,6 +79,24 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.SUBMIT_NEW_NODE_DIALOG:
             this.submitNewNodeDialog(action.data);
             break;
+          case ActionTypes.OPEN_EDIT_NODE_DIALOG:
+            this.openEditNodeDialog(action.data);
+            break;
+          case ActionTypes.CLOSE_EDIT_NODE_DIALOG:
+            this.editNodeDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_EDIT_NODE_DIALOG:
+            // this.submitNewNodeDialog(action.data);
+            break;
+          case ActionTypes.DELETE_NODE:
+            this.deleteNode(action.data);
+            break;
+          case ActionTypes.UPDATE_NODE:
+            this.updateNode(action.data);
+            break;
           case ActionTypes.OPEN_ADD_COMMENT_DIALOG:
             this.addCommentDialog.open = true;
             this.addCommentDialog.coords = action.coords;
@@ -244,7 +262,8 @@ export default class SingleWorkspaceStore extends Store {
         map: {
           name: 'Loading...',
           workspace : 'not yet set',
-          loading: true
+          loading: true,
+          nodes: []
         }
       };
     }
@@ -296,6 +315,73 @@ export default class SingleWorkspaceStore extends Store {
         this.map = data2;
         this.newNodeDialog = {
           open: false
+        };
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  openEditNodeDialog(data){
+    this.editNodeDialog = {open : true};
+    var map = this.getMap().map;
+    var nodes = map.nodes;
+    /* find node and populate node internal state
+    */
+    for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i]._id === data.nodeID) {
+        this.editNodeDialog.name = nodes[i].name;
+        this.editNodeDialog.type = nodes[i].type;
+        this.editNodeDialog.responsiblePerson = nodes[i].responsiblePerson;
+        this.editNodeDialog.inertia = nodes[i].inertia;
+        this.editNodeDialog.description = nodes[i].description;
+        this.editNodeDialog.workspaceId = this.getWorkspaceId();
+        this.editNodeDialog.mapId = this.getMapId();
+        this.editNodeDialog.nodeId = data.nodeID;
+      }
+    }
+    this.emitChange();
+  }
+
+  deleteNode(data){
+    $.ajax({
+      type: 'DELETE',
+      url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + data.nodeId,
+      success: function(data2) {
+        this.map = data2;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  updateNode(data){
+    var payload = {};
+    if(data.pos){
+      payload.x = data.pos.x;
+      payload.y = data.pos.y;
+    }
+    if(data.name || data.type || data.person || data.inertia || data.description){
+      payload.name = data.name;
+      payload.type = data.type;
+      payload.responsiblePerson = data.person;
+      payload.inertia = data.inertia;
+      payload.description = data.description;
+    }
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + data.nodeId,
+      data: payload,
+      success: function(data2) {
+        this.map = data2;
+        this.editNodeDialog = {
+            open : false
         };
         this.emitChange();
         this.io.emit('map', {

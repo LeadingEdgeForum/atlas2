@@ -289,6 +289,63 @@ var SingleMapActions = {
       });
     },
 
+    deleteNode: function(workspaceId, mapId, nodeId){
+      if(!mapId || !nodeId){
+        console.error('missing data, aborting');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.DELETE_NODE,
+          data: {
+            workspaceId: workspaceId,
+            mapId: mapId,
+            nodeId: nodeId
+          }
+      });
+    },
+
+    updateNode: function(workspaceId, mapId, nodeId, pos,
+    name, type, person, inertia, description){
+      if(!nodeId){
+        console.error('missing node id');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.UPDATE_NODE,
+          data: {
+            workspaceId: workspaceId,
+            mapId: mapId,
+            nodeId :nodeId,
+            pos : pos ? pos : null,
+            name,
+            type,
+            person,
+            inertia,
+            description
+          }
+      });
+    },
+
+    openEditNodeDialog: function(mapID, nodeID){
+      if(!mapID || !nodeID){
+        console.error('unspecified node');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_EDIT_NODE_DIALOG,
+          data : {
+            nodeID : nodeID,
+            mapID : mapID
+          }
+      });
+    },
+
+    closeEditNodeDialog: function(data){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_NODE_DIALOG
+      });
+    },
+
     recordConnection : function(data){
       console.error('implement me');
     },
@@ -301,13 +358,7 @@ var SingleMapActions = {
       console.error('implement me');
     },
 
-    removeNode: function(data){
-      console.error('implement me');
-    },
 
-    openEditNodeDialog: function(data){
-      console.error('implement me');
-    },
 
     openSubmapReferencesDialog: function(data){
       console.error('implement me');
