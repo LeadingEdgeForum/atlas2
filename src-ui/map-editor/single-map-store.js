@@ -249,10 +249,13 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   fetchMap(){
-    this.serverRequest = $.get('/api/map/' + this.mapID, function(result) {
-      this.map = result;
-      this.emitChange();
-    }.bind(this));
+    if(!this.serverRequest){
+      this.serverRequest = $.get('/api/map/' + this.mapID, function(result) {
+        this.map = result;
+        this.serverRequest = null;
+        this.emitChange();
+      }.bind(this));
+    }
   }
 
   getMap(){
