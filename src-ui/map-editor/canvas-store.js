@@ -97,11 +97,28 @@ export default class CanvasStore extends Store {
   */
   normalizeComponentCoord(params) { //normalizes the drop and opens the new node dialog
     if (!params) {
+      console.error('No params specified');
+      return null;
+    }
+    var x = null;
+    var y = null;
+    if(params.pos && Array.isArray(params.pos)){
+      x = params.pos[0];
+      y = params.pos[1];
+    } else if(Array.isArray(params)){
+      x = params[0];
+      y = params[1];
+    } else {
+      x = params.x;
+      y = params.y;
+    }
+    if(x === null || y === null){
+      console.error('Could not normalize', params);
       return null;
     }
     let coords = this.state.coords;
-    var relativeToCanvasPosX = params.pos[0] /*absolute pos of drop*/ - coords.offset.left /*absolute pos of canvas*/ ;
-    var relativeToCanvasPosY = params.pos[1] /*absolute pos of drop*/ - coords.offset.top /*absolute pos of canvas*/ ;
+    var relativeToCanvasPosX = x/*absolute pos of drop*/ - coords.offset.left /*absolute pos of canvas*/ ;
+    var relativeToCanvasPosY = y /*absolute pos of drop*/ - coords.offset.top /*absolute pos of canvas*/ ;
 
     var universalCoordX = relativeToCanvasPosX / coords.size.width;
     var universalCoordY = relativeToCanvasPosY / coords.size.height;

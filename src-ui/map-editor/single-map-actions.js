@@ -210,6 +210,85 @@ var SingleMapActions = {
       });
     },
 
+    recordAction : function(workspaceID, mapID, sourceId, pos /*{pos: [x, y]} */){
+      if(!sourceId || !pos){
+        console.error('missing data, aborting');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.RECORD_ACTION,
+          data: {
+            workspaceID: workspaceID,
+            mapID: mapID,
+            sourceId: sourceId,
+            pos: pos.pos
+          }
+      });
+    },
+
+    openEditActionDialog: function(workspaceID, mapID, sourceId, actionId, shortSummary, description){
+      if(!sourceId || !actionId){
+        console.error('no data to open the dialog');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_EDIT_ACTION_DIALOG,
+          data: {
+            workspaceID: workspaceID,
+            mapID: mapID,
+            sourceId: sourceId,
+            actionId: actionId,
+            shortSummary:shortSummary,
+            description:description
+          }
+      });
+    },
+
+    closeEditActionDialog: function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_ACTION_DIALOG,
+      });
+    },
+
+    updateAction: function(workspaceID, mapID, sourceID, actionID, pos, shortSummary, description) {
+      if(!actionID){
+        console.error('missing action id');
+        return;
+      }
+      if(!(pos || shortSummary || description)){
+        console.error('missing action data', pos, shortSummary, description);
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.UPDATE_ACTION,
+          data: {
+            workspaceID: workspaceID,
+            mapID: mapID,
+            pos : pos ? pos.pos : null,
+            sourceId: sourceID,
+            actionId: actionID,
+            shortSummary:shortSummary,
+            description:description
+          }
+      });
+    },
+
+    deleteAction: function(workspaceID, mapID, sourceID, actionID){
+      if(!sourceID || !actionID){
+        console.error('missing data, aborting');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.DELETE_ACTION,
+          data: {
+            workspaceID: workspaceID,
+            mapID: mapID,
+            sourceId: sourceID,
+            actionId: actionID
+          }
+      });
+    },
+
     recordConnection : function(data){
       console.error('implement me');
     },
@@ -218,19 +297,7 @@ var SingleMapActions = {
       console.error('implement me');
     },
 
-    recordAction : function(data){
-      console.error('implement me');
-    },
-
-    deleteAction: function(data){
-      console.error('implement me');
-    },
-
     openCreateSubmapDialog: function(data){
-      console.error('implement me');
-    },
-
-    openEditActionDialog: function(data){
       console.error('implement me');
     },
 
@@ -248,11 +315,7 @@ var SingleMapActions = {
 
     openReferencesDialog: function(data){
       console.error('implement me');
-    },
-
-    updateAction: function(data){
-      console.error('implement me');
-    },
+    }
 
 };
 

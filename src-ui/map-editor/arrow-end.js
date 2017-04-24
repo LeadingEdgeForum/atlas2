@@ -12,6 +12,17 @@ var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
+/* globals document */
+/* globals window */
+function getElementOffset(element)
+{
+    var de = document.documentElement;
+    var box = element.getBoundingClientRect();
+    var top = box.top + window.pageYOffset - de.clientTop;
+    var left = box.left + window.pageXOffset - de.clientLeft;
+    return { top: top, left: left };
+}
+
 var ArrowEnd = React.createClass({
 
 
@@ -35,6 +46,7 @@ var ArrowEnd = React.createClass({
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
     var node_id = node._id;
+    var canvasStore = this.props.canvasStore;
 
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
@@ -50,9 +62,11 @@ var ArrowEnd = React.createClass({
             30, 30
           ],
           stop: function(event) {
-            var x = event.e.pageX;
-            var y = event.e.pageY;
-            Actions.updateAction(workspaceID, mapID, node_id, id, {pos:[x,y]});
+            var offset = getElementOffset(input);
+            var x = offset.left;
+            var y = offset.top;
+            var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
+            Actions.updateAction(workspaceID, mapID, node_id, id, {pos:[coords.x,coords.y]});
           }
         });
       }}>

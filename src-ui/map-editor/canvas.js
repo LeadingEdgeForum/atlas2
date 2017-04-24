@@ -90,8 +90,9 @@ export default class MapCanvas extends React.Component {
 
   connectionDragStop(info, e) {
       if (info.getData().scope === 'WM_Action') {
+          var coords = this.props.canvasStore.normalizeComponentCoord([e.x, e.y]);
           SingleMapActions.recordAction(this.props.workspaceID, this.props.mapID, info.sourceId, {
-              pos: [e.x, e.y]
+              pos: [coords.x, coords.y]
           });
       }
   }

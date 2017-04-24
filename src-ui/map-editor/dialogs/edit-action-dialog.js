@@ -1,58 +1,58 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
   FormControl,
   ControlLabel,
   HelpBlock,
-  Col
+  Col,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
-import Actions from './../../../../actions.js';
-var $ = require('jquery');
-var _ = require('underscore');
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from './../../workspace-store';
+var Constants = require('../single-map-constants');
+import SingleMapActions from '../single-map-actions';
 
 
 var EditActionDialog = React.createClass({
   getInitialState: function() {
-    return WorkspaceStore.getEditActionDialogState();
+    return {open: false};
   },
 
   componentDidMount: function() {
     this.internalState = {};
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange);
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
+
   internalState: {},
+
   _onChange: function() {
-    var newState = WorkspaceStore.getEditActionDialogState();
+    var newState = this.props.singleMapStore.getEditActionDialogState();
     this.internalState.shortSummary = newState.shortSummary;
     this.internalState.description = newState.description;
-    this.internalState.seq = newState.seq;
-    this.internalState.sourceID = newState.sourceID;
+    this.internalState.sourceId = newState.sourceId;
+    this.internalState.actionId = newState.actionId;
     this.setState(newState);
   },
+
   _close: function() {
-    Actions.closeEditActionDialog();
+    SingleMapActions.closeEditActionDialog();
   },
+
   _submit: function() {
       this.internalState.mapID = this.props.mapID;
       this.internalState.workspaceID = this.props.workspaceID;
-      Actions.updateAction(this.props.workspaceID,
+      SingleMapActions.updateAction(this.props.workspaceID,
           this.props.mapID,
-          this.internalState.sourceID,
-          this.internalState.seq,
+          this.internalState.sourceId,
+          this.internalState.actionId,
           null, // position should not change
           this.internalState.shortSummary,
           this.internalState.description);
@@ -62,6 +62,7 @@ var EditActionDialog = React.createClass({
     this.internalState[parameterName] = event.target.value;
     this.forceUpdate();
   },
+
   render: function() {
     var show = this.state.open;
     var summary = this.internalState.shortSummary;

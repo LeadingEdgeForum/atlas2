@@ -35,6 +35,14 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.actionDialog = {
+          open : false
+      };
+
+      this.editNodeDialog = {
+          open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', function(msg) {
@@ -137,6 +145,33 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.MOVE_COMMENT:
             this.updateComment(action.data);
             break;
+
+
+          case ActionTypes.RECORD_ACTION:
+            this.recordAction(action.data);
+            break;
+          case ActionTypes.OPEN_EDIT_ACTION_DIALOG:
+            this.actionDialog.open = true;
+            this.actionDialog.workspaceID = action.data.workspaceID;
+            this.actionDialog.mapID = action.data.mapID;
+            this.actionDialog.sourceId = action.data.sourceId;
+            this.actionDialog.actionId = action.data.actionId;
+            this.actionDialog.shortSummary = action.data.shortSummary;
+            this.actionDialog.description = action.data.description;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_EDIT_ACTION_DIALOG:
+            this.actionDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.UPDATE_ACTION:
+            this.updateAction(action.data);
+            break;
+          case ActionTypes.DELETE_ACTION:
+            this.deleteAction(action.data);
+            break;
           default:
             return;
         }
@@ -165,6 +200,14 @@ export default class SingleWorkspaceStore extends Store {
 
   getEditCommentDialogState(){
     return this.editCommentDialog;
+  }
+
+  getEditActionDialogState(){
+    return this.actionDialog;
+  }
+
+  getNodeEditDialogState(){
+    return this.editNodeDialog;
   }
 
   getMapId(){
@@ -370,6 +413,76 @@ export default class SingleWorkspaceStore extends Store {
         success: function(data2) {
           this.map = data2;
           this.editCommentDialog = {open:false};
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
+  }
+
+  recordAction(data){
+    var coords = {
+      x : data.pos[0],
+      y: data.pos[1]
+    };
+    $.ajax({
+        type: 'POST',
+        url: '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/node/' + data.sourceId +
+            '/action/',
+        data: coords,
+        success: function(data2) {
+          this.map = data2;
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
+  }
+
+  updateAction(data){
+    var actionData = {};
+    if(data.pos){
+      actionData.x = data.pos[0];
+      actionData.y = data.pos[1];
+    }
+    if(data.shortSummary || data.description){
+      actionData.shortSummary = data.shortSummary;
+      actionData.description = data.description;
+    }
+    $.ajax({
+        type: 'PUT',
+        url: '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/node/' + data.sourceId +
+            '/action/' + data.actionId,
+        data: actionData,
+        success: function(data2) {
+          this.map = data2;
+          this.actionDialog = {open:false};
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
+  }
+
+  deleteAction(data){
+    $.ajax({
+        type: 'DELETE',
+        url: '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/node/' + data.sourceId +
+            '/action/' + data.actionId,
+        success: function(data2) {
+          this.map = data2;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
