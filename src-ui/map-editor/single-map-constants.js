@@ -36,5 +36,8 @@ module.exports  = keyMirror({
       CLOSE_EDIT_ACTION_DIALOG : null,
       UPDATE_ACTION : null,
       DELETE_ACTION : null,
+
+      RECORD_CONNECTION : null,
+      DELETE_CONNECTION : null
   }
 });

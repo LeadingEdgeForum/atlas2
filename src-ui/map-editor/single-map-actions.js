@@ -340,19 +340,38 @@ var SingleMapActions = {
       });
     },
 
-    closeEditNodeDialog: function(data){
+    recordConnection : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
       Dispatcher.dispatch({
-          actionType: ACTION_TYPES.CLOSE_EDIT_NODE_DIALOG
+          actionType: ACTION_TYPES.RECORD_CONNECTION,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
       });
     },
 
-    recordConnection : function(data){
-      console.error('implement me');
+    deleteConnection : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.DELETE_CONNECTION,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
+      });
     },
 
-    deleteConnection : function(data){
-      console.error('implement me');
-    },
 
     openCreateSubmapDialog: function(data){
       console.error('implement me');

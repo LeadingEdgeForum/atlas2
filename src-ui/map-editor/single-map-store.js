@@ -88,9 +88,6 @@ export default class SingleWorkspaceStore extends Store {
             };
             this.emitChange();
             break;
-          case ActionTypes.SUBMIT_EDIT_NODE_DIALOG:
-            // this.submitNewNodeDialog(action.data);
-            break;
           case ActionTypes.DELETE_NODE:
             this.deleteNode(action.data);
             break;
@@ -189,6 +186,14 @@ export default class SingleWorkspaceStore extends Store {
             break;
           case ActionTypes.DELETE_ACTION:
             this.deleteAction(action.data);
+            break;
+
+
+          case ActionTypes.RECORD_CONNECTION:
+            this.recordConnection(action.data);
+            break;
+          case ActionTypes.DELETE_CONNECTION:
+            this.deleteConnection(action.data);
             break;
           default:
             return;
@@ -581,4 +586,39 @@ export default class SingleWorkspaceStore extends Store {
     });
   }
 
+  recordConnection(data){
+    $.ajax({
+      type: 'POST',
+      url:  '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/node/' + data.sourceId +
+            '/outgoingDependency/' + data.targetId,
+      success: function(data2) {
+        this.map = data2;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  deleteConnection(data){
+    $.ajax({
+      type: 'DELETE',
+      url:  '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/node/' + data.sourceId +
+            '/outgoingDependency/' + data.targetId,
+      success: function(data2) {
+        this.map = data2;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
 }
