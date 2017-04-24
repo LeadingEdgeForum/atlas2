@@ -1,5 +1,5 @@
 /*jshint esversion: 6 */
-import Dispatcher from '../../../../dispatcher';
+import Dispatcher from '../dispatcher';
 var Constants = require('./deduplicator-constants');
 
 export default class Actions {

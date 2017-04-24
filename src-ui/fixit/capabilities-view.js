@@ -15,8 +15,8 @@ import {
 } from 'react-bootstrap';
 import Actions from './deduplicator-actions';
 import _ from "underscore";
-var AssignExistingCapabilityDialog = require('./assign-existing-capability');
-import {getStyleForType} from './../editor/component-styles';
+var AssignExistingCapabilityDialog = require('./assign-existing-capability-dialog');
+import {getStyleForType} from '../map-editor/component-styles';
 import MapLink from './maplink.js';
 var UsageInfo = require('./usage-info');
 
@@ -43,6 +43,7 @@ var greyLaneStyle = {
   margin: "1px",
   backgroundColor: '#f8f8f8'
 };
+
 export default class CapabilitiesView extends React.Component {
   constructor(props) {
     super(props);
@@ -73,7 +74,7 @@ export default class CapabilitiesView extends React.Component {
 
   handleDropNewCapability(cat, e) {
     var item = JSON.parse(e.dataTransfer.getData('json'));
-    Actions.createNewCapability(this.props.workspace._id, cat, item._id);
+    Actions.createNewCapability(this.props.workspaceId, cat, item._id);
   }
 
   cancelDialog() {
@@ -87,7 +88,7 @@ export default class CapabilitiesView extends React.Component {
 
   submitAssignDialog(nodeBeingAssignedID) {
     var capability = this.state.assignExistingCapabilityDialog.capability;
-    Actions.assignNodeToCapability(this.props.workspace._id, capability._id, nodeBeingAssignedID);
+    Actions.assignNodeToCapability(this.props.workspaceId,  capability._id, nodeBeingAssignedID);
     this.setState({
         assignExistingCapabilityDialog: {
           open: false
@@ -96,7 +97,7 @@ export default class CapabilitiesView extends React.Component {
   }
 
   submitAssignAlias(nodeBeingAssignedID, aliasID) {
-    Actions.assignNodeToAlias(this.props.workspace._id, aliasID, nodeBeingAssignedID);
+    Actions.assignNodeToAlias(this.props.workspaceId, aliasID, nodeBeingAssignedID);
     this.setState({
         assignExistingCapabilityDialog: {
           open: false
@@ -109,7 +110,7 @@ export default class CapabilitiesView extends React.Component {
       e.preventDefault();
     }
     e.stopPropagation();
-    Actions.deleteCapability(this.props.workspace._id, capability._id);
+    Actions.deleteCapability(this.props.workspaceId, capability._id);
   }
 
 
@@ -122,7 +123,7 @@ export default class CapabilitiesView extends React.Component {
     style.left = node.x * 100 + '%';
     style.position = 'absolute';
     style.top = "10px";
-    var workspaceID = this.props.workspace._id;
+    var workspaceID = this.props.workspaceId;
     var _popover = <Popover id={node._id} title="Component details">
             <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={true} alternativeNames={false} originInfo={true}/>
         </Popover>;
@@ -156,7 +157,7 @@ export default class CapabilitiesView extends React.Component {
 
     var categories = [];
     if(!this.props.categories || !this.props.categories.capabilityCategories){
-      return <div> wait...</div>
+      return <div> please wait...</div>;
     }
     this.props.categories.capabilityCategories.forEach(function(category){
 
@@ -208,19 +209,18 @@ export default class CapabilitiesView extends React.Component {
       });
 
     });
-    if(categories.length === 0){
-      categories.push(<Row className="show-grid">
-                  <Col xs={12}>
-                    Nothing found
-                  </Col>
-                </Row>);
+
+    if (categories.length === 0) {
+      categories.push(
+        <Row className="show-grid">
+          <Col xs={12}> Nothing found </Col>
+        </Row>);
     }
 
     var assignDialogOpen = this.state.assignExistingCapabilityDialog.open;
     var capability = this.state.assignExistingCapabilityDialog.capability;
     var nodeBeingAssigned = this.state.assignExistingCapabilityDialog.nodeBeingAssigned;
 
-    var _this;
     return (
       <Grid fluid={true}>
         {categories}

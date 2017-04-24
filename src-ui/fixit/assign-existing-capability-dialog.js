@@ -1,9 +1,6 @@
 /*jshint esversion: 6 */
 
 var React = require('react');
-var Input = require('react-bootstrap').Input;
-var Modal = require('react-bootstrap').Modal;
-var Button = require('react-bootstrap').Button;
 import {
   Form,
   FormGroup,
@@ -12,13 +9,12 @@ import {
   HelpBlock,
   Col,
   ListGroup,
-  ListGroupItem
+  ListGroupItem,
+  Glyphicon,
+  Input,
+  Modal,
+  Button
 } from 'react-bootstrap';
-var Glyphicon = require('react-bootstrap').Glyphicon;
-var Constants = require('./../../../../constants');
-import Actions from './../../../../actions.js';
-var browserHistory = require('react-router').browserHistory;
-import WorkspaceStore from '../../workspace-store';
 import MapLink from './maplink.js';
 
 var AssignExistingCapabilityDialog = React.createClass({
@@ -36,6 +32,7 @@ var AssignExistingCapabilityDialog = React.createClass({
   _handleDialogChange: function(parameterName, event) {
     this.internalState[parameterName] = event.target.value;
   },
+
   renderExistingItems: function(capability) {
     var submit = this.submitAlias;
     var result = [];
@@ -51,6 +48,7 @@ var AssignExistingCapabilityDialog = React.createClass({
     });
     return result;
   },
+  
   render: function() {
     var show = this.props.open;
     var nodeBeingAssigned = this.props.nodeBeingAssigned;

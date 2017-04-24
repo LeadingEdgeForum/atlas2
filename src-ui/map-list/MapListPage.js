@@ -58,7 +58,7 @@ export default class MapListPage extends React.Component {
 
   prepareWorkspaceMenu(){
     const workspaceID = this.props.singleWorkspaceStore.getWorkspaceId();
-    const deduplicateHref = '/deduplicate/' + workspaceID;
+    const deduplicateHref = '/fixit/' + workspaceID;
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditWorkspaceDialog.bind(this)}>
           <Glyphicon glyph="edit"></Glyphicon>
@@ -66,9 +66,8 @@ export default class MapListPage extends React.Component {
       </NavItem>,
       <LinkContainer to={{pathname: deduplicateHref}} key="2">
           <NavItem eventKey={2} href={deduplicateHref} key="2">
-              <Glyphicon glyph="pawn"></Glyphicon>
-              <Glyphicon glyph="pawn" style={{color: "silver"}}></Glyphicon>
-              &nbsp;Deduplicate
+          <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
+          &nbsp;Fix it!
           </NavItem>
       </LinkContainer>
     ];

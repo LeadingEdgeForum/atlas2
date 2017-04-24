@@ -38,6 +38,9 @@ import WorkspaceListStore from './workspace/workspace-list-store';
 import SingleWorkspaceStore from './map-list/single-workspace-store';
 import SingleMapStore from './map-editor/single-map-store';
 
+import FixitPage from './fixit/FixitPage';
+import FixitStore from './fixit/fixit-store';
+
 //this is injected at build time
 const auth = new AuthService(___AUTH0_AUDIENCE___, ___AUTH0_ISSUER___);
 
@@ -72,22 +75,15 @@ ReactDOM.render(
           ? <MapListPage singleWorkspaceStore={new SingleWorkspaceStore(props.match.params.workspaceID)} auth={auth} history={props.history}/>
           : AuthRedirect)
         }/>
-    {/*<Route exact path="/deduplicate/:workspaceID" render={props => (auth.loggedIn() ? WorkspaceListPage : AuthRedirect)}/> */}
     <Route exact path="/map/:mapID"
         render={
           (props) =>
           (auth.loggedIn()
           ? <MapEditorPage auth={auth} history={props.history} singleMapStore={new SingleMapStore(props.match.params.mapID)}/>
           : AuthRedirect)}/>
+    <Route exact path="/fixit/:workspaceID"
+        render={props =>
+          (auth.loggedIn() ? <FixitPage auth={auth} history={props.history} fixitStore={new FixitStore(props.match.params.workspaceID)}/> : AuthRedirect)}/>
     <Redirect from="*" to="/" />
   </Switch>
-  {/*<Route path='/' component={MasterPage} auth={auth}>
-    <Route path='deduplicate/:workspaceID' components={{
-      mainContent: Deduplicator
-    }} onEnter={requireAuth}/>
-    <Route path='map/:mapID' components={{
-      mainContent: MapEditor,
-      navMenu: MapMenu
-    }} onEnter={requireAuth}/>
-  </Route>*/}
 </Router>, document.getElementById('app-container'));

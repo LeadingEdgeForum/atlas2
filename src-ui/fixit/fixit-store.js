@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 
-import Store from '../../../../store.js';
-import Dispatcher from '../../../../dispatcher';
+import Store from '../store.js';
+import Dispatcher from '../dispatcher';
 import Constants from './deduplicator-constants';
 import $ from 'jquery';
 
@@ -107,13 +107,16 @@ class DeduplicatorStore extends Store {
         dataType: 'json',
         success: function(data) {
           this.state.processedComponents = data.workspace.capabilityCategories;
-          console.log('processed',this.state);
           this.emitChange();
         }.bind(this)
       });
       this.state.loadedProcessed = true;
     }
     return {capabilityCategories : this.state.processedComponents};
+  }
+
+  getWorkspaceId(){
+    return this.workspaceID;
   }
 }
 
