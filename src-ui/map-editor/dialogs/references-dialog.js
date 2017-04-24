@@ -23,13 +23,13 @@ var ReferencesDialog = React.createClass({
   },
 
   componentWillUnmount: function() {
-    this.props.singleMapStoreremoveChangeListener(this._onChange);
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
 
   _onChange: function() {
     this.setState(this.props.singleMapStore.getReferencesDialogState());
   },
-  
+
   render: function() {
     var show = this.state.open;
     if (!show) {

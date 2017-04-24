@@ -7,15 +7,17 @@ class AuthStore extends Store {
 
   constructor() {
     super();
-    this.loggedIn = false;
+    this._loggedIn = false;
     this.inProgress = false;
     this.meQueried = false;
-    this.isLoggedIn.bind(this);
-    this.logout.bind(this);
+    this.loggedIn = this.loggedIn.bind(this);
+    this.logout = this.logout.bind(this);
+    this.history = null;
   }
 
-  isLoggedIn(){
-    if(this.loggedIn){
+  loggedIn(history){
+    this.history = history;
+    if(this._loggedIn){
       return true;
     }
     if(this.meQueried){ // not logged in, me queried, no point in querying again
@@ -27,24 +29,30 @@ class AuthStore extends Store {
         type: 'GET',
         url: '/me',
         success: function(data2) {
-          this.loggedIn = true;
+          this._loggedIn = true;
           this.inProgress = false;
           this.meQueried = true;
           this.emitChange();
+          if(history){
+            history.replace('/');
+          }
         }.bind(this),
         error: function(err) {
           this.inProgress = false;
-          this.loggedIn = false;
+          this._loggedIn = false;
           this.meQueried = true;
           this.emitChange();
+          if(history){
+            history.replace('/');
+          }
         }.bind(this)
       });
     }
-    return this.loggedIn;
+    return this._loggedIn;
   }
 
   loginPasswordLogin(login, password, next){
-    if(this.loggedIn){
+    if(this._loggedIn){
       return; //no op if already logged in
     }
     if(!this.inProgress){
@@ -57,7 +65,7 @@ class AuthStore extends Store {
           password:password
         },
         success: function(data2) {
-          this.loggedIn = true;
+          this._loggedIn = true;
           this.inProgress = false;
           this.meQueried = true;
           this.emitChange();
@@ -65,7 +73,7 @@ class AuthStore extends Store {
         }.bind(this),
         error: function(err) {
           this.inProgress = false;
-          this.loggedIn = false;
+          this._loggedIn = false;
           this.meQueried = true;
           this.emitChange();
         }.bind(this)
@@ -73,18 +81,16 @@ class AuthStore extends Store {
     }
   }
 
-  logout(next){
+  logout(history){
     $.ajax({
       type: 'GET',
       url: '/logout',
       success: function(data2) {
-        this.loggedIn = false;
+        this._loggedIn = false;
         this.emitChange();
+        history.replace('/');
       }.bind(this)
     });
-    if(next){
-      next();
-    }
   }
 }
 
