@@ -150,6 +150,18 @@ var SingleMapActions = {
       });
     },
 
+
+    openCreateSubmapDialog: function(data) {
+      if (!data.mapID || !data.nodes || !data.comments) {
+        console.error('not enough of data to create a submap', data.mapId, data.nodes, data.comments);
+        return;
+      }
+      Dispatcher.dispatch({
+        actionType: ACTION_TYPES.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG,
+        data: data
+      });
+    },
+
     openEditCommentDialog: function(workspaceID, mapID, id, text){
       if(!workspaceID || !mapID || !id || !text){
         console.error('missing data', workspaceID, mapID, id, text);
@@ -305,7 +317,7 @@ var SingleMapActions = {
     },
 
     updateNode: function(workspaceId, mapId, nodeId, pos,
-    name, type, person, inertia, description){
+      name, type, person, inertia, description){
       if(!nodeId){
         console.error('missing node id');
         return;
@@ -371,13 +383,6 @@ var SingleMapActions = {
           }
       });
     },
-
-
-    openCreateSubmapDialog: function(data){
-      console.error('implement me');
-    },
-
-
 
     openSubmapReferencesDialog: function(data){
       console.error('implement me');

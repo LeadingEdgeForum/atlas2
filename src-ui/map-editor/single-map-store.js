@@ -114,6 +114,7 @@ export default class SingleWorkspaceStore extends Store {
             this.addSubmapDialog.coords = action.coords;
             this.addSubmapDialog.type = action.type;
             this.addSubmapDialog.listOfNodesToSubmap = [];
+            this.addSubmapDialog.listOfCommentsToSubmap = [];
             $.ajax({
               type: 'GET',
               url: '/api/submaps/map/' + this.getMapId(),
@@ -122,6 +123,11 @@ export default class SingleWorkspaceStore extends Store {
                 this.emitChange();
               }.bind(this)
             });
+            break;
+          case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
+            this.addSubmapDialog.open = true;
+            this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
+            this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
             this.emitChange();
             break;
           case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:

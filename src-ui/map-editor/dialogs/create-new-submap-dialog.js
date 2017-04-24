@@ -17,7 +17,6 @@ import {
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
 
-//TODO: validation of the workspace dialog
 
 var CreateNewSubmapDialog = React.createClass({
 
@@ -37,7 +36,8 @@ var CreateNewSubmapDialog = React.createClass({
   internalState: {},
 
   _onChange: function() {
-    this.setState(this.props.singleMapStore.getNewSubmapDialogState());
+    this.internalState = this.props.singleMapStore.getNewSubmapDialogState();
+    this.setState(this.internalState);
   },
 
   _close: function() {
@@ -45,7 +45,6 @@ var CreateNewSubmapDialog = React.createClass({
   },
 
   _submit: function() {
-    this.internalState.coords = this.state.coords;
     SingleMapActions.submitAddSubmapDialog(this.internalState);
   },
 
@@ -54,7 +53,7 @@ var CreateNewSubmapDialog = React.createClass({
     this.forceUpdate();
   },
 
-  // catch enter and consider it to be 'submit'
+  // catch enter and do not consider it to be 'submit'
   _enterInterceptor(e) {
     if (e.nativeEvent.keyCode === 13) {
       e.preventDefault();

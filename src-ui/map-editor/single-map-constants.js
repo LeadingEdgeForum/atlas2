@@ -38,6 +38,9 @@ module.exports  = keyMirror({
       DELETE_ACTION : null,
 
       RECORD_CONNECTION : null,
-      DELETE_CONNECTION : null
+      DELETE_CONNECTION : null,
+
+
+      OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG : null
   }
 });
