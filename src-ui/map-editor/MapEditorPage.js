@@ -25,6 +25,10 @@ import {calculateMapName} from '../map-list/map-name-calculator';
 import Palette from './palette';
 import CanvasStore from './canvas-store';
 import CanvasWithBackground from './canvas-with-background';
+import $ from 'jquery';
+var Blob = require('blob');
+/* globals document */
+/* globals window */
 
 export default class MapEditorPage extends React.Component {
 
@@ -36,6 +40,7 @@ export default class MapEditorPage extends React.Component {
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this._onChange = this._onChange.bind(this);
+    this.download = this.download.bind(this);
     this.state = this.props.singleMapStore.getMap();
     this.canvasStore = new CanvasStore();
   }
@@ -64,16 +69,41 @@ export default class MapEditorPage extends React.Component {
     SingleMapActions.openEditMapDialog();
   }
 
+  download(maplink, tempName) {
+    $.ajax({
+      url: maplink,
+      type: 'GET',
+      xhrFields: {
+        responseType: 'blob'
+      },
+      success: function(data, textStatus, jqxhr) {
+        var file = new Blob([data], {"type": jqxhr.getResponseHeader("Content-Type")});
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(file);
+        link.download = tempName;
+        link.click();
+      }
+    });
+  }
+
   prepareMapMenu(){
     const workspaceID = this.props.singleMapStore.getWorkspaceId();
     const deduplicateHref = '/fixit/' + workspaceID;
+    var mapID = this.props.singleMapStore.getMapId();
+
+    var tempName = mapID + '.png';
+    var downloadMapHref = '/img/' + tempName;
+
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this)}>
           <Glyphicon glyph="edit"></Glyphicon>
           &nbsp;Edit map info
       </NavItem>,
-      <LinkContainer to={{pathname: deduplicateHref}} key="2">
-          <NavItem eventKey={2} href={deduplicateHref} key="2">
+      <NavItem eventKey={2} key="2" href="#" download={tempName} onClick={this.download.bind(this, downloadMapHref, tempName)}>
+        <Glyphicon glyph="download"></Glyphicon>&nbsp; Download
+      </NavItem>,
+      <LinkContainer to={{pathname: deduplicateHref}} key="3">
+          <NavItem eventKey={2} href={deduplicateHref}>
               <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
               &nbsp;Fix it!
           </NavItem>
