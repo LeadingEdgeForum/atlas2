@@ -4,12 +4,9 @@ var React = require('react');
 var Input = require('react-bootstrap').Input;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
-import Actions from './../../../../actions.js';
-import WorkspaceStore from './../../workspace-store';
-import {calculateMapName} from './../map-name-calculator';
-var UsageInfo = require('../deduplicator/usage-info');
-
-//TODO: validation of the workspace dialog
+import Actions from '../single-map-actions';
+import {calculateMapName} from '../../map-list/map-name-calculator';
+var UsageInfo = require('../../fixit/usage-info');
 
 var SubmapReferencesDialog = React.createClass({
   getInitialState: function() {
@@ -21,16 +18,17 @@ var SubmapReferencesDialog = React.createClass({
   },
 
   componentDidMount: function() {
-    WorkspaceStore.addChangeListener(this._onChange);
+    this.props.singleMapStore.addChangeListener(this._onChange);
   },
 
   componentWillUnmount: function() {
-    WorkspaceStore.removeChangeListener(this._onChange.bind(this));
+    this.props.singleMapStore.removeChangeListener(this._onChange);
   },
 
   _onChange: function() {
-    this.setState(WorkspaceStore.getSubmapReferencesDialogState());
+    this.setState(this.props.singleMapStore.getSubmapReferencesDialogState());
   },
+
   constructMessage : function(){
     if(!this.state.referencingMaps){
       return <div>Loading... please wait.</div>;

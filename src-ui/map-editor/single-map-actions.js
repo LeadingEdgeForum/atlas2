@@ -384,12 +384,40 @@ var SingleMapActions = {
       });
     },
 
-    openSubmapReferencesDialog: function(data){
-      console.error('implement me');
+    openSubmapReferencesDialog: function(currentName, mapID, submapID, node, workspaceID){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SHOW_SUBMAP_REFERENCES,
+          data : {
+            currentName: currentName,
+            mapID:mapID,
+            submapID:submapID,
+            node :node,
+            workspaceID:workspaceID
+          }
+      });
     },
 
-    openReferencesDialog: function(data){
-      console.error('implement me');
+    closeSubmapReferencesDialog : function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_SUBMAP_REFERENCES,
+      });
+    },
+
+    openReferencesDialog: function(currentName, node, workspaceID){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SHOW_REFERENCES,
+          data : {
+            currentName: currentName,
+            node:node,
+            workspaceID:workspaceID
+          }
+      });
+    },
+
+    closeReferencesDialog : function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_REFERENCES,
+      });
     }
 
 };

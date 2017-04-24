@@ -19,6 +19,8 @@ import EditActionDialog from './dialogs/edit-action-dialog';
 import NewGenericCommentDialog from './dialogs/create-new-comment-dialog';
 import EditGenericCommentDialog from './dialogs/edit-comment-dialog';
 import CreateNewSubmapDialog from './dialogs/create-new-submap-dialog';
+import SubmapReferencesDialog from './dialogs/submap-references-dialog';
+import ReferencesDialog from './dialogs/references-dialog';
 import {LinkContainer} from 'react-router-bootstrap';
 import SingleMapActions from './single-map-actions';
 import {calculateMapName} from '../map-list/map-name-calculator';
@@ -171,9 +173,8 @@ export default class MapEditorPage extends React.Component {
           <EditGenericCommentDialog singleMapStore={singleMapStore}/>
           <EditNodeDialog singleMapStore={singleMapStore}/>
           <EditActionDialog singleMapStore={singleMapStore}/>
-          {/*
-          <SubmapReferencesDialog/>
-          <ReferencesDialog/>*/}
+          <SubmapReferencesDialog singleMapStore={singleMapStore}/>
+          <ReferencesDialog singleMapStore={singleMapStore}/>
         </Grid>
       </DocumentTitle>
     );

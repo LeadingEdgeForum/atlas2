@@ -43,6 +43,14 @@ export default class SingleWorkspaceStore extends Store {
           open : false
       };
 
+      this.referencesDialog = {
+        open : false
+      };
+
+      this.submapReferencesDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', function(msg) {
@@ -201,6 +209,44 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.DELETE_CONNECTION:
             this.deleteConnection(action.data);
             break;
+
+
+          case ActionTypes.SHOW_SUBMAP_REFERENCES:
+            this.submapReferencesDialog.open = true;
+            this.submapReferencesDialog.currentName = action.data.currentName;
+            this.submapReferencesDialog.mapID = action.data.mapID;
+            this.submapReferencesDialog.submapID = action.data.submapID;
+            this.submapReferencesDialog.node = action.data.node;
+            this.submapReferencesDialog.workspaceID = action.data.workspaceID;
+            $.ajax({
+              type: 'GET',
+              url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
+              success: function(data2) {
+                this.submapReferencesDialog.referencingMaps = data2;
+                this.emitChange();
+              }.bind(this)
+            });
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_SUBMAP_REFERENCES:
+            this.submapReferencesDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SHOW_REFERENCES:
+            this.referencesDialog.open = true;
+            this.referencesDialog.currentName = action.data.currentName;
+            this.referencesDialog.node = action.data.node;
+            this.referencesDialog.workspaceID = action.data.workspaceID;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_REFERENCES:
+            this.referencesDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
           default:
             return;
         }
@@ -237,6 +283,14 @@ export default class SingleWorkspaceStore extends Store {
 
   getNodeEditDialogState(){
     return this.editNodeDialog;
+  }
+
+  getReferencesDialogState(){
+    return this.referencesDialog;
+  }
+
+  getSubmapReferencesDialogState(){
+    return this.submapReferencesDialog;
   }
 
   getMapId(){
