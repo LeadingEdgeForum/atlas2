@@ -59,7 +59,7 @@ export class Login extends React.Component {
           </Col>
         </Row>
       </Grid>
-    )
+    );
   }
 }
 
