@@ -225,7 +225,7 @@ module.exports = function(conn) {
             .findOne({
                 _id: this._id
             })
-            .populate('nodes')
+            .populate('nodes workspace')
             .exec();
     };
 

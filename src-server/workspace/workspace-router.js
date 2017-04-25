@@ -359,7 +359,16 @@ module.exports = function(authGuardian, mongooseConnection) {
           if (err2) {
             res.status(500).json(err2);
           }
-          res.json({map: result2});
+          Workspace.populate(result2, {
+              path: 'maps capabilityCategories'
+          }, function(err, result3) {
+              if (err) {
+                  return res.send(500);
+              }
+              res.json({
+                  workspace: result3.toObject()
+              });
+          });
         });
       }
     });
@@ -379,7 +388,10 @@ module.exports = function(authGuardian, mongooseConnection) {
           })
           .then(function(map) {
               map.workspace.maps.pull(map._id);
-              var workspacePromise = map.workspace.save();
+              var workspacePromise = map.workspace.save()
+              .then(function(workspace){
+                  return workspace.populate('maps capabilityCategories').execPopulate();
+              });
 
               map.archived = true;
               var mapPromise = map.save();
@@ -389,9 +401,9 @@ module.exports = function(authGuardian, mongooseConnection) {
           .fail(function(e) {
               return defaultAccessDenied(res, e);
           })
-          .done(function() {
+          .done(function(args) {
               res.json({
-                  map: null
+                  workspace: args[0]
               });
               track(owner,'delete_map',{
                 'id' : req.params.mapID,
@@ -503,6 +515,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               workspace.owner.push(email);
               return workspace.save();
           })
+          .then(function(workspace){
+            return workspace.populate('maps capabilityCategories').execPopulate();
+          })
           .fail(function(e){
             return defaultAccessDenied(res, e);
           })
@@ -546,8 +561,11 @@ module.exports = function(authGuardian, mongooseConnection) {
             archived: false
         }).exec()
         .then(function(workspace) {
-            workspace.owner.pop(email);
+            workspace.owner.pull(email);
             return workspace.save();
+        })
+        .then(function(workspace){
+          return workspace.populate('maps capabilityCategories').execPopulate();
         })
         .fail(function(e) {
             return defaultAccessDenied(res, e);
