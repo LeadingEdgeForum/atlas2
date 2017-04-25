@@ -151,8 +151,9 @@ describe('Workspaces & maps', function() {
                 if (!(res.body.map && res.body.map._id)) {
                     throw new Error('map not loaded properly ' + res.body.map);
                 }
-                if (res.body.map.workspace !== workspaceID) {
-                    throw new Error('workspace not assigned properly, should be' + workspaceID + " but was " + res.body.map.workspace);
+                var localWorkspaceId = res.body.map.workspace ? (res.body.map.workspace._id || res.body.map.workspace) : null;
+                if (localWorkspaceId !== workspaceID) {
+                    throw new Error('workspace not assigned properly, should be' + workspaceID + " but was " + localWorkspaceId);
                 }
                 copyOfMap = res.body.map;
             })
