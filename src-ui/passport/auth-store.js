@@ -42,9 +42,6 @@ class AuthStore extends Store {
           this._loggedIn = false;
           this.meQueried = true;
           this.emitChange();
-          if(history){
-            history.replace('/');
-          }
         }.bind(this)
       });
     }

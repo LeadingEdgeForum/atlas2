@@ -1,55 +1,66 @@
 /*jshint esversion: 6 */
-
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {IndexRoute, Route, browserHistory, IndexRedirect, Router, Redirect} from 'react-router';
-import MasterPage from './passport/MasterPage';
-import IndexPage from './passport/l-p/IndexPage';
+
+import {
+  BrowserRouter as Router,
+  Route,
+  Switch,
+  Link,
+  Redirect
+} from 'react-router-dom';
+
+import SplashPage from './passport/l-p/SplashPage';
 import LoginPage from './passport/l-p/LoginPage';
-import WorkspaceList from './pages/workspace/workspace-list';
-import MapList from './pages/workspace/maps/map-list.js';
-import Deduplicator from './pages/workspace/maps/deduplicator/deduplicator.js';
-import WorkspaceMenu from './pages/workspace/workspace-menu.js';
-import MapEditor from './pages/workspace/maps/editor/map-editor.js';
-import MapMenu from './pages/workspace/maps/map-menu.js';
-import $ from 'jquery';
+import WorkspaceListPage from './workspace/WorkspaceListPage';
+import MapListPage from './map-list/MapListPage';
+import MapEditorPage from './map-editor/MapEditorPage';
+import WorkspaceListStore from './workspace/workspace-list-store';
+import SingleWorkspaceStore from './map-list/single-workspace-store';
+import SingleMapStore from './map-editor/single-map-store';
+
+import FixitPage from './fixit/FixitPage';
+import FixitStore from './fixit/fixit-store';
+
 import AuthStore from './passport/auth-store';
 
-var authStore = new AuthStore();
+var auth = new AuthStore();
 
-const requireAuth = (nextState, replace) => {
-  if (!authStore.isLoggedIn()) {
-    replace({ pathname: '/' });
-  }
-};
-
-const requireNotAuth = (nextState, replace) => {
-  if (authStore.isLoggedIn()) {
-    replace({ pathname: '/' });
-  }
-};
+const AuthRedirect = <Redirect to={{pathname: '/' }}/>;
+const workspaceListStore = new WorkspaceListStore();
 
 ReactDOM.render(
-  <Router history={browserHistory}>
-  <Route path='/' component={MasterPage} authStore={authStore}>
-    <IndexRedirect to="/" />
-    <IndexRoute components={{
-      mainContent: IndexPage
-    }} authStore={AuthStore}/>
-    <Route path="/login" components={{
-      mainContent : LoginPage
-    }} onEnter={requireNotAuth}/>
-    <Route path='workspace/:workspaceID' components={{
-      mainContent: MapList,
-      navMenu: WorkspaceMenu
-    }} onEnter={requireAuth}/>
-    <Route path='deduplicate/:workspaceID' components={{
-      mainContent: Deduplicator
-    }} onEnter={requireAuth}/>
-    <Route path='map/:mapID' components={{
-      mainContent: MapEditor,
-      navMenu: MapMenu
-    }} onEnter={requireAuth}/>
-    <Redirect from="*" to="/"/>
-  </Route>
+  <Router>
+  <Switch>
+    <Route exact path="/"
+        component={
+          (props) =>
+            (auth.loggedIn(props.history)
+            ? <WorkspaceListPage auth={auth} history={props.history} workspaceListStore={workspaceListStore}/>
+            : <SplashPage auth={auth} history={props.history}/>)
+        }/>
+    <Route exact path="/login"
+          component={
+            (props) =>
+              (auth.loggedIn(props.history) ? AuthRedirect
+                : <LoginPage auth={auth} history={props.history}/>)
+        }/>
+    <Route exact path="/workspace/:workspaceID"
+        render={
+          (props) =>
+          (auth.loggedIn(props.history)
+          ? <MapListPage singleWorkspaceStore={new SingleWorkspaceStore(props.match.params.workspaceID)} auth={auth} history={props.history}/>
+          : AuthRedirect)
+        }/>
+    <Route exact path="/map/:mapID"
+        render={
+          (props) =>
+          (auth.loggedIn(props.history)
+          ? <MapEditorPage auth={auth} history={props.history} singleMapStore={new SingleMapStore(props.match.params.mapID)}/>
+          : AuthRedirect)}/>
+    <Route exact path="/fixit/:workspaceID"
+        render={props =>
+          (auth.loggedIn(props.history) ? <FixitPage auth={auth} history={props.history} fixitStore={new FixitStore(props.match.params.workspaceID)}/> : AuthRedirect)}/>
+    <Redirect from="*" to="/" />
+  </Switch>
 </Router>, document.getElementById('app-container'));

@@ -1,20 +1,31 @@
 /*jshint esversion: 6 */
 
-import React, {
-    PropTypes as T
-} from 'react';
+import {Link} from 'react-router';
+import {LinkContainer} from 'react-router-bootstrap';
+
+import React  from 'react';
 import ReactDOM from 'react-dom';
+import DocumentTitle from 'react-document-title';
 import {
-    Form,
-    FormGroup,
-    FormControl,
-    ControlLabel,
-    Button,
-    ButtonToolbar,
-    Grid,
-    Row,
-    Col
+  Grid,
+  Row,
+  Col,
+  Navbar,
+  NavbarBrand,
+  Nav,
+  NavItem,
+  Glyphicon,
+  PageHeader,
+  Jumbotron,
+  Button,
+  Table,
+  Form,
+  FormGroup,
+  ControlLabel,
+  FormControl,
+  ButtonToolbar
 } from 'react-bootstrap';
+import AtlasNavbar from '../../atlas-navbar';
 
 
 export class Login extends React.Component {
@@ -30,14 +41,15 @@ export class Login extends React.Component {
     e.preventDefault();
     const { email, password } = this.getAuthParams();
     var _this = this;
-    this.props.authStore.loginPasswordLogin(email, password, function(){
-      _this.props.router.push('/');
+    this.props.auth.loginPasswordLogin(email, password, function(){
+      _this.props.history.push('/');
     });
   }
 
   render() {
     return (
-      <Grid fluid={true}>
+      <DocumentTitle title='Atlas2, the mapping Tool'>
+        <Grid fluid={true}>
         <Row className="show-grid">
           <Col sm={6} smOffset={3} lg={4} lgOffset={4}>
           <h2>Login</h2>
@@ -58,7 +70,8 @@ export class Login extends React.Component {
           </Form>
           </Col>
         </Row>
-      </Grid>
+        </Grid>
+      </DocumentTitle>
     );
   }
 }
