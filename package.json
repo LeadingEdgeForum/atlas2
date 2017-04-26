@@ -41,7 +41,7 @@
     "phantom-pool": "^1.2.0",
     "q": "*",
     "react": "^15.3.0",
-    "react-bootstrap": "^0.30.6",
+    "react-bootstrap": "^0.31.0",
     "react-document-title": "2.0.3",
     "react-dom": "^15.3.2",
     "react-router": "4.1.0",
