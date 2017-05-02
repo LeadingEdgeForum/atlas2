@@ -46,10 +46,12 @@ export default class FixitPage extends React.Component {
 
   componentDidMount() {
     this.props.fixitStore.addChangeListener(this._onChange);
+    this.props.singleWorkspaceStore.addChangeListener(this._onChange);
   }
 
   componentWillUnmount() {
     this.props.fixitStore.addChangeListener(this._onChange);
+    this.props.singleWorkspaceStore.addChangeListener(this._onChange);
   }
 
   _onChange(){
@@ -112,7 +114,7 @@ export default class FixitPage extends React.Component {
     const fixitStore = this.props.fixitStore;
     const workspaceStore = this.props.singleWorkspaceStore;
     const pageTitle = 'Fix your organization!';
-    
+
     const workspaceID = fixitStore.getWorkspaceId();
     const workspaceName = workspaceStore.getWorkspaceInfo().workspace.name + ' - ' + workspaceStore.getWorkspaceInfo().workspace.purpose;
 
