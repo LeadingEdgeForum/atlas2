@@ -20,6 +20,14 @@ class DeduplicatorStore extends Store {
         loadedAvailable : false,
         loadedProcessed : false
     };
+    this.dispatchToken = null;
+    this.redispatch();
+  }
+
+  redispatch(){
+    if(this.dispatchToken){
+      return;
+    }
     this.dispatchToken = Dispatcher.register(action => {
       switch (action.actionType) {
 
@@ -71,6 +79,13 @@ class DeduplicatorStore extends Store {
           return;
       }
     });
+  }
+
+  undispatch(){
+    if(this.dispatchToken){
+      Dispatcher.unregister(this.dispatchToken);
+      this.dispatchToken = null;
+    }
   }
 
   emitChange() {

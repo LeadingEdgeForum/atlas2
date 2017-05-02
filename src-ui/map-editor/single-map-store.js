@@ -59,199 +59,214 @@ export default class SingleWorkspaceStore extends Store {
           }
       }.bind(this));
 
-      this.dispatchToken = Dispatcher.register(action => {
-        switch (action.actionType) {
-          case ActionTypes.OPEN_EDIT_MAP_DIALOG:
-            this.editMapDialog.open = true;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_EDIT_MAP_DIALOG:
-            this.editMapDialog.open = false;
-            this.emitChange();
-            break;
-          case ActionTypes.SUBMIT_EDIT_MAP_DIALOG:
-            this.submitEditMapDialog(action.data);
-            break;
-          case ActionTypes.OPEN_NEW_NODE_DIALOG:
-            this.newNodeDialog.open = true;
-            this.newNodeDialog.coords = action.coords;
-            this.newNodeDialog.type = action.type;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_NEW_NODE_DIALOG:
-            this.newNodeDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.SUBMIT_NEW_NODE_DIALOG:
-            this.submitNewNodeDialog(action.data);
-            break;
-          case ActionTypes.OPEN_EDIT_NODE_DIALOG:
-            this.openEditNodeDialog(action.data);
-            break;
-          case ActionTypes.CLOSE_EDIT_NODE_DIALOG:
-            this.editNodeDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.DELETE_NODE:
-            this.deleteNode(action.data);
-            break;
-          case ActionTypes.UPDATE_NODE:
-            this.updateNode(action.data);
-            break;
-          case ActionTypes.OPEN_ADD_COMMENT_DIALOG:
-            this.addCommentDialog.open = true;
-            this.addCommentDialog.coords = action.coords;
-            this.addCommentDialog.type = action.type;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_ADD_COMMENT_DIALOG:
-            this.addCommentDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.SUBMIT_ADD_COMMENT_DIALOG:
-            this.submitAddCommentDialog(action.data);
-            break;
-          case ActionTypes.OPEN_ADD_SUBMAP_DIALOG:
-            this.addSubmapDialog.open = true;
-            this.addSubmapDialog.coords = action.coords;
-            this.addSubmapDialog.type = action.type;
-            this.addSubmapDialog.listOfNodesToSubmap = [];
-            this.addSubmapDialog.listOfCommentsToSubmap = [];
-            $.ajax({
-              type: 'GET',
-              url: '/api/submaps/map/' + this.getMapId(),
-              success: function(data2) {
-                this.addSubmapDialog.listOfAvailableSubmaps = data2.listOfAvailableSubmaps;
-                this.emitChange();
-              }.bind(this)
-            });
-            break;
-          case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
-            this.addSubmapDialog.open = true;
-            this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
-            this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
-            this.addSubmapDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
-            this.createSubmap(action.data);
-            break;
-          case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
-            this.addReferenceToExistingSubmap(action.refID, action.coords);
-            break;
+      this.dispatchToken = null;
+      this.redispatch();
+  }
 
-          case ActionTypes.OPEN_EDIT_COMMENT_DIALOG:
-            this.editCommentDialog.open = true;
-            this.editCommentDialog.id = action.id;
-            this.editCommentDialog.comment = action.text;
-            this.editCommentDialog.workspaceID = action.workspaceID;
-            this.editCommentDialog.mapID = action.mapID;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_EDIT_COMMENT_DIALOG:
-            this.editCommentDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.SUBMIT_EDIT_COMMENT_DIALOG:
-            this.updateComment(action.data);
-            break;
-          case ActionTypes.DELETE_COMMENT:
-            this.deleteComment(action.id);
-            break;
-          case ActionTypes.MOVE_COMMENT:
-            this.updateComment(action.data);
-            break;
+  redispatch(){
+    if(this.dispatchToken){
+      return;
+    }
+    this.dispatchToken = Dispatcher.register(action => {
+      switch (action.actionType) {
+        case ActionTypes.OPEN_EDIT_MAP_DIALOG:
+          this.editMapDialog.open = true;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_EDIT_MAP_DIALOG:
+          this.editMapDialog.open = false;
+          this.emitChange();
+          break;
+        case ActionTypes.SUBMIT_EDIT_MAP_DIALOG:
+          this.submitEditMapDialog(action.data);
+          break;
+        case ActionTypes.OPEN_NEW_NODE_DIALOG:
+          this.newNodeDialog.open = true;
+          this.newNodeDialog.coords = action.coords;
+          this.newNodeDialog.type = action.type;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_NEW_NODE_DIALOG:
+          this.newNodeDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.SUBMIT_NEW_NODE_DIALOG:
+          this.submitNewNodeDialog(action.data);
+          break;
+        case ActionTypes.OPEN_EDIT_NODE_DIALOG:
+          this.openEditNodeDialog(action.data);
+          break;
+        case ActionTypes.CLOSE_EDIT_NODE_DIALOG:
+          this.editNodeDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.DELETE_NODE:
+          this.deleteNode(action.data);
+          break;
+        case ActionTypes.UPDATE_NODE:
+          this.updateNode(action.data);
+          break;
+        case ActionTypes.OPEN_ADD_COMMENT_DIALOG:
+          this.addCommentDialog.open = true;
+          this.addCommentDialog.coords = action.coords;
+          this.addCommentDialog.type = action.type;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_ADD_COMMENT_DIALOG:
+          this.addCommentDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.SUBMIT_ADD_COMMENT_DIALOG:
+          this.submitAddCommentDialog(action.data);
+          break;
+        case ActionTypes.OPEN_ADD_SUBMAP_DIALOG:
+          this.addSubmapDialog.open = true;
+          this.addSubmapDialog.coords = action.coords;
+          this.addSubmapDialog.type = action.type;
+          this.addSubmapDialog.listOfNodesToSubmap = [];
+          this.addSubmapDialog.listOfCommentsToSubmap = [];
+          $.ajax({
+            type: 'GET',
+            url: '/api/submaps/map/' + this.getMapId(),
+            success: function(data2) {
+              this.addSubmapDialog.listOfAvailableSubmaps = data2.listOfAvailableSubmaps;
+              this.emitChange();
+            }.bind(this)
+          });
+          break;
+        case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
+          this.addSubmapDialog.open = true;
+          this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
+          this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
+          this.addSubmapDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
+          this.createSubmap(action.data);
+          break;
+        case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
+          this.addReferenceToExistingSubmap(action.refID, action.coords);
+          break;
 
-
-          case ActionTypes.RECORD_ACTION:
-            this.recordAction(action.data);
-            break;
-          case ActionTypes.OPEN_EDIT_ACTION_DIALOG:
-            this.actionDialog.open = true;
-            this.actionDialog.workspaceID = action.data.workspaceID;
-            this.actionDialog.mapID = action.data.mapID;
-            this.actionDialog.sourceId = action.data.sourceId;
-            this.actionDialog.actionId = action.data.actionId;
-            this.actionDialog.shortSummary = action.data.shortSummary;
-            this.actionDialog.description = action.data.description;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_EDIT_ACTION_DIALOG:
-            this.actionDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.UPDATE_ACTION:
-            this.updateAction(action.data);
-            break;
-          case ActionTypes.DELETE_ACTION:
-            this.deleteAction(action.data);
-            break;
+        case ActionTypes.OPEN_EDIT_COMMENT_DIALOG:
+          this.editCommentDialog.open = true;
+          this.editCommentDialog.id = action.id;
+          this.editCommentDialog.comment = action.text;
+          this.editCommentDialog.workspaceID = action.workspaceID;
+          this.editCommentDialog.mapID = action.mapID;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_EDIT_COMMENT_DIALOG:
+          this.editCommentDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.SUBMIT_EDIT_COMMENT_DIALOG:
+          this.updateComment(action.data);
+          break;
+        case ActionTypes.DELETE_COMMENT:
+          this.deleteComment(action.id);
+          break;
+        case ActionTypes.MOVE_COMMENT:
+          this.updateComment(action.data);
+          break;
 
 
-          case ActionTypes.RECORD_CONNECTION:
-            this.recordConnection(action.data);
-            break;
-          case ActionTypes.DELETE_CONNECTION:
-            this.deleteConnection(action.data);
-            break;
+        case ActionTypes.RECORD_ACTION:
+          this.recordAction(action.data);
+          break;
+        case ActionTypes.OPEN_EDIT_ACTION_DIALOG:
+          this.actionDialog.open = true;
+          this.actionDialog.workspaceID = action.data.workspaceID;
+          this.actionDialog.mapID = action.data.mapID;
+          this.actionDialog.sourceId = action.data.sourceId;
+          this.actionDialog.actionId = action.data.actionId;
+          this.actionDialog.shortSummary = action.data.shortSummary;
+          this.actionDialog.description = action.data.description;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_EDIT_ACTION_DIALOG:
+          this.actionDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.UPDATE_ACTION:
+          this.updateAction(action.data);
+          break;
+        case ActionTypes.DELETE_ACTION:
+          this.deleteAction(action.data);
+          break;
 
 
-          case ActionTypes.SHOW_SUBMAP_REFERENCES:
-            this.submapReferencesDialog.open = true;
-            this.submapReferencesDialog.currentName = action.data.currentName;
-            this.submapReferencesDialog.mapID = action.data.mapID;
-            this.submapReferencesDialog.submapID = action.data.submapID;
-            this.submapReferencesDialog.node = action.data.node;
-            this.submapReferencesDialog.workspaceID = action.data.workspaceID;
-            $.ajax({
-              type: 'GET',
-              url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
-              success: function(data2) {
-                this.submapReferencesDialog.referencingMaps = data2;
-                this.emitChange();
-              }.bind(this)
-            });
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_SUBMAP_REFERENCES:
-            this.submapReferencesDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          case ActionTypes.SHOW_REFERENCES:
-            this.referencesDialog.open = true;
-            this.referencesDialog.currentName = action.data.currentName;
-            this.referencesDialog.node = action.data.node;
-            this.referencesDialog.workspaceID = action.data.workspaceID;
-            this.emitChange();
-            break;
-          case ActionTypes.CLOSE_REFERENCES:
-            this.referencesDialog = {
-              open: false
-            };
-            this.emitChange();
-            break;
-          default:
-            return;
-        }
-      });
+        case ActionTypes.RECORD_CONNECTION:
+          this.recordConnection(action.data);
+          break;
+        case ActionTypes.DELETE_CONNECTION:
+          this.deleteConnection(action.data);
+          break;
+
+
+        case ActionTypes.SHOW_SUBMAP_REFERENCES:
+          this.submapReferencesDialog.open = true;
+          this.submapReferencesDialog.currentName = action.data.currentName;
+          this.submapReferencesDialog.mapID = action.data.mapID;
+          this.submapReferencesDialog.submapID = action.data.submapID;
+          this.submapReferencesDialog.node = action.data.node;
+          this.submapReferencesDialog.workspaceID = action.data.workspaceID;
+          $.ajax({
+            type: 'GET',
+            url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
+            success: function(data2) {
+              this.submapReferencesDialog.referencingMaps = data2;
+              this.emitChange();
+            }.bind(this)
+          });
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_SUBMAP_REFERENCES:
+          this.submapReferencesDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.SHOW_REFERENCES:
+          this.referencesDialog.open = true;
+          this.referencesDialog.currentName = action.data.currentName;
+          this.referencesDialog.node = action.data.node;
+          this.referencesDialog.workspaceID = action.data.workspaceID;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_REFERENCES:
+          this.referencesDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        default:
+          return;
       }
+    });
+  }
+
+  undispatch(){
+    if(this.dispatchToken){
+      Dispatcher.unregister(this.dispatchToken);
+      this.dispatchToken = null;
+    }
+  }
 
   emitChange() {
     super.emitChange();

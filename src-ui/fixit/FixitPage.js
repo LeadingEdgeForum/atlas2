@@ -110,15 +110,12 @@ export default class FixitPage extends React.Component {
     const auth = this.props.auth;
     const history = this.props.history;
     const fixitStore = this.props.fixitStore;
+    const workspaceStore = this.props.singleWorkspaceStore;
     const pageTitle = 'Fix your organization!';
-    //
-    // const nameAndPurpose = fixitStore.getWorkspaceNameAndPurpose();
-    const nameAndPurpose = {
-      name : 'implement me',
-      purpose : 'purpose'
-    };
+    
     const workspaceID = fixitStore.getWorkspaceId();
-    const workspaceName = nameAndPurpose ? nameAndPurpose.name + ' - ' + nameAndPurpose.purpose : workspaceID;
+    const workspaceName = workspaceStore.getWorkspaceInfo().workspace.name + ' - ' + workspaceStore.getWorkspaceInfo().workspace.purpose;
+
 
     var unprocessedComponents = fixitStore.getAvailableComponents();
     var processedComponents = fixitStore.getProcessedComponents();

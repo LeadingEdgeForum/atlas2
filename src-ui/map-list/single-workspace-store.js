@@ -36,56 +36,70 @@ export default class SingleWorkspaceStore extends Store {
               this.emitChange();
           }.bind(this));
       });
+      this.dispatchToken = null;
+      this.redispatch();
+  }
 
-      this.dispatchToken = Dispatcher.register(action => {
-          switch (action.actionType) {
-              case ActionTypes.MAP_OPEN_NEW_MAP_DIALOG:
-                  this.newMapDialog.open = true;
-                  this.emitChange();
-                  break;
-              case ActionTypes.MAP_CLOSE_NEW_MAP_DIALOG:
-                  this.newMapDialog.open = false;
-                  this.emitChange();
-                  break;
-              case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
-                  this.submitNewMapDialog(action.data);
-                  break;
-              case ActionTypes.MAP_DELETE:
-                  this.deleteMap(action.data);
-                  break;
-              case ActionTypes.WORKSPACE_OPEN_INVITE_DIALOG:
-                  this.inviteDialog.open = true;
-                  this.emitChange();
-                  break;
-              case ActionTypes.WORKSPACE_CLOSE_INVITE_DIALOG:
-                  this.inviteDialog.open = false;
-                  this.emitChange();
-                  break;
-              case ActionTypes.WORKSPACE_SUBMIT_INVITE_DIALOG:
-                  this.inviteEditor(action.data);
-                  break;
-              case ActionTypes.WORKSPACE_DELETE_USER:
-                  this.removeEditor(action.data);
-                  break;
-              case ActionTypes.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG:
-                  this.editWorkspaceDialog.open = true;
-                  this.editWorkspaceDialog.name = this.workspace.workspace.name;
-                  this.editWorkspaceDialog.description = this.workspace.workspace.description;
-                  this.editWorkspaceDialog.purpose = this.workspace.workspace.purpose;
-                  this.emitChange();
-                  break;
-              case ActionTypes.WORKSPACE_CLOSE_EDIT_WORKSPACE_DIALOG:
-                  this.editWorkspaceDialog.open = false;
-                  this.emitChange();
-                  break;
-              case ActionTypes.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG:
-                  this.submitNewWorkspaceDialog(action.data);
-                  //no change, because it will go only after the submission is successful
-                  break;
-              default:
-                  return;
-          }
-      });
+  redispatch(){
+    if(this.dispatchToken){
+      return;
+    }
+    this.dispatchToken = Dispatcher.register(action => {
+        switch (action.actionType) {
+            case ActionTypes.MAP_OPEN_NEW_MAP_DIALOG:
+                this.newMapDialog.open = true;
+                this.emitChange();
+                break;
+            case ActionTypes.MAP_CLOSE_NEW_MAP_DIALOG:
+                this.newMapDialog.open = false;
+                this.emitChange();
+                break;
+            case ActionTypes.MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG:
+                this.submitNewMapDialog(action.data);
+                break;
+            case ActionTypes.MAP_DELETE:
+                this.deleteMap(action.data);
+                break;
+            case ActionTypes.WORKSPACE_OPEN_INVITE_DIALOG:
+                this.inviteDialog.open = true;
+                this.emitChange();
+                break;
+            case ActionTypes.WORKSPACE_CLOSE_INVITE_DIALOG:
+                this.inviteDialog.open = false;
+                this.emitChange();
+                break;
+            case ActionTypes.WORKSPACE_SUBMIT_INVITE_DIALOG:
+                this.inviteEditor(action.data);
+                break;
+            case ActionTypes.WORKSPACE_DELETE_USER:
+                this.removeEditor(action.data);
+                break;
+            case ActionTypes.WORKSPACE_OPEN_EDIT_WORKSPACE_DIALOG:
+                this.editWorkspaceDialog.open = true;
+                this.editWorkspaceDialog.name = this.workspace.workspace.name;
+                this.editWorkspaceDialog.description = this.workspace.workspace.description;
+                this.editWorkspaceDialog.purpose = this.workspace.workspace.purpose;
+                this.emitChange();
+                break;
+            case ActionTypes.WORKSPACE_CLOSE_EDIT_WORKSPACE_DIALOG:
+                this.editWorkspaceDialog.open = false;
+                this.emitChange();
+                break;
+            case ActionTypes.WORKSPACE_SUBMIT_EDIT_WORKSPACE_DIALOG:
+                this.submitNewWorkspaceDialog(action.data);
+                //no change, because it will go only after the submission is successful
+                break;
+            default:
+                return;
+        }
+    });
+  }
+
+  undispatch(){
+    if(this.dispatchToken){
+      Dispatcher.unregister(this.dispatchToken);
+      this.dispatchToken = null;
+    }
   }
 
   emitChange() {
@@ -185,21 +199,23 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   submitNewMapDialog(data) {
-    $.ajax({
-      type: 'POST',
-      url: '/api/map/',
-      dataType: 'json',
-      data: data,
-      success: function(data) {
-        this.fetchSingleWorkspaceInfo(); // create new map should return map, so we have to refetch workspace here
-        this.newMapDialog.open = false;
-        this.emitChange();
-        this.io.emit('workspace', {
-          type: 'change',
-          id: data.workspaceID
-        });
-      }.bind(this)
-    });
+    if(data.workspaceID === this.getWorkspaceId()){
+      $.ajax({
+        type: 'POST',
+        url: '/api/map/',
+        dataType: 'json',
+        data: data,
+        success: function(data) {
+          this.fetchSingleWorkspaceInfo(); // create new map should return map, so we have to refetch workspace here
+          this.newMapDialog.open = false;
+          this.emitChange();
+          this.io.emit('workspace', {
+            type: 'change',
+            id: data.workspaceID
+          });
+        }.bind(this)
+      });
+    }
   }
 
   deleteMap(data){
