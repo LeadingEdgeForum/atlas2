@@ -916,6 +916,20 @@ describe('Workspaces & maps', function() {
 
     });
 
+    it('download a png', function(done){
+      userAgent1.
+      get('/img/' + mapID + '.png')
+          .set('Content-type', 'image/png')
+          .expect(200)
+          .expect('Content-type', 'image/png')
+          .expect(function(res){
+            res.body.length.should.equal(15585); //measured by hand
+          })
+          .end(function(err, res) {
+              done(err);
+          });
+    });
+
     it('archive a map (/api/map/mapID)', function(done) {
         userAgent1.
         del('/api/map/' + mapID)
