@@ -2,7 +2,7 @@
 
 var React = require('react');
 var _ = require('underscore');
-var Constants = require('./single-map-constants');
+var Constants = require('../constants');
 import Actions from './single-map-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
