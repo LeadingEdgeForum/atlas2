@@ -293,7 +293,7 @@ export default class MapCanvas extends React.Component {
       }
       //clean up unnecessary canvas connection (no counterpart in model)
       for (var z = 0; z < canvasConnections.length; z++) {
-          jsPlumb.detach(canvasConnections[z]);
+          jsPlumb.deleteConnection(canvasConnections[z]);
       }
 
       // iterate over all nodes
