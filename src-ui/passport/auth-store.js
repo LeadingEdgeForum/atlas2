@@ -15,7 +15,7 @@ class AuthStore extends Store {
     this.history = null;
   }
 
-  loggedIn(history){
+  loggedIn(history, referrer){
     this.history = history;
     if(this._loggedIn){
       return true;
@@ -34,7 +34,7 @@ class AuthStore extends Store {
           this.meQueried = true;
           this.emitChange();
           if(history){
-            history.replace('/');
+            history.replace(referrer ? referrer : '/');
           }
         }.bind(this),
         error: function(err) {
