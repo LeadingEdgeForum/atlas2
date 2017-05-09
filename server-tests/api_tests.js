@@ -923,8 +923,7 @@ describe('Workspaces & maps', function() {
           .expect(200)
           .expect('Content-type', 'image/png')
           .expect(function(res){
-            res.body.length.should.be.at.least(15000); //measured by hand
-            res.body.length.should.be.at.most(16000); //differs by the platform
+            res.body.length.should.be.within(15000, 16000); //measured by hand
           })
           .end(function(err, res) {
               done(err);
