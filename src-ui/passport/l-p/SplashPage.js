@@ -47,7 +47,7 @@ export default class SplashPage extends React.Component {
               <Jumbotron>
                 <h1>Welcome, Cartographer!</h1>
                 <p>You are about to start a wonderful journey.</p>
-                <p><Button href="/login" bsStyle="primary" bsSize="lg"> Login now!</Button></p>
+                <p><LinkContainer to="/login"><Button href="/login" bsStyle="primary" bsSize="lg"> Login now!</Button></LinkContainer></p>
               </Jumbotron>
             </Col>
           </Row>
