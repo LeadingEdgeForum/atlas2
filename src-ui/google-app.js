@@ -82,14 +82,14 @@ ReactDOM.render(
     <Route exact path="/"
         component={
           (props) =>
-            (auth.loggedIn(props.history) ? <WorkspaceListPage
+            (auth.loggedIn(props.history, props.location) ? <WorkspaceListPage
                                               auth={auth}
                                               history={props.history}
                                               workspaceListStore={workspaceListStore}/>
             : <SplashPage auth={auth} history={props.history}/>)
         }/>
         <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
-              if(!auth.loggedIn()) {
+              if(!auth.loggedIn(props.history, props.location)) {
                 return AuthRedirect;
               }
               const workspaceID = props.match.params.workspaceID;
@@ -119,7 +119,7 @@ ReactDOM.render(
         <Route exact path="/map/:mapID"
             render={
               (props) =>
-              (auth.loggedIn() ? <MapEditorPage
+              (auth.loggedIn(props.history, props.location) ? <MapEditorPage
                                   auth={auth}
                                   history={props.history}
                                   singleMapStore={getSingleMapStore(props.match.params.mapID)}/>
