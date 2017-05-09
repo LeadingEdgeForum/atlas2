@@ -352,6 +352,12 @@ var SingleMapActions = {
       });
     },
 
+    closeEditNodeDialog:  function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_NODE_DIALOG
+      });
+    },
+
     recordConnection : function(workspaceId, mapId, sourceId, targetId){
       if(!workspaceId || !mapId || !sourceId || !targetId){
         console.error('not enough of data to create connection');
