@@ -21,6 +21,7 @@ import EditGenericCommentDialog from './dialogs/edit-comment-dialog';
 import CreateNewSubmapDialog from './dialogs/create-new-submap-dialog';
 import SubmapReferencesDialog from './dialogs/submap-references-dialog';
 import ReferencesDialog from './dialogs/references-dialog';
+var GetHelpDialog = require('./dialogs/get-help-dialog');
 import {LinkContainer} from 'react-router-bootstrap';
 import SingleMapActions from './single-map-actions';
 import {calculateMapName} from '../map-list/map-name-calculator';
@@ -45,6 +46,8 @@ export default class MapEditorPage extends React.Component {
     this.download = this.download.bind(this);
     this.state = this.props.singleMapStore.getMap();
     this.canvasStore = new CanvasStore();
+    this.closeHelpDialog = this.closeHelpDialog.bind(this);
+    this.openHelpDialog = this.openHelpDialog.bind(this);
   }
 
   componentDidMount() {
@@ -113,6 +116,14 @@ export default class MapEditorPage extends React.Component {
     ];
   }
 
+  closeHelpDialog() {
+    this.setState({openHelpDialog: false});
+  }
+
+  openHelpDialog() {
+    this.setState({openHelpDialog: true});
+  }
+
   render() {
     const auth = this.props.auth;
     const history = this.props.history;
@@ -130,6 +141,10 @@ export default class MapEditorPage extends React.Component {
     const comments = singleMapStore.getMap().map.comments;
 
     const canvasStore = this.canvasStore;
+    const helpDialog = <GetHelpDialog open={this.state.openHelpDialog} close={this.closeHelpDialog}/>;
+    const helpMenu = <NavItem eventKey={7} href="#" onClick={this.openHelpDialog} key="help">
+      <Glyphicon glyph="education"></Glyphicon>Get help!
+    </NavItem>;
 
     return (
       <DocumentTitle title={mapName}>
@@ -139,7 +154,8 @@ export default class MapEditorPage extends React.Component {
               <AtlasNavbarWithLogout
                 auth={auth}
                 history={history}
-                mainMenu={mapMenu}/>
+                mainMenu={mapMenu}
+                rightMenu={[helpMenu]}/>
             </Col>
           </Row>
           <Row className="show-grid">
@@ -175,6 +191,7 @@ export default class MapEditorPage extends React.Component {
           <EditActionDialog singleMapStore={singleMapStore}/>
           <SubmapReferencesDialog singleMapStore={singleMapStore}/>
           <ReferencesDialog singleMapStore={singleMapStore}/>
+          {helpDialog}
         </Grid>
       </DocumentTitle>
     );
