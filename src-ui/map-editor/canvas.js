@@ -162,8 +162,11 @@ export default class MapCanvas extends React.Component {
   }
 
   componentDidUpdate(prevProps, prevState) {
-    this.reconcileDependencies();
-    jsPlumb.setSuspendDrawing(false, true);
+    var _this = this;
+    jsPlumb.bind("ready", function() {
+      _this.reconcileDependencies();
+      jsPlumb.setSuspendDrawing(false, true);
+    });
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
