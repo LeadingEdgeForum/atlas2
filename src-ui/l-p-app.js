@@ -24,7 +24,7 @@ import FixitPage from './fixit/FixitPage';
 import FixitStore from './fixit/fixit-store';
 
 import AuthStore from './passport/auth-store';
-
+var jsPlumb = require('../node_modules/jsplumb/dist/js/jsplumb.min.js').jsPlumb;
 var auth = new AuthStore();
 
 const AuthRedirect = <Redirect to={{pathname: '/' }}/>;
@@ -76,61 +76,62 @@ function getSingleMapStore(mapID){
   }
   return singleMapStores[mapID];
 }
+jsPlumb.bind('ready', function(){
+      ReactDOM.render(
+        <Router>
+        <Switch>
+          <Route exact path="/"
+              component={
+                (props) =>
+                  (auth.loggedIn(props.history) ? <WorkspaceListPage
+                                                    auth={auth}
+                                                    history={props.history}
+                                                    workspaceListStore={workspaceListStore}/>
+                  : <SplashPage auth={auth} history={props.history}/>)
+              }/>
+          <Route exact path="/login"
+                component={
+                  (props) =>
+                    (auth.loggedIn(props.history) ? AuthRedirect
+                      : <LoginPage auth={auth} history={props.history}/>)
+              }/>
+              <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
+                    if(!auth.loggedIn(props.history, props.location)) {
+                      return AuthRedirect;
+                    }
+                    const workspaceID = props.match.params.workspaceID;
+                    const singleWorkspaceStore = getWorkspaceStore(workspaceID);
+                    const fixitStore = getFixitStore(workspaceID);
 
-ReactDOM.render(
-  <Router>
-  <Switch>
-    <Route exact path="/"
-        component={
-          (props) =>
-            (auth.loggedIn(props.history) ? <WorkspaceListPage
-                                              auth={auth}
-                                              history={props.history}
-                                              workspaceListStore={workspaceListStore}/>
-            : <SplashPage auth={auth} history={props.history}/>)
-        }/>
-    <Route exact path="/login"
-          component={
-            (props) =>
-              (auth.loggedIn(props.history) ? AuthRedirect
-                : <LoginPage auth={auth} history={props.history}/>)
-        }/>
-        <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
-              if(!auth.loggedIn(props.history, props.location)) {
-                return AuthRedirect;
-              }
-              const workspaceID = props.match.params.workspaceID;
-              const singleWorkspaceStore = getWorkspaceStore(workspaceID);
-              const fixitStore = getFixitStore(workspaceID);
-
-              return (
-                  <Switch>
-                    <Route exact path="/workspace/:workspaceID">
-                        <MapListPage
-                          auth={auth}
-                          history={props.history}
-                          singleWorkspaceStore={singleWorkspaceStore} />
-                    </Route>
-                    <Route exact path="/fixit/:workspaceID">
-                      <FixitPage
-                          auth={auth}
-                          history={props.history}
-                          singleWorkspaceStore={singleWorkspaceStore}
-                          fixitStore={fixitStore}/>
-                    </Route>
-                  </Switch>
-              );
-            }
-          }>
-        </Route>
-        <Route exact path="/map/:mapID"
-            render={
-              (props) =>
-              (auth.loggedIn(props.history, props.location) ? <MapEditorPage
-                                  auth={auth}
-                                  history={props.history}
-                                  singleMapStore={getSingleMapStore(props.match.params.mapID)}/>
-              : AuthRedirect)}/>
-    <Redirect from="*" to="/" />
-  </Switch>
-</Router>, document.getElementById('app-container'));
+                    return (
+                        <Switch>
+                          <Route exact path="/workspace/:workspaceID">
+                              <MapListPage
+                                auth={auth}
+                                history={props.history}
+                                singleWorkspaceStore={singleWorkspaceStore} />
+                          </Route>
+                          <Route exact path="/fixit/:workspaceID">
+                            <FixitPage
+                                auth={auth}
+                                history={props.history}
+                                singleWorkspaceStore={singleWorkspaceStore}
+                                fixitStore={fixitStore}/>
+                          </Route>
+                        </Switch>
+                    );
+                  }
+                }>
+              </Route>
+              <Route exact path="/map/:mapID"
+                  render={
+                    (props) =>
+                    (auth.loggedIn(props.history, props.location) ? <MapEditorPage
+                                        auth={auth}
+                                        history={props.history}
+                                        singleMapStore={getSingleMapStore(props.match.params.mapID)}/>
+                    : AuthRedirect)}/>
+          <Redirect from="*" to="/" />
+        </Switch>
+      </Router>, document.getElementById('app-container'));
+});

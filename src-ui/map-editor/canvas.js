@@ -13,6 +13,7 @@ var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
 import {endpointOptions, actionEndpointOptions} from './component-styles';
 
+//remove min to fix connections
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 //this is style applied to the place where actuall components can be drawn
