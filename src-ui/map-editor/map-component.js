@@ -72,11 +72,15 @@ var MapComponent = React.createClass({
   },
 
   onClickHandler: function(e) {
-    if (this.state.hover === "submap") {
-      return; //pass the event to link
+    if (this.state.hover === "submap" && this.props.node.submapID) {
+      return; //pass the event to link, this is a submap and actually has a submap
     }
     e.preventDefault();
     e.stopPropagation();
+    if (this.state.hover === "submap"){
+      // submap menu on non-submap, we want to turn the node into submap.
+      Actions.openTurnIntoSubmapNodeDialog(this.props.workspaceID, this.props.mapID, this.props.id);
+    }
     if (this.state.hover === "remove") {
       var id = this.props.id;
       var mapID = this.props.mapID;
@@ -115,6 +119,7 @@ var MapComponent = React.createClass({
            workspaceID:workspaceID);
       }
     }
+
     if(this.state.hover === 'action'){
       console.log('action!!!');
     }
@@ -282,7 +287,7 @@ var MapComponent = React.createClass({
         jsPlumb.unmakeSource(this.input);
         jsPlumb.makeSource(this.input, actionEndpointOptions, {anchor: "Right"});
       }
-    };
+    }
     var menuItems = [];
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
     menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
@@ -292,13 +297,17 @@ var MapComponent = React.createClass({
     if(this.props.node.type === Constants.SUBMAP){
       var href = "/map/" + this.props.node.submapID;
       var linkContainer = (
-        <a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="hand-down" style={submapStyle}></Glyphicon></a>
+        <a href={href} key='zoom-in'><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} key='zoom-in'></Glyphicon></a>
       );
-      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" style={infoStyle}></Glyphicon></a>);
+      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
       menuItems.push(linkContainer);
       menuItems.push(infoContainer);
     } else {
-      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" style={infoStyle}></Glyphicon></a>);
+      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
+      var linkContainer = (
+        <Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} onClick={null} key='zoom-in'></Glyphicon>
+      );
+      menuItems.push(linkContainer);
       menuItems.push(infoContainer);
     }
     return (
@@ -341,7 +350,7 @@ var MapComponent = React.createClass({
     var inertia = this.renderInertia(this.props.inertia);
     var canvasStore = this.props.canvasStore;
     return (
-      <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
+      <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
         if (input) {
           this.input = input;
         }
