@@ -1,0 +1,122 @@
+/*jshint esversion: 6 */
+
+var React = require('react');
+import {
+  Form,
+  FormGroup,
+  FormControl,
+  ControlLabel,
+  HelpBlock,
+  Col,
+  Radio,
+  Input,
+  Modal,
+  Button,
+  Glyphicon
+} from 'react-bootstrap';
+var Constants = require('../single-map-constants');
+import SingleMapActions from '../single-map-actions';
+
+
+var ChangeIntoSubmapDialog = React.createClass({
+
+  getInitialState: function() {
+    return {open: false};
+  },
+
+  componentDidMount: function() {
+    this.props.singleMapStore.addChangeListener(this._onChange);
+  },
+
+  componentWillUnmount: function() {
+    this.props.singleMapStore.removeChangeListener(this._onChange);
+  },
+
+  _onChange: function() {
+    this.setState(this.props.singleMapStore.getTurnIntoSubmapDialogState());
+  },
+
+  _close: function() {
+    SingleMapActions.closeTurnIntoSubmapNodeDialog();
+  },
+
+  _submit: function() {
+    SingleMapActions.turnIntoSubmap(this.state.workspaceId, this.state.mapId, this.state.nodeId);
+  },
+
+  renderNewSubmapDialogOnly: function(show) {
+    return (
+      <div>
+        <Modal show={show} onHide={this._close}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              Turn this component into submap
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+          <p> A new, empty map will be created and linked to this component. </p>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button type="reset" onClick={this._close}>Cancel</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Turn into submap</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    );
+  },
+
+  renderListOfAvailableSubmaps: function() {
+    var finalList = [];
+    var coords = this.state.coords;
+    var state = this.state;
+    for (var i = 0; i < this.state.listOfAvailableSubmaps.length; i++) {
+      var refID = '' + this.state.listOfAvailableSubmaps[i]._id;
+      finalList.push(
+        <p>
+          <Button bsSize="small" block onClick={SingleMapActions.turnIntoSubmap.bind(SingleMapActions, state.workspaceId, state.mapId, state.nodeId, refID)}>{this.state.listOfAvailableSubmaps[i].name}</Button>
+        </p>
+      );
+    }
+    return finalList;
+  },
+
+  renderNewSubmapDialogWitSubmapList: function(show) {
+    var finalList = this.renderListOfAvailableSubmaps();
+    return (
+      <div>
+        <Modal show={show} onHide={this._close}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              Turn this component into submap
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p> A new, empty map will be created and linked to this component. </p>
+            <p> Click on any map name below to link to it instead of creating a new one.</p>
+            <div className="well" style={{
+              maxWidth: 400,
+              margin: '0 auto 10px'
+            }}>
+              {finalList}
+            </div>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button type="reset" onClick={this._close}>Cancel</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Turn into submap</Button>
+          </Modal.Footer>
+        </Modal>
+      </div>
+    );
+  },
+
+  render: function() {
+    var show = this.state.open;
+    if (!this.state.listOfAvailableSubmaps || this.state.listOfAvailableSubmaps.length === 0) {
+      return this.renderNewSubmapDialogOnly(show);
+
+    }
+    return this.renderNewSubmapDialogWitSubmapList(show);
+  }
+});
+
+module.exports = ChangeIntoSubmapDialog;

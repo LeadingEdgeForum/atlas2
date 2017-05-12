@@ -12,6 +12,7 @@ import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.js").jsPlumb;
 
 var activeStyle = {
   boxShadow: "0 0 10px #00789b",

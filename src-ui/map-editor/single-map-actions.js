@@ -424,7 +424,41 @@ var SingleMapActions = {
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.CLOSE_REFERENCES,
       });
-    }
+    },
+
+
+    openTurnIntoSubmapNodeDialog : function(workspaceId, mapId, nodeId){
+      if(!workspaceId || !mapId || !nodeId){
+        console.error('not enough of data to create a submap');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_TURN_INTO_SUBMAP,
+          workspaceId : workspaceId,
+          mapId : mapId,
+          nodeId : nodeId
+      });
+    },
+
+    closeTurnIntoSubmapNodeDialog : function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_TURN_INTO_SUBMAP,
+      });
+    },
+
+    turnIntoSubmap : function(workspaceId, mapId, nodeId, refId){
+      if(!workspaceId || !mapId || !nodeId){
+        console.error('not enough of data to create a submap');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_TURN_INTO_SUBMAP,
+          workspaceId : workspaceId,
+          mapId : mapId,
+          nodeId : nodeId,
+          refId : refId
+      });
+    },
 
 };
 

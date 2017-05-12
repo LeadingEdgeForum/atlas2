@@ -73,6 +73,37 @@ module.exports = function(conn){
         }
     });
 
+    NodeSchema.methods.turnIntoSubmap = function(refId) {
+      this.type = 'SUBMAP';
+      var _this = this;
+      if (refId) {
+        this.submapID = refId;
+        return this.save();
+      } else {
+        return this.populate('workspace').execPopulate()
+          .then(function(node) {
+            //create structures
+            var WardleyMap = require('./map-schema')(conn);
+            var submapID = new ObjectId();
+            var submap = new WardleyMap({
+              _id: submapID,
+              name: _this.name,
+              isSubmap: true,
+              workspace: _this.workspace,
+              archived: false,
+              responsiblePerson: _this.responsiblePerson
+            });
+            return submap.save().then(function(submap) {
+              _this.workspace.maps.push(submap);
+              return _this.workspace.save().then(function(workspace) {
+                node.submapID = submapID;
+                return node.save();
+              });
+            });
+          });
+      }
+    };
+
     NodeSchema.methods.makeDependencyTo = function(_targetId) {
         var targetId = new ObjectId(_targetId);
         var promises = [];

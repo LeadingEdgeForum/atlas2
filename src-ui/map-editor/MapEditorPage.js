@@ -21,6 +21,7 @@ import EditGenericCommentDialog from './dialogs/edit-comment-dialog';
 import CreateNewSubmapDialog from './dialogs/create-new-submap-dialog';
 import SubmapReferencesDialog from './dialogs/submap-references-dialog';
 import ReferencesDialog from './dialogs/references-dialog';
+import ChangeIntoSubmapDialog from './dialogs/change-into-submap-dialog';
 var GetHelpDialog = require('./dialogs/get-help-dialog');
 import {LinkContainer} from 'react-router-bootstrap';
 import SingleMapActions from './single-map-actions';
@@ -191,6 +192,7 @@ export default class MapEditorPage extends React.Component {
           <EditActionDialog singleMapStore={singleMapStore}/>
           <SubmapReferencesDialog singleMapStore={singleMapStore}/>
           <ReferencesDialog singleMapStore={singleMapStore}/>
+          <ChangeIntoSubmapDialog singleMapStore={singleMapStore}/>
           {helpDialog}
         </Grid>
       </DocumentTitle>

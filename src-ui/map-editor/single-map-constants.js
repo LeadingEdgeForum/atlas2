@@ -46,6 +46,10 @@ module.exports  = keyMirror({
       SHOW_SUBMAP_REFERENCES : null,
       CLOSE_SUBMAP_REFERENCES : null,
       SHOW_REFERENCES : null,
-      CLOSE_REFERENCES : null
+      CLOSE_REFERENCES : null,
+
+      OPEN_TURN_INTO_SUBMAP : null,
+      CLOSE_TURN_INTO_SUBMAP : null,
+      SUBMIT_TURN_INTO_SUBMAP : null
   }
 });

@@ -51,6 +51,10 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.turnIntoSubmapDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', function(msg) {
@@ -255,6 +259,50 @@ export default class SingleWorkspaceStore extends Store {
           };
           this.emitChange();
           break;
+
+
+        case ActionTypes.OPEN_TURN_INTO_SUBMAP:
+          this.turnIntoSubmapDialog.open = true;
+          this.turnIntoSubmapDialog.workspaceId = action.workspaceId;
+          this.turnIntoSubmapDialog.mapId = action.mapId;
+          this.turnIntoSubmapDialog.nodeId = action.nodeId;
+          $.ajax({
+            type: 'GET',
+            url: '/api/submaps/map/' + this.getMapId(),
+            success: function(data2) {
+              this.turnIntoSubmapDialog.listOfAvailableSubmaps = data2.listOfAvailableSubmaps;
+              this.emitChange();
+            }.bind(this)
+          });
+          break;
+        case ActionTypes.CLOSE_TURN_INTO_SUBMAP:
+          this.turnIntoSubmapDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.SUBMIT_TURN_INTO_SUBMAP:
+        $.ajax({
+              type: 'PUT',
+              url: '/api/workspace/' + action.workspaceId + '/map/' + this.getMapId() + '/node/' + action.nodeId + '/submap/' + (action.refId ? action.refId : '') ,
+              dataType: 'json',
+              success: function(data2) {
+                this.map = data2;
+                this.turnIntoSubmapDialog = {
+                  open: false
+                };
+                this.emitChange();
+                this.io.emit('map', {
+                  type: 'change',
+                  id: this.getMapId()
+                });
+                this.io.emit('workspace', {
+                  type: 'change',
+                  id: this.getWorkspaceId()
+                });
+              }.bind(this)
+            });
+          break;
         default:
           return;
       }
@@ -306,6 +354,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getSubmapReferencesDialogState(){
     return this.submapReferencesDialog;
+  }
+
+  getTurnIntoSubmapDialogState(){
+    return this.turnIntoSubmapDialog;
   }
 
   getMapId(){
