@@ -55,7 +55,7 @@
     "woopra": "^0.2.0"
   },
   "devDependencies": {
-    "mocha": "*",
+    "mocha": ">=3.4.0",
     "should": "11.2.1",
     "supertest": "*",
     "babel-core": "^6.23.1",
