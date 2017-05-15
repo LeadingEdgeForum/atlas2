@@ -58,7 +58,9 @@ export default class MapCanvas extends React.Component {
 
   componentDidMount(prevProps, prevState) {
     this.reconcileDependencies();
+    console.log('unuspending 1');
     jsPlumb.setSuspendDrawing(false, true);
+    console.log('unuspending 2');
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
@@ -106,6 +108,7 @@ export default class MapCanvas extends React.Component {
             endpointOptions.paintStyle, endpointOptions.paintStyle
           ]
         });
+      }
 
         var desiredActions = _node.action;
         for (var ll = 0; ll < desiredActions.length; ll++) {
@@ -128,7 +131,6 @@ export default class MapCanvas extends React.Component {
           });
           connection2.getOverlay("label").show();
         }
-      }
     }
   }
 

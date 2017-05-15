@@ -114,7 +114,7 @@ module.exports = function(authGuardian, mongooseConnection) {
         var owner = getUserIdFromReq(req);
         var mapName = req.params.mapID;
         var splitMapName = mapName.split(".");
-        if (splitMapName.length !== 2 || splitMapName[1] !== 'png') {
+        if (!(splitMapName.length === 2 && (splitMapName[1] === 'png' || splitMapName[1] === 'html'))) {
             return defaultAccessDenied(res, 'Invalid req');
         }
         var mapID = new ObjectId(splitMapName[0]);
@@ -145,6 +145,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                 };
 
                 var pageText = renderFullPage(opts);
+
+                if(splitMapName[1] === 'html'){
+                  res.send(pageText);
+                  return;
+                }
 
                 pool.use(function(instance) {
                     instance.createPage().then(function(page) {
