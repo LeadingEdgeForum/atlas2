@@ -1,10 +1,10 @@
 {
     "userProvider": {
-        "type": "auth0",
+        "type": "passport",
         "strategy": "anonymous",
         "auth0": {
-          "audience" : "2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9",
-          "issuer" : "wardleymaps.eu.auth0.com"
+          "audience" : "from_auth0__change_me_config_json",
+          "issuer" : "from_auth0__change_me_config_json"
         },
         "server": {
             "url": "ldap://ldap.forumsys.com:389",

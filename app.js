@@ -33,7 +33,7 @@ var conn = mongoose.createConnection(MongoDBConnection.connectionURL, MongoDBCon
 
 
 var debug = false;
-// debug = true;
+debug = true;
 if (debug){
   try{
     var webpack = require('webpack');
