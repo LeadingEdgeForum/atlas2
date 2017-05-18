@@ -318,7 +318,7 @@ export default class MapCanvas extends React.Component {
               }
               // if not desired - remove it
               if (!desired) {
-                  jsPlumb.detach(existingActions[jj]);
+                  jsPlumb.deleteConnection(existingActions[jj]);
               }
           }
           // now we have only desired connections, but some may be missing
