@@ -15,6 +15,8 @@ import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import {getStyleForType} from '../map-editor/component-styles';
 import CapabilitiesView from './capabilities-view';
 import MapLink from './maplink.js';
+import CreateCategoryDialog from './dialogs/create-category';
+import EditCategoryDialog from './dialogs/edit-category';
 
 var draggableComponentStyle = {
   borderWidth: '1px',
@@ -153,6 +155,8 @@ export default class FixitPage extends React.Component {
             </Breadcrumb>
           </Row>
           {row}
+          <CreateCategoryDialog fixitStore={fixitStore} workspaceID={workspaceID}/>
+          <EditCategoryDialog fixitStore={fixitStore} workspaceID={workspaceID}/>
         </Grid>
       </DocumentTitle>
     );

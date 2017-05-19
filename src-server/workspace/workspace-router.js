@@ -1143,6 +1143,108 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
       });
 
+      module.router.delete(
+        '/workspace/:workspaceID/capabilitycategory/:categoryID',
+        authGuardian.authenticationRequired,
+        function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var categoryID = new ObjectId(req.params.categoryID);
+          capabilityLogger.trace(workspaceID, categoryID);
+          Workspace
+            .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false
+            })
+            .exec()
+            .then(function(workspace) {
+              if (!workspace) {
+                res.status(404).json("workspace not found");
+                return null;
+              }
+              return workspace.deleteCategory(categoryID);
+            })
+            .fail(function(e) {
+              capabilityLogger.error('responding with error', e);
+              res.status(500).json(e);
+            })
+            .done(function(wk) {
+              capabilityLogger.trace('responding ...', wk);
+              res.json({
+                workspace: wk
+              });
+            });
+        });
+
+      module.router.post(
+        '/workspace/:workspaceID/capabilitycategory/',
+        authGuardian.authenticationRequired,
+        function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var name = req.body.name;
+          capabilityLogger.trace(workspaceID, name);
+          Workspace
+            .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false
+            })
+            .exec()
+            .then(function(workspace) {
+              if (!workspace) {
+                res.status(404).json("workspace not found");
+                return null;
+              }
+              return workspace.createCategory(name);
+            })
+            .fail(function(e) {
+              capabilityLogger.error('responding with error', e);
+              res.status(500).json(e);
+            })
+            .done(function(wk) {
+              capabilityLogger.trace('responding ...', wk);
+              res.json({
+                workspace: wk
+              });
+            });
+        });
+
+      module.router.put(
+        '/workspace/:workspaceID/capabilitycategory/:categoryID',
+        authGuardian.authenticationRequired,
+        function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var categoryID = new ObjectId(req.params.categoryID);
+          var name = req.body.name;
+          capabilityLogger.trace(workspaceID, categoryID, name);
+          Workspace
+            .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false
+            })
+            .exec()
+            .then(function(workspace) {
+              if (!workspace) {
+                res.status(404).json("workspace not found");
+                return null;
+              }
+              return workspace.editCategory(categoryID, name);
+            })
+            .fail(function(e) {
+              capabilityLogger.error('responding with error', e);
+              res.status(500).json(e);
+            })
+            .done(function(wk) {
+              capabilityLogger.trace('responding ...', wk);
+              res.json({
+                workspace: wk
+              });
+            });
+        });
 
   module.router.put(
       '/workspace/:workspaceID/capability/:capabilityID/node/:nodeID',
@@ -1295,19 +1397,9 @@ module.exports = function(authGuardian, mongooseConnection) {
                         _id: workspaceID
                     })
                     .populate({
-                        path: 'capabilityCategories',
-                        populate: {
-                            path: 'capabilities',
-                            populate: {
-                                path: 'aliases',
-                                populate: {
-                                    model: 'Node',
-                                    path: 'nodes'
-                                }
-                            }
-                        }
-                    })
-                    .exec();
+                        path: 'capabilityCategories.capabilities.aliases.nodes',
+                        model: 'Node',
+                    });
                 return wkPromise;
             })
             .then(function(wk) {

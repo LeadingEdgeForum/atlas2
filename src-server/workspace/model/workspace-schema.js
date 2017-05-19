@@ -198,6 +198,77 @@ module.exports = function(conn) {
         });
     };
 
+    workspaceSchema.methods.editCategory = function(capabilityCategoryID, name){
+      for (var i = this.capabilityCategories.length - 1; i > -1 ; i--) {
+          if (capabilityCategoryID.equals(this.capabilityCategories[i]._id)) {
+              this.capabilityCategories[i].name = name;
+              break;
+          }
+      }
+      var promises = [this.save()];
+      return q.allSettled(promises).then(function(res) {
+          return res[0].value.populate({
+              path: 'capabilityCategories.capabilities.aliases.nodes',
+              model: 'Node',
+          }).execPopulate();
+      });
+    };
+
+    workspaceSchema.methods.createCategory = function(name){
+      this.capabilityCategories.push({ name:name, capabilities : []});
+      var promises = [this.save()];
+      return q.allSettled(promises).then(function(res) {
+          return res[0].value.populate({
+              path: 'capabilityCategories.capabilities.aliases.nodes',
+              model: 'Node',
+          }).execPopulate();
+      });
+    };
+
+    workspaceSchema.methods.deleteCategory = function(capabilityCategoryID){
+      var Node = require('./node-schema')(conn);
+        var promises = [];
+        var capabilityCategoryToRemove = null;
+        for (var i = this.capabilityCategories.length - 1; i > -1 ; i--) {
+            if (capabilityCategoryID.equals(this.capabilityCategories[i]._id)) {
+                capabilityCategoryToRemove = this.capabilityCategories.splice(i,1)[0];
+                promises.push(this.save());
+                break;
+            }
+        }
+        if(capabilityCategoryToRemove.capabilities){
+          for (var j = 0; j < capabilityCategoryToRemove.capabilities.length; j++){
+            var capability = capabilityCategoryToRemove.capabilities[j];
+            if(capability.aliases){
+              for(var k = 0; k < capability.aliases.length; k++){
+                var alias = capability.aliases[k];
+                if(alias.nodes){
+                  for(var l = 0; l < alias.nodes.length; l++){
+
+                    var node = alias.nodes[l];
+                    promises.push(Node.findOneAndUpdate({
+                        _id: node
+                    }, {
+                        $set: {
+                            processedForDuplication: false
+                        }
+                    }).exec());
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+            }).execPopulate();
+        });
+
+    };
+
     workspaceSchema.methods.createNewAliasForNodeInACapability = function(capabilityID, nodeID) {
         var Node = require('./node-schema')(conn);
 

@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 
 import React, {PropTypes} from 'react';
+import ReactDOM  from 'react-dom';
 import {
   Grid,
   Row,
@@ -11,7 +12,8 @@ import {
   ListGroup,
   Popover,
   OverlayTrigger,
-  Glyphicon
+  Glyphicon,
+  ButtonGroup
 } from 'react-bootstrap';
 import Actions from './deduplicator-actions';
 import _ from "underscore";
@@ -115,7 +117,7 @@ export default class CapabilitiesView extends React.Component {
 
 
   renderSingleNode(node){
-    if(!node){
+    if((!node) || (!node._id)){
       console.error('this node should not be null');
       return null;
     }
@@ -137,6 +139,7 @@ export default class CapabilitiesView extends React.Component {
     var _acceptorStyleToSet = _.clone(acceptorStyle);
     var _capabilityStyleToSet = _.clone(capabilityStyle);
     var _greyLaneStyleToSet = _.clone(greyLaneStyle);
+    var workspaceId = this.props.workspaceId;
     var greyLaneText = null;
     var _this = this;
     if (this.props.dragStarted) {
@@ -170,8 +173,14 @@ export default class CapabilitiesView extends React.Component {
           <Col xs={3}>
             <h4>{category.name}</h4>
           </Col>
-          <Col xs={9}>
+          <Col xs={8}>
             <div style={_acceptorStyleToSet} onDragOver={dragOver} onDrop={onDrop}>Drop here if nothing in this category does the same job</div>
+          </Col>
+          <Col xs={1}>
+            <ButtonGroup bsSize="xsmall">
+              <Button bsSize="xsmall" href="" onClick={Actions.openEditCategoryDialog.bind(Actions, workspaceId, category._id, category.name)}><span style={{color:'dimgray'}}><Glyphicon glyph="edit"/></span></Button>
+              <Button bsSize="xsmall" href="" onClick={Actions.deleteCategory.bind(Actions, workspaceId, category._id)}><span style={{color:'dimgray'}}><Glyphicon glyph="remove"/></span></Button>
+            </ButtonGroup>
           </Col>
         </Row>
       );
@@ -224,6 +233,11 @@ export default class CapabilitiesView extends React.Component {
     return (
       <Grid fluid={true}>
         {categories}
+        <Row className="show-grid" key="new_category_button">
+          <Col xs={12}>
+            <Button bsSize="xsmall" href="" onClick={Actions.openNewCategoryDialog.bind(Actions,workspaceId)}><span style={{color:'dimgray'}}><Glyphicon glyph="plus"/>Add a new category</span></Button>
+          </Col>
+        </Row>
         <AssignExistingCapabilityDialog
           open={assignDialogOpen}
           nodeBeingAssigned={nodeBeingAssigned}
