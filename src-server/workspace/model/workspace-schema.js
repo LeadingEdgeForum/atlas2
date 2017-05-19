@@ -212,7 +212,7 @@ module.exports = function(conn) {
               model: 'Node',
           }).execPopulate();
       });
-    },
+    };
 
     workspaceSchema.methods.createCategory = function(name){
       this.capabilityCategories.push({ name:name, capabilities : []});
@@ -223,7 +223,7 @@ module.exports = function(conn) {
               model: 'Node',
           }).execPopulate();
       });
-    },
+    };
 
     workspaceSchema.methods.deleteCategory = function(capabilityCategoryID){
       var Node = require('./node-schema')(conn);

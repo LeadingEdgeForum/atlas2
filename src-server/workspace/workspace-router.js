@@ -1397,19 +1397,9 @@ module.exports = function(authGuardian, mongooseConnection) {
                         _id: workspaceID
                     })
                     .populate({
-                        path: 'capabilityCategories',
-                        populate: {
-                            path: 'capabilities',
-                            populate: {
-                                path: 'aliases',
-                                populate: {
-                                    model: 'Node',
-                                    path: 'nodes'
-                                }
-                            }
-                        }
-                    })
-                    .exec();
+                        path: 'capabilityCategories.capabilities.aliases.nodes',
+                        model: 'Node',
+                    });
                 return wkPromise;
             })
             .then(function(wk) {

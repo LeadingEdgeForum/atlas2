@@ -117,7 +117,7 @@ export default class CapabilitiesView extends React.Component {
 
 
   renderSingleNode(node){
-    if(!node){
+    if((!node) || (!node._id)){
       console.error('this node should not be null');
       return null;
     }
