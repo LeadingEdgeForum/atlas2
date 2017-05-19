@@ -9,6 +9,13 @@ module.exports  = keyMirror({
       NEW_CAPABILITY : null,
       ASSIGN_NODE_TO_CAPABILITY : null,
       DELETE_CAPABILITY : null,
-      ASSIGN_NODE_TO_ALIAS : null
+      ASSIGN_NODE_TO_ALIAS : null,
+      DELETE_CATEGORY : null,
+      NEW_CATEGORY_OPEN_DIALOG : null,
+      NEW_CATEGORY_CLOSE_DIALOG : null,
+      NEW_CATEGORY_SUBMIT_DIALOG : null,
+      EDIT_CATEGORY_OPEN_DIALOG : null,
+      EDIT_CATEGORY_CLOSE_DIALOG : null,
+      EDIT_CATEGORY_SUBMIT_DIALOG : null
   }
 });

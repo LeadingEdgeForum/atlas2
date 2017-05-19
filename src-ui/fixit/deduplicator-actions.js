@@ -47,4 +47,74 @@ export default class Actions {
       }
     });
   }
+
+  static deleteCategory(workspaceID, capabilityCategoryID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.DELETE_CATEGORY,
+      data: {
+        capabilityCategoryID: capabilityCategoryID,
+        workspaceID: workspaceID
+      }
+    });
+  }
+
+  static openEditCategoryDialog(workspaceID, capabilityCategoryID, name) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.EDIT_CATEGORY_OPEN_DIALOG,
+      data: {
+        workspaceID: workspaceID,
+        capabilityCategoryID: capabilityCategoryID,
+        name: name
+      }
+    });
+  }
+
+  static closeEditCategoryDialog(workspaceID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.EDIT_CATEGORY_CLOSE_DIALOG,
+      data: {
+        workspaceID: workspaceID
+      }
+    });
+  }
+
+  static submitEditCategoryDialog(workspaceID, capabilityCategoryID, name) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.EDIT_CATEGORY_SUBMIT_DIALOG,
+      data: {
+        workspaceID: workspaceID,
+        capabilityCategoryID: capabilityCategoryID,
+        name: name
+      }
+    });
+  }
+
+  static openNewCategoryDialog(workspaceID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.NEW_CATEGORY_OPEN_DIALOG,
+      data: {
+        workspaceID: workspaceID
+      }
+    });
+  }
+
+  static closeNewCategoryDialog(workspaceID) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.NEW_CATEGORY_CLOSE_DIALOG,
+      data: {
+        workspaceID: workspaceID
+      }
+    });
+  }
+
+  static submitNewCategoryDialog(workspaceID, name) {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.NEW_CATEGORY_SUBMIT_DIALOG,
+      data: {
+        workspaceID: workspaceID,
+        name: name
+      }
+    });
+  }
+
 }
