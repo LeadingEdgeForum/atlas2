@@ -398,6 +398,9 @@ export default class MapCanvas extends React.Component {
       size = this.state.coords.size;
     }
     var components = null;
+    var arrowends = [];
+
+
     var mapID = this.props.mapID;
     var workspaceID = this.props.workspaceID;
     var state = this.state;
@@ -413,40 +416,33 @@ export default class MapCanvas extends React.Component {
                 }
             }
         }
-        return (<MapComponent canvasStore={canvasStore} workspaceID={workspaceID} mapID={mapID} node={component} size={size} key={component._id} id={component._id} focused={focused} inertia={component.inertia} multi={multiSelection}/>);
+
+        for (var j = 0; j < component.action.length; j++) {
+          arrowends.push(
+            <ArrowEnd workspaceID = {workspaceID}
+              canvasStore = {canvasStore}
+              mapID = {mapID}
+              node = {component}
+              size = {size}
+              id = {component.action[j]._id}
+              key = {component.action[j]._id}
+              action = {component.action[j]}/>);
+        }
+
+        return (
+            <MapComponent
+              canvasStore={canvasStore}
+              workspaceID={workspaceID}
+              mapID={mapID} node={component}
+              size={size}
+              key={component._id}
+              id={component._id}
+              focused={focused}
+              inertia={component.inertia}
+              multi={multiSelection}/>);
       });
     }
-    var arrowends = [];
-if (this.props.nodes) {
-    for (var i = 0; i < this.props.nodes.length; i++) {
-        var n = this.props.nodes[i];
-        for(var j = 0; j < n.action.length;j++){
-          arrowends.push( < ArrowEnd workspaceID = {
-                  workspaceID
-              }
-              canvasStore = {canvasStore}
-              mapID = {
-                  mapID
-              }
-              node = {
-                  n
-              }
-              size = {
-                  size
-              }
-              id = {
-                  n.action[j]._id
-              }
-              key = {
-                  n.action[j]._id
-              }
-              action = {
-                n.action[j]
-              }
-              />);
-        }
-        }
-    }
+
     var comments = [];
     if (this.props.comments) {
         for (var i = 0; i < this.props.comments.length; i++) {
@@ -458,28 +454,15 @@ if (this.props.nodes) {
                       }
                   }
               }
-              comments.push( <Comment workspaceID = {
-                      workspaceID
-                  }
+              comments.push(
+                <Comment workspaceID = {workspaceID}
                   canvasStore = {canvasStore}
-                  mapID = {
-                      mapID
-                  }
-                  comment = {
-                      this.props.comments[i]
-                  }
-                  id = {
-                      this.props.comments[i]._id
-                  }
-                  key = {
-                      this.props.comments[i]._id
-                  }
-                  size = {
-                      size
-                  }
-                  focused = {
-                    focused
-                  }
+                  mapID = {mapID}
+                  comment = {this.props.comments[i]}
+                  id = {this.props.comments[i]._id}
+                  key = {this.props.comments[i]._id}
+                  size = {size}
+                  focused = {focused}
                   multi={multiSelection}
                   />);
             }

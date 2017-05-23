@@ -62,11 +62,15 @@ var ArrowEnd = React.createClass({
             30, 30
           ],
           stop: function(event) {
-            var offset = getElementOffset(input);
-            var x = offset.left;
-            var y = offset.top;
-            var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
-            Actions.updateAction(workspaceID, mapID, node_id, id, {pos:[coords.x,coords.y]});
+              /* Gently skip update of this is source node is dragged together. This is a relative action, so it does not require manual update in this case, as the relative position does not change*/
+              if(event.drag.posses && event.drag.posses.length > 0 && event.drag.posses[0] === node_id){
+                return;
+              }
+              var offset = getElementOffset(input);
+              var x = offset.left;
+              var y = offset.top;
+              var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
+              Actions.updateAction(workspaceID, mapID, node_id, id, {pos:[coords.x,coords.y]});
           }
         });
       }}>
