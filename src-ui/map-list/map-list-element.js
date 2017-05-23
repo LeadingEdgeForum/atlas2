@@ -1,14 +1,16 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import {
-  ListGroupItem,
   Grid,
   Row,
   Col,
-  Button,
-  ButtonGroup,
-  Glyphicon
+  Table,
+  ListGroup,
+  ListGroupItem,
+  Glyphicon,
+  DropdownButton,
+  MenuItem
 } from 'react-bootstrap';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import SingleWorkspaceActions from './single-workspace-actions';
@@ -22,6 +24,7 @@ export default class MapListElement extends React.Component {
 
     this.componentDidMount = this.componentDidMount.bind(this);
     this.computeSubmapReferencesMessage = this.computeSubmapReferencesMessage.bind(this);
+    this.stopPropagation = this.stopPropagation.bind(this);
   }
 
   delete(id) {
@@ -38,6 +41,11 @@ export default class MapListElement extends React.Component {
         this.setState({referencingMaps: referencingMaps});
       }.bind(this)
     });
+  }
+
+  stopPropagation(event){
+    event.stopPropagation();
+    event.preventDefault();
   }
 
   computeSubmapReferencesMessage() {
@@ -74,10 +82,7 @@ export default class MapListElement extends React.Component {
     var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose, this.props.name);
 
     var deleteButton = (
-      <Button bsStyle="default" href="#" onClick={this.delete.bind(this, mapid)}>
-        <Glyphicon glyph="remove"></Glyphicon>
-        Delete
-      </Button>
+      <MenuItem eventKey="1" onClick={this.delete.bind(this, mapid)}><Glyphicon glyph="remove"></Glyphicon>Delete</MenuItem>
     );
     var mapsUsingThisSubmapInfo = null;
     if (this.props.isSubmap) {
@@ -87,27 +92,22 @@ export default class MapListElement extends React.Component {
     if(this.props.responsible) {
       responsible = (<span><Glyphicon glyph="user"></Glyphicon> {this.props.responsible}</span>);
     }
+    var dropDownTitle = <Glyphicon glyph="cog"></Glyphicon>;
     return (
-      <ListGroupItem header={mapName}>
-        <Grid fluid={true}>
-          <Row className="show-grid">
-            <Col xs={9}>{mapsUsingThisSubmapInfo}{responsible}</Col>
-            <Col xs={3}>
-              <ButtonGroup>
-                <LinkContainer to={{
-                  pathname: href
-                }}>
-                  <Button bsStyle="default" href={href}>
-                    <Glyphicon glyph="edit"></Glyphicon>
-                    Edit
-                  </Button>
-                </LinkContainer>
-                {deleteButton}
-              </ButtonGroup>
-            </Col>
-          </Row>
-        </Grid>
-      </ListGroupItem>
+      <LinkContainer to={{ pathname: href }}>
+        <ListGroupItem header={mapName} href={href}>
+          <Grid fluid={true}>
+            <Row className="show-grid">
+              <Col xs={11}>{mapsUsingThisSubmapInfo}{responsible}</Col>
+              <Col xs={1}>
+                <DropdownButton title={dropDownTitle} onClick={this.stopPropagation}>
+                  {deleteButton}
+                </DropdownButton>
+              </Col>
+            </Row>
+          </Grid>
+        </ListGroupItem>
+      </LinkContainer>
     );
   }
 }
