@@ -1,16 +1,14 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
-import DocumentTitle from 'react-document-title';
+import React from 'react';
 import {
   Grid,
   Row,
   Col,
-  Jumbotron,
   Button,
-  Table,
   ListGroup,
-  Breadcrumb
+  ListGroupItem,
+  Glyphicon
 } from 'react-bootstrap';
 import Actions from './single-workspace-actions';
 import MapListElement from './map-list-element';
@@ -18,6 +16,7 @@ import MapListElementNew from './map-list-element-new';
 var InviteNewUserDialog = require('./invite-new-user-dialog');
 
 export default class MapList extends React.Component {
+
   constructor(props) {
     super(props);
     this.render = this.render.bind(this);
@@ -29,17 +28,17 @@ export default class MapList extends React.Component {
     const singleWorkspaceStore = this.props.singleWorkspaceStore;
 
     var editorsToShow = editors.map(owner =>
-      <li className = "list-group-item" key={owner}>
+      <ListGroupItem key={owner}>
         {owner}
-        <Button bsSize="xsmall"
-          onClick={Actions.deleteInvitedEditor.bind(Actions,{email:owner})}> X </Button>
-      </li>);
+        <Button bsSize="xsmall" className="pull-right"
+          onClick={Actions.deleteInvitedEditor.bind(Actions,{email:owner})}><Glyphicon glyph="remove"></Glyphicon></Button>
+      </ListGroupItem>);
 
     return (
       <ListGroup>
-      {editorsToShow}
-      <Button bsStyle="link" onClick={Actions.openInviteDialog}>Invite more editors...</Button>
-      <InviteNewUserDialog workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/>
+        {editorsToShow}
+        <Button bsStyle="link" onClick={Actions.openInviteDialog}>Invite more editors...</Button>
+        <InviteNewUserDialog workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/>
       </ListGroup>
     );
   }
