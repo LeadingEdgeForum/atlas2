@@ -53,7 +53,7 @@
     "socket.io": "2.0.1",
     "socket.io-client": "2.0.1",
     "underscore": "*",
-    "woopra": "^0.2.0"
+    "woopra": "^0.3.0"
   },
   "devDependencies": {
     "mocha": ">=3.4.0",
