@@ -89,23 +89,23 @@ export default class FixitPage extends React.Component {
     return (<div key={map._id}><h5><MapLink mapID={map._id}/></h5>{nodes}</div>);
   }
 
-  renderDeduplicationRow(workspaceId, unprocessedComponents, processedComponents){
+  renderDeduplicationRow(workspaceId, fixitStore, unprocessedComponents, processedComponents){
     return <Row className="show-grid">
       <Col xs={3}>
-        <h4>Components to check:</h4>
+        <h4>Unclassified components:</h4>
         {unprocessedComponents}
       </Col>
       <Col xs={9}>
         <h4>Capabilities:</h4>
-        <CapabilitiesView dragStarted={dragStarted} workspaceId={workspaceId} categories={processedComponents}/>
+        <CapabilitiesView dragStarted={dragStarted} fixitStore={fixitStore} workspaceId={workspaceId} categories={processedComponents}/>
       </Col>
     </Row>;
   }
 
-  renderDeduplicationResultsOnly(workspaceId, processedComponents){
+  renderDeduplicationResultsOnly(workspaceId,fixitStore, processedComponents){
     return <Row className="show-grid">
       <Col xs={12}>
-        <CapabilitiesView dragStarted={dragStarted} workspaceId={workspaceId} categories={processedComponents}/>
+        <CapabilitiesView dragStarted={dragStarted} fixitStore={fixitStore} workspaceId={workspaceId} categories={processedComponents}/>
       </Col>
     </Row>;
   }
@@ -128,9 +128,9 @@ export default class FixitPage extends React.Component {
 
     var row = null;
     if(_unprocessedComponents.length > 0){
-      row = this.renderDeduplicationRow(workspaceID, _unprocessedComponents, processedComponents);
+      row = this.renderDeduplicationRow(workspaceID, fixitStore, _unprocessedComponents, processedComponents);
     } else {
-      row = this.renderDeduplicationResultsOnly(workspaceID, processedComponents);
+      row = this.renderDeduplicationResultsOnly(workspaceID, fixitStore, processedComponents);
     }
 
     return (

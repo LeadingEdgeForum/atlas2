@@ -21,7 +21,8 @@ class DeduplicatorStore extends Store {
         loadedProcessed : false,
         newCategoryDialogState : {open:false},
         editCategoryDialogState : {open:false},
-
+        createMarketReferenceDialogState : {open:false},
+        editMarketReferenceDialogState : {open:false}
     };
     this.dispatchToken = null;
     this.redispatch();
@@ -155,6 +156,90 @@ class DeduplicatorStore extends Store {
               }.bind(this)
             });
             break;
+
+
+            case Constants.ACTION_TYPES.OPEN_CREATE_NEW_MARKET_REFERENCE_DIALOG:
+              this.state.createMarketReferenceDialogState = {
+                open: true,
+                capability : action.data.capability
+              };
+              this.emitChange();
+              break;
+            case Constants.ACTION_TYPES.CLOSE_CREATE_NEW_MARKET_REFERENCE_DIALOG:
+              this.state.createMarketReferenceDialogState = {
+                open: false
+              };
+              this.emitChange();
+              break;
+            case Constants.ACTION_TYPES.SUBMIT_CREATE_NEW_MARKET_REFERENCE_DIALOG:
+            $.ajax({
+              type: 'POST',
+              url: '/api/workspace/' + this.workspaceID + '/capability/' + action.data.capability._id + '/marketreference/',
+              data : {
+                name: action.data.name,
+                description : action.data.description,
+                evolution : action.data.evolution
+              },
+              success: function(data2) {
+                this.state.loadedAvailable = false;
+                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.state.createMarketReferenceDialogState = {
+                  open: false
+                };
+                this.emitChange();
+              }.bind(this)
+            });
+            break;
+
+            case Constants.ACTION_TYPES.OPEN_EDIT_NEW_MARKET_REFERENCE_DIALOG:
+              this.state.editMarketReferenceDialogState = {
+                open: true,
+                workspaceId : action.data.workspaceId,
+                capability : action.data.capability,
+                marketReferenceId : action.data.marketreference._id,
+                name : action.data.marketreference.name,
+                description : action.data.marketreference.description,
+                evolution : action.data.marketreference.evolution
+              };
+              this.emitChange();
+              break;
+            case Constants.ACTION_TYPES.CLOSE_EDIT_NEW_MARKET_REFERENCE_DIALOG:
+              this.state.editMarketReferenceDialogState = {
+                open: false
+              };
+              this.emitChange();
+              break;
+            case Constants.ACTION_TYPES.SUBMIT_EDIT_NEW_MARKET_REFERENCE_DIALOG:
+              $.ajax({
+                type: 'PUT',
+                url: '/api/workspace/' + this.workspaceID + '/capability/' + action.data.capabilityId + '/marketreference/' + action.data.marketReferenceId,
+                data : {
+                  name: action.data.name,
+                  description : action.data.description,
+                  evolution : action.data.evolution
+                },
+                success: function(data2) {
+                  this.state.loadedAvailable = false;
+                  this.state.processedComponents = data2.workspace.capabilityCategories;
+                  this.state.editMarketReferenceDialogState = {
+                    open: false
+                  };
+                  this.emitChange();
+                }.bind(this)
+              });
+            break;
+
+            case Constants.ACTION_TYPES.DELETE_MARKET_REFERENCE:
+            $.ajax({
+              type: 'DELETE',
+              url: '/api/workspace/' + this.workspaceID + '/capability/' + action.data.capabilityId + '/marketreference/' + action.data.marketReferenceId,
+              success: function(data2) {
+                this.state.loadedAvailable = false;
+                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.emitChange();
+              }.bind(this)
+            });
+            break;
         default:
           return;
       }
@@ -213,6 +298,15 @@ class DeduplicatorStore extends Store {
   getWorkspaceId(){
     return this.workspaceID;
   }
+
+  getCreateMarketReferenceDialogState(){
+    return this.state.createMarketReferenceDialogState;
+  }
+
+  getEditMarketReferenceDialogState(){
+    return this.state.editMarketReferenceDialogState;
+  }
+
 }
 
 export default DeduplicatorStore;

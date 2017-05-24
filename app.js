@@ -86,6 +86,10 @@ app.get('/css/bootstrap.min.css.map', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/css/bootstrap.min.css.map'));
 });
 
+app.get('/css/bootstrap-slider.min.css', function(req, res) {
+    res.sendFile(path.join(__dirname, '/node_modules/react-bootstrap-slider/src/css/bootstrap-slider.min.css'));
+});
+
 app.get('/fonts/glyphicons-halflings-regular.eot', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/fonts/glyphicons-halflings-regular.eot'));
 });

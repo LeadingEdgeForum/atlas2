@@ -56,6 +56,11 @@ module.exports = function(conn) {
                   type: Schema.Types.ObjectId,
                   ref: 'Node'
               }]
+            }],
+            marketreferences : [ {
+              name : Schema.Types.String,
+              description : Schema.Types.String,
+              evolution : Schema.Types.Number
             }]
           } ]
         } ]
@@ -292,6 +297,84 @@ module.exports = function(conn) {
         }, {
             safe: true
         }).exec());
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+            }).execPopulate();
+        });
+    };
+
+    workspaceSchema.methods.createNewMarketReferenceInCapability = function(capabilityID, name, description, evolution) {
+        var promises = [];
+        var capability = null;
+        for (var i = 0; i < this.capabilityCategories.length; i++) {
+            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = this.capabilityCategories[i].capabilities[j];
+                }
+            }
+        }
+        capability.marketreferences.push({
+          name: name,
+          description: description,
+          evolution: evolution
+        });
+        promises.push(this.save());
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+            }).execPopulate();
+        });
+    };
+
+    workspaceSchema.methods.deleteMarketReferenceInCapability = function(capabilityID, marketReferenceId) {
+        var promises = [];
+        var capability = null;
+        for (var i = 0; i < this.capabilityCategories.length; i++) {
+            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = this.capabilityCategories[i].capabilities[j];
+                    for(var k = capability.marketreferences.length - 1; k >=0; k--){
+                      if(capability.marketreferences[k]._id.equals(marketReferenceId)){
+                        capability.marketreferences.splice(k,1);
+                      }
+                    }
+                }
+            }
+        }
+
+        promises.push(this.save());
+
+        return q.allSettled(promises).then(function(res) {
+            return res[0].value.populate({
+                path: 'capabilityCategories.capabilities.aliases.nodes',
+                model: 'Node',
+            }).execPopulate();
+        });
+    };
+
+    workspaceSchema.methods.updateMarketReferenceInCapability = function(capabilityID, marketReferenceId, name, description, evolution) {
+        var promises = [];
+        var capability = null;
+        for (var i = 0; i < this.capabilityCategories.length; i++) {
+            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = this.capabilityCategories[i].capabilities[j];
+                    for(var k = capability.marketreferences.length - 1; k >=0; k--){
+                      if(capability.marketreferences[k]._id.equals(marketReferenceId)){
+                        capability.marketreferences[k].name = name;
+                        capability.marketreferences[k].description = description;
+                        capability.marketreferences[k].evolution = evolution;
+                      }
+                    }
+                }
+            }
+        }
+
+        promises.push(this.save());
+
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
                 path: 'capabilityCategories.capabilities.aliases.nodes',

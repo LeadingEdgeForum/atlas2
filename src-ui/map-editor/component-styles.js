@@ -34,6 +34,12 @@ var submapStyle = _.extend(_.clone(mapComponentStyle), {
   backgroundColor: 'black'
 });
 
+var marketReferenceStyle = _.extend(_.clone(externalStyle), {
+  border: '1px dotted black',
+  zIndex : 4,
+  backgroundColor : '#f8f8f8'
+});
+
 var arrowEndStyle = _.extend(_.clone(mapComponentStyle), {
   border: '1px solid silver',
   backgroundColor: 'silver',
@@ -84,6 +90,9 @@ var getStyleForType = function(type) {
       break;
     case Constants.SUBMAP:
       style = submapStyle;
+      break;
+    case "MARKET_REFERENCE":
+      style = marketReferenceStyle;
       break;
     case "ArrowEnd":
       style = arrowEndStyle;

@@ -1281,6 +1281,116 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
       });
 
+      module.router.post(
+        '/workspace/:workspaceID/capability/:capabilityID/marketreference/',
+        authGuardian.authenticationRequired,
+        function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var capabilityID = new ObjectId(req.params.capabilityID);
+          var name = req.body.name;
+          var description = req.body.description;
+          var evolution = req.body.evolution;
+          capabilityLogger.trace(workspaceID, capabilityID, name, description, evolution);
+          Workspace
+            .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false,
+            })
+            .exec()
+            .then(function(workspace) {
+              if (!workspace) {
+                res.status(404).json("workspace not found");
+                return null;
+              }
+              return workspace.createNewMarketReferenceInCapability(capabilityID, name, description, evolution);
+            })
+            .fail(function(e) {
+              capabilityLogger.error('responding...', e);
+              res.status(500).json(e);
+            })
+            .done(function(wk) {
+              capabilityLogger.trace('responding ...', wk);
+              res.json({
+                workspace: wk
+              });
+            });
+        });
+
+      module.router.delete(
+        '/workspace/:workspaceID/capability/:capabilityID/marketreference/:marketReferenceId',
+        authGuardian.authenticationRequired,
+        function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceID = req.params.workspaceID;
+          var capabilityID = new ObjectId(req.params.capabilityID);
+          var marketReferenceId = new ObjectId(req.params.marketReferenceId);
+          capabilityLogger.trace(workspaceID, capabilityID, marketReferenceId);
+          Workspace
+            .findOne({
+              _id: workspaceID,
+              owner: owner,
+              archived: false,
+            })
+            .exec()
+            .then(function(workspace) {
+              if (!workspace) {
+                res.status(404).json("workspace not found");
+                return null;
+              }
+              return workspace.deleteMarketReferenceInCapability(capabilityID, marketReferenceId);
+            })
+            .fail(function(e) {
+              capabilityLogger.error('responding...', e);
+              res.status(500).json(e);
+            })
+            .done(function(wk) {
+              capabilityLogger.trace('responding ...', wk);
+              res.json({
+                workspace: wk
+              });
+            });
+        });
+
+        module.router.put(
+          '/workspace/:workspaceID/capability/:capabilityID/marketreference/:marketReferenceId',
+          authGuardian.authenticationRequired,
+          function(req, res) {
+            var owner = getUserIdFromReq(req);
+            var workspaceID = req.params.workspaceID;
+            var capabilityID = new ObjectId(req.params.capabilityID);
+            var marketReferenceId = new ObjectId(req.params.marketReferenceId);
+            var name = req.body.name;
+            var description = req.body.description;
+            var evolution = req.body.evolution;
+            capabilityLogger.trace(workspaceID, capabilityID, marketReferenceId, name, description, evolution);
+            Workspace
+              .findOne({
+                _id: workspaceID,
+                owner: owner,
+                archived: false,
+              })
+              .exec()
+              .then(function(workspace) {
+                if (!workspace) {
+                  res.status(404).json("workspace not found");
+                  return null;
+                }
+                return workspace.updateMarketReferenceInCapability(capabilityID, marketReferenceId, name, description, evolution);
+              })
+              .fail(function(e) {
+                capabilityLogger.error('responding...', e);
+                res.status(500).json(e);
+              })
+              .done(function(wk) {
+                capabilityLogger.trace('responding ...', wk);
+                res.json({
+                  workspace: wk
+                });
+              });
+          });
+
   module.router.put(
       '/workspace/:workspaceID/alias/:aliasID/node/:nodeID',
       authGuardian.authenticationRequired,

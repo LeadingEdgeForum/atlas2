@@ -21,6 +21,8 @@ var AssignExistingCapabilityDialog = require('./assign-existing-capability-dialo
 import {getStyleForType} from '../map-editor/component-styles';
 import MapLink from './maplink.js';
 var UsageInfo = require('./usage-info');
+import CreateMarketReferenceDialog from './dialogs/create-market-reference';
+import EditMarketReferenceDialog from './dialogs/edit-market-reference';
 
 var acceptorStyle = {
   width: "100%",
@@ -115,6 +117,9 @@ export default class CapabilitiesView extends React.Component {
     Actions.deleteCapability(this.props.workspaceId, capability._id);
   }
 
+  openAddMarketReferenceToCapabilityDialog(capability){
+    Actions.openAddMarketReferenceToCapabilityDialog(capability);
+  }
 
   renderSingleNode(node){
     if((!node) || (!node._id)){
@@ -135,7 +140,37 @@ export default class CapabilitiesView extends React.Component {
       </OverlayTrigger>);
   }
 
+  openEditMarketReferenceDialog(workspaceId, capability, marketreference, ref){
+      this.refs[marketreference._id].hide();
+      Actions.openEditMarketReferenceDialog(workspaceId, capability, marketreference);
+  }
+
+  renderSingleMarketReference(capability, marketreference) {
+      if ((!marketreference) || (!marketreference._id)) {
+        console.error('this marketreference should not be null');
+        return null;
+      }
+      var style = getStyleForType("MARKET_REFERENCE");
+      style.left = marketreference.evolution * 100 + '%';
+      style.position = 'absolute';
+      style.top = "10px";
+      var workspaceId = this.props.workspaceId;
+      var popoverTitle = "Market reference \'" + marketreference.name + "\'.";
+      var _popover = <Popover id={marketreference._id} title={popoverTitle}>
+                        {marketreference.description} <br/>
+                        <ButtonGroup bsSize="xsmall">
+                          <Button bsSize="xsmall" href="" onClick={this.openEditMarketReferenceDialog.bind(this, workspaceId, capability, marketreference)}><Glyphicon glyph="edit"/></Button>
+                          <Button bsSize="xsmall" href="" onClick={Actions.deleteMarketReference.bind(Actions, workspaceId, capability._id, marketreference._id)}><Glyphicon glyph="remove"/></Button>
+                        </ButtonGroup>
+                     </Popover>;
+      return (
+          <OverlayTrigger trigger="click" placement="bottom" overlay={_popover} ref={marketreference._id}>
+            <div style={style}></div>
+          </OverlayTrigger>);
+  }
+
   render() {
+    const fixitStore = this.props.fixitStore;
     var _acceptorStyleToSet = _.clone(acceptorStyle);
     var _capabilityStyleToSet = _.clone(capabilityStyle);
     var _greyLaneStyleToSet = _.clone(greyLaneStyle);
@@ -178,7 +213,7 @@ export default class CapabilitiesView extends React.Component {
           </Col>
           <Col xs={1}>
             <ButtonGroup bsSize="xsmall">
-              <Button bsSize="xsmall" href="" onClick={Actions.openEditCategoryDialog.bind(Actions, workspaceId, category._id, category.name)}><span style={{color:'dimgray'}}><Glyphicon glyph="edit"/></span></Button>
+              <Button bsSize="xsmall" href="" onClick={Actions.openEditCategoryDialog.bind(Actions, workspaceId, category._id, category.name)}><span><Glyphicon glyph="edit"/></span></Button>
               <Button bsSize="xsmall" href="" onClick={Actions.deleteCategory.bind(Actions, workspaceId, category._id)}><span style={{color:'dimgray'}}><Glyphicon glyph="remove"/></span></Button>
             </ButtonGroup>
           </Col>
@@ -194,6 +229,14 @@ export default class CapabilitiesView extends React.Component {
               _this.renderSingleNode(alias.nodes[0])
             );
         });
+        if(capability.marketreferences) {
+          capability.marketreferences.forEach(function(marketreference){
+              console.log('rendering marketreference',marketreference );
+              _itemsToDisplay.push(
+                _this.renderSingleMarketReference(capability, marketreference)
+              );
+          });
+        }
         var name = capability.aliases[0].nodes[0].name;
         categories.push(
           <Row className="show-grid" key={capability._id}>
@@ -204,14 +247,17 @@ export default class CapabilitiesView extends React.Component {
                           <h5>{name}</h5>
                         </div>
                       </Col>
-                      <Col xs={8}>
+                      <Col xs={7}>
                         <div style={_capabilityStyleToSet} onDragOver={dragOver} onDrop={_this.handleDropExistingCapability.bind(_this, capability)}>
                           <div style={_greyLaneStyleToSet}>{greyLaneText}</div>
                           {_itemsToDisplay}
                         </div>
                       </Col>
-                      <Col xs={1}>
-                        <Button bsSize="xsmall" onClick={_this.deleteCapability.bind(_this, capability)}><Glyphicon glyph="remove"></Glyphicon></Button>
+                      <Col xs={2}>
+                        <ButtonGroup>
+                          <Button bsSize="xsmall" onClick={_this.openAddMarketReferenceToCapabilityDialog.bind(_this, capability)}><Glyphicon glyph="plus"></Glyphicon></Button>
+                          <Button bsSize="xsmall" onClick={_this.deleteCapability.bind(_this, capability)}><Glyphicon glyph="remove"></Glyphicon></Button>
+                        </ButtonGroup>
                       </Col>
                     </Row>
         );
@@ -246,6 +292,8 @@ export default class CapabilitiesView extends React.Component {
           submitAssignDialog={_this.submitAssignDialog.bind(_this)}
           submitAssignAlias={_this.submitAssignAlias.bind(_this)}
           />
+        <CreateMarketReferenceDialog fixitStore={fixitStore} />
+        <EditMarketReferenceDialog fixitStore={fixitStore} />
       </Grid>
     );
   }

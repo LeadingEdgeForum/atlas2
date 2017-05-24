@@ -117,4 +117,97 @@ export default class Actions {
     });
   }
 
+
+  static openAddMarketReferenceToCapabilityDialog(capability){
+    if((!capability) || (!capability._id)){
+      console.error('this capability should not be null');
+      return null;
+    }
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.OPEN_CREATE_NEW_MARKET_REFERENCE_DIALOG,
+      data: {
+          capability : capability
+      }
+    });
+  }
+
+  static closeAddMarketReferenceToCapabilityDialog(){
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CLOSE_CREATE_NEW_MARKET_REFERENCE_DIALOG
+    });
+  }
+
+  static submitAddMarketReferenceToCapabilityDialog(capability, name, description, evolution){
+    if((!capability) || (!capability._id)){
+      console.error('this capability should not be null');
+      return null;
+    }
+    if(!name ||  evolution === undefined ||  evolution === null){
+      console.error('name and evolution should not be null');
+    }
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.SUBMIT_CREATE_NEW_MARKET_REFERENCE_DIALOG,
+      data: {
+          capability : capability,
+          name : name,
+          description : description,
+          evolution : evolution
+      }
+    });
+  }
+
+  static openEditMarketReferenceDialog(workspaceId, capability, marketreference) {
+    if (!workspaceId || !marketreference || !capability) {
+      console.log('missing data', workspaceId, capability, marketreference);
+      return;
+    }
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.OPEN_EDIT_NEW_MARKET_REFERENCE_DIALOG,
+      data: {
+        workspaceId: workspaceId,
+        capability: capability,
+        marketreference: marketreference
+      }
+    });
+  }
+
+  static closeEditMarketReferenceDialog() {
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.CLOSE_EDIT_NEW_MARKET_REFERENCE_DIALOG
+    });
+  }
+
+  static submitEditMarketReferenceDialog(workspaceId, capabilityId, marketReferenceId, name, description, evolution) {
+    if (!workspaceId || !marketReferenceId || !capabilityId || !name || evolution === undefined || evolution === null) {
+      console.log('missing data', workspaceId, capabilityId, marketReferenceId, name, evolution);
+      return;
+    }
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.SUBMIT_EDIT_NEW_MARKET_REFERENCE_DIALOG,
+      data: {
+        workspaceId: workspaceId,
+        capabilityId: capabilityId,
+        marketReferenceId: marketReferenceId,
+        name: name,
+        description: description,
+        evolution: evolution
+      }
+    });
+  }
+
+  static deleteMarketReference(workspaceId, capabilityId, marketReferenceId) {
+    if (!workspaceId || !marketReferenceId || !capabilityId) {
+      console.log('missing data', workspaceId, capabilityId, marketReferenceId);
+      return;
+    }
+    Dispatcher.dispatch({
+      actionType: Constants.ACTION_TYPES.DELETE_MARKET_REFERENCE,
+      data: {
+        workspaceId: workspaceId,
+        capabilityId: capabilityId,
+        marketReferenceId: marketReferenceId
+      }
+    });
+  }
+
 }
