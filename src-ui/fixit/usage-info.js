@@ -47,7 +47,7 @@ var UsageInfo = React.createClass({
           if(originInfo){
             return <div>This node,<b> {alias.nodes[0].name}</b>, comes from map <MapLink mapID={alias.nodes[0].parentMap._id}/></div>;
           } else {
-            return <div>This node seems to be used only in this map/></div>;
+            return <div>This node seems to be used only in this map</div>;
           }
       } else {
           return <span></span>;
@@ -73,7 +73,7 @@ var UsageInfo = React.createClass({
     } else {
       aliasLinkInfo = <div>
           This node is also known as:<ul>
-            {aliasLinks}</ul></div>
+            {aliasLinks}</ul></div>;
     }
 
     var alternativeAliases = [];
@@ -104,7 +104,7 @@ var UsageInfo = React.createClass({
     var originMessage = null;
     if (originInfo) {
         originMessage = ( <div>This node,<b> {alias.nodes[0].name}</b>, comes from map < MapLink mapID = {alias.nodes[0].parentMap._id} /></div > );
-    };
+    }
 
     return  (<div> {originMessage}
           {aliasLinkInfo}
