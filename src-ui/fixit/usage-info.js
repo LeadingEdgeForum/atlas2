@@ -17,6 +17,37 @@ import {
 import MapLink from './maplink.js';
 
 var UsageInfo = React.createClass({
+
+  calculateSingleReference(marketreference){
+    var nodeEvolutionLevel = this.props.node.x;
+    var efficiencyDiff = this.props.node.x - marketreference.evolution;
+    var efficiencyMessage = null;
+    if(efficiencyDiff < -0.25){
+      efficiencyMessage = "significantly more advanced";
+    } else if(efficiencyDiff < 0){
+      efficiencyMessage = "more advanced";
+    } else if(efficiencyDiff < 0.25){
+      efficiencyMessage = "less advanced";
+    } else {
+      efficiencyMessage = "significantly less advanced";
+    }
+    return <li key={marketreference._id}>{marketreference.name}, {efficiencyMessage}</li>;
+  },
+
+  calculateMarketReferences(showMarketReferences){
+    if(!showMarketReferences || !this.state){
+      return null;
+    }
+    if(this.state.capability && this.state.capability.marketreferences && this.state.capability.marketreferences.length > 0){
+      var competitors = [];
+      for(var i = 0; i < this.state.capability.marketreferences.length; i++){
+        competitors.push(this.calculateSingleReference(this.state.capability.marketreferences[i]));
+      }
+      return <div>Identified market references: <ul>{competitors}</ul> </div>;
+    }
+    return null;
+  },
+
   render() {
     var node = this.props.node;
     var capability= this.state ? this.state.capability : null;
@@ -24,6 +55,8 @@ var UsageInfo = React.createClass({
     var alternativeNames = this.props.alternativeNames;
     var excludedList = this.props.excludeList ? this.props.excludeList : [];
     var originInfo = this.props.originInfo;
+    var showMarketReferences = this.props.showMarketReferences;
+    var marketReferences = this.calculateMarketReferences(showMarketReferences);
 
     if(!capability && emptyInfo){
       return <div>No insights available.</div>;
@@ -45,9 +78,9 @@ var UsageInfo = React.createClass({
     if(alias.nodes.length === 1 && capability.aliases.length === 1){
       if(emptyInfo){
           if(originInfo){
-            return <div>This node,<b> {alias.nodes[0].name}</b>, comes from map <MapLink mapID={alias.nodes[0].parentMap._id}/></div>;
+            return <div>This node,<b> {alias.nodes[0].name}</b>, comes from map <MapLink mapID={alias.nodes[0].parentMap._id}/>.<br/>{marketReferences}</div>;
           } else {
-            return <div>This node seems to be used only in this map</div>;
+            return <div>This node seems to be used only in this map.<br/>{marketReferences}</div>;
           }
       } else {
           return <span></span>;
@@ -109,6 +142,7 @@ var UsageInfo = React.createClass({
     return  (<div> {originMessage}
           {aliasLinkInfo}
           {alternativeAliasesInfo}
+          {marketReferences}
     </div>);
   },
 

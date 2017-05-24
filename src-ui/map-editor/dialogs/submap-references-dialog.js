@@ -74,7 +74,7 @@ var SubmapReferencesDialog = React.createClass({
           </Modal.Header>
           <Modal.Body>
               {message}
-              <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={false} alternativeNames={true} excludeList={this.state.referencingMaps}/>
+              <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={false} alternativeNames={true} excludeList={this.state.referencingMaps} showMarketReferences={true}/>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>
