@@ -23,6 +23,8 @@ var capabilityLogger = require('./../log').getLogger('capability');
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
 var q = require('q');
+q.longStackSupport = true;
+
 var _async = require('async');
 
 var log4js = require('log4js');
@@ -1487,13 +1489,12 @@ module.exports = function(authGuardian, mongooseConnection) {
                 promises.push(workspace.save());
                 for (var k = 0; k < capability.aliases.length; k++) {
                     for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
-                        promises.push(Node.findOneAndUpdate({
+                        promises.push(Node.findOne({
                             _id: capability.aliases[k].nodes[l]
-                        }, {
-                            $set: {
-                                processedForDuplication: false
-                            }
-                        }).exec());
+                        }).exec().then(function(node){
+                          node.processedForDuplication = false;
+                          return node.save();
+                        }));
                     }
                 }
                 return q.all(promises);
