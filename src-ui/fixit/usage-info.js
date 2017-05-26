@@ -56,13 +56,17 @@ var UsageInfo = React.createClass({
     var excludedList = this.props.excludeList ? this.props.excludeList : [];
     var originInfo = this.props.originInfo;
     var showMarketReferences = this.props.showMarketReferences;
-    var marketReferences = this.calculateMarketReferences(showMarketReferences);
+    var marketReferencesExist = capability ? (capability && capability.marketreferences && capability.marketreferences.length > 0) : false;
+    var marketReferences = null;
+    if(marketReferencesExist && showMarketReferences){
+      marketReferences = this.calculateMarketReferences(showMarketReferences);
+    }
 
     if(!capability && emptyInfo){
       return <div>No insights available.</div>;
     }
     if(!capability && !emptyInfo){
-      return <span></span>;
+      return <span>{marketReferences}</span>;
     }
 
     var alias = null;
@@ -83,7 +87,7 @@ var UsageInfo = React.createClass({
             return <div>This node seems to be used only in this map.<br/>{marketReferences}</div>;
           }
       } else {
-          return <span></span>;
+          return <span>{marketReferences}</span>;
       }
     }
 
