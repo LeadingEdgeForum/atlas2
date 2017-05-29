@@ -353,6 +353,15 @@ var MapComponent = React.createClass({
     });
     return <div style={style}></div>;
   },
+  renderName(node){
+    if(node.constraint == 20){
+      return <span>{node.name}<Glyphicon glyph="minus-sign"/></span>;
+    }
+    if(node.constraint == 10){
+      return <span>{node.name}<Glyphicon glyph="exclamation-sign"/></span>;
+    }
+    return node.name;
+  },
   render: function() {
     var node = this.props.node;
 
@@ -365,7 +374,7 @@ var MapComponent = React.createClass({
       position: 'absolute',
       cursor: 'pointer'
     });
-    var name = node.name;
+    var name = this.renderName(node);
     var menu = this.renderMenu();
     var shouldBeDraggable = this.props.focused;
     var _this = this;

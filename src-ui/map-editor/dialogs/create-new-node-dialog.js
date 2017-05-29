@@ -68,6 +68,10 @@ var CreateNewNodeDialog = React.createClass({
   render: function() {
     var show = this.state.open;
     var inertia = this.internalState.inertia;
+    var constraint = this.internalState.constraint;
+    if(constraint === null || constraint === undefined){
+      constraint = 0;
+    }
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -103,6 +107,16 @@ var CreateNewNodeDialog = React.createClass({
                     <Radio inline value={0.33} checked={inertia==0.33} onChange={this._handleDialogChange.bind(this, 'inertia')}>Small</Radio>{' '}
                     <Radio inline value={0.66} checked={inertia==0.66} onChange={this._handleDialogChange.bind(this, 'inertia')}>Considerable</Radio>{' '}
                     <Radio inline value={1} checked={inertia==1} onChange={this._handleDialogChange.bind(this, 'inertia')}>Huge</Radio>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="constraint">
+                <Col sm={2}>
+                  <ControlLabel>Limitation</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                    <Radio inline checked={ constraint==0 || !constraint} value={0} onChange={this._handleDialogChange.bind(this, 'constraint')}>None</Radio>{' '}
+                    <Radio inline value={10} checked={constraint==10} onChange={this._handleDialogChange.bind(this, 'constraint')}>Constraint</Radio>{' '}
+                    <Radio inline value={20} checked={constraint==20} onChange={this._handleDialogChange.bind(this, 'constraint')}>Barrier to entry</Radio>{' '}
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">

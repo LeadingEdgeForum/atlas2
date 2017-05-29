@@ -476,6 +476,7 @@ module.exports = function(authGuardian, mongooseConnection) {
       var x = req.body.x;
       var y = req.body.y;
       var type = req.body.type;
+      var constraint = req.body.constraint;
       var parentMap = new ObjectId(mapID);
 
       WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
@@ -487,7 +488,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.verifyAccess(owner);
           })
           .then(function(map) {
-              return map.addNode(name, x, y, type, new ObjectId(workspaceID), description, inertia, responsiblePerson);
+              return map.addNode(name, x, y, type, new ObjectId(workspaceID), description, inertia, responsiblePerson, constraint);
           })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
@@ -697,6 +698,7 @@ module.exports = function(authGuardian, mongooseConnection) {
       var desiredNodeId = new ObjectId(req.params.nodeID);
       var description = req.body.description;
       var inertia = req.body.inertia;
+      var constraint = req.body.constraint;
       var responsiblePerson = req.body.responsiblePerson;
 
       // find a map with a node
@@ -711,7 +713,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.verifyAccess(owner);
           })
           .then(function(map) {
-              return map.changeNode(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson);
+              return map.changeNode(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
           })
           .then(function(result) {
               return result[1].value.formJSON();

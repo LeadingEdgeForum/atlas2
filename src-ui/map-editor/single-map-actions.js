@@ -317,7 +317,7 @@ var SingleMapActions = {
     },
 
     updateNode: function(workspaceId, mapId, nodeId, pos,
-      name, type, person, inertia, description){
+      name, type, person, inertia, description, constraint){
       if(!nodeId){
         console.error('missing node id');
         return;
@@ -329,11 +329,12 @@ var SingleMapActions = {
             mapId: mapId,
             nodeId :nodeId,
             pos : pos ? pos : null,
-            name,
-            type,
-            person,
-            inertia,
-            description
+            name : name,
+            type : type,
+            person : person,
+            inertia : inertia,
+            description: description,
+            constraint : constraint
           }
       });
     },

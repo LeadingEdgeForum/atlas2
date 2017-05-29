@@ -66,6 +66,7 @@ function safeStringify(obj) {
 var r = process.cwd();
 var script = fs.readFileSync(r + '/build-ui/js/canvas-wrapper.js');
 var css = fs.readFileSync(r + '/build-ui/css/bootstrap.min.css');
+var glyphs = fs.readFileSync(r + '/build-ui/fonts/glyphicons-halflings-regular.svg');
 
 function renderFullPage(opts) {
   return "<!doctype html><html><head><style>" + css + "</style></head><body><div id=\"root\" style=\"background:white\">"

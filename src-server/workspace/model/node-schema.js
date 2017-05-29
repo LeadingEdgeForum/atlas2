@@ -45,6 +45,7 @@ module.exports = function(conn){
         x: Schema.Types.Number,
         y: Schema.Types.Number,
         type: Schema.Types.String,
+        constraint: Schema.Types.Number, // 0 - none, 10 - constraint, 20 - barrier
         inboundDependencies: [{
             type: Schema.Types.ObjectId,
             ref: 'Node'

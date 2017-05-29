@@ -473,6 +473,7 @@ export default class SingleWorkspaceStore extends Store {
         this.editNodeDialog.responsiblePerson = nodes[i].responsiblePerson;
         this.editNodeDialog.inertia = nodes[i].inertia;
         this.editNodeDialog.description = nodes[i].description;
+        this.editNodeDialog.constraint = nodes[i].constraint;
         this.editNodeDialog.workspaceId = this.getWorkspaceId();
         this.editNodeDialog.mapId = this.getMapId();
         this.editNodeDialog.nodeId = data.nodeID;
@@ -502,12 +503,13 @@ export default class SingleWorkspaceStore extends Store {
       payload.x = data.pos.x;
       payload.y = data.pos.y;
     }
-    if(data.name || data.type || data.person || data.inertia || data.description){
+    if(data.name || data.type || data.person || data.inertia || data.description || data.constraint !== undefined ){
       payload.name = data.name;
       payload.type = data.type;
       payload.responsiblePerson = data.person;
       payload.inertia = data.inertia;
       payload.description = data.description;
+      payload.constraint = data.constraint;
     }
     $.ajax({
       type: 'PUT',

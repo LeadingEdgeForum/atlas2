@@ -141,7 +141,7 @@ module.exports = function(conn) {
         return this.save();
     };
 
-    _MapSchema.methods.addNode = function(name, x, y, type, workspace, description, inertia, responsiblePerson) {
+    _MapSchema.methods.addNode = function(name, x, y, type, workspace, description, inertia, responsiblePerson, constraint) {
         var Node = require('./node-schema')(conn);
 
         var _this = this;
@@ -156,6 +156,7 @@ module.exports = function(conn) {
                 description: description,
                 inertia: inertia,
                 responsiblePerson: responsiblePerson,
+                constraint : constraint
             }).save()
             .then(function(node) {
                 _this.nodes.push(node._id);
@@ -169,7 +170,7 @@ module.exports = function(conn) {
             });
     };
 
-    _MapSchema.methods.changeNode = function(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson) {
+    _MapSchema.methods.changeNode = function(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
         var _this = this;
         var Node = require('./node-schema')(conn);
         return Node.findOne({
@@ -196,6 +197,9 @@ module.exports = function(conn) {
                 }
                 if (responsiblePerson) {
                     node.responsiblePerson = responsiblePerson;
+                }
+                if (constraint !== null && constraint !== undefined) {
+                    node.constraint = constraint;
                 }
                 return q.allSettled([node.save(), _this.populate({
                     path: 'nodes',

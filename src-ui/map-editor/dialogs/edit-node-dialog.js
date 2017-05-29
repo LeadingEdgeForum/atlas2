@@ -55,7 +55,8 @@ var EditNodeDialog = React.createClass({
       this.internalState.type,
       this.internalState.responsiblePerson,
       this.internalState.inertia,
-      this.internalState.description
+      this.internalState.description,
+      this.internalState.constraint
     );
     this.internalState = {};
   },
@@ -83,7 +84,11 @@ var EditNodeDialog = React.createClass({
     var description = this.internalState.description;
     var responsiblePerson = this.internalState.responsiblePerson;
     var inertia = this.internalState.inertia;
-
+    var constraint = this.internalState.constraint;
+    if(constraint === null || constraint === undefined){
+      constraint = 0;
+    }
+    console.log('cons', constraint);
     var typeGroup = type != Constants.SUBMAP ? (<FormGroup controlId="type">
       <Col sm={2}>
         <ControlLabel>Type</ControlLabel>
@@ -131,6 +136,16 @@ var EditNodeDialog = React.createClass({
                     <Radio inline checked={inertia == 0.33} value={0.33} onChange={this._handleDialogChange.bind(this, 'inertia')}>Small</Radio>{' '}
                     <Radio inline checked={inertia == 0.66} value={0.66} onChange={this._handleDialogChange.bind(this, 'inertia')}>Considerable</Radio>{' '}
                     <Radio inline checked={inertia == 1} value={1} onChange={this._handleDialogChange.bind(this, 'inertia')}>Huge</Radio>
+                </Col>
+              </FormGroup>
+              <FormGroup controlId="constraint">
+                <Col sm={2}>
+                  <ControlLabel>Limitation</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                    <Radio inline checked={ constraint==0 || !constraint} value={0} onChange={this._handleDialogChange.bind(this, 'constraint')}>None</Radio>{' '}
+                    <Radio inline value={10} checked={constraint==10} onChange={this._handleDialogChange.bind(this, 'constraint')}>Constraint</Radio>{' '}
+                    <Radio inline value={20} checked={constraint==20} onChange={this._handleDialogChange.bind(this, 'constraint')}>Barrier to entry</Radio>{' '}
                 </Col>
               </FormGroup>
               <FormGroup controlId="description">
