@@ -10,6 +10,8 @@ var Comment = require('./comment');
 import {endpointOptions, actionEndpointOptions} from './component-styles';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
+jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
@@ -58,9 +60,7 @@ export default class MapCanvas extends React.Component {
 
   componentDidMount(prevProps, prevState) {
     this.reconcileDependencies();
-    console.log('unuspending 1');
     jsPlumb.setSuspendDrawing(false, true);
-    console.log('unuspending 2');
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
@@ -94,6 +94,13 @@ export default class MapCanvas extends React.Component {
       // for each node - create connections
       var iterator_length = _node.outboundDependencies ? _node.outboundDependencies.length : 0;
       for (var j = 0; j < iterator_length; j++) {
+        var type = '0';
+        var label = '';
+        if(_node.dependencyData && _node.dependencyData.outbound && _node.dependencyData.outbound[_node.outboundDependencies[j]]){
+          type = _node.dependencyData.outbound[_node.outboundDependencies[j]].type;
+          label = _node.dependencyData.outbound[_node.outboundDependencies[j]].label;
+        }
+
         var connection = jsPlumb.connect({
           source: _node._id,
           target: _node.outboundDependencies[j],
@@ -106,8 +113,17 @@ export default class MapCanvas extends React.Component {
           connector: endpointOptions.connector,
           endpointStyles: [
             endpointOptions.paintStyle, endpointOptions.paintStyle
-          ]
+          ],
+          overlays: this.getOverlays(null, [],
+            label
+          )
         });
+
+        if(type == '20'){
+          connection.addType('flow');
+        } else if (type == '10') {
+          connection.addType('constraint');
+        }
       }
 
         var desiredActions = _node.action;
