@@ -21,6 +21,22 @@ var q = require('q');
 
 var wardleyMap = {};
 
+var ensureDepedencyData = function(node){
+  if(!node.dependencyData){
+    node.dependencyData = {
+      inbound : {},
+      outbound : {}
+    };
+    return;
+  }
+  if(!node.dependencyData.inbound){
+    node.dependencyData.inbound = {};
+  }
+  if(!node.dependencyData.outbound){
+    node.dependencyData.outbound = {};
+  }
+};
+
 var calculateMean = function(list, field) {
     // submapLogger.trace('multisave', list, field);
     if (!list || list.length === 0) {
@@ -334,8 +350,11 @@ module.exports = function(conn) {
                     if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.outboundDependencies[j]) > -1) {
                         notTransferredNode.outboundDependencies.set(j, submapNode);
                         // transfer the info about the connection
+
+                        ensureDepedencyData(notTransferredNode);
                         notTransferredNode.dependencyData.outbound['' + submapNodeID] = notTransferredNode.dependencyData.outbound['' + notTransferredNode.outboundDependencies[j]];
                         delete notTransferredNode.dependencyData.outbound['' + notTransferredNode.outboundDependencies[j]];
+                        notTransferredNode.markModified('dependencyData');
 
                         nodesToSave.push(notTransferredNode);
                     }
@@ -348,8 +367,10 @@ module.exports = function(conn) {
                         notTransferredNode.inboundDependencies.set(jjj, submapNode);
 
                         // transfer the info about the connection
-                        notTransferredNode.dependencyData.inboud['' + submapNodeID] = notTransferredNode.dependencyData.inboud['' + notTransferredNode.inboundDependencies[jjj]];
+                        ensureDepedencyData(notTransferredNode);
+                        notTransferredNode.dependencyData.inbound['' + submapNodeID] = notTransferredNode.dependencyData.inbound['' + notTransferredNode.inboundDependencies[jjj]];
                         delete notTransferredNode.dependencyData.inbound['' + notTransferredNode.inboundDependencies[jjj]];
+                        notTransferredNode.markModified('dependencyData');
 
                         nodesToSave.push(notTransferredNode);
                     }
@@ -368,8 +389,10 @@ module.exports = function(conn) {
                         submapNode.outboundDependencies.push(transferredNode.outboundDependencies[k]); // the submap node will replace the transfered node
 
                         // transfer the info about the connection
+                        ensureDepedencyData(submapNode);
                         submapNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]] = transferredNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]];
                         delete transferredNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]];
+                        transferredNode.markModified('dependencyData');
 
                         transferredNode.outboundDependencies.splice(k, 1); // and the node will loose that connection
                     }
@@ -381,8 +404,10 @@ module.exports = function(conn) {
                         submapNode.inboundDependencies.push(transferredNode.inboundDependencies[kk]);
 
                         // transfer the info about the connection
+                        ensureDepedencyData(submapNode);
                         submapNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]] = transferredNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]];
                         delete transferredNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]];
+                        transferredNode.markModified('dependencyData');
 
                         transferredNode.inboundDependencies.splice(kk, 1);
                     }
