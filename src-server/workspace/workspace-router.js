@@ -804,6 +804,52 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
       });
 
+  module.router.put(
+    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+    authGuardian.authenticationRequired,
+    function(req, res) {
+      var owner = getUserIdFromReq(req);
+      var workspaceID = req.params.workspaceID;
+      var mapID = req.params.mapID;
+      var nodeID1 = new ObjectId(req.params.nodeID1);
+      var nodeID2 = new ObjectId(req.params.nodeID2);
+      var parentMap = new ObjectId(mapID);
+      var type = req.body.type; // none, constraint, flow
+      var label = req.body.label;
+      var description = req.body.description;
+
+      WardleyMap.findOne({
+          _id: mapID,
+          archived: false,
+          workspace: workspaceID,
+          nodes: nodeID1 // maybe, one day, check the second node, too
+        })
+        .exec()
+        .then(function(map) {
+          return map.verifyAccess(owner);
+        })
+        .then(function(map) {
+          return Node
+            .findById(nodeID1) //two ids we are looking for
+            .exec().then(function(node) {
+              return node.updateDependencyTo(nodeID2, {type:type, label:label, description:description});
+            }).then(function(tr){
+                return map.populate('nodes').execPopulate();
+            });
+        })
+        .then(function(result) {
+          return result.formJSON();
+        })
+        .fail(function(e) {
+          return defaultAccessDenied(res, e);
+        })
+        .done(function(jsonResult) {
+          res.json({
+            map: jsonResult
+          });
+        });
+    });
+
   module.router.delete(
       '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
       authGuardian.authenticationRequired,
@@ -826,15 +872,17 @@ module.exports = function(authGuardian, mongooseConnection) {
                   return map.verifyAccess(owner);
               })
               .then(function(map) {
-                  return q.allSettled([Node
-                      .findById(nodeID1) //two ids we are looking for
-                      .exec().then(function(node) {
-                          return node.removeDependencyTo(nodeID2);
-                      }), map.populate('nodes').execPopulate()
-                  ]);
+                  return Node
+                    .findById(nodeID1) //two ids we are looking for
+                    .exec().then(function(node) {
+                      return node.removeDependencyTo(nodeID2);
+                    }).then(function(tr){
+                        console.log(tr);
+                        return map.populate('nodes').execPopulate();
+                    });
               })
               .then(function(result) {
-                  return result[1].value.formJSON();
+                  return result.formJSON();
               })
               .fail(function(e) {
                   return defaultAccessDenied(res, e);

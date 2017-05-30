@@ -26,6 +26,21 @@ var node = {};
  * see capability-category-schema for explanations.
  */
 
+var ensureDepedencyData = function(node){
+  if(!node.dependencyData){
+    node.dependencyData = {
+      inbound : {},
+      outbound : {}
+    };
+    return;
+  }
+  if(!node.dependencyData.inbound){
+    node.dependencyData.inbound = {};
+  }
+  if(!node.dependencyData.outbound){
+    node.dependencyData.outbound = {};
+  }
+};
 
 module.exports = function(conn){
     if(node[conn]){
@@ -54,6 +69,10 @@ module.exports = function(conn){
             type: Schema.Types.ObjectId,
             ref: 'Node'
         }],
+        dependencyData : {
+          inbound : Schema.Types.Mixed, // _id : {} pairs
+          outbound: Schema.Types.Mixed
+        },
         action: [{
             x : Schema.Types.Number,
             y : Schema.Types.Number,
@@ -138,6 +157,48 @@ module.exports = function(conn){
             });
     };
 
+    NodeSchema.methods.updateDependencyTo = function(_targetId, data) {
+        var targetId = new ObjectId(_targetId);
+        var promises = [];
+
+        // otherwise, check who is on the top
+        var _this = this;
+        ensureDepedencyData(_this);
+        if(!_this.dependencyData.outbound['' +_targetId]){
+          _this.dependencyData.outbound['' +_targetId] = {};
+        }
+        _this.dependencyData.outbound['' +_targetId].label = data.label;
+        _this.dependencyData.outbound['' +_targetId].description = data.description;
+        _this.dependencyData.outbound['' +_targetId].type = data.type;
+        _this.markModified('dependencyData');
+
+        var Node = require('./node-schema')(conn);
+        return Node.findOne({
+                _id: targetId,
+                workspace: this.workspace
+            }).exec()
+            .then(function(counterPartyNode) {
+                if (!counterPartyNode) { // no other node, exit
+                    throw new Error('target node does not exists');
+                }
+                ensureDepedencyData(counterPartyNode, _this._id);
+                if(!counterPartyNode.dependencyData.inbound['' + _this._id]){
+                  counterPartyNode.dependencyData.inbound['' + _this._id] = {};
+                }
+                try {
+                  counterPartyNode.dependencyData.inbound['' + _this._id].label = data.label;
+                  counterPartyNode.dependencyData.inbound['' + _this._id].description = data.description;
+                  counterPartyNode.dependencyData.inbound['' + _this._id].type = data.type;
+                  counterPartyNode.markModified('dependencyData');
+                } catch (e) {
+                  console.log(e);
+                }
+                promises.push(_this.save());
+                promises.push(counterPartyNode.save());
+                return q.allSettled(promises);
+            });
+    };
+
     NodeSchema.methods.makeAction = function(dataPos) {
         var relativeX = dataPos.x - this.x;
         var relativeY = dataPos.y - this.y;
@@ -187,7 +248,12 @@ module.exports = function(conn){
     NodeSchema.methods.removeDependencyTo = function(_targetId) {
         var targetId = new ObjectId(_targetId);
         var promises = [];
+        var _this = this;
         this.outboundDependencies.pull(targetId);
+        if(this.dependencyData && this.dependencyData.outbound){
+            this.dependencyData.outbound[''+_targetId] = {};
+        }
+        this.markModified('dependencyData');
         promises.push(this.save());
         var Node = require('./node-schema')(conn);
         promises.push(Node.update({
@@ -199,6 +265,17 @@ module.exports = function(conn){
             }
         }, {
             safe: true
+        }).then(function(updateResult){
+          return Node.findOne({
+                  _id: targetId,
+                  workspace: _this.workspace
+              }).exec().then(function(node){
+                if(node.dependencyData && node.dependencyData.inbound){
+                  delete node.dependencyData.inbound['' + _this._id ];
+                  node.markModified('dependencyData');
+                }
+                return node.save();
+              });
         }));
         return q.allSettled(promises);
     };
@@ -206,30 +283,39 @@ module.exports = function(conn){
     NodeSchema.pre('remove', function(next) {
         modelLogger.trace('pre remove on node', this._id);
         var Node = require('./node-schema')(conn);
+        var _this = this;
         var promises = [];
         var dependencyToRemove = this._id;
         var workspaceID = this.workspace;
         for (var i = 0; i < this.inboundDependencies.length; i++) {
-            promises.push(Node.update({
+            promises.push(
+              Node.findOne({
                 _id: this.inboundDependencies[i]
-            }, {
-                $pull: {
-                    outboundDependencies: this._id
+              }).exec()
+              .then(function(node) {
+                node.outboundDependencies.pull(dependencyToRemove);
+                if (node.dependencyData && node.dependencyData.outbound) {
+                  delete node.dependencyData.outbound['' + dependencyToRemove];
+                  node.markModified('dependencyData');
                 }
-            }, {
-                safe: true
-            }));
+                return node.save();
+              })
+            );
         }
         for (var j = 0; j < this.outboundDependencies.length; j++) {
-            promises.push(Node.update({
-                _id: this.outboundDependencies[j]
-            }, {
-                $pull: {
-                    inboundDependencies: this._id
-                }
-            }, {
-                safe: true
-            }));
+          promises.push(
+            Node.findOne({
+              _id: this.outboundDependencies[j]
+            }).exec()
+            .then(function(node) {
+              node.outboundDependencies.pull(dependencyToRemove);
+              if (node.dependencyData && node.dependencyData.inbound) {
+                delete node.dependencyData.inbound['' + dependencyToRemove];
+                node.markModified('dependencyData');
+              }
+              return node.save();
+            })
+          );
         }
         var WardleyMap = require('./map-schema')(conn);
         promises.push(WardleyMap.update({

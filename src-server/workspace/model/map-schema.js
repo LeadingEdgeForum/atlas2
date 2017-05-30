@@ -333,6 +333,10 @@ module.exports = function(conn) {
                 for (var j = notTransferredNode.outboundDependencies.length - 1; j >= 0; j--) {
                     if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.outboundDependencies[j]) > -1) {
                         notTransferredNode.outboundDependencies.set(j, submapNode);
+                        // transfer the info about the connection
+                        notTransferredNode.dependencyData.outbound['' + submapNodeID] = notTransferredNode.dependencyData.outbound['' + notTransferredNode.outboundDependencies[j]];
+                        delete notTransferredNode.dependencyData.outbound['' + notTransferredNode.outboundDependencies[j]];
+
                         nodesToSave.push(notTransferredNode);
                     }
                 }
@@ -342,6 +346,11 @@ module.exports = function(conn) {
                 for (var jjj = notTransferredNode.inboundDependencies.length - 1; jjj >= 0; jjj--) {
                     if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.inboundDependencies[jjj]) > -1) {
                         notTransferredNode.inboundDependencies.set(jjj, submapNode);
+
+                        // transfer the info about the connection
+                        notTransferredNode.dependencyData.inboud['' + submapNodeID] = notTransferredNode.dependencyData.inboud['' + notTransferredNode.inboundDependencies[jjj]];
+                        delete notTransferredNode.dependencyData.inbound['' + notTransferredNode.inboundDependencies[jjj]];
+
                         nodesToSave.push(notTransferredNode);
                     }
                 }
@@ -357,6 +366,11 @@ module.exports = function(conn) {
                     if (params.listOfNodesToSubmap.indexOf('' + transferredNode.outboundDependencies[k]) === -1) {
                         var dependencyAlreadyEstablished = false;
                         submapNode.outboundDependencies.push(transferredNode.outboundDependencies[k]); // the submap node will replace the transfered node
+
+                        // transfer the info about the connection
+                        submapNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]] = transferredNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]];
+                        delete transferredNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]];
+
                         transferredNode.outboundDependencies.splice(k, 1); // and the node will loose that connection
                     }
                 }
@@ -365,6 +379,11 @@ module.exports = function(conn) {
                 for (var kk = transferredNode.inboundDependencies.length - 1; kk >= 0; kk--) {
                     if (params.listOfNodesToSubmap.indexOf('' + transferredNode.inboundDependencies[kk]) === -1) {
                         submapNode.inboundDependencies.push(transferredNode.inboundDependencies[kk]);
+
+                        // transfer the info about the connection
+                        submapNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]] = transferredNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]];
+                        delete transferredNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]];
+
                         transferredNode.inboundDependencies.splice(kk, 1);
                     }
                 }
