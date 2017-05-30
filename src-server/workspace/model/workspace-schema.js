@@ -23,6 +23,7 @@ var workspace = {};
 
 
 var defaultCapabilityCategories = [
+  { name:'Portfolio', capabilities : []},
   { name:'Customer Service', capabilities : []},
   { name:'Administrative', capabilities : []},
   { name:'Quality', capabilities : []},
