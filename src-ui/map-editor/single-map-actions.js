@@ -375,6 +375,54 @@ var SingleMapActions = {
       });
     },
 
+    openEditConnectionDialog: function(workspaceId, mapId, sourceId, targetId, label, description, type){
+      if(!sourceId || !targetId){
+        console.error('no data to open the dialog');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_EDIT_CONNECTION_DIALOG,
+          data: {
+            workspaceId: workspaceId,
+            mapId: mapId,
+            sourceId: sourceId,
+            targetId: targetId,
+            label:label,
+            description:description,
+            type:type
+          }
+      });
+    },
+
+    closeEditConnectionDialog: function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_CONNECTION_DIALOG,
+      });
+    },
+
+    updateConnection: function(workspaceId, mapId, sourceId, targetId, label, description, type) {
+      if(!sourceId || !targetId){
+        console.error('no data to open the dialog');
+        return;
+      }
+      if(!(type !== undefined || label || description)){
+        console.warn('missing connection data', type, label, description);
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.UPDATE_CONNECTION,
+          data: {
+            workspaceId: workspaceId,
+            mapId: mapId,
+            sourceId: sourceId,
+            targetId: targetId,
+            label:label,
+            description:description,
+            type:type
+          }
+      });
+    },
+
     deleteConnection : function(workspaceId, mapId, sourceId, targetId){
       if(!workspaceId || !mapId || !sourceId || !targetId){
         console.error('not enough of data to create connection');

@@ -39,6 +39,10 @@ export default class SingleWorkspaceStore extends Store {
           open : false
       };
 
+      this.connectionDialog = {
+          open : false
+      };
+
       this.editNodeDialog = {
           open : false
       };
@@ -218,6 +222,26 @@ export default class SingleWorkspaceStore extends Store {
         case ActionTypes.RECORD_CONNECTION:
           this.recordConnection(action.data);
           break;
+        case ActionTypes.OPEN_EDIT_CONNECTION_DIALOG:
+          this.connectionDialog.open = true;
+          this.connectionDialog.workspaceId = action.data.workspaceId;
+          this.connectionDialog.mapId = action.data.mapId;
+          this.connectionDialog.sourceId = action.data.sourceId;
+          this.connectionDialog.targetId = action.data.targetId;
+          this.connectionDialog.label = action.data.label;
+          this.connectionDialog.description = action.data.description;
+          this.connectionDialog.type = action.data.type;
+          this.emitChange();
+          break;
+        case ActionTypes.CLOSE_EDIT_CONNECTION_DIALOG:
+          this.connectionDialog = {
+            open: false
+          };
+          this.emitChange();
+          break;
+        case ActionTypes.UPDATE_CONNECTION:
+          this.updateConnection(action.data);
+          break;
         case ActionTypes.DELETE_CONNECTION:
           this.deleteConnection(action.data);
           break;
@@ -342,6 +366,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getEditActionDialogState(){
     return this.actionDialog;
+  }
+
+  getEditConnectionDialogState(){
+    return this.connectionDialog;
   }
 
   getNodeEditDialogState(){
@@ -730,6 +758,27 @@ export default class SingleWorkspaceStore extends Store {
           id: this.getMapId()
         });
       }.bind(this)
+    });
+  }
+
+  updateConnection(data){
+    var actionData = {};
+    $.ajax({
+        type: 'PUT',
+        url:  '/api/workspace/' + this.getWorkspaceId() +
+              '/map/' + this.getMapId() +
+              '/node/' + data.sourceId +
+              '/outgoingDependency/' + data.targetId,
+        data: data,
+        success: function(data2) {
+          this.map = data2;
+          this.connectionDialog = {open:false};
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
     });
   }
 

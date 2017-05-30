@@ -38,6 +38,9 @@ module.exports  = keyMirror({
       DELETE_ACTION : null,
 
       RECORD_CONNECTION : null,
+      OPEN_EDIT_CONNECTION_DIALOG : null,
+      CLOSE_EDIT_CONNECTION_DIALOG : null,
+      UPDATE_CONNECTION : null,
       DELETE_CONNECTION : null,
 
 

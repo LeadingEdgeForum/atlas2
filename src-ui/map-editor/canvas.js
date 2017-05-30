@@ -235,10 +235,15 @@ export default class MapCanvas extends React.Component {
               _node.outboundDependencies.length :
               0;
           for (var j = 0; j < iterator_length; j++) {
+              var dependencyData = _node.dependencyData ?  _node.dependencyData.outbound : null;
+              if(!dependencyData) {
+                dependencyData = {};
+              }
               modelConnections.push({
                   source: _node._id,
                   target: _node.outboundDependencies[j],
-                  scope: jsPlumb.Defaults.Scope
+                  scope: jsPlumb.Defaults.Scope,
+                  dependencyData : dependencyData[_node.outboundDependencies[j]] ? dependencyData[_node.outboundDependencies[j]] : {}
               });
           }
       }
@@ -256,17 +261,28 @@ export default class MapCanvas extends React.Component {
                   //we found graphic equivalent, so we ignore further processing of this element
                   var existing = canvasConnections.splice(canvasIterator, 1)[0];
                   existing.removeOverlay("menuOverlay");
+                  existing.removeOverlay("label");
                   var overlaysToReadd = this.getOverlays(null, [
-                          ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
-                      ]
+                          ["pencil", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
+                                            this.props.workspaceID,
+                                            this.props.mapID,
+                                            currentModel.source,
+                                            currentModel.target,
+                                            currentModel.dependencyData.label,
+                                            currentModel.dependencyData.description,
+                                            currentModel.dependencyData.type)],
+                          ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)],
+                      ], currentModel.dependencyData.label
                   );
                   for (var zz = 0; zz < overlaysToReadd.length; zz++) {
                       existing.addOverlay(overlaysToReadd[zz]);
                   }
                   if(existing.___overlayVisible){
+                      existing.getOverlay("label").hide();
                       existing.getOverlay("menuOverlay").show();
                   } else {
                       existing.getOverlay("menuOverlay").hide();
+                      existing.getOverlay("label").show();
                   }
 
               }
@@ -287,11 +303,20 @@ export default class MapCanvas extends React.Component {
                       endpointOptions.paintStyle, endpointOptions.paintStyle
                   ],
                   overlays: this.getOverlays(null, [
+                    ["pencil", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
+                                      this.props.workspaceID,
+                                      this.props.mapID,
+                                      currentModel.source,
+                                      currentModel.target,
+                                      currentModel.dependencyData.label,
+                                      currentModel.dependencyData.description,
+                                      currentModel.dependencyData.type)],
                       ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
-                  ])
+                  ], currentModel.dependencyData.label)
               });
               connection.___overlayVisible = false;
               connection.getOverlay("menuOverlay").hide();
+              connection.getOverlay("label").show();
               connection.bind('click', this.overlayClickHandler);
           }
       }
