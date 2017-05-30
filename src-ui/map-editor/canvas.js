@@ -15,6 +15,8 @@ import {endpointOptions, actionEndpointOptions} from './component-styles';
 
 //remove min to fix connections
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
+jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
@@ -285,6 +287,15 @@ export default class MapCanvas extends React.Component {
                       existing.getOverlay("label").show();
                   }
 
+                  if(currentModel.dependencyData.type === '20'){
+                    existing.clearTypes();
+                    existing.addType('flow');
+                  } else if (currentModel.dependencyData.type === '10') {
+                    existing.clearTypes();
+                    existing.addType('constraint');
+                  } else {
+                    existing.clearTypes();
+                  }
               }
           }
           // model connection not found on canvas, create it
@@ -318,10 +329,21 @@ export default class MapCanvas extends React.Component {
               connection.getOverlay("menuOverlay").hide();
               connection.getOverlay("label").show();
               connection.bind('click', this.overlayClickHandler);
+              if(currentModel.dependencyData.type === '20'){
+                connection.clearTypes();
+                connection.addType('flow');
+              } else if (currentModel.dependencyData.type === '10') {
+                connection.clearTypes();
+                connection.addType('constraint');
+              } else {
+                connection.clearTypes();
+              }
           }
       }
       //clean up unnecessary canvas connection (no counterpart in model)
       for (var z = 0; z < canvasConnections.length; z++) {
+          canvasConnections[z].removeOverlay("menuOverlay");
+          canvasConnections[z].removeOverlay("label");
           jsPlumb.deleteConnection(canvasConnections[z]);
       }
 
