@@ -351,10 +351,7 @@ module.exports = function(conn) {
                         notTransferredNode.outboundDependencies.set(j, submapNode);
                         // transfer the info about the connection
 
-                        ensureDepedencyData(notTransferredNode);
-                        notTransferredNode.dependencyData.outbound['' + submapNodeID] = notTransferredNode.dependencyData.outbound['' + notTransferredNode.outboundDependencies[j]];
-                        delete notTransferredNode.dependencyData.outbound['' + notTransferredNode.outboundDependencies[j]];
-                        notTransferredNode.markModified('dependencyData');
+                        notTransferredNode.transferDependencyData(notTransferredNode.outboundDependencies[j], submapNodeID);
 
                         nodesToSave.push(notTransferredNode);
                     }
@@ -367,10 +364,7 @@ module.exports = function(conn) {
                         notTransferredNode.inboundDependencies.set(jjj, submapNode);
 
                         // transfer the info about the connection
-                        ensureDepedencyData(notTransferredNode);
-                        notTransferredNode.dependencyData.inbound['' + submapNodeID] = notTransferredNode.dependencyData.inbound['' + notTransferredNode.inboundDependencies[jjj]];
-                        delete notTransferredNode.dependencyData.inbound['' + notTransferredNode.inboundDependencies[jjj]];
-                        notTransferredNode.markModified('dependencyData');
+                        notTransferredNode.transferDependencyData(notTransferredNode.inboundDependencies[jjj], submapNodeID);
 
                         nodesToSave.push(notTransferredNode);
                     }
@@ -388,11 +382,8 @@ module.exports = function(conn) {
                         var dependencyAlreadyEstablished = false;
                         submapNode.outboundDependencies.push(transferredNode.outboundDependencies[k]); // the submap node will replace the transfered node
 
-                        // transfer the info about the connection
-                        ensureDepedencyData(submapNode);
-                        submapNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]] = transferredNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]];
-                        delete transferredNode.dependencyData.outbound['' + transferredNode.outboundDependencies[k]];
-                        transferredNode.markModified('dependencyData');
+                        // transfer the info about the connection, both must be saved later
+                        submapNode.stealDependencyData(transferredNode, transferredNode.outboundDependencies[k]);
 
                         transferredNode.outboundDependencies.splice(k, 1); // and the node will loose that connection
                     }
@@ -403,11 +394,8 @@ module.exports = function(conn) {
                     if (params.listOfNodesToSubmap.indexOf('' + transferredNode.inboundDependencies[kk]) === -1) {
                         submapNode.inboundDependencies.push(transferredNode.inboundDependencies[kk]);
 
-                        // transfer the info about the connection
-                        ensureDepedencyData(submapNode);
-                        submapNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]] = transferredNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]];
-                        delete transferredNode.dependencyData.inbound['' + transferredNode.inboundDependencies[kk]];
-                        transferredNode.markModified('dependencyData');
+                        // steal the info about the connection, both must be saved later
+                        submapNode.stealDependencyData(transferredNode, transferredNode.inboundDependencies[kk]);
 
                         transferredNode.inboundDependencies.splice(kk, 1);
                     }

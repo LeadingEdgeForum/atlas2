@@ -280,6 +280,62 @@ module.exports = function(conn){
         return q.allSettled(promises);
     };
 
+    //dependency switch in one node
+    NodeSchema.methods.transferDependencyData = function(sourceId, targetId) {
+        sourceId = '' + sourceId;
+        targetId = '' + targetId;
+        if(!this.dependencyData){
+          return; // no data, quit happily
+        }
+        if(this.dependencyData.inbound && this.dependencyData.inbound[sourceId]){
+          this.dependencyData.inbound[targetId] = this.dependencyData.inbound[sourceId];
+          delete this.dependencyData.inbound[sourceId];
+          this.markModified('dependencyData');
+        }
+        if(this.dependencyData.outbound && this.dependencyData.outbound[sourceId]){
+          this.dependencyData.outbound[targetId] = this.dependencyData.outbound[sourceId];
+          delete this.dependencyData.outbound[sourceId];
+          this.markModified('dependencyData');
+        }
+    };
+
+    //dependency steal from different node
+    NodeSchema.methods.stealDependencyData = function(node, sourceId) {
+        var targetId = '' + node._id;
+        sourceId = '' + sourceId;
+
+        if(!node || !node.dependencyData){
+          return; //nothing to steal, quit
+        }
+        if(!this.dependencyData){ // no data placeholder, create it
+          this.dependencyData = {
+            inbound : {},
+            outbound : {}
+          };
+          this.markModified('dependencyData');
+        }
+        if(!this.dependencyData.inbound){
+          this.dependencyData.inbound = {};
+          this.markModified('dependencyData');
+        }
+        if(!this.dependencyData.outbound){
+          this.dependencyData.outbound = {};
+          this.markModified('dependencyData');
+        }
+        if(node.dependencyData.inbound && node.dependencyData.inbound[sourceId]){
+          this.dependencyData.inbound[targetId] = node.dependencyData.inbound[sourceId];
+          delete node.dependencyData.inbound[sourceId];
+          this.markModified('dependencyData');
+          node.markModified('dependencyData');
+        }
+        if(node.dependencyData.outbound && node.dependencyData.outbound[sourceId]){
+          this.dependencyData.outbound[targetId] = node.dependencyData.outbound[sourceId];
+          delete node.dependencyData.outbound[sourceId];
+          this.markModified('dependencyData');
+          node.markModified('dependencyData');
+        }
+    };
+
     NodeSchema.pre('remove', function(next) {
         modelLogger.trace('pre remove on node', this._id);
         var Node = require('./node-schema')(conn);
