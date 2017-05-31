@@ -414,6 +414,8 @@ module.exports = function(conn) {
         for (var z = 0; z < totalNodesToSave.length; z++) {
             promises.push(totalNodesToSave[z].save());
         }
+        
+        removeDuplicatesDependencies([submapNode]);
         promises.push(submapNode.save());
         promises.push(submap.save());
         promises.push(_this.workspace.save());
