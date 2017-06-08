@@ -305,7 +305,7 @@ export default class MapCanvas extends React.Component {
                   target: currentModel.target,
                   scope: jsPlumb.Defaults.Scope,
                   anchors: [
-                      "BottomCenter", "TopCenter"
+                      "Center", "Center"
                   ],
                   paintStyle: endpointOptions.connectorStyle,
                   endpoint: endpointOptions.endpoint,
