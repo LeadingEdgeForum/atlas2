@@ -8,6 +8,8 @@ var mongoDBService = appEnv.getService("mongo-for-atlas");
 
 var connectionURL = null;
 var options = {};
+
+
 if(mongoDBService && mongoDBService.credentials && (mongoDBService.credentials.uri ||mongoDBService.credentials.url)){
   logger.trace('MongodDB service found...');
   if(mongoDBService.credentials && (mongoDBService.credentials.uri || mongoDBService.credentials.url)){
@@ -29,4 +31,5 @@ if(mongoDBService && mongoDBService.credentials && (mongoDBService.credentials.u
     logger.warn('mongoDB service not configured (or configured improperly), defaulting to local database');
     connectionURL = 'mongodb://localhost:27017/atlas2';
 }
+
 module.exports = {connectionURL:connectionURL, options:options};

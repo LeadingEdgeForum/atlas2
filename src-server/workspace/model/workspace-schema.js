@@ -14,6 +14,10 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var q = require('q');
 var ObjectId = mongoose.Types.ObjectId;
+var String = Schema.Types.String;
+var Boolean = Schema.Types.Boolean;
+var Number = Schema.Types.Number;
+
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work
@@ -33,40 +37,75 @@ var defaultCapabilityCategories = [
   { name:'Finances', capabilities : []}
 ];
 
+function migrator(doc, fn){
+  if (!doc.schemaVersion) {
+    doc.schemaVersion = 1;
+    doc.timeline = [{
+      name: 'Now',
+      description: 'Happening right now',
+      current : true,
+      maps: doc._doc.maps,
+      capabilityCategories : doc._doc.capabilityCategories
+    }];
+    delete doc._doc.maps;
+    delete doc._doc.capabilityCategories;
+  }
+  fn();
+}
+
 module.exports = function(conn) {
+
     if (workspace[conn]) {
         return workspace[conn];
     }
+
     var workspaceSchema = new Schema({
-        name : Schema.Types.String,
-        purpose : Schema.Types.String,
-        description : Schema.Types.String,
+        name : String,
+        purpose : String,
+        description : String,
         owner : [ {
-            type : Schema.Types.String
+            type : String
         } ],
-        archived : Schema.Types.Boolean,
-        maps : [ {
-            type : Schema.Types.ObjectId,
-            ref : 'WardleyMap'
-        } ],
-        capabilityCategories : [ {
-          name : Schema.Types.String,
-          capabilities : [ {
-            aliases: [{
-              nodes: [{
-                  type: Schema.Types.ObjectId,
-                  ref: 'Node'
-              }]
+        archived : Boolean,
+        timeline : [ {
+            name: String,
+            description : String,
+            current : Boolean,
+            maps: [{
+              type: Schema.Types.ObjectId,
+              ref: 'WardleyMap'
             }],
-            marketreferences : [ {
-              name : Schema.Types.String,
-              description : Schema.Types.String,
-              evolution : Schema.Types.Number
-            }]
-          } ]
-        } ]
+            capabilityCategories : [ {
+              name : String,
+              capabilities : [ {
+                aliases: [{
+                  nodes: [{
+                      type: Schema.Types.ObjectId,
+                      ref: 'Node'
+                  }]
+                }],
+                marketreferences : [ {
+                  name : String,
+                  description : String,
+                  evolution : Number
+                }]
+              } ]
+            } ]
+          }
+        ],
+        schemaVersion : Number
     });
 
+    // always update the schema to the latest possible version
+    workspaceSchema.post('init', migrator);
+
+    workspaceSchema.virtual('nowId').get(function(){
+      for(var i = 0; i < this.timeline.length; i++){
+        if(this.timeline[i].current){
+          return this.timeline[i]._id;
+        }
+      }
+    });
 
     workspaceSchema.statics.initWorkspace = function(name, description, purpose, owner) {
         if (!name) {
@@ -85,47 +124,92 @@ module.exports = function(conn) {
             purpose: purpose,
             owner: [owner],
             archived: false,
-            capabilityCategories : defaultCapabilityCategories
+            timeline : [{
+              name : 'Now',
+              description : 'Representation of current reality',
+              current : true,
+              maps : [],
+              capabilityCategories : defaultCapabilityCategories
+            }],
+            schemaVersion : 1
         });
         return wkspc.save();
     };
 
-    workspaceSchema.methods.createMap = function(editor, user, purpose, responsiblePerson) {
+    workspaceSchema.methods.insertMapIdAt = function(mapId, timesliceId) {
         var WardleyMap = require('./map-schema')(conn);
         var Workspace = require('./workspace-schema')(conn);
-
-        if (!user) {
-            user = "your competitor";
+        if(!timesliceId){
+          timesliceId = this.nowId;
         }
-        if (!purpose) {
-            purpose = "be busy with nothing";
+        for(var i = 0; i < this.timeline.length; i++){
+          if(this.timeline[i]._id.equals(timesliceId)){
+            this.timeline[i].maps.push(mapId);
+            return this.save();
+          }
         }
-        var newId = new ObjectId();
-        this.maps.push(newId);
-        return this.save()
-            .then(function(workspace) {
-                return new WardleyMap({
-                    user: user,
-                    purpose: purpose,
-                    workspace: workspace._id,
-                    archived: false,
-                    responsiblePerson: responsiblePerson,
-                    _id: newId
-                }).save();
-            });
+        throw new Error('Specified timeslice ' + timesliceId + ' is not present in workspace ' + this._id);
     };
 
-    workspaceSchema.methods.findUnprocessedNodes = function(){
+    /*TODO:
+     1. create a map
+      a. if specified where - add it there and all future states
+      b. if not specified where, add it to latest and all future states
+     2. create a timeslice (part of the timeline)
+      a. if specified parent timeslice, add it after
+      b. copy all maps from the previous time splice
+      c. ensure they are interconnected
+     3. delete a map
+      a. if there is just one timeslice, delete the map
+      b. if there is more than one timeslice, delete the map from the last one
+      c. if the map belongs to the past, do not delete it
+     4. delete timeslice (should it be possible at all)?
+    */
+    workspaceSchema.methods.createAMap = function(params, timesliceId) {
+      var WardleyMap = require('./map-schema')(conn);
+      var Workspace = require('./workspace-schema')(conn);
+
+      if (!params.user) {
+        params.user = "your competitor";
+      }
+      if (!params.purpose) {
+        params.purpose = "be busy with nothing";
+      }
+      var newId = new ObjectId();
+      console.log('nn' + newId, newId.value, newId.oid);
+      return this.insertMapIdAt(newId, timesliceId)
+        .then(function(workspace) {
+          return new WardleyMap({
+            user: params.user,
+            purpose: params.purpose,
+            workspace: workspace._id,
+            archived: false,
+            timesliceId : timesliceId ? new ObjectId(timesliceId) : workspace.nowId,
+            responsiblePerson: params.responsiblePerson,
+            _id: newId
+          }).save();
+        });
+    };
+
+    workspaceSchema.methods.findUnprocessedNodes = function(timesliceId){
       var WardleyMap = require('./map-schema')(conn);
       var Node = require('./node-schema')(conn);
 
+      if(!timesliceId){
+        timesliceId = this.nowId;
+      }
+
+      console.log('timesliceId', timesliceId);
+
       return WardleyMap
-          .find({ // find all undeleted maps within workspace
+          .find({ // find all undeleted maps within workspace and timeslice
               archived: false,
-              workspace: this._id
+              workspace: this._id,
+              timesliceId : timesliceId
           })
           .select('user purpose name')
           .then(function(maps) {
+              console.log('maps', maps);
               var loadPromises = [];
               maps.forEach(function(cv, i, a) {
                   loadPromises.push(Node
@@ -148,11 +232,25 @@ module.exports = function(conn) {
           });
     };
 
-    workspaceSchema.methods.findProcessedNodes = function() {
-        console.log(this.capabilityCategories);
+    workspaceSchema.methods.getTimeSlice = function(timesliceId){
+      if(!timesliceId){
+        timesliceId = this.nowId;
+      }
+      for(var i = 0; i < this.timeline.length; i++){
+        if(this.timeline[i]._id.equals(timesliceId)){
+          return  this.timeline[i];
+        }
+      }
+      return null;
+    };
+
+    workspaceSchema.methods.findProcessedNodes = function(timesliceId) {
         var _this = this;
+
+        var timeSlice = this.getTimeSlice(timesliceId);
+
         //this is a temporary mechanism that should be removed when the database is properly migrated
-        if (!this.capabilityCategories[0].name) { // rough check, no name -> needs migration
+        if (!timeSlice.capabilityCategories[0].name) { // rough check, no name -> needs migration
             var Node = require('./node-schema')(conn);
             return Node.update({
                 workspace: _this.id
@@ -161,26 +259,28 @@ module.exports = function(conn) {
             }, {
                 safe: true
             }).exec().then(function() {
-                _this.capabilityCategories = defaultCapabilityCategories;
+                timeSlice.capabilityCategories = defaultCapabilityCategories;
                 return _this.save();
             });
         } else {
             return this
                 .populate({
-                    path: 'capabilityCategories.capabilities.aliases.nodes',
+                    path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                     model: 'Node',
                 }).execPopulate();
         }
     };
 
-    workspaceSchema.methods.createNewCapabilityAndAliasForNode = function(categoryID, nodeID) {
+    workspaceSchema.methods.createNewCapabilityAndAliasForNode = function(timesliceId, categoryID, nodeID) {
         var Node = require('./node-schema')(conn);
 
         var promises = [];
         var capabilityCategory = null;
-        for (var i = 0; i < this.capabilityCategories.length; i++) {
-            if (categoryID.equals(this.capabilityCategories[i]._id)) {
-                capabilityCategory = this.capabilityCategories[i];
+        var timeSlice = this.getTimeSlice(timesliceId);
+
+        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+            if (categoryID.equals(timeSlice.capabilityCategories[i]._id)) {
+                capabilityCategory = timeSlice.capabilityCategories[i];
             }
         }
         capabilityCategory.capabilities.push({
@@ -198,46 +298,52 @@ module.exports = function(conn) {
         }).exec());
         return q.allSettled(promises).then(function(res) {
           return res[0].value.populate({
-              path: 'capabilityCategories.capabilities.aliases.nodes',
+              path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
               model: 'Node',
           }).execPopulate();
         });
     };
 
-    workspaceSchema.methods.editCategory = function(capabilityCategoryID, name){
-      for (var i = this.capabilityCategories.length - 1; i > -1 ; i--) {
-          if (capabilityCategoryID.equals(this.capabilityCategories[i]._id)) {
-              this.capabilityCategories[i].name = name;
+    workspaceSchema.methods.editCategory = function(timesliceId, capabilityCategoryID, name){
+      var timeSlice = this.getTimeSlice(timesliceId);
+
+      for (var i = timeSlice.capabilityCategories.length - 1; i > -1 ; i--) {
+          if (capabilityCategoryID.equals(timeSlice.capabilityCategories[i]._id)) {
+              timeSlice.capabilityCategories[i].name = name;
               break;
           }
       }
       var promises = [this.save()];
       return q.allSettled(promises).then(function(res) {
           return res[0].value.populate({
-              path: 'capabilityCategories.capabilities.aliases.nodes',
+              path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
               model: 'Node',
           }).execPopulate();
       });
     };
 
-    workspaceSchema.methods.createCategory = function(name){
-      this.capabilityCategories.push({ name:name, capabilities : []});
+    workspaceSchema.methods.createCategory = function(timesliceId, name){
+      var timeSlice = this.getTimeSlice(timesliceId);
+
+      timeSlice.capabilityCategories.push({ name:name, capabilities : []});
       var promises = [this.save()];
       return q.allSettled(promises).then(function(res) {
           return res[0].value.populate({
-              path: 'capabilityCategories.capabilities.aliases.nodes',
+              path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
               model: 'Node',
           }).execPopulate();
       });
     };
 
-    workspaceSchema.methods.deleteCategory = function(capabilityCategoryID){
+    workspaceSchema.methods.deleteCategory = function(timesliceId, capabilityCategoryID){
+      var timeSlice = this.getTimeSlice(timesliceId);
+
       var Node = require('./node-schema')(conn);
         var promises = [];
         var capabilityCategoryToRemove = null;
-        for (var i = this.capabilityCategories.length - 1; i > -1 ; i--) {
-            if (capabilityCategoryID.equals(this.capabilityCategories[i]._id)) {
-                capabilityCategoryToRemove = this.capabilityCategories.splice(i,1)[0];
+        for (var i = timeSlice.capabilityCategories.length - 1; i > -1 ; i--) {
+            if (capabilityCategoryID.equals(timeSlice.capabilityCategories[i]._id)) {
+                capabilityCategoryToRemove = timeSlice.capabilityCategories.splice(i,1)[0];
                 promises.push(this.save());
                 break;
             }
@@ -268,22 +374,24 @@ module.exports = function(conn) {
 
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node',
             }).execPopulate();
         });
 
     };
 
-    workspaceSchema.methods.createNewAliasForNodeInACapability = function(capabilityID, nodeID) {
+    workspaceSchema.methods.createNewAliasForNodeInACapability = function(timesliceId, capabilityID, nodeID) {
+        var timeSlice = this.getTimeSlice(timesliceId);
+
         var Node = require('./node-schema')(conn);
 
         var promises = [];
         var capability = null;
-        for (var i = 0; i < this.capabilityCategories.length; i++) {
-            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
-                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
-                    capability = this.capabilityCategories[i].capabilities[j];
+        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = timeSlice.capabilityCategories[i].capabilities[j];
                 }
             }
         }
@@ -300,19 +408,21 @@ module.exports = function(conn) {
         }).exec());
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node',
             }).execPopulate();
         });
     };
 
-    workspaceSchema.methods.createNewMarketReferenceInCapability = function(capabilityID, name, description, evolution) {
+    workspaceSchema.methods.createNewMarketReferenceInCapability = function(timesliceId, capabilityID, name, description, evolution) {
+      var timeSlice = this.getTimeSlice(timesliceId);
+
         var promises = [];
         var capability = null;
-        for (var i = 0; i < this.capabilityCategories.length; i++) {
+        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
             for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
-                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
-                    capability = this.capabilityCategories[i].capabilities[j];
+                if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = timeSlice.capabilityCategories[i].capabilities[j];
                 }
             }
         }
@@ -324,19 +434,21 @@ module.exports = function(conn) {
         promises.push(this.save());
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node',
             }).execPopulate();
         });
     };
 
-    workspaceSchema.methods.deleteMarketReferenceInCapability = function(capabilityID, marketReferenceId) {
+    workspaceSchema.methods.deleteMarketReferenceInCapability = function(timesliceId, capabilityID, marketReferenceId) {
+      var timeSlice = this.getTimeSlice(timesliceId);
+
         var promises = [];
         var capability = null;
-        for (var i = 0; i < this.capabilityCategories.length; i++) {
-            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
-                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
-                    capability = this.capabilityCategories[i].capabilities[j];
+        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = timeSlice.capabilityCategories[i].capabilities[j];
                     for(var k = capability.marketreferences.length - 1; k >=0; k--){
                       if(capability.marketreferences[k]._id.equals(marketReferenceId)){
                         capability.marketreferences.splice(k,1);
@@ -350,19 +462,21 @@ module.exports = function(conn) {
 
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node',
             }).execPopulate();
         });
     };
 
-    workspaceSchema.methods.updateMarketReferenceInCapability = function(capabilityID, marketReferenceId, name, description, evolution) {
+    workspaceSchema.methods.updateMarketReferenceInCapability = function(timesliceId, capabilityID, marketReferenceId, name, description, evolution) {
+      var timeSlice = this.getTimeSlice(timesliceId);
+
         var promises = [];
         var capability = null;
-        for (var i = 0; i < this.capabilityCategories.length; i++) {
-            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
-                if (capabilityID.equals(this.capabilityCategories[i].capabilities[j]._id)) {
-                    capability = this.capabilityCategories[i].capabilities[j];
+        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+                if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+                    capability = timeSlice.capabilityCategories[i].capabilities[j];
                     for(var k = capability.marketreferences.length - 1; k >=0; k--){
                       if(capability.marketreferences[k]._id.equals(marketReferenceId)){
                         capability.marketreferences[k].name = name;
@@ -378,22 +492,24 @@ module.exports = function(conn) {
 
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node',
             }).execPopulate();
         });
     };
 
-    workspaceSchema.methods.addNodeToAlias = function(aliasID, nodeID) {
+    workspaceSchema.methods.addNodeToAlias = function(timesliceId,aliasID, nodeID) {
+        var timeSlice = this.getTimeSlice(timesliceId);
+
         var Node = require('./node-schema')(conn);
 
         var promises = [];
         var alias = null;
-        for (var i = 0; i < this.capabilityCategories.length; i++) {
-          for(var j = 0; j < this.capabilityCategories[i].capabilities.length; j++){
-            for(var k = 0; k < this.capabilityCategories[i].capabilities[j].aliases.length; k++){
-              if (aliasID.equals(this.capabilityCategories[i].capabilities[j].aliases[k]._id)) {
-                  alias = this.capabilityCategories[i].capabilities[j].aliases[k];
+        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+          for(var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++){
+            for(var k = 0; k < timeSlice.capabilityCategories[i].capabilities[j].aliases.length; k++){
+              if (aliasID.equals(timeSlice.capabilityCategories[i].capabilities[j].aliases[k]._id)) {
+                  alias = timeSlice.capabilityCategories[i].capabilities[j].aliases[k];
               }
             }
           }
@@ -409,16 +525,17 @@ module.exports = function(conn) {
         }).exec());
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node'
             }).execPopulate();
         });
     };
 
-    workspaceSchema.methods.getNodeUsageInfo = function(nodeID) {
+    workspaceSchema.methods.getNodeUsageInfo = function(timesliceId, nodeID) {
+        var timeSlice = this.getTimeSlice(timesliceId);
         var _this = this;
         return this.populate({
-                path: 'capabilityCategories.capabilities.aliases.nodes',
+                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
                 model: 'Node',
                 populate: {
                     model: 'WardleyMap',
@@ -428,12 +545,12 @@ module.exports = function(conn) {
             .execPopulate()
             .then(function(workspace) {
                 var capability = null;
-                for (var i = 0; i < workspace.capabilityCategories.length; i++) {
-                    for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
-                        for (var k = 0; k < workspace.capabilityCategories[i].capabilities[j].aliases.length; k++) {
-                            for (var l = 0; l < workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
-                                if (nodeID.equals(workspace.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
-                                    capability = workspace.capabilityCategories[i].capabilities[j];
+                for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+                    for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+                        for (var k = 0; k < timeSlice.capabilityCategories[i].capabilities[j].aliases.length; k++) {
+                            for (var l = 0; l < timeSlice.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
+                                if (nodeID.equals(timeSlice.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
+                                    capability = timeSlice.capabilityCategories[i].capabilities[j];
                                 }
                             }
                         }
@@ -441,9 +558,76 @@ module.exports = function(conn) {
                 }
                 return capability;
             });
+          };
+
+      workspaceSchema.methods.removeNodeUsageInfo = function(node) {
+          var WardleyMap = require('./map-schema')(conn);
+          var workspace = this;
+          var dependencyToRemove = node._id;
+
+          return WardleyMap.findById(node.parentMap._id || node.parentMap).exec()
+            .then(function(parentMap){
+              var timeSliceId = parentMap.timesliceId;
+              var timeSlice = workspace.getTimeSlice(timeSliceId);
+
+              for (var capabilityCategoriesCounter = timeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
+                  var capabilityCategory = timeSlice.capabilityCategories[capabilityCategoriesCounter];
+                  for (var capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
+                      var capability = capabilityCategory.capabilities[capabilitiesCounter];
+                      for (var aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
+                          var alias = capability.aliases[aliasCounter];
+                          for (var nodeCounter = alias.nodes.length - 1; nodeCounter >= 0; nodeCounter--) {
+                              var node = alias.nodes[nodeCounter];
+                              if (node._id === dependencyToRemove) {
+                                  alias.nodes.splice(nodeCounter, 1);
+                                  break;
+                              }
+                          }
+                          if (alias.nodes.length === 0) {
+                              capability.aliases.splice(aliasCounter, 1);
+                          }
+                      }
+                      if (capability.aliases.length === 0) {
+                          capabilityCategory.capabilities.splice(capabilitiesCounter, 1);
+                      }
+                  }
+              }
+              return workspace.save();
+            });
 
     };
+
+    workspaceSchema.methods.removeCapability = function(timesliceId, capabilityID) {
+      var Node = require('./node-schema')(conn);
+      var timeSlice = this.getTimeSlice(timesliceId);
+
+      var promises = [];
+      var capability = null;
+      for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+          for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+              if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+                  capability = timeSlice.capabilityCategories[i].capabilities[j];
+                  timeSlice.capabilityCategories[i].capabilities.splice(j, 1);
+                  break;
+              }
+          }
+      }
+      promises.push(this.save());
+      for (var k = 0; k < capability.aliases.length; k++) {
+          for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
+              promises.push(Node.findOne({
+                  _id: capability.aliases[k].nodes[l]
+              }).exec().then(function(node){
+                node.processedForDuplication = false;
+                return node.save();
+              }));
+          }
+      }
+      return q.all(promises);
+
+  };
 
     workspace[conn] = conn.model('Workspace', workspaceSchema);
     return workspace[conn];
 };
+module.exports.migrator = migrator;

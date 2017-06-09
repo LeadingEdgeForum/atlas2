@@ -22,9 +22,7 @@ var modelLogger = require('./../../log').getLogger('NodeSchema');
 var q = require('q');
 
 var node = {};
-/**
- * see capability-category-schema for explanations.
- */
+
 
 var ensureDepedencyData = function(node){
   if(!node.dependencyData){
@@ -97,10 +95,11 @@ module.exports = function(conn){
       this.type = 'SUBMAP';
       var _this = this;
       if (refId) {
+        // TODO: prevent connection from multiple time slices
         this.submapID = refId;
         return this.save();
       } else {
-        return this.populate('workspace').execPopulate()
+        return this.populate('workspace parentMap').execPopulate()
           .then(function(node) {
             //create structures
             var WardleyMap = require('./map-schema')(conn);
@@ -110,6 +109,7 @@ module.exports = function(conn){
               name: _this.name,
               isSubmap: true,
               workspace: _this.workspace,
+              timesliceId: _this.parentMap.timesliceId,
               archived: false,
               responsiblePerson: _this.responsiblePerson
             });
@@ -388,32 +388,13 @@ module.exports = function(conn){
         q.all(promises)
             .then(function(results) {
                 var Workspace = require('./workspace-schema')(conn);
-                Workspace.findById(workspaceID).exec(function(err, wkspc) {
-                    for (var capabilityCategoriesCounter = wkspc.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
-                        var capabilityCategory = wkspc.capabilityCategories[capabilityCategoriesCounter];
-                        for (var capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
-                            var capability = capabilityCategory.capabilities[capabilitiesCounter];
-                            for (var aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
-                                var alias = capability.aliases[aliasCounter];
-                                for (var nodeCounter = alias.nodes.length - 1; nodeCounter >= 0; nodeCounter--) {
-                                    var node = alias.nodes[nodeCounter];
-                                    if (node._id === dependencyToRemove) {
-                                        alias.nodes.splice(nodeCounter, 1);
-                                        break;
-                                    }
-                                }
-                                if (alias.nodes.length === 0) {
-                                    capability.aliases.splice(aliasCounter, 1);
-                                }
-                            }
-                            if (capability.aliases.length === 0) {
-                                capabilityCategory.capabilities.splice(capabilitiesCounter, 1);
-                            }
-                        }
-                    }
-                    wkspc.save(next);
+                return Workspace.findById(workspaceID).exec()
+                .then(function(workspace){
+                  return workspace.removeNodeUsageInfo(_this);
                 });
-                return true;
+            })
+            .then(function(savedWorkspace){
+                next();
             }, function(err) {
                 modelLogger.error(err);
                 next(err);

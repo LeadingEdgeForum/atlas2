@@ -137,7 +137,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               _id: req.params.workspaceID,
               archived: false
           })
-          .populate('maps capabilityCategories')
+          .populate('timeline timeline.maps timeline.capabilityCategories')
           .exec(function(err, result) {
               if (err) {
                   return res.send(500);
@@ -362,7 +362,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             res.status(500).json(err2);
           }
           Workspace.populate(result2, {
-              path: 'maps capabilityCategories'
+              path: 'timeline timeline.maps timeline.capabilityCategories'
           }, function(err, result3) {
               if (err) {
                   return res.send(500);
@@ -389,10 +389,10 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.verifyAccess(owner);
           })
           .then(function(map) {
-              map.workspace.maps.pull(map._id);
+              map.workspace.getTimeSlice(map.timesliceId).maps.pull(map._id);
               var workspacePromise = map.workspace.save()
               .then(function(workspace){
-                  return workspace.populate('maps capabilityCategories').execPopulate();
+                  return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
               });
 
               map.archived = true;
@@ -448,7 +448,11 @@ module.exports = function(authGuardian, mongooseConnection) {
               if (!workspace) {
                   throw new Error("Workspace not found");
               }
-              return workspace.createMap(editor, req.body.user, req.body.purpose, req.body.responsiblePerson);
+              return workspace.createAMap({
+                user : req.body.user,
+                purpose: req.body.purpose,
+                responsiblePerson : req.body.responsiblePerson,
+              });
           })
           .fail(function(e) {
               defaultAccessDenied.bind(res, e);
@@ -519,7 +523,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return workspace.save();
           })
           .then(function(workspace){
-            return workspace.populate('maps capabilityCategories').execPopulate();
+            return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
           })
           .fail(function(e){
             return defaultAccessDenied(res, e);
@@ -568,7 +572,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             return workspace.save();
         })
         .then(function(workspace){
-          return workspace.populate('maps capabilityCategories').execPopulate();
+          return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
         })
         .fail(function(e) {
             return defaultAccessDenied(res, e);
@@ -1181,7 +1185,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       res.status(404).json("workspace not found");
                       return null;
                   }
-                  return workspace.createNewCapabilityAndAliasForNode(categoryID, nodeID);
+                  return workspace.createNewCapabilityAndAliasForNode(null, categoryID, nodeID);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding with error', e);
@@ -1319,7 +1323,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       res.status(404).json("workspace not found");
                       return null;
                   }
-                  return workspace.createNewAliasForNodeInACapability(capabilityID, nodeID);
+                  return workspace.createNewAliasForNodeInACapability(null, capabilityID, nodeID);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding...', e);
@@ -1464,7 +1468,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   if (!workspace) {
                       return res.status(404).json("workspace not found");
                   }
-                  return workspace.addNodeToAlias(aliasID, nodeID);
+                  return workspace.addNodeToAlias(null, aliasID, nodeID);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding...', e);
@@ -1493,7 +1497,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           }) // this is not the best security check as we do not check relation between workspace & cap & node
           .exec()
         .then(function(workspace){
-          return workspace.getNodeUsageInfo(nodeID);
+          return workspace.getNodeUsageInfo(null, nodeID);
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1525,29 +1529,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                     res.status(404).json("workspace not found");
                     return null;
                 }
-                var promises = [];
-                var capability = null;
-                for (var i = 0; i < workspace.capabilityCategories.length; i++) {
-                    for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
-                        if (capabilityID.equals(workspace.capabilityCategories[i].capabilities[j]._id)) {
-                            capability = workspace.capabilityCategories[i].capabilities[j];
-                            workspace.capabilityCategories[i].capabilities.splice(j, 1);
-                            break;
-                        }
-                    }
-                }
-                promises.push(workspace.save());
-                for (var k = 0; k < capability.aliases.length; k++) {
-                    for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
-                        promises.push(Node.findOne({
-                            _id: capability.aliases[k].nodes[l]
-                        }).exec().then(function(node){
-                          node.processedForDuplication = false;
-                          return node.save();
-                        }));
-                    }
-                }
-                return q.all(promises);
+                return workspace.removeCapability(null, capabilityID);
             })
             .then(function(ur) {
                 capabilityLogger.trace('populating response...');
