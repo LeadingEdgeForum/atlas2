@@ -64,13 +64,14 @@ function safeStringify(obj) {
 }
 
 var r = process.cwd();
-var script = fs.readFileSync(r + '/build-ui/js/canvas-wrapper.js');
+var CANVAS_WRAPPER_PATH = '/build-ui/js/canvas-wrapper.js';
+var script = null;
 var css = fs.readFileSync(r + '/build-ui/css/bootstrap.min.css');
 var glyphs = fs.readFileSync(r + '/build-ui/fonts/glyphicons-halflings-regular.svg');
 
-function renderFullPage(opts) {
+function renderFullPage(opts, canvasScript) {
   return "<!doctype html><html><head><style>" + css + "</style></head><body><div id=\"root\" style=\"background:white\">"
-  + "</div><script>OPTS=" + safeStringify(opts) + ";</script><script>" + script + "</script></body></html>";
+  + "</div><script>OPTS=" + safeStringify(opts) + ";</script><script>" + canvasScript + "</script></body></html>";
 }
 
 var atob = require('atob');
@@ -93,7 +94,16 @@ var pool = createPhantomPool({
   phantomArgs: [['--ignore-ssl-errors=true', '--disk-cache=true'], {logLevel: 'error'}] // arguments passed to phantomjs-node directly, default is `[]`. For all opts, see https://github.com/amir20/phantomjs-node#phantom-object-api
 });
 
-module.exports = function(authGuardian, mongooseConnection) {
+module.exports = function(authGuardian, mongooseConnection, webpack_middleware) {
+    if (!webpack_middleware) {
+      // middleware not supplied, use the prebuilt file
+      try {
+        script = fs.readFileSync(r + CANVAS_WRAPPER_PATH);
+      } catch (e) {
+        console.error('Run "webpack -p" before launching this app in production mode!');
+      }
+    }
+
     var WardleyMap = require('./model/map-schema')(mongooseConnection);
     var Workspace = require('./model/workspace-schema')(mongooseConnection);
     var Node = require('./model/node-schema')(mongooseConnection);
@@ -144,8 +154,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                         }
                     }
                 };
-
-                var pageText = renderFullPage(opts);
+                var pageText = renderFullPage(opts, script || webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH));
 
                 if(splitMapName[1] === 'html'){
                   res.send(pageText);
