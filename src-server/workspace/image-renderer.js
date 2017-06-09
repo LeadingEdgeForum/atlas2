@@ -69,9 +69,9 @@ var script = null;
 var css = fs.readFileSync(r + '/build-ui/css/bootstrap.min.css');
 var glyphs = fs.readFileSync(r + '/build-ui/fonts/glyphicons-halflings-regular.svg');
 
-function renderFullPage(opts) {
+function renderFullPage(opts, canvasScript) {
   return "<!doctype html><html><head><style>" + css + "</style></head><body><div id=\"root\" style=\"background:white\">"
-  + "</div><script>OPTS=" + safeStringify(opts) + ";</script><script>" + script + "</script></body></html>";
+  + "</div><script>OPTS=" + safeStringify(opts) + ";</script><script>" + canvasScript + "</script></body></html>";
 }
 
 var atob = require('atob');
@@ -159,7 +159,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                   // script not present, middleware needs to be supplied for this to happen
                   script = webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH);
                 }
-                var pageText = renderFullPage(opts);
+                var pageText = renderFullPage(opts, script);
 
                 if(splitMapName[1] === 'html'){
                   res.send(pageText);
