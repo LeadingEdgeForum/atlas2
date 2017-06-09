@@ -154,12 +154,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                         }
                     }
                 };
-                if(!script){
-                  // let's try to get it from middleware
-                  // script not present, middleware needs to be supplied for this to happen
-                  script = webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH);
-                }
-                var pageText = renderFullPage(opts, script);
+                var pageText = renderFullPage(opts, script || webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH));
 
                 if(splitMapName[1] === 'html'){
                   res.send(pageText);
