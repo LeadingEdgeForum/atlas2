@@ -77,6 +77,8 @@ module.exports = function(conn) {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'
         },
+        next : [Schema.Types.ObjectId],
+        previous : Schema.Types.ObjectId,
         timesliceId : Schema.Types.ObjectId,
         nodes: [{
             type: Schema.Types.ObjectId,

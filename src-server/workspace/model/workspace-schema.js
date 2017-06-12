@@ -75,20 +75,50 @@ module.exports = function(conn) {
               type: Schema.Types.ObjectId,
               ref: 'WardleyMap'
             }],
+            next : [{
+              type: Schema.Types.ObjectId
+            }],
+            previous : {
+              type: Schema.Types.ObjectId
+            },
             capabilityCategories : [ {
               name : String,
+              next : [{
+                type: Schema.Types.ObjectId
+              }],
+              previous : {
+                type: Schema.Types.ObjectId
+              },
               capabilities : [ {
                 aliases: [{
                   nodes: [{
                       type: Schema.Types.ObjectId,
                       ref: 'Node'
-                  }]
+                  }],
+                  next : [{
+                    type: Schema.Types.ObjectId
+                  }],
+                  previous : {
+                    type: Schema.Types.ObjectId
+                  }
                 }],
                 marketreferences : [ {
                   name : String,
                   description : String,
-                  evolution : Number
-                }]
+                  evolution : Number,
+                  next : [{
+                    type: Schema.Types.ObjectId
+                  }],
+                  previous : {
+                    type: Schema.Types.ObjectId
+                  }
+                }],
+                next : [{
+                  type: Schema.Types.ObjectId
+                }],
+                previous : {
+                  type: Schema.Types.ObjectId
+                }
               } ]
             } ]
           }
@@ -199,8 +229,6 @@ module.exports = function(conn) {
         timesliceId = this.nowId;
       }
 
-      console.log('timesliceId', timesliceId);
-
       return WardleyMap
           .find({ // find all undeleted maps within workspace and timeslice
               archived: false,
@@ -209,7 +237,6 @@ module.exports = function(conn) {
           })
           .select('user purpose name')
           .then(function(maps) {
-              console.log('maps', maps);
               var loadPromises = [];
               maps.forEach(function(cv, i, a) {
                   loadPromises.push(Node
@@ -626,6 +653,217 @@ module.exports = function(conn) {
       return q.all(promises);
 
   };
+
+
+    workspaceSchema.methods.cloneTimeslice = function(sourceTimeSliceId) {
+      var WardleyMap = require('./map-schema')(conn);
+      var Node = require('./node-schema')(conn);
+
+
+      if (!sourceTimeSliceId) {
+        throw new Error('source not specified');
+      }
+
+      return this.populate('timeline.maps timeline.maps.nodes').execPopulate()
+        .then(function(popWorkspace) {
+          var promisesToSave = [];
+          var sourceTimeSlice = popWorkspace.getTimeSlice(sourceTimeSliceId);
+
+          // prepare a new timeslice
+          var newTimeSlice = {
+            _id: new ObjectId(),
+            name: sourceTimeSlice.name,
+            description: sourceTimeSlice.description,
+            current: false,
+            next: [],
+            previous: [sourceTimeSlice._id],
+            maps: [],
+            capabilityCategories: []
+          };
+          sourceTimeSlice.next.push(newTimeSlice._id);
+
+
+
+
+          var submapMappings = {};
+          var nodeMappings = {};
+
+          sourceTimeSlice.maps.forEach(function(oldMap) {
+            var newId = new ObjectId();
+            var newMap = new WardleyMap({
+              _id: newId,
+              user: oldMap.user,
+              purpose: oldMap.purpose,
+              name: oldMap.name,
+              isSubmap: oldMap.isSubmap,
+              archived: oldMap.archived,
+              workspace: oldMap.workspace,
+              next: [],
+              previous: oldMap._id,
+              timesliceId: newTimeSlice._id,
+              responsiblePerson: oldMap.responsiblePerson,
+              schemaVersion: oldMap.schemaVersion,
+              comments: [],
+              nodes: []
+            });
+            newTimeSlice.maps.push(newMap);
+            oldMap.next.push(newMap._id);
+
+            if (oldMap.isSubmap) {
+              submapMappings[oldMap._id] = newMap._id;
+            }
+            // transfer comments
+            for (var i = 0; i < oldMap.comments.length; i++) {
+              newMap.comments.push({
+                x: oldMap.comments[i].x,
+                y: oldMap.comments[i].y,
+                text: oldMap.comments[i].text,
+              });
+            }
+            // transfer nodes
+            for (var j = 0; j < oldMap.nodes.length; j++) {
+              var newNodeId = new ObjectId();
+              var oldNode = oldMap.nodes[j];
+              var newNode = new Node({
+                workspace: oldNode.workspace,
+                parentMap: newMap._id,
+                name: oldNode.name,
+                x: oldNode.x,
+                y: oldNode.y,
+                type: oldNode.type,
+                constraint: oldNode.constraint,
+                previous: oldNode._id,
+                next: [],
+                inboundDependencies: oldNode.inboundDependencies,
+                outboundDependencies: oldNode.outboundDependencies,
+                dependencyData: {
+                  inbound: oldNode.dependencyData.inbound,
+                  outbound: oldNode.dependencyData.outbound
+                },
+                action: [],
+                submapID: oldNode.submapID,
+                responsiblePerson: oldNode.responsiblePerson,
+                inertia: oldNode.inertia,
+                description: oldNode.description,
+                processedForDuplication: oldNode.processedForDuplication
+              });
+              //transfer what needs to be transferred
+              for (var k = 0; k < oldNode.action.length; k++) {
+                newNode.action.push({
+                  x: oldNode.action[k].x,
+                  y: oldNode.action[k].y,
+                  shortSummary: oldNode.action[k].shortSummary,
+                  description: oldNode.action[k].description
+                });
+              }
+              // add to the parent map
+              newMap.nodes.push(newNode);
+
+              // record mapping
+              nodeMappings[oldNode._id] = newNodeId;
+            }
+          });
+
+          // update dependencies and submaps
+          newTimeSlice.maps.forEach(function(map) {
+            map.nodes.forEach(function(node) {
+              if (node.isSubmap) {
+                node.submapID = submapMappings[node.submapID];
+              }
+              if (node.inboundDependencies) {
+                for (var ni = 0; ni < node.inboundDependencies.length; ni++) {
+                  // replace the dependency
+
+                  var oldDep = node.inboundDependencies[ni];
+                  node.inboundDependencies[ni] = nodeMappings[oldDep];
+
+                  //replace the dependencyData
+
+                  node.dependencyData.inbound[nodeMappings[oldDep]] = node.dependencyData.inbound[oldDep];
+                  delete node.dependencyData.inbound[oldDep];
+                }
+              }
+              if (node.outboundDependencies) {
+                for (var no = 0; no < node.outboundDependencies.length; no++) {
+                  // replace the dependency
+
+                  var oldDep = node.outboundDependencies[no];
+                  node.outboundDependencies[no] = nodeMappings[oldDep];
+
+                  //replace the dependencyData
+
+                  node.dependencyData.outbound[nodeMappings[oldDep]] = node.dependencyData.outbound[oldDep];
+                  delete node.dependencyData.outbound[oldDep];
+                }
+              }
+            });
+          });
+
+          // finally, transfer duplication data
+          sourceTimeSlice.capabilityCategories.forEach(function(oldCapabilityCategory) {
+            var newCapabilityCategory = {
+              name: oldCapabilityCategory.name,
+              next: [],
+              previous: oldCapabilityCategory._id,
+              capabilities: [],
+              marketreferences: []
+            };
+
+            oldCapabilityCategory.capabilities.forEach(function(oldCapability) {
+              var newCapability = {
+                aliases: [],
+                next: [],
+                previous: oldCapability._id
+              };
+              oldCapability.aliases.forEach(function(newCapability, oldAlias) {
+                var newAlias = {
+                  nodes: [],
+                  next: [],
+                  previous: oldAlias._id
+                };
+                for (var z = 0; z < oldAlias.nodes.length; z++) {
+                  newAlias.push(nodeMappings[oldAlias.nodes[z]._id]);
+                }
+                newCapability.aliases.push(newAlias);
+              }.bind(newCapability));
+              newCapabilityCategory.capabilities.push(newCapability);
+            });
+            if (oldCapabilityCategory.marketreferences) {
+              oldCapabilityCategory.marketreferences.forEach(function(oldMarketReference) {
+                newCapabilityCategory.marketreferences.push({
+                  name: oldMarketReference.name,
+                  description: oldMarketReference.description,
+                  evolution: oldMarketReference.evolution,
+                  next: [],
+                  previous: oldMarketReference._id
+                });
+              });
+            }
+
+            newTimeSlice.capabilityCategories.push(newCapabilityCategory);
+          });
+
+
+          sourceTimeSlice.maps.forEach(function(map){
+            promisesToSave.push(map.save());
+            map.nodes.forEach(function(node){
+              promisesToSave.push(node.save());
+            });
+          });
+          newTimeSlice.maps.forEach(function(map){
+            promisesToSave.push(map.save());
+            map.nodes.forEach(function(node){
+              console.log('node', node);
+              promisesToSave.push(node.save());
+            });
+          });
+
+          popWorkspace.timeline.push(newTimeSlice);
+          return q.allSettled(promisesToSave).then(function(r){
+            return popWorkspace.save();
+          });
+        });
+    };
 
     workspace[conn] = conn.model('Workspace', workspaceSchema);
     return workspace[conn];

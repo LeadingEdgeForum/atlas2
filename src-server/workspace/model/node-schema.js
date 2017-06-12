@@ -88,7 +88,9 @@ module.exports = function(conn){
         processedForDuplication: {
             default: false,
             type: Schema.Types.Boolean
-        }
+        },
+        next : [Schema.Types.ObjectId],
+        previous : Schema.Types.ObjectId
     });
 
     NodeSchema.methods.turnIntoSubmap = function(refId) {
