@@ -436,7 +436,9 @@ module.exports = function(conn) {
       for (var i = 0; i < this.nodes.length; i++) {
         promises.push(
           Node.findById(this.nodes[i]._id || this.nodes[i]).exec().then(function(node) {
-            return node.remove();
+            if(node){
+                return node.remove();
+            }
           }));
       }
       // if we are not a submap, then this is the end
