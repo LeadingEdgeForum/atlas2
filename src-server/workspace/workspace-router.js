@@ -986,10 +986,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               authGuardian.authenticationRequired,
               function(req, res) {
                 var owner = getUserIdFromReq(req);
-                var workspaceId = req.params.workspaceId;
-                var mapId = req.params.mapId;
+                var workspaceId = new ObjectId(req.params.workspaceId);
+                var mapId = new ObjectId(req.params.mapId);
                 var nodeId = new ObjectId(req.params.nodeId);
-
                 WardleyMap.findOne({
                     _id: mapId,
                     archived: false,

@@ -81,7 +81,8 @@ export default class MapListPage extends React.Component {
     const name = this.state.workspace.name;
     const purpose = this.state.workspace.purpose;
     const workspaceID = singleWorkspaceStore.getWorkspaceId();
-    const maps = this.state.workspace.maps;
+
+    const maps = this.state.workspace.timeline ? this.state.workspace.timeline[this.state.workspace.timeline.length - 1].maps : [];
     const editors = this.state.workspace.owner;
     return (
       <DocumentTitle title='Atlas2, the mapping Tool'>

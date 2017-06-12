@@ -601,6 +601,47 @@ describe('Workspaces & maps', function() {
         });
 
 
+        it('create another map', function(done) {
+            userAgent1.
+            post('/api/map')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .send({
+                    workspaceID: workspaceID,
+                    user: "Sample user",
+                    purpose: "Sample purpose"
+                })
+                .expect(200)
+                .expect(function(res) {
+                    if (!res.body.map._id) {
+                        throw new Error('_id should be assigned during map creation');
+                    }
+                    mapID = res.body.map._id;
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('create a node in a map', createNodeInAMap.bind(this,0));
+
+        it('turn component into submap', function(done){
+          userAgent1.
+          put('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + nodeID[nodeID.length - 1] + '/submap/')
+              .set('Content-type', 'application/json')
+              .set('Accept', 'application/json')
+              .expect(200)
+              .expect(function(res) {
+                  if (!res.body.map._id) {
+                      throw new Error('_id should be assigned during map creation');
+                  }
+                  res.body.map.nodes[res.body.map.nodes.length - 1].type.should.equal("SUBMAP");
+                  res.body.map.nodes[res.body.map.nodes.length - 1].submapID.should.not.be.null;
+              })
+              .end(function(err, res) {
+                  done(err);
+              });
+        });
     });
 
     describe('Duplication', function() {

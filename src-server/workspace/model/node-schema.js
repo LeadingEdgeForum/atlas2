@@ -96,9 +96,11 @@ module.exports = function(conn){
       var _this = this;
       if (refId) {
         // TODO: prevent connection from multiple time slices
+        // the map we should link to is specified
         this.submapID = refId;
         return this.save();
       } else {
+        // no submap specified, create one
         return this.populate('workspace parentMap').execPopulate()
           .then(function(node) {
             //create structures
@@ -114,7 +116,7 @@ module.exports = function(conn){
               responsiblePerson: _this.responsiblePerson
             });
             return submap.save().then(function(submap) {
-              _this.workspace.maps.push(submap);
+              _this.workspace.timeline[_this.workspace.timeline.length - 1].maps.push(submap);
               return _this.workspace.save().then(function(workspace) {
                 node.submapID = submapID;
                 return node.save();
