@@ -64,8 +64,8 @@ describe('Timeline management tests', function() {
           currentWorkspace.timeline.length.should.equal(2);
 
           // timeslices point at each other
-          currentWorkspace.timeline[1].previous.equals(currentWorkspace.timeline[0]._id).should.be.ok;
 
+          currentWorkspace.timeline[1].previous.equals(currentWorkspace.timeline[0]._id).should.be.ok;
           currentWorkspace.timeline[0].next[0].equals(currentWorkspace.timeline[1]._id).should.be.ok;
           currentWorkspace.timeline[0].maps.length.should.equal(currentWorkspace.timeline[1].maps.length);
 
@@ -85,28 +85,23 @@ describe('Timeline management tests', function() {
         .then(function(map){
           return currentWorkspace.cloneTimeslice(currentWorkspace.nowId);
         })
-        .then(function(workspace){
-          return workspace.populate('timeline.maps timeline.maps.nodes').execPopulate();
-        })
-        .then(function(savedWorkspace) {
+        .then(function(clonedWorkspace) {
           // three timeslices
-          currentWorkspace.timeline.length.should.equal(3);
+          clonedWorkspace.timeline.length.should.equal(3);
           //two future
-          currentWorkspace.timeline[0].next.length.should.equal(2);
+          clonedWorkspace.timeline[0].next.length.should.equal(2);
           // timeslices point at each other
-          currentWorkspace.timeline[2].previous.equals(currentWorkspace.timeline[0]._id).should.be.ok;
+          clonedWorkspace.timeline[2].previous.equals(clonedWorkspace.timeline[0]._id).should.be.ok;
 
-          currentWorkspace.timeline[0].next[0].equals(currentWorkspace.timeline[2]._id).should.be.ok;
-          currentWorkspace.timeline[0].maps.length.should.equal(currentWorkspace.timeline[2].maps.length);
+          clonedWorkspace.timeline[0].next[0].equals(clonedWorkspace.timeline[2]._id).should.be.ok;
+          clonedWorkspace.timeline[0].maps.length.should.equal(clonedWorkspace.timeline[2].maps.length);
 
-          currentWorkspace.timeline[2].maps[0].previous.equals(currentWorkspace.timeline[0].maps[0]._id).should.be.ok;
-          currentWorkspace.timeline[0].maps[0].next[0].equals(currentWorkspace.timeline[2].maps[0]._id).should.be.ok;
+          clonedWorkspace.timeline[2].maps[0].previous.equals(clonedWorkspace.timeline[0].maps[0]._id).should.be.ok;
+          clonedWorkspace.timeline[0].maps[0].next[0].equals(clonedWorkspace.timeline[2].maps[0]._id).should.be.ok;
 
-          console.log(currentWorkspace.timeline[2].maps[0]);
-          currentWorkspace.timeline[2].maps[0].nodes.length.should.equal(2); //two nodes copied
+          clonedWorkspace.timeline[2].maps[0].nodes.length.should.equal(2); //two nodes copied
 
-          console.log(currentWorkspace.timeline[2].maps[0]);
-          currentWorkspace.timeline[2].maps[0].nodes[0].previous.equals(currentWorkspace.timeline[0].maps[0].nodes[0]).should.be.ok;
+          clonedWorkspace.timeline[2].maps[0].nodes[0].previous.equals(clonedWorkspace.timeline[0].maps[0].nodes[0]).should.be.ok;
         }).done(function(v, e) {
           done(e);
         });

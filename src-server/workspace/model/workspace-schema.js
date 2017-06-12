@@ -666,67 +666,35 @@ module.exports = function(conn) {
 
       return this.populate('timeline.maps timeline.maps.nodes').execPopulate()
         .then(function(popWorkspace) {
-          var promisesToSave = [];
+
           var sourceTimeSlice = popWorkspace.getTimeSlice(sourceTimeSliceId);
 
-          // prepare a new timeslice
-          var newTimeSlice = {
-            _id: new ObjectId(),
-            name: sourceTimeSlice.name,
-            description: sourceTimeSlice.description,
-            current: false,
-            next: [],
-            previous: [sourceTimeSlice._id],
-            maps: [],
-            capabilityCategories: []
+          var mappings = {
+            maps: {},
+            nodes: {},
+            newTimeSliceId: new ObjectId()
           };
-          sourceTimeSlice.next.push(newTimeSlice._id);
-
-
-
-
-          var submapMappings = {};
-          var nodeMappings = {};
-
-          sourceTimeSlice.maps.forEach(function(oldMap) {
-            var newId = new ObjectId();
-            var newMap = new WardleyMap({
-              _id: newId,
-              user: oldMap.user,
-              purpose: oldMap.purpose,
-              name: oldMap.name,
-              isSubmap: oldMap.isSubmap,
-              archived: oldMap.archived,
-              workspace: oldMap.workspace,
-              next: [],
-              previous: oldMap._id,
-              timesliceId: newTimeSlice._id,
-              responsiblePerson: oldMap.responsiblePerson,
-              schemaVersion: oldMap.schemaVersion,
-              comments: [],
-              nodes: []
-            });
-            newTimeSlice.maps.push(newMap);
-            oldMap.next.push(newMap._id);
-
-            if (oldMap.isSubmap) {
-              submapMappings[oldMap._id] = newMap._id;
+          // part one, book future map ids
+          for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
+            mappings.maps[sourceTimeSlice.maps[i]._id] = new ObjectId();
+          }
+          // part two, book future nodes ids
+          for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
+            let nodes = sourceTimeSlice.maps[i].nodes;
+            for (let j = 0; j < nodes.length; j++) {
+              mappings.nodes[nodes[j]._id] = new ObjectId();
             }
-            // transfer comments
-            for (var i = 0; i < oldMap.comments.length; i++) {
-              newMap.comments.push({
-                x: oldMap.comments[i].x,
-                y: oldMap.comments[i].y,
-                text: oldMap.comments[i].text,
-              });
-            }
-            // transfer nodes
-            for (var j = 0; j < oldMap.nodes.length; j++) {
-              var newNodeId = new ObjectId();
-              var oldNode = oldMap.nodes[j];
+          }
+          // part three, clone nodes
+          var nodesToSave = [];
+          for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
+            let nodes = sourceTimeSlice.maps[i].nodes;
+            for (let j = 0; j < nodes.length; j++) {
+              let oldNode = nodes[j];
               var newNode = new Node({
+                _id: new ObjectId(mappings.nodes[oldNode._id]),
                 workspace: oldNode.workspace,
-                parentMap: newMap._id,
+                parentMap: mappings.maps[sourceTimeSlice.maps[i]._id],
                 name: oldNode.name,
                 x: oldNode.x,
                 y: oldNode.y,
@@ -747,8 +715,9 @@ module.exports = function(conn) {
                 description: oldNode.description,
                 processedForDuplication: oldNode.processedForDuplication
               });
-              //transfer what needs to be transferred
-              for (var k = 0; k < oldNode.action.length; k++) {
+              oldNode.next.push(newNode._id);
+              //transfer comments
+              for (let k = 0; k < oldNode.action.length; k++) {
                 newNode.action.push({
                   x: oldNode.action[k].x,
                   y: oldNode.action[k].y,
@@ -756,112 +725,174 @@ module.exports = function(conn) {
                   description: oldNode.action[k].description
                 });
               }
-              // add to the parent map
-              newMap.nodes.push(newNode);
+              // update dependencies
+              if (oldNode.isSubmap) {
+                newNode.submapID = mappings.maps[oldNode.submapID];
+              }
+              if (oldNode.inboundDependencies) {
+                for (let ni = 0; ni < oldNode.inboundDependencies.length; ni++) {
+                  // replace the dependency
 
-              // record mapping
-              nodeMappings[oldNode._id] = newNodeId;
+                  let oldDep = oldNode.inboundDependencies[ni];
+                  newNode.inboundDependencies.push(mappings.nodes[oldDep]);
+
+                  //replace the dependencyData
+                  newNode.dependencyData.inbound[mappings.nodes[oldDep]] = oldNode.dependencyData.inbound[oldDep];
+                }
+              }
+              if (oldNode.outboundDependencies) {
+                for (var no = 0; no < oldNode.outboundDependencies.length; no++) {
+                  // replace the dependency
+
+                  let oldDep = oldNode.outboundDependencies[no];
+                  newNode.outboundDependencies.push(mappings.nodes[oldDep]);
+
+                  //replace the dependencyData
+                  newNode.dependencyData.outbound[mappings.nodes[oldDep]] = oldNode.dependencyData.outbound[oldDep];
+                }
+              }
+              nodesToSave.push(newNode.save());
+              nodesToSave.push(oldNode.save());
             }
-          });
+          }
 
-          // update dependencies and submaps
-          newTimeSlice.maps.forEach(function(map) {
-            map.nodes.forEach(function(node) {
-              if (node.isSubmap) {
-                node.submapID = submapMappings[node.submapID];
-              }
-              if (node.inboundDependencies) {
-                for (var ni = 0; ni < node.inboundDependencies.length; ni++) {
-                  // replace the dependency
-
-                  var oldDep = node.inboundDependencies[ni];
-                  node.inboundDependencies[ni] = nodeMappings[oldDep];
-
-                  //replace the dependencyData
-
-                  node.dependencyData.inbound[nodeMappings[oldDep]] = node.dependencyData.inbound[oldDep];
-                  delete node.dependencyData.inbound[oldDep];
-                }
-              }
-              if (node.outboundDependencies) {
-                for (var no = 0; no < node.outboundDependencies.length; no++) {
-                  // replace the dependency
-
-                  var oldDep = node.outboundDependencies[no];
-                  node.outboundDependencies[no] = nodeMappings[oldDep];
-
-                  //replace the dependencyData
-
-                  node.dependencyData.outbound[nodeMappings[oldDep]] = node.dependencyData.outbound[oldDep];
-                  delete node.dependencyData.outbound[oldDep];
-                }
-              }
-            });
-          });
-
-          // finally, transfer duplication data
-          sourceTimeSlice.capabilityCategories.forEach(function(oldCapabilityCategory) {
-            var newCapabilityCategory = {
-              name: oldCapabilityCategory.name,
-              next: [],
-              previous: oldCapabilityCategory._id,
-              capabilities: [],
-              marketreferences: []
-            };
-
-            oldCapabilityCategory.capabilities.forEach(function(oldCapability) {
-              var newCapability = {
-                aliases: [],
-                next: [],
-                previous: oldCapability._id
-              };
-              oldCapability.aliases.forEach(function(newCapability, oldAlias) {
-                var newAlias = {
-                  nodes: [],
+          return q.allSettled(nodesToSave)
+            .then(function(savedNodes) {
+              // part four - clone maps
+              var mapsToSave = [];
+              for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
+                var oldMap = sourceTimeSlice.maps[i];
+                var newMap = new WardleyMap({
+                  _id: new ObjectId(mappings.maps[oldMap._id]),
+                  user: oldMap.user,
+                  purpose: oldMap.purpose,
+                  name: oldMap.name,
+                  isSubmap: oldMap.isSubmap,
+                  archived: oldMap.archived,
+                  workspace: oldMap.workspace,
                   next: [],
-                  previous: oldAlias._id
-                };
-                for (var z = 0; z < oldAlias.nodes.length; z++) {
-                  newAlias.push(nodeMappings[oldAlias.nodes[z]._id]);
-                }
-                newCapability.aliases.push(newAlias);
-              }.bind(newCapability));
-              newCapabilityCategory.capabilities.push(newCapability);
-            });
-            if (oldCapabilityCategory.marketreferences) {
-              oldCapabilityCategory.marketreferences.forEach(function(oldMarketReference) {
-                newCapabilityCategory.marketreferences.push({
-                  name: oldMarketReference.name,
-                  description: oldMarketReference.description,
-                  evolution: oldMarketReference.evolution,
-                  next: [],
-                  previous: oldMarketReference._id
+                  previous: oldMap._id,
+                  timesliceId: mappings.newTimeSliceId,
+                  responsiblePerson: oldMap.responsiblePerson,
+                  schemaVersion: oldMap.schemaVersion,
+                  comments: [],
+                  nodes: []
                 });
-              });
-            }
+                oldMap.next.push(newMap._id);
 
-            newTimeSlice.capabilityCategories.push(newCapabilityCategory);
-          });
+                // transfer comments
+                for (let j = 0; j < oldMap.comments.length; j++) {
+                  newMap.comments.push({
+                    x: oldMap.comments[j].x,
+                    y: oldMap.comments[j].y,
+                    text: oldMap.comments[j].text,
+                  });
+                }
 
+                // transfer nodes
+                for (let j = 0; j < oldMap.nodes.length; j++) {
+                  // add to the parent map
+                  newMap.nodes.push(new ObjectId(mappings.nodes[oldMap.nodes[j]._id]));
+                }
 
-          sourceTimeSlice.maps.forEach(function(map){
-            promisesToSave.push(map.save());
-            map.nodes.forEach(function(node){
-              promisesToSave.push(node.save());
+                mapsToSave.push(oldMap.save());
+                mapsToSave.push(newMap.save());
+              }
+
+              return q.allSettled(mapsToSave)
+                .then(function(savedMaps) {
+                  // prepare a new timeslice
+                  var newTimeSlice = {
+                    _id: mappings.newTimeSliceId,
+                    name: sourceTimeSlice.name,
+                    description: sourceTimeSlice.description,
+                    current: false,
+                    next: [],
+                    previous: [sourceTimeSlice._id],
+                    maps: [],
+                    capabilityCategories: []
+                  };
+                  sourceTimeSlice.next.push(newTimeSlice._id);
+
+                  for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
+                    newTimeSlice.maps.push(new ObjectId(mappings.maps[sourceTimeSlice.maps[i]._id]));
+                  }
+
+                  for (let i = 0; i < sourceTimeSlice.capabilityCategories.length; i++) {
+                    let oldCapabilityCategory = sourceTimeSlice.capabilityCategories[i];
+
+                    let newCapabilityCategory = {
+                      _id : new ObjectId(),
+                      name: oldCapabilityCategory.name,
+                      next: [],
+                      previous: oldCapabilityCategory._id,
+                      capabilities: [],
+                      marketreferences: []
+                    };
+                    oldCapabilityCategory.next.push(newCapabilityCategory._id);
+
+                    if (oldCapabilityCategory.marketreferences) {
+                      for (let j = 0; j < oldCapabilityCategory.marketreferences.length; j++) {
+                        let oldMarketReference = oldCapabilityCategory.marketreferences[j];
+                        newCapabilityCategory.marketreferences.push({
+                          _id: new ObjectId(),
+                          name: oldMarketReference.name,
+                          description: oldMarketReference.description,
+                          evolution: oldMarketReference.evolution,
+                          next: [],
+                          previous: oldMarketReference._id
+                        });
+                        oldMarketReference.next.push(newCapabilityCategory._id);
+                      }
+                    }
+
+                    if (oldCapabilityCategory.capabilities) {
+                      for (let j = 0; j < oldCapabilityCategory.capabilities.length; j++) {
+                        let oldCapability = oldCapabilityCategory.capabilities[j];
+                        var newCapability = {
+                          _id: new ObjectId(),
+                          aliases: [],
+                          next: [],
+                          previous: oldCapability._id
+                        };
+                        oldCapability.next.push(newCapability._id);
+
+                        for (let k = 0; k < oldCapability.aliases.length; k++) {
+                          let oldAlias = oldCapability.aliases[k];
+                          var newAlias = {
+                            _id : new ObjectId(),
+                            nodes: [],
+                            next: [],
+                            previous: oldAlias._id
+                          };
+                          oldAlias.next.push(newAlias._id);
+                          for (var z = 0; z < oldAlias.nodes.length; z++) {
+                            newAlias.push(mappings.nodes[oldAlias.nodes[z]]);
+                          }
+                          newCapability.aliases.push(newAlias);
+                        }
+
+                        newCapabilityCategory.capabilities.push(newCapability);
+                      }
+                    }
+
+                    newTimeSlice.capabilityCategories.push(newCapabilityCategory);
+                  }
+
+                  popWorkspace.timeline.push(newTimeSlice);
+                  return popWorkspace.save().then(function(wrkspc){
+                    return wrkspc.populate({
+                      path : 'timeline.maps',
+                      ref :'WardleyMap',
+                      populate : {
+                        path: 'nodes',
+                        ref: 'Node'
+                      }
+                    }).execPopulate();
+                  });
+
+                });
             });
-          });
-          newTimeSlice.maps.forEach(function(map){
-            promisesToSave.push(map.save());
-            map.nodes.forEach(function(node){
-              console.log('node', node);
-              promisesToSave.push(node.save());
-            });
-          });
-
-          popWorkspace.timeline.push(newTimeSlice);
-          return q.allSettled(promisesToSave).then(function(r){
-            return popWorkspace.save();
-          });
         });
     };
 
