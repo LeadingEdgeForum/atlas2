@@ -110,6 +110,15 @@ var SingleWorkspaceActions = {
       });
     },
 
+    createNewVariant: function(sourceTimeSliceId) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.CREATE_NEW_VARIANT,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null
+            }
+        });
+    },
+
 
 };
 

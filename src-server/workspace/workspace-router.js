@@ -130,6 +130,34 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
   });
 
+  module.router.put('/workspace/:workspaceID/variant/:sourceTimeSlice', authGuardian.authenticationRequired, function(req, res) {
+    if(req.params.sourceTimeSlice === 'null'){
+      req.params.sourceTimeSlice = null;
+    }
+    Workspace
+      .findOne({
+        owner: getUserIdFromReq(req),
+        _id: req.params.workspaceID,
+        archived: false
+      }).exec()
+      .then(function(workspace){
+        console.log('about to clone');
+        return workspace.cloneTimeslice(req.params.sourceTimeSlice || workspace.nowId);
+      })
+      .then(function(workspace) {
+        console.log('about to populate');
+        return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
+      })
+      .then(function(workspace, err) {
+        if (err) {
+          return res.send(500);
+        }
+        res.json({
+          workspace: workspace.toObject()
+        });
+      });
+  });
+
   module.router.get('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
       Workspace
           .findOne({

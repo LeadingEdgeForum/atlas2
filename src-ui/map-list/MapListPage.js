@@ -35,6 +35,7 @@ export default class MapListPage extends React.Component {
     this.state = this.props.singleWorkspaceStore.getWorkspaceInfo();
     this.prepareTimelineTabs = this.prepareTimelineTabs.bind(this);
     this.handleTabSelection = this.handleTabSelection.bind(this);
+    this.cloneActiveVariant = this.cloneActiveVariant.bind(this);
   }
 
   componentDidMount() {
@@ -80,8 +81,20 @@ export default class MapListPage extends React.Component {
     ];
   }
 
-  handleTabSelection(key){
+  handleTabSelection(key,a, b){
+    if(key === 'cloneVariant'){
+      return; //this is an action, tab should not switch
+    }
+    if(key === 'setCurrent'){
+      return; //this is an action, tab should not switch
+    }
     this.setState({tabselection : key});
+  }
+
+  cloneActiveVariant(e){
+    e.preventDefault();
+    e.stopPropagation();
+    SingleWorkspaceActions.createNewVariant(this.state.tabselection);
   }
 
   prepareTimelineTabs(timeline, workspaceID, singleWorkspaceStore){
@@ -97,22 +110,23 @@ export default class MapListPage extends React.Component {
         let key = timeline[i]._id;
         let timeLineName = timeline[i].name;
         if(timeline[i].current){
-          key = timeline[i].current;
+          key = timeline[i]._id;
           defaultActiveKey = key;
         }
-        navs.push(<NavItem eventKey={key} key={key}>{timeLineName}</NavItem>);
+        navs.push(<NavItem eventKey={key}>{timeLineName}</NavItem>);
         let maps = timeline[i].maps || [];
-        panes.push(<Tab.Pane eventKey={key} key={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/></Tab.Pane>);
+        panes.push(<Tab.Pane eventKey={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/></Tab.Pane>);
       }
 
       var dropDownTitle = <Glyphicon glyph="cog"/>;
+      let setAsCurrent = ((this.state.tabselection || defaultActiveKey) === defaultActiveKey) ?  null : <MenuItem eventKey="setCurrent">Set active variant as 'current'</MenuItem>;
       navs.push(
         <NavDropdown title={dropDownTitle} id="nav-dropdown-within-tab">
-          <MenuItem eventKey="3.1">Set active variant as 'current'</MenuItem>
-          <MenuItem eventKey="3.1">Create a new variant from currently active</MenuItem>
+          {setAsCurrent}
+          <MenuItem eventKey="cloneVariant" onClick={this.cloneActiveVariant} href="#">Create future variant from currently active</MenuItem>
         </NavDropdown>);
     }
-    var activeKey = this.state.tabselection || defaultActiveKey;
+    var activeKey = this.state.tabselection ? this.state.tabselection : defaultActiveKey;
     return <Tab.Container onSelect={this.handleTabSelection} activeKey={activeKey}>
       <Row className="clearfix">
             <Col sm={12}>
@@ -163,7 +177,6 @@ export default class MapListPage extends React.Component {
             </Breadcrumb>
           </Row>
           <Row className="show-grid">
-
           <Col xs={9} sm={9} md={9} lg={7} lgOffset={1}>
             <h4>Your maps</h4>
             {tabs}

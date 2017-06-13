@@ -14,6 +14,7 @@ module.exports  = keyMirror({
       MAP_OPEN_NEW_MAP_DIALOG : null,
       MAP_CLOSE_NEW_MAP_DIALOG : null,
       MAP_CLOSE_SUBMIT_NEW_MAP_DIALOG : null,
-      MAP_DELETE : null
+      MAP_DELETE : null,
+      CREATE_NEW_VARIANT : null
   }
 });

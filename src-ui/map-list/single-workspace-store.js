@@ -89,6 +89,9 @@ export default class SingleWorkspaceStore extends Store {
                 this.submitNewWorkspaceDialog(action.data);
                 //no change, because it will go only after the submission is successful
                 break;
+            case ActionTypes.CREATE_NEW_VARIANT:
+                this.createNewVariant(action.data);
+                break;
             default:
                 return;
         }
@@ -233,6 +236,21 @@ export default class SingleWorkspaceStore extends Store {
         this.io.emit('map', {
           type: 'change',
           id: data.mapID
+        });
+      }.bind(this)
+    });
+  }
+
+  createNewVariant(data){
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + this.getWorkspaceId() + '/variant/' + data.sourceTimeSliceId,
+      success: function(data) {
+        this.workspace = data;
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
         });
       }.bind(this)
     });

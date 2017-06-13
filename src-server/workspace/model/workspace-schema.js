@@ -664,7 +664,14 @@ module.exports = function(conn) {
         throw new Error('source not specified');
       }
 
-      return this.populate('timeline.maps timeline.maps.nodes').execPopulate()
+      return this.populate({
+        path : 'timeline.maps',
+        ref :'WardleyMap',
+        populate : {
+          path: 'nodes',
+          ref: 'Node'
+        }
+      }).execPopulate()
         .then(function(popWorkspace) {
 
           var sourceTimeSlice = popWorkspace.getTimeSlice(sourceTimeSliceId);
