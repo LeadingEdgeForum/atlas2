@@ -709,11 +709,11 @@ module.exports = function(conn) {
                 constraint: oldNode.constraint,
                 previous: oldNode._id,
                 next: [],
-                inboundDependencies: oldNode.inboundDependencies,
-                outboundDependencies: oldNode.outboundDependencies,
+                inboundDependencies: [],
+                outboundDependencies: [],
                 dependencyData: {
-                  inbound: oldNode.dependencyData.inbound,
-                  outbound: oldNode.dependencyData.outbound
+                  inbound: {},
+                  outbound: {}
                 },
                 action: [],
                 submapID: oldNode.submapID,
@@ -733,7 +733,7 @@ module.exports = function(conn) {
                 });
               }
               // update dependencies
-              if (oldNode.isSubmap) {
+              if (oldNode.type === "SUBMAP") {
                 newNode.submapID = mappings.maps[oldNode.submapID];
               }
               if (oldNode.inboundDependencies) {

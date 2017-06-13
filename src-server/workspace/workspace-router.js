@@ -141,11 +141,9 @@ module.exports = function(authGuardian, mongooseConnection) {
         archived: false
       }).exec()
       .then(function(workspace){
-        console.log('about to clone');
         return workspace.cloneTimeslice(req.params.sourceTimeSlice || workspace.nowId);
       })
       .then(function(workspace) {
-        console.log('about to populate');
         return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
       })
       .then(function(workspace, err) {
