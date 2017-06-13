@@ -9,7 +9,12 @@ import {
   Col,
   Breadcrumb,
   NavItem,
-  Glyphicon
+  Glyphicon,
+  Tabs,
+  Tab,
+  Nav,
+  NavDropdown,
+  MenuItem
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import MapList from './map-list';
@@ -28,6 +33,8 @@ export default class MapListPage extends React.Component {
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this._onChange = this._onChange.bind(this);
     this.state = this.props.singleWorkspaceStore.getWorkspaceInfo();
+    this.prepareTimelineTabs = this.prepareTimelineTabs.bind(this);
+    this.handleTabSelection = this.handleTabSelection.bind(this);
   }
 
   componentDidMount() {
@@ -73,6 +80,55 @@ export default class MapListPage extends React.Component {
     ];
   }
 
+  handleTabSelection(key){
+    this.setState({tabselection : key});
+  }
+
+  prepareTimelineTabs(timeline, workspaceID, singleWorkspaceStore){
+    let navs = [];
+    let panes = [];
+    let defaultActiveKey;
+    if(!timeline || timeline.length === 0){
+      navs.push(<NavItem eventKey={defaultActiveKey}>Loading...</NavItem>);
+      panes.push(<Tab.Pane eventKey={defaultActiveKey}></Tab.Pane>);
+    } else {
+      //render time slices
+      for(let i = 0; i < timeline.length; i++){
+        let key = timeline[i]._id;
+        let timeLineName = timeline[i].name;
+        if(timeline[i].current){
+          key = timeline[i].current;
+          defaultActiveKey = key;
+        }
+        navs.push(<NavItem eventKey={key} key={key}>{timeLineName}</NavItem>);
+        let maps = timeline[i].maps || [];
+        panes.push(<Tab.Pane eventKey={key} key={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/></Tab.Pane>);
+      }
+
+      var dropDownTitle = <Glyphicon glyph="cog"/>;
+      navs.push(
+        <NavDropdown title={dropDownTitle} id="nav-dropdown-within-tab">
+          <MenuItem eventKey="3.1">Set active variant as 'current'</MenuItem>
+          <MenuItem eventKey="3.1">Create a new variant from currently active</MenuItem>
+        </NavDropdown>);
+    }
+    var activeKey = this.state.tabselection || defaultActiveKey;
+    return <Tab.Container onSelect={this.handleTabSelection} activeKey={activeKey}>
+      <Row className="clearfix">
+            <Col sm={12}>
+              <Nav bsStyle="tabs">
+                {navs}
+              </Nav>
+            </Col>
+            <Col sm={12}>
+              <Tab.Content>
+                {panes}
+              </Tab.Content>
+            </Col>
+          </Row>
+    </Tab.Container>;
+  }
+
   render() {
     const auth = this.props.auth;
     const history = this.props.history;
@@ -84,6 +140,9 @@ export default class MapListPage extends React.Component {
 
     const maps = this.state.workspace.timeline ? this.state.workspace.timeline[this.state.workspace.timeline.length - 1].maps : [];
     const editors = this.state.workspace.owner;
+
+    const tabs = this.prepareTimelineTabs(this.state.workspace.timeline, workspaceID, singleWorkspaceStore);
+
     return (
       <DocumentTitle title='Atlas2, the mapping Tool'>
         <Grid fluid={true}>
@@ -104,18 +163,13 @@ export default class MapListPage extends React.Component {
             </Breadcrumb>
           </Row>
           <Row className="show-grid">
+
           <Col xs={9} sm={9} md={9} lg={7} lgOffset={1}>
-              <h4>Your maps</h4>
+            <h4>Your maps</h4>
+            {tabs}
             </Col>
             <Col xs={3} sm={3} md={3} lg={2}>
-              <h4>Editors:</h4>
-            </Col>
-          </Row>
-          <Row className="show-grid">
-            <Col xs={9} sm={9} md={9} lg={7} lgOffset={1}>
-              <MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/>
-            </Col>
-            <Col xs={3} sm={3} md={3} lg={2}>
+              <h4>Editors:</h4> <br/>
               <EditorList workspaceID={workspaceID} editors={editors} singleWorkspaceStore={singleWorkspaceStore}/>
             </Col>
           </Row>
