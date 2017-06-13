@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-/*jslint node:true, mocha:true */
+/*jslint node:true, mocha:true, expr: true*/
 var should = require('should');
 var q = require('q');
 
@@ -83,6 +83,12 @@ describe('Timeline management tests', function() {
           return map.addNode('name2', 0.2, 0.2, 'EXTERNAL', currentWorkspace._id, 'desc3', 1, 'you', 20);
         })
         .then(function(map){
+          return map.makeComment({x:0.3,y:03, text:'comment'});
+        })
+        .then(function(map){
+          return map.nodes[0].makeDependencyTo(map.nodes[1]._id);
+        })
+        .then(function(map){
           return currentWorkspace.cloneTimeslice(currentWorkspace.nowId);
         })
         .then(function(clonedWorkspace) {
@@ -102,6 +108,15 @@ describe('Timeline management tests', function() {
           clonedWorkspace.timeline[2].maps[0].nodes.length.should.equal(2); //two nodes copied
 
           clonedWorkspace.timeline[2].maps[0].nodes[0].previous.equals(clonedWorkspace.timeline[0].maps[0].nodes[0]).should.be.ok;
+
+          // ensure comment is copied
+          clonedWorkspace.timeline[2].maps[0].comments.length.should.be.equal(1);
+          clonedWorkspace.timeline[2].maps[0].comments[0].text.should.be.equal('comment');
+          clonedWorkspace.timeline[2].maps[0].comments[0].previous.equals(clonedWorkspace.timeline[0].maps[0].comments[0]._id).should.be.true;
+
+          // ensure dependency is copied
+          clonedWorkspace.timeline[2].maps[0].nodes[0].outboundDependencies[0].equals(clonedWorkspace.timeline[2].maps[0].nodes[1]._id).should.be.true;
+
         }).done(function(v, e) {
           done(e);
         });

@@ -87,7 +87,9 @@ module.exports = function(conn) {
         comments: [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
-            text: Schema.Types.String
+            text: Schema.Types.String,
+            next : [Schema.Types.ObjectId],
+            previous : Schema.Types.ObjectId,
         }],
         responsiblePerson: Schema.Types.String,
         schemaVersion : Schema.Types.Number

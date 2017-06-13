@@ -737,7 +737,9 @@ module.exports = function(conn) {
                   newNode.inboundDependencies.push(mappings.nodes[oldDep]);
 
                   //replace the dependencyData
-                  newNode.dependencyData.inbound[mappings.nodes[oldDep]] = oldNode.dependencyData.inbound[oldDep];
+                  if(oldNode.dependencyData.inbound){
+                    newNode.dependencyData.inbound[mappings.nodes[oldDep]] = oldNode.dependencyData.inbound[oldDep];
+                  }
                 }
               }
               if (oldNode.outboundDependencies) {
@@ -748,7 +750,9 @@ module.exports = function(conn) {
                   newNode.outboundDependencies.push(mappings.nodes[oldDep]);
 
                   //replace the dependencyData
-                  newNode.dependencyData.outbound[mappings.nodes[oldDep]] = oldNode.dependencyData.outbound[oldDep];
+                  if(oldNode.dependencyData.outbound){
+                    newNode.dependencyData.outbound[mappings.nodes[oldDep]] = oldNode.dependencyData.outbound[oldDep];
+                  }
                 }
               }
               nodesToSave.push(newNode.save());
@@ -782,11 +786,16 @@ module.exports = function(conn) {
 
                 // transfer comments
                 for (let j = 0; j < oldMap.comments.length; j++) {
+                  var newCommentId = new ObjectId();
                   newMap.comments.push({
+                    _id: newCommentId,
                     x: oldMap.comments[j].x,
                     y: oldMap.comments[j].y,
                     text: oldMap.comments[j].text,
+                    next: [],
+                    previous : oldMap.comments[j]._id
                   });
+                  oldMap.comments[j].next.push(newCommentId);
                 }
 
                 // transfer nodes
