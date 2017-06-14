@@ -39,6 +39,7 @@ export default class MapListPage extends React.Component {
     this.handleTabSelection = this.handleTabSelection.bind(this);
     this.cloneActiveVariant = this.cloneActiveVariant.bind(this);
     this.editActiveVariant = this.editActiveVariant.bind(this);
+    this.setCurrent = this.setCurrent.bind(this);
   }
 
   componentDidMount() {
@@ -109,6 +110,12 @@ export default class MapListPage extends React.Component {
     SingleWorkspaceActions.openEditVariantDialog(this.state.tabselection);
   }
 
+  setCurrent(e){
+    e.preventDefault();
+    e.stopPropagation();
+    SingleWorkspaceActions.setVariantAsCurrent(this.state.tabselection);
+  }
+
   prepareTimelineTabs(timeline, workspaceID, singleWorkspaceStore){
     let navs = [];
     let panes = [];
@@ -131,12 +138,12 @@ export default class MapListPage extends React.Component {
       }
 
       var dropDownTitle = <Glyphicon glyph="cog"/>;
-      let setAsCurrent = ((this.state.tabselection || defaultActiveKey) === defaultActiveKey) ?  null : <MenuItem eventKey="setCurrent">Set active variant as 'current'</MenuItem>;
+      let setAsCurrent = ((this.state.tabselection || defaultActiveKey) === defaultActiveKey) ?  null : <MenuItem eventKey="setCurrent" onClick={this.setCurrent}>Set active variant as 'current'</MenuItem>;
       navs.push(
         <NavDropdown title={dropDownTitle} id="nav-dropdown-within-tab">
+          <MenuItem eventKey="editVariant" onClick={this.editActiveVariant} href="#">Edit currently active variant</MenuItem>
           {setAsCurrent}
           <MenuItem eventKey="cloneVariant" onClick={this.cloneActiveVariant} href="#">Create future variant from currently active</MenuItem>
-          <MenuItem eventKey="editVariant" onClick={this.editActiveVariant} href="#">Edit currently active variant</MenuItem>
         </NavDropdown>);
     }
     var activeKey = this.state.tabselection ? this.state.tabselection : defaultActiveKey;

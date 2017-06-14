@@ -162,6 +162,19 @@ var SingleWorkspaceActions = {
       });
     },
 
+    setVariantAsCurrent: function(sourceTimeSliceId) {
+      if(!sourceTimeSliceId) {
+        console.log('ignoring because of empty sourceTimeSliceId');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SET_VARIANT_AS_CURRENT,
+          data : {
+            sourceTimeSliceId : sourceTimeSliceId,
+            current : true
+          }
+      });
+    },
 
 };
 

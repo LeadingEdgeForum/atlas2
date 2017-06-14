@@ -21,5 +21,6 @@ module.exports  = keyMirror({
       OPEN_EDIT_VARIANT_DIALOG : null,
       CLOSE_EDIT_VARIANT_DIALOG : null,
       MODIFY_VARIANT : null,
+      SET_VARIANT_AS_CURRENT : null
   }
 });

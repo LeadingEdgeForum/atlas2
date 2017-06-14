@@ -144,6 +144,9 @@ export default class SingleWorkspaceStore extends Store {
             case ActionTypes.MODIFY_VARIANT:
               this.modifyVariant(action.data);
               break;
+            case ActionTypes.SET_VARIANT_AS_CURRENT:
+              this.modifyVariant(action.data);
+              break;
             default:
                 return;
         }
