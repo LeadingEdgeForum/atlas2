@@ -655,7 +655,7 @@ module.exports = function(conn) {
   };
 
 
-    workspaceSchema.methods.cloneTimeslice = function(sourceTimeSliceId) {
+    workspaceSchema.methods.cloneTimeslice = function(sourceTimeSliceId, name, description) {
       var WardleyMap = require('./map-schema')(conn);
       var Node = require('./node-schema')(conn);
 
@@ -820,8 +820,8 @@ module.exports = function(conn) {
                   // prepare a new timeslice
                   var newTimeSlice = {
                     _id: mappings.newTimeSliceId,
-                    name: sourceTimeSlice.name,
-                    description: sourceTimeSlice.description,
+                    name: name || sourceTimeSlice.name,
+                    description: description || sourceTimeSlice.description,
                     current: false,
                     next: [],
                     previous: [sourceTimeSlice._id],
@@ -910,6 +910,42 @@ module.exports = function(conn) {
                 });
             });
         });
+    };
+
+
+    workspaceSchema.methods.modifyTimeslice = function(sourceTimeSliceId, name, description, current) {
+      var WardleyMap = require('./map-schema')(conn);
+      var Node = require('./node-schema')(conn);
+
+
+      if (!sourceTimeSliceId) {
+        throw new Error('source not specified');
+      }
+
+      var sourceTimeSlice = this.getTimeSlice(sourceTimeSliceId);
+      if (name) {
+        sourceTimeSlice.name = name;
+      }
+      if (description) {
+        sourceTimeSlice.description = description;
+      }
+      if (current) {
+        for (let i = 0; i < this.timeline.length; i++) {
+          var timeSlice = this.timeline[i];
+          // current gets true
+          timeSlice.current = timeSlice._id.equals(sourceTimeSliceId);
+        }
+      }
+      return this.save().then(function(wrkspc) {
+        return wrkspc.populate({
+          path: 'timeline.maps',
+          ref: 'WardleyMap',
+          populate: {
+            path: 'nodes',
+            ref: 'Node'
+          }
+        }).execPopulate();
+      });
     };
 
     workspace[conn] = conn.model('Workspace', workspaceSchema);

@@ -28,6 +28,10 @@ export default class SingleWorkspaceStore extends Store {
           open : false
       };
 
+      this.newVariantDialog = {
+          open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('workspacechange', function(msg) {
@@ -92,6 +96,17 @@ export default class SingleWorkspaceStore extends Store {
             case ActionTypes.CREATE_NEW_VARIANT:
                 this.createNewVariant(action.data);
                 break;
+            case ActionTypes.OPEN_NEW_VARIANT_DIALOG:
+                this.newVariantDialog = {
+                  open: true,
+                  sourceTimeSliceId: action.data.sourceTimeSliceId
+                };
+                this.emitChange();
+                break;
+            case ActionTypes.CLOSE_NEW_VARIANT_DIALOG:
+                this.newVariantDialog = {open: false};
+                this.emitChange();
+                break;
             default:
                 return;
         }
@@ -119,6 +134,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getInviteNewUserDialogState(){
     return this.inviteDialog;
+  }
+
+  getNewVariantDialogState(){
+    return this.newVariantDialog;
   }
 
   getWorkspaceId(){
@@ -243,10 +262,17 @@ export default class SingleWorkspaceStore extends Store {
 
   createNewVariant(data){
     $.ajax({
-      type: 'PUT',
+      type: 'POST',
       url: '/api/workspace/' + this.getWorkspaceId() + '/variant/' + data.sourceTimeSliceId,
+      data: {
+        name : data.name,
+        description : data.description
+      },
       success: function(data) {
         this.workspace = data;
+        this.newVariantDialog = {
+          open: false
+        };
         this.emitChange();
         this.io.emit('workspace', {
           type: 'change',

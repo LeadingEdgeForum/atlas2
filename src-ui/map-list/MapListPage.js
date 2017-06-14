@@ -21,6 +21,7 @@ import MapList from './map-list';
 import {LinkContainer} from 'react-router-bootstrap';
 import SingleWorkspaceActions from './single-workspace-actions';
 import EditWorkspaceDialog from '../workspace/edit-workspace-dialog';
+import CreateNewVariantDialog from './create-new-variant-dialog';
 import EditorList from './editors-list';
 
 export default class MapListPage extends React.Component {
@@ -94,7 +95,7 @@ export default class MapListPage extends React.Component {
   cloneActiveVariant(e){
     e.preventDefault();
     e.stopPropagation();
-    SingleWorkspaceActions.createNewVariant(this.state.tabselection);
+    SingleWorkspaceActions.openNewVariantDialog(this.state.tabselection);
   }
 
   prepareTimelineTabs(timeline, workspaceID, singleWorkspaceStore){
@@ -187,6 +188,7 @@ export default class MapListPage extends React.Component {
             </Col>
           </Row>
           <EditWorkspaceDialog singleWorkspaceStore={singleWorkspaceStore}/>
+          <CreateNewVariantDialog singleWorkspaceStore={singleWorkspaceStore}/>
         </Grid>
       </DocumentTitle>
     );

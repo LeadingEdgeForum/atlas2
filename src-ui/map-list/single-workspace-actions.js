@@ -110,13 +110,30 @@ var SingleWorkspaceActions = {
       });
     },
 
-    createNewVariant: function(sourceTimeSliceId) {
+    submitNewVariantDialog: function(sourceTimeSliceId, name, description) {
         Dispatcher.dispatch({
             actionType: ACTION_TYPES.CREATE_NEW_VARIANT,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null,
+              name : name,
+              description: description
+            }
+        });
+    },
+
+    openNewVariantDialog: function(sourceTimeSliceId) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.OPEN_NEW_VARIANT_DIALOG,
             data : {
               sourceTimeSliceId : sourceTimeSliceId || null
             }
         });
+    },
+
+    closeNewVariantDialog: function() {
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_NEW_VARIANT_DIALOG
+      });
     },
 
 
