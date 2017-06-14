@@ -32,6 +32,10 @@ export default class SingleWorkspaceStore extends Store {
           open : false
       };
 
+      this.editVariantDialog = {
+          open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('workspacechange', function(msg) {
@@ -107,6 +111,39 @@ export default class SingleWorkspaceStore extends Store {
                 this.newVariantDialog = {open: false};
                 this.emitChange();
                 break;
+            case ActionTypes.OPEN_EDIT_VARIANT_DIALOG:
+              let name = null;
+              let description = null;
+              let workspace = this.getWorkspaceInfo().workspace;
+              for (let i = 0; i < workspace.timeline.length; i++) {
+
+                // either we find indicated timeline
+                // or if it was indicated, we use current one
+                if (workspace.timeline[i]._id === action.data.sourceTimeSliceId ||
+                  (!action.data.sourceTimeSliceId && workspace.timeline[i].current)) {
+
+                    name = workspace.timeline[i].name;
+                    description = workspace.timeline[i].description;
+                  }
+
+              }
+              this.editVariantDialog = {
+                open: true,
+                sourceTimeSliceId: action.data.sourceTimeSliceId,
+                name : name,
+                description : description
+              };
+              this.emitChange();
+              break;
+            case ActionTypes.CLOSE_EDIT_VARIANT_DIALOG:
+              this.editVariantDialog = {
+                open: false
+              };
+              this.emitChange();
+              break;
+            case ActionTypes.MODIFY_VARIANT:
+              this.modifyVariant(action.data);
+              break;
             default:
                 return;
         }
@@ -138,6 +175,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getNewVariantDialogState(){
     return this.newVariantDialog;
+  }
+
+  getEditVariantDialogState(){
+    return this.editVariantDialog;
   }
 
   getWorkspaceId(){
@@ -271,6 +312,29 @@ export default class SingleWorkspaceStore extends Store {
       success: function(data) {
         this.workspace = data;
         this.newVariantDialog = {
+          open: false
+        };
+        this.emitChange();
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceID
+        });
+      }.bind(this)
+    });
+  }
+
+  modifyVariant(data){
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + this.getWorkspaceId() + '/variant/' + data.sourceTimeSliceId,
+      data: {
+        name : data.name,
+        description : data.description,
+        current : data.current
+      },
+      success: function(data) {
+        this.workspace = data;
+        this.editVariantDialog = {
           open: false
         };
         this.emitChange();

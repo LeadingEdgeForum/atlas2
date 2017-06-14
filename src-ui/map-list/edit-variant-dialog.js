@@ -16,32 +16,38 @@ var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./single-workspace-constants');
 import Actions from './single-workspace-actions';
 
-var CreateNewVariantDialog = React.createClass({
+var EditVariantDialog = React.createClass({
   getInitialState: function() {
-    return this.props.singleWorkspaceStore.getNewVariantDialogState();
-  },
-  componentDidMount() {
-    this.props.singleWorkspaceStore.addChangeListener(this._onChange.bind(this));
+    return this.props.singleWorkspaceStore.getEditVariantDialogState();
   },
 
-  componentWillUnmount() {
-    this.props.singleWorkspaceStore.removeChangeListener(this._onChange.bind(this));
+  componentDidMount: function() {
+    this.internalState = {};
+    this.props.singleWorkspaceStore.addChangeListener(this._onChange);
+  },
+
+  componentWillUnmount: function() {
+    this.props.singleWorkspaceStore.removeChangeListener(this._onChange);
   },
 
   internalState: {},
 
   _onChange: function() {
-    this.setState(this.props.singleWorkspaceStore.getNewVariantDialogState());
+    var newState = this.props.singleWorkspaceStore.getEditVariantDialogState();
+    console.log(newState);
+    this.internalState.name = newState.name;
+    this.internalState.description = newState.description;
+
+    this.setState(newState);
   },
 
   _close: function() {
-    Actions.closeNewVariantDialog();
+    Actions.closeEditVariantDialog();
     this.internalState = {};
   },
 
   _submit: function() {
-    this.internalState.workspaceID = this.props.workspaceID;
-    Actions.submitNewVariantDialog(this.internalState.sourceTimeSliceId, this.internalState.name, this.internalState.description);
+    Actions.submitEditVariantDialog(this.internalState.sourceTimeSliceId, this.internalState.name, this.internalState.description);
     this.internalState = {};
   },
 
@@ -50,14 +56,24 @@ var CreateNewVariantDialog = React.createClass({
     this.forceUpdate();
   },
 
+  // catch enter and consider prevent it from submitting
+  _enterInterceptor(e){
+    if(e.nativeEvent.keyCode===13){
+        e.preventDefault();
+        e.stopPropagation();
+    }
+  },
+
   render: function() {
-    var show = this.state.open;
+    let show = this.state.open;
+    let name = this.internalState.name;
+    let description = this.internalState.description;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
           <Modal.Header closeButton>
             <Modal.Title>
-              Create a new variant for your workspace
+              Modify variant
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
@@ -67,7 +83,11 @@ var CreateNewVariantDialog = React.createClass({
                   <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter variant name" onChange={this._handleDialogChange.bind(this, 'name')}/>
+                  <FormControl
+                    type="text"
+                    placeholder="Enter variant name"
+                    onChange={this._handleDialogChange.bind(this, 'name')}
+                    value={name}/>
                   <HelpBlock>A short text to identify your variant</HelpBlock>
                 </Col>
               </FormGroup>
@@ -76,7 +96,11 @@ var CreateNewVariantDialog = React.createClass({
                   <ControlLabel>Description</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter variant description" onChange={this._handleDialogChange.bind(this, 'description')}/>
+                  <FormControl
+                    type="textarea"
+                    placeholder="Enter variant description"
+                    onChange={this._handleDialogChange.bind(this, 'description')}
+                    value={description}/>
                   <HelpBlock>Longer description</HelpBlock>
                 </Col>
               </FormGroup>
@@ -84,7 +108,7 @@ var CreateNewVariantDialog = React.createClass({
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create a new variant</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Modify</Button>
           </Modal.Footer>
         </Modal>
       </div>
@@ -92,4 +116,4 @@ var CreateNewVariantDialog = React.createClass({
   }
 });
 
-module.exports = CreateNewVariantDialog;
+module.exports = EditVariantDialog;

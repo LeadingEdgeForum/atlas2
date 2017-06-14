@@ -136,6 +136,32 @@ var SingleWorkspaceActions = {
       });
     },
 
+    submitEditVariantDialog: function(sourceTimeSliceId, name, description) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.MODIFY_VARIANT,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null,
+              name : name,
+              description: description
+            }
+        });
+    },
+
+    openEditVariantDialog: function(sourceTimeSliceId) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.OPEN_EDIT_VARIANT_DIALOG,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null
+            }
+        });
+    },
+
+    closeEditVariantDialog: function() {
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_VARIANT_DIALOG
+      });
+    },
+
 
 };
 

@@ -22,6 +22,7 @@ import {LinkContainer} from 'react-router-bootstrap';
 import SingleWorkspaceActions from './single-workspace-actions';
 import EditWorkspaceDialog from '../workspace/edit-workspace-dialog';
 import CreateNewVariantDialog from './create-new-variant-dialog';
+import EditVariantDialog from './edit-variant-dialog';
 import EditorList from './editors-list';
 
 export default class MapListPage extends React.Component {
@@ -37,6 +38,7 @@ export default class MapListPage extends React.Component {
     this.prepareTimelineTabs = this.prepareTimelineTabs.bind(this);
     this.handleTabSelection = this.handleTabSelection.bind(this);
     this.cloneActiveVariant = this.cloneActiveVariant.bind(this);
+    this.editActiveVariant = this.editActiveVariant.bind(this);
   }
 
   componentDidMount() {
@@ -86,6 +88,9 @@ export default class MapListPage extends React.Component {
     if(key === 'cloneVariant'){
       return; //this is an action, tab should not switch
     }
+    if(key === 'editVariant'){
+      return; //this is an action, tab should not switch
+    }
     if(key === 'setCurrent'){
       return; //this is an action, tab should not switch
     }
@@ -96,6 +101,12 @@ export default class MapListPage extends React.Component {
     e.preventDefault();
     e.stopPropagation();
     SingleWorkspaceActions.openNewVariantDialog(this.state.tabselection);
+  }
+
+  editActiveVariant(e){
+    e.preventDefault();
+    e.stopPropagation();
+    SingleWorkspaceActions.openEditVariantDialog(this.state.tabselection);
   }
 
   prepareTimelineTabs(timeline, workspaceID, singleWorkspaceStore){
@@ -125,6 +136,7 @@ export default class MapListPage extends React.Component {
         <NavDropdown title={dropDownTitle} id="nav-dropdown-within-tab">
           {setAsCurrent}
           <MenuItem eventKey="cloneVariant" onClick={this.cloneActiveVariant} href="#">Create future variant from currently active</MenuItem>
+          <MenuItem eventKey="editVariant" onClick={this.editActiveVariant} href="#">Edit currently active variant</MenuItem>
         </NavDropdown>);
     }
     var activeKey = this.state.tabselection ? this.state.tabselection : defaultActiveKey;
@@ -189,6 +201,7 @@ export default class MapListPage extends React.Component {
           </Row>
           <EditWorkspaceDialog singleWorkspaceStore={singleWorkspaceStore}/>
           <CreateNewVariantDialog singleWorkspaceStore={singleWorkspaceStore}/>
+          <EditVariantDialog singleWorkspaceStore={singleWorkspaceStore}/>
         </Grid>
       </DocumentTitle>
     );

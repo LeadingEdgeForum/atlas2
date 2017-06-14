@@ -17,6 +17,9 @@ module.exports  = keyMirror({
       MAP_DELETE : null,
       CREATE_NEW_VARIANT : null,
       OPEN_NEW_VARIANT_DIALOG : null,
-      CLOSE_NEW_VARIANT_DIALOG : null
+      CLOSE_NEW_VARIANT_DIALOG : null,
+      OPEN_EDIT_VARIANT_DIALOG : null,
+      CLOSE_EDIT_VARIANT_DIALOG : null,
+      MODIFY_VARIANT : null,
   }
 });
