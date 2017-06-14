@@ -34,7 +34,7 @@ var EditVariantDialog = React.createClass({
 
   _onChange: function() {
     var newState = this.props.singleWorkspaceStore.getEditVariantDialogState();
-    console.log(newState);
+
     this.internalState.name = newState.name;
     this.internalState.description = newState.description;
 
@@ -47,7 +47,7 @@ var EditVariantDialog = React.createClass({
   },
 
   _submit: function() {
-    Actions.submitEditVariantDialog(this.internalState.sourceTimeSliceId, this.internalState.name, this.internalState.description);
+    Actions.submitEditVariantDialog(this.state.sourceTimeSliceId, this.internalState.name, this.internalState.description);
     this.internalState = {};
   },
 
