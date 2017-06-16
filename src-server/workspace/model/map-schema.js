@@ -445,9 +445,35 @@ module.exports = function(conn) {
             }
           }));
       }
+
+      var WardleyMap = require('./map-schema')(conn);
+      var _this = this;
+      if (this.previous) {
+        promises.push(WardleyMap.findOne({
+            _id: _this.previous
+          }).exec()
+          .then(function(map) {
+            map.next.pull(_this._id);
+            return map.save();
+          }));
+      }
+      if (this.next && this.next.length > 0) {
+        for (let i = 0; i < this.next.length; i++) {
+          promises.push(WardleyMap.findOne({
+              _id: _this.next[i]
+            }).exec()
+            .then(function(map) {
+              map.previous = null;
+              return map.save();
+            }));
+        }
+      }
+      
       // if we are not a submap, then this is the end
       if (!this.isSubmap) {
-        return next();
+        return q.allSettled(promises).then(function(r) {
+          next();
+        });
       }
       // otherwise it is necessary to find every Node that uses this map and delete it.
       Node.find({
