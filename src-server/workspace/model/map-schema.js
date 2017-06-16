@@ -173,7 +173,11 @@ module.exports = function(conn) {
             .then(function(savedWardleyMap) {
                 return savedWardleyMap.populate({
                     path: 'nodes',
-                    model: 'Node'
+                    model: 'Node',
+                    populate : {
+                      path: 'previous',
+                      model: 'Node'
+                    }
                 }).execPopulate();
             });
     };
@@ -211,7 +215,11 @@ module.exports = function(conn) {
                 }
                 return q.allSettled([node.save(), _this.populate({
                     path: 'nodes',
-                    model: 'Node'
+                    model: 'Node',
+                    populate : {
+                      path: 'previous',
+                      model: 'Node'
+                    }
                 }).execPopulate()]);
             });
     };
@@ -226,7 +234,11 @@ module.exports = function(conn) {
             .then(function(node) {
                 return q.allSettled([node.remove(), _this.populate({
                     path: 'nodes',
-                    model: 'Node'
+                    model: 'Node',
+                    populate : {
+                      path: 'previous',
+                      model: 'Node'
+                    }
                 }).execPopulate()]);
             });
     };
@@ -237,7 +249,14 @@ module.exports = function(conn) {
             .findOne({
                 _id: this._id
             })
-            .populate('nodes workspace')
+            .populate({
+                path: 'nodes',
+                model: 'Node',
+                populate : {
+                  path: 'previous',
+                  model: 'Node'
+                }
+            })
             .exec();
     };
 
@@ -468,7 +487,7 @@ module.exports = function(conn) {
             }));
         }
       }
-      
+
       // if we are not a submap, then this is the end
       if (!this.isSubmap) {
         return q.allSettled(promises).then(function(r) {
