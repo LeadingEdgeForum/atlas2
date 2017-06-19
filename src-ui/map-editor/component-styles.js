@@ -175,8 +175,8 @@ var moveEndpointOptions = {
       radius: 1
     }
   ],
-  deleteEndpointsOnDetach: false,
-  uniqueEndpoints: true,
+  deleteEndpointsOnDetach: true,
+  // uniqueEndpoints: true,
   scope: "WM_MOVED",
   connectorOverlays: [
     ["Arrow", {
