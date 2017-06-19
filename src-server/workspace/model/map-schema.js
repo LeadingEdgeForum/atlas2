@@ -142,6 +142,96 @@ module.exports = function(conn) {
         });
     };
 
+    _MapSchema.methods.calculateDiff = function() {
+        var Workspace = require('./workspace-schema')(conn);
+        var mapID = this._id;
+        var _this = this;
+        return _this.populate({
+            path: 'nodes',
+            model: 'Node',
+            populate : {
+              path: 'previous',
+              model: 'Node'
+            }
+        }).populate({
+            path: 'previous',
+            model: 'WardleyMap',
+            populate : {
+                path: 'nodes',
+                model: 'Node'
+            }
+        }).execPopulate()
+        .then(function(map){
+          let added = [];
+          for (let i = 0; i < map.nodes.length; i++) {
+            if (!map.nodes[i].previous) {
+              added.push({_id : map.nodes[i]._id});
+            }
+          }
+          // console.log('added', added);
+
+          let modified = [];
+          let hasCounterpart = {};
+          for (let i = 0; i < map.nodes.length; i++) {
+            let differs = false;
+            let diff = {};
+            let currentNode = map.nodes[i];
+            let previousNode = currentNode.previous;
+            if(!previousNode){
+              continue;
+            }
+            if (currentNode.name !== previousNode.name){
+              differs = true;
+              diff.name = {
+                old : previousNode.name,
+                new : currentNode.name
+              };
+            }
+            if (currentNode.type !== previousNode.type){
+              differs = true;
+              diff.type = {
+                old : previousNode.type,
+                new : currentNode.type
+              };
+            }
+            if (currentNode.x !== previousNode.x){
+              differs = true;
+              diff.x = {
+                old : previousNode.x,
+                new : currentNode.x
+              };
+            }
+            if(differs){
+              modified.push({
+                  _id : currentNode._id, diff: diff
+              });
+            }
+            hasCounterpart[previousNode._id] = true;
+          }
+
+          // console.log('modified', modified);
+
+          let removed = [];
+          let previousMap = map.previous;
+          // console.log(hasCounterpart);
+          if (previousMap) {
+            for (let i = 0; i < previousMap.nodes.length; i++) {
+              let candidateNode = previousMap.nodes[i];
+              if (!hasCounterpart[candidateNode._id]) {
+                removed.push(candidateNode); // add full removed node as we want to show where it was);
+              }
+            }
+          }
+          // console.log('removed', removed);
+
+          return {
+            removed : removed,
+            added : added,
+            modified : modified
+          };
+        });
+    };
+
     _MapSchema.methods.newBody = function(body) {
         _.extend(this, body);
         _.extend(this.archived, false);
