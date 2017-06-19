@@ -29,7 +29,8 @@ export default class CanvasStore extends Store {
           width: 1, //1 is just to avoid division by 0
           height: 1
         }
-      }
+      },
+      diffEnabled : false
     };
     this.dispatchToken = Dispatcher.register(action => {
       switch (action.actionType) {
@@ -90,6 +91,15 @@ export default class CanvasStore extends Store {
           return;
       }
     });
+  }
+
+  toggleDiff(){
+    this.diffEnabled = !this.diffEnabled;
+    this.emitChange();
+  }
+
+  isDiffEnabled(){
+    return this.diffEnabled;
   }
 
   /**

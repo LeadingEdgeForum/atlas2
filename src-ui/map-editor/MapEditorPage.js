@@ -128,8 +128,16 @@ export default class MapEditorPage extends React.Component {
               <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
               &nbsp;Fix it!
           </NavItem>
-      </LinkContainer>
+      </LinkContainer>,
+      <NavItem eventKey={5} href="#" key="5" onClick={this.toggleDiff.bind(this)}>
+          <Glyphicon glyph="tags" style={{color: "basil"}}></Glyphicon>
+          &nbsp;Diff
+      </NavItem>
     ];
+  }
+
+  toggleDiff(){
+    this.canvasStore.toggleDiff();
   }
 
   closeHelpDialog() {
@@ -144,7 +152,6 @@ export default class MapEditorPage extends React.Component {
     const auth = this.props.auth;
     const history = this.props.history;
     const singleMapStore = this.props.singleMapStore;
-    const mapMenu = this.prepareMapMenu();
 
     const nameAndPurpose = singleMapStore.getWorkspaceNameAndPurpose();
     const workspaceID = singleMapStore.getWorkspaceId();
@@ -153,10 +160,13 @@ export default class MapEditorPage extends React.Component {
     const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
+    const diff = singleMapStore.getDiff();
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
 
     const canvasStore = this.canvasStore;
+    const mapMenu = this.prepareMapMenu(canvasStore);
+
     const helpDialog = <GetHelpDialog open={this.state.openHelpDialog} close={this.closeHelpDialog}/>;
     const helpMenu = <NavItem eventKey={7} href="#" onClick={this.openHelpDialog} key="help">
       <Glyphicon glyph="education"></Glyphicon>Get help!
@@ -195,7 +205,8 @@ export default class MapEditorPage extends React.Component {
                   comments={comments}
                   mapID={mapID}
                   workspaceID={workspaceID}
-                  canvasStore={canvasStore} />
+                  canvasStore={canvasStore}
+                  diff={diff}/>
             </Col>
           </Row>
           <EditMapDialog singleMapStore={singleMapStore}/>

@@ -362,9 +362,24 @@ var MapComponent = React.createClass({
     }
     return node.name;
   },
+
+  decorateDiffStyle(node, style, diff) {
+    if (!this.props.canvasStore.isDiffEnabled()) {
+      return;
+    }
+    if (!diff) {
+      return;
+    }
+    if (diff === 'ADDED') {
+      style.boxShadow = "0 0 3px 3px green";
+      return;
+    }
+    style.boxShadow = "0 0 3px 3px orange";
+  },
+
   render: function() {
     var node = this.props.node;
-
+    var diff = this.props.diff;
     var style = getStyleForType(node.type);
     var left = node.x * this.props.size.width;
     var top = node.y * this.props.size.height;
@@ -374,6 +389,7 @@ var MapComponent = React.createClass({
       position: 'absolute',
       cursor: 'pointer'
     });
+    this.decorateDiffStyle(node, style, diff);
     var name = this.renderName(node);
     var menu = this.renderMenu();
     var shouldBeDraggable = this.props.focused;

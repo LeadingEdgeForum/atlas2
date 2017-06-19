@@ -129,6 +129,7 @@ export default class CanvasWithBackground extends React.Component {
     var workspaceID = this.props.workspaceID;
     var mapID = this.props.mapID;
     var background = this.props.background;
+    let diff = this.props.diff;
     if(background){
       outerStyle.backgroundColor = 'white';
       outerStyle.marginTop= '-7px';
@@ -136,7 +137,7 @@ export default class CanvasWithBackground extends React.Component {
     var canvasStore = this.props.canvasStore;
     return (
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background} canvasStore={canvasStore}></MapCanvas>
+              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background} canvasStore={canvasStore} diff={diff}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>

@@ -156,6 +156,37 @@ var actionEndpointOptions = {
     }]
   ]
 };
+var moveEndpointOptions = {
+  paintStyle: {
+    fillStyle: "transparent",
+    outlineColor: 'transparent',
+    stroke:'orange'
+  },
+  allowLoopback: false,
+  connector: "Straight",
+  connectorStyle: {
+    strokeWidth: 2,
+    stroke: 'gray',
+    outlineStroke: 'transparent',
+    outlineWidth: 10
+  },
+  endpoint: [
+    "Dot", {
+      radius: 1
+    }
+  ],
+  deleteEndpointsOnDetach: false,
+  uniqueEndpoints: true,
+  scope: "WM_MOVED",
+  connectorOverlays: [
+    ["Arrow", {
+      width: 10,
+      length: 10,
+      location: 1,
+      direction: 1
+    }]
+  ]
+};
 export {
   userNeedStyle,
   externalStyle,
@@ -164,5 +195,6 @@ export {
   genericCommentPalletteStyle,
   getStyleForType,
   endpointOptions,
-  actionEndpointOptions
+  actionEndpointOptions,
+  moveEndpointOptions
 };

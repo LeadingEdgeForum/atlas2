@@ -418,6 +418,16 @@ export default class SingleWorkspaceStore extends Store {
     }
   }
 
+  fetchMapDiff(){
+    if(!this.diffServerRequest){
+      this.diffServerRequest = $.get('/api/map/' + this.mapID + '/diff', function(result) {
+        this.diff = result;
+        this.diffServerRequest = null;
+        this.emitChange();
+      }.bind(this));
+    }
+  }
+
   getMap(){
     if(!this.map){
       this.fetchMap();
@@ -431,6 +441,18 @@ export default class SingleWorkspaceStore extends Store {
       };
     }
     return this.map;
+  }
+
+  getDiff(){
+    if(!this.diff){
+      this.fetchMapDiff();
+      return {
+        removed : [],
+        added : [],
+        modified : []
+      };
+    }
+    return this.diff;
   }
 
   submitEditMapDialog(data){
