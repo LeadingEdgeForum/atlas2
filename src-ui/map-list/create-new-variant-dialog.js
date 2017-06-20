@@ -41,6 +41,7 @@ var CreateNewVariantDialog = React.createClass({
 
   _submit: function() {
     this.internalState.workspaceID = this.props.workspaceID;
+    this.internalState.sourceTimeSliceId = this.state.sourceTimeSliceId;
     Actions.submitNewVariantDialog(this.internalState.sourceTimeSliceId, this.internalState.name, this.internalState.description);
     this.internalState = {};
   },
