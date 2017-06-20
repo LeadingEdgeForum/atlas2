@@ -40,6 +40,7 @@ export default class MapListPage extends React.Component {
     this.cloneActiveVariant = this.cloneActiveVariant.bind(this);
     this.editActiveVariant = this.editActiveVariant.bind(this);
     this.setCurrent = this.setCurrent.bind(this);
+    this.findChildren = this.findChildren.bind(this);
   }
 
   componentDidMount() {
@@ -116,6 +117,22 @@ export default class MapListPage extends React.Component {
     SingleWorkspaceActions.setVariantAsCurrent(this.state.tabselection);
   }
 
+  findChildren(timeline, timeslice, filteredTimeline) {
+    if(!timeslice){
+      return;
+    }
+    filteredTimeline.push(timeslice);
+    // for each next
+    for (let i = 0; i < timeslice.next.length; i++) {
+      //locate the timeslice
+      for (let j = 0; j < timeline.length; j++) {
+        if (timeline[j]._id === timeslice.next[i]) {
+          this.findChildren(timeline, timeline[j], filteredTimeline);
+        }
+      }
+    }
+  }
+
   prepareTimelineTabs(timeline, workspaceID, singleWorkspaceStore){
     let navs = [];
     let panes = [];
@@ -124,23 +141,36 @@ export default class MapListPage extends React.Component {
       navs.push(<NavItem eventKey={defaultActiveKey}>Loading...</NavItem>);
       panes.push(<Tab.Pane eventKey={defaultActiveKey}></Tab.Pane>);
     } else {
+      // very optimistic approach - display the list only from the timeline
       //render time slices
+      let filteredTimeline = [];
+      let currentTimeSlice = null;
       for(let i = 0; i < timeline.length; i++){
         let key = timeline[i]._id;
-        let timeLineName = timeline[i].name;
-        let currentDecoriation = null;
         if(timeline[i].current){
+          currentTimeSlice = timeline[i];
+          defaultActiveKey = key;
+          break;
+        }
+      }
+      this.findChildren(timeline, currentTimeSlice, filteredTimeline);
+
+      for(let i = 0; i < filteredTimeline.length; i++){
+        let key = filteredTimeline[i]._id;
+        let timeLineName = filteredTimeline[i].name;
+        let currentDecoriation = null;
+        if(filteredTimeline[i].current){
           key = timeline[i]._id;
           defaultActiveKey = key;
           currentDecoriation = <Glyphicon glyph="flash"/>;
         }
         navs.push(<NavItem eventKey={key}>{timeLineName}{currentDecoriation}</NavItem>);
-        let maps = timeline[i].maps || [];
+        let maps = filteredTimeline[i].maps || [];
         panes.push(<Tab.Pane eventKey={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/></Tab.Pane>);
       }
 
       var dropDownTitle = <Glyphicon glyph="cog"/>;
-      let setAsCurrent = ((this.state.tabselection || defaultActiveKey) === defaultActiveKey) ?  null : <MenuItem eventKey="setCurrent" onClick={this.setCurrent}>Set active variant as 'current'</MenuItem>;
+      let setAsCurrent = ((this.state.tabselection || defaultActiveKey) === defaultActiveKey) ?  null : <MenuItem eventKey="setCurrent" onClick={this.setCurrent}>Set active variant as new baseline</MenuItem>;
       navs.push(
         <NavDropdown title={dropDownTitle} id="nav-dropdown-within-tab">
           <MenuItem eventKey="editVariant" onClick={this.editActiveVariant} href="#">Edit currently active variant</MenuItem>
