@@ -289,10 +289,10 @@ module.exports = function(conn) {
             }
             // find ancestor
             if (previousMap && timeSlice._id.equals(previousMap.timesliceId)) {
-              result.futures.push({
+              result.past = {
                 name: timeSlice.name,
                 mapId: previousMap._id
-              });
+              };
             }
           }
           return result;
