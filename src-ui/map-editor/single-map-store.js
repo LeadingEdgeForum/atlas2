@@ -433,7 +433,7 @@ export default class SingleWorkspaceStore extends Store {
 
   fetchMapVariants(){
     if(!this.variantsServerRequest){
-      this.diffServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
+      this.variantsServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
         this.variants = result;
         this.variantsServerRequest = null;
         this.emitChange();

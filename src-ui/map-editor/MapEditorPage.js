@@ -55,6 +55,7 @@ export default class MapEditorPage extends React.Component {
     this.openHelpDialog = this.openHelpDialog.bind(this);
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
     this.prepareVariantsSwitch = this.prepareVariantsSwitch.bind(this);
+    this.state.diff = this.props.singleMapStore.getDiff();
   }
 
   componentDidMount() {
@@ -75,6 +76,7 @@ export default class MapEditorPage extends React.Component {
 
   _onChange() {
     this.setState(this.props.singleMapStore.getMap());
+    this.setState({diff:this.props.singleMapStore.getDiff()});
   }
 
   openEditMapDialog() {
@@ -194,7 +196,8 @@ export default class MapEditorPage extends React.Component {
     const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
-    const diff = singleMapStore.getDiff();
+    const diff = this.state.diff;
+    console.log('DIFF', diff);
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
 
