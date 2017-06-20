@@ -428,6 +428,16 @@ export default class SingleWorkspaceStore extends Store {
     }
   }
 
+  fetchMapVariants(){
+    if(!this.variantsServerRequest){
+      this.diffServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
+        this.variants = result;
+        this.variantsServerRequest = null;
+        this.emitChange();
+      }.bind(this));
+    }
+  }
+
   getMap(){
     if(!this.map){
       this.fetchMap();
@@ -454,6 +464,19 @@ export default class SingleWorkspaceStore extends Store {
     }
     return this.diff;
   }
+
+  getVariants(){
+    if(!this.variants){
+      this.fetchMapVariants();
+      return {
+        past : null,
+        alternatives : [],
+        futures : []
+      };
+    }
+    return this.variants;
+  }
+
 
   submitEditMapDialog(data){
     this.map.map.user = data.user;

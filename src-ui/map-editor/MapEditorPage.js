@@ -9,7 +9,9 @@ import {
   Col,
   Breadcrumb,
   NavItem,
-  Glyphicon
+  Glyphicon,
+  NavDropdown,
+  MenuItem
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
@@ -52,6 +54,7 @@ export default class MapEditorPage extends React.Component {
     this.closeHelpDialog = this.closeHelpDialog.bind(this);
     this.openHelpDialog = this.openHelpDialog.bind(this);
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
+    this.prepareVariantsSwitch = this.prepareVariantsSwitch.bind(this);
   }
 
   componentDidMount() {
@@ -104,8 +107,37 @@ export default class MapEditorPage extends React.Component {
 
   }
 
+  prepareVariantsSwitch(variants){
+    if(!variants || !(variants.alternatives.length || variants.past || variants.futures.length )){
+      return null;
+    }
+    let variantItems = [];
+    if(variants.past){
+      let name = variants.past.name;
+      let href = '/map/' + variants.past.mapId;
+      variantItems.push(<MenuItem href={href}>{name} (past)</MenuItem>);
+      variantItems.push(<MenuItem divider />);
+    }
+    for(let i = 0; i < variants.alternatives.length; i++){
+      let name = variants.alternatives[i].name;
+      let href = '/map/' + variants.alternatives[i].mapId;
+      variantItems.push(<MenuItem href={href}>{name} (alternative)</MenuItem>);
+    }
+    variantItems.push(<MenuItem divider />);
+    for(let i = 0; i < variants.futures.length; i++){
+      let name = variants.futures[i].name;
+      let href = '/map/' + variants.futures[i].mapId;
+      variantItems.push(<MenuItem href={href}>{name} (future)</MenuItem>);
+    }
+    return <NavDropdown eventKey="4" title="Related" id="nav-dropdown">
+        {variantItems}
+      </NavDropdown>;
+  }
+
   prepareMapMenu(){
     const workspaceID = this.props.singleMapStore.getWorkspaceId();
+    const variants = this.props.singleMapStore.getVariants();
+
     const deduplicateHref = '/fixit/' + workspaceID;
     var mapID = this.props.singleMapStore.getMapId();
 
@@ -113,6 +145,7 @@ export default class MapEditorPage extends React.Component {
     var downloadMapHref = '/img/' + tempName;
 
     const goBack = this.prepareGoBackForSubmap();
+    const variantSwitch = this.prepareVariantsSwitch(variants);
 
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this)}>
@@ -132,7 +165,8 @@ export default class MapEditorPage extends React.Component {
       <NavItem eventKey={5} href="#" key="5" onClick={this.toggleDiff.bind(this)}>
           <Glyphicon glyph="tags" style={{color: "basil"}}></Glyphicon>
           &nbsp;Diff
-      </NavItem>
+      </NavItem>,
+      variantSwitch
     ];
   }
 

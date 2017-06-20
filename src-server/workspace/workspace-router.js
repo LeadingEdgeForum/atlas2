@@ -243,6 +243,26 @@ module.exports = function(authGuardian, mongooseConnection) {
           });
   });
 
+  module.router.get('/map/:mapID/variants', authGuardian.authenticationRequired, function(req, res) {
+      WardleyMap.findOne({
+              _id: req.params.mapID,
+              archived: false
+          })
+          .exec()
+          .then(function(result) {
+              return result.verifyAccess(getUserIdFromReq(req));
+          })
+          .then(function(result){
+            return result.getRelevantVariants();
+          })
+          .fail(function(e) {
+              defaultAccessDenied(res, e);
+          })
+          .done(function(diffResult) {
+              res.json(diffResult);
+          });
+  });
+
   module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
       WardleyMap.findOne({
               _id: req.params.mapID,

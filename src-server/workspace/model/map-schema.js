@@ -232,6 +232,73 @@ module.exports = function(conn) {
         });
     };
 
+
+    _MapSchema.methods.getRelevantVariants = function() {
+      return this.populate({
+          path: 'previous',
+          model: 'WardleyMap',
+          populate: {
+            path: 'next',
+            model: 'WardleyMap'
+          }
+        }).populate({
+          path: 'workspace',
+          model: 'Workspace'
+        }).populate({
+            path: 'next',
+            model: 'WardleyMap'
+        }).execPopulate()
+        .then(function(populatedMap) {
+          let result = {
+              past : null,
+              alternatives : [],
+              futures : []
+          };
+
+          let previousMap = populatedMap.previous;
+          let alternativeMaps = [];
+          let futureMaps = populatedMap.next;
+
+          if (previousMap) {
+            for (let i = 0; i < previousMap.next.length; i++) {
+              if (!populatedMap._id.equals(previousMap.next[i]._id)) {
+                alternativeMaps.push(previousMap.next[i]);
+              }
+            }
+          }
+
+          for (let i = 0; i < populatedMap.workspace.timeline.length; i++) {
+            let timeSlice = populatedMap.workspace.timeline[i];
+            // find alternatives maps
+            for (let j = 0; j < alternativeMaps.length; j++) {
+              if (timeSlice._id.equals(alternativeMaps[j].timesliceId)) {
+                result.alternatives.push({
+                  name: timeSlice.name,
+                  mapId: alternativeMaps[j]._id
+                });
+              }
+            }
+            // find future maps
+            for (let j = 0; j < futureMaps.length; j++) {
+              if (timeSlice._id.equals(futureMaps[j].timesliceId)) {
+                result.futures.push({
+                  name: timeSlice.name,
+                  mapId: futureMaps[j]._id
+                });
+              }
+            }
+            // find ancestor
+            if (previousMap && timeSlice._id.equals(previousMap.timesliceId)) {
+              result.futures.push({
+                name: timeSlice.name,
+                mapId: previousMap._id
+              });
+            }
+          }
+          return result;
+        });
+    };
+
     _MapSchema.methods.newBody = function(body) {
         _.extend(this, body);
         _.extend(this.archived, false);
