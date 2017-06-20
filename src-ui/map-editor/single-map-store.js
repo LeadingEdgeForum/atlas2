@@ -69,6 +69,8 @@ export default class SingleWorkspaceStore extends Store {
 
       this.dispatchToken = null;
       this.redispatch();
+
+      this.fetchMap = this.fetchMap.bind(this);
   }
 
   redispatch(){
