@@ -14,9 +14,10 @@ export default class MapListElementNew extends React.Component {
       <ListGroupItem header="Create a new map" onClick={SingleWorkspaceActions.openNewMapDialog}>
         Just click <CreateNewMapDialog
           workspaceID={workspaceID}
-          singleWorkspaceStore={singleWorkspaceStore}/>
+          singleWorkspaceStore={singleWorkspaceStore}
+          selectedVariant={this.props.selectedVariant}/>
       </ListGroupItem>
     );
   }
-  
+
 }

@@ -266,9 +266,13 @@ export default class SingleWorkspaceStore extends Store {
 
   submitNewMapDialog(data) {
     if(data.workspaceID === this.getWorkspaceId()){
+      let url = '/api/map';
+      if(data.timesliceId){
+        url = '/api/variant/' + data.timesliceId + '/map';
+      }
       $.ajax({
         type: 'POST',
-        url: '/api/map/',
+        url: url,
         dataType: 'json',
         data: data,
         success: function(data) {

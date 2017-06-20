@@ -560,6 +560,38 @@ module.exports = function(authGuardian, mongooseConnection) {
           });
   });
 
+  module.router.post('/variant/:timesliceId/map', authGuardian.authenticationRequired, function(req, res) {
+      var editor = getUserIdFromReq(req);
+      Workspace
+          .findOne({
+              _id: new ObjectId(req.body.workspaceID),
+              owner: editor
+          })
+          .exec()
+          .then(function(workspace) {
+              if (!workspace) {
+                  throw new Error("Workspace not found");
+              }
+              return workspace.createAMap({
+                user : req.body.user,
+                purpose: req.body.purpose,
+                responsiblePerson : req.body.responsiblePerson,
+              }, req.params.timesliceId);
+          })
+          .fail(function(e) {
+              defaultAccessDenied.bind(res, e);
+          })
+          .done(function(result) {
+              res.json({
+                  map: result
+              });
+              track(editor,'create_map',{
+                'id' : result._id,
+                'body' : JSON.stringify(req.body)
+              });
+          });
+  });
+
 
   module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);

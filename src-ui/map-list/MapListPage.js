@@ -166,7 +166,7 @@ export default class MapListPage extends React.Component {
         }
         navs.push(<NavItem eventKey={key}>{timeLineName}{currentDecoriation}</NavItem>);
         let maps = filteredTimeline[i].maps || [];
-        panes.push(<Tab.Pane eventKey={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/></Tab.Pane>);
+        panes.push(<Tab.Pane eventKey={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore} selectedVariant={this.state.tabselection}/></Tab.Pane>);
       }
 
       var dropDownTitle = <Glyphicon glyph="cog"/>;

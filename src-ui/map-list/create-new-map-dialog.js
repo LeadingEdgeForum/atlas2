@@ -43,6 +43,7 @@ var CreateNewMapDialog = React.createClass({
 
   _submit: function() {
     this.internalState.workspaceID = this.props.workspaceID;
+    this.internalState.timesliceId = this.props.selectedVariant;
     Actions.submitNewMapDialog(this.internalState);
     this.internalState = {};
   },
