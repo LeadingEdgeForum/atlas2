@@ -128,11 +128,13 @@ export default class MapListPage extends React.Component {
       for(let i = 0; i < timeline.length; i++){
         let key = timeline[i]._id;
         let timeLineName = timeline[i].name;
+        let currentDecoriation = null;
         if(timeline[i].current){
           key = timeline[i]._id;
           defaultActiveKey = key;
+          currentDecoriation = <Glyphicon glyph="flash"/>;
         }
-        navs.push(<NavItem eventKey={key}>{timeLineName}</NavItem>);
+        navs.push(<NavItem eventKey={key}>{timeLineName}{currentDecoriation}</NavItem>);
         let maps = timeline[i].maps || [];
         panes.push(<Tab.Pane eventKey={key}><MapList maps={maps} workspaceID={workspaceID} singleWorkspaceStore={singleWorkspaceStore}/></Tab.Pane>);
       }
