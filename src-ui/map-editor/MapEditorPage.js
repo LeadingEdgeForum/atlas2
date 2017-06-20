@@ -197,7 +197,6 @@ export default class MapEditorPage extends React.Component {
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
     const diff = this.state.diff;
-    console.log('DIFF', diff);
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
 
