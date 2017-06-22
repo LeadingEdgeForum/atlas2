@@ -119,7 +119,6 @@ export default class FixitPage extends React.Component {
 
     const workspaceID = fixitStore.getWorkspaceId();
     const variantId = this.props.variantId;
-    console.log(this.props);
     const workspaceName = workspaceStore.getWorkspaceInfo().workspace.name + ' - ' + workspaceStore.getWorkspaceInfo().workspace.purpose;
 
 

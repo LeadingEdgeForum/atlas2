@@ -276,6 +276,18 @@ class DeduplicatorStore extends Store {
     return this.state.availableComponents;
   }
 
+  getCapabilitiesForCurrentVariant(workspace, variantId){
+    if(!workspace || !workspace.timeline || !workspace.timeline.length || !variantId){
+      return [];
+    }
+    for(let i = 0; i < workspace.timeline.length; i++){
+      if(workspace.timeline[i]._id === variantId){
+        return workspace.timeline[i].capabilityCategories;
+      }
+    }
+    return [];
+  }
+
   /**
     list of maps with processed components
   */
@@ -286,7 +298,7 @@ class DeduplicatorStore extends Store {
         url: '/api/workspace/' + this.workspaceID + '/components/' + variantId + '/processed',
         dataType: 'json',
         success: function(data) {
-          this.state.processedComponents = data.workspace.capabilityCategories;
+          this.state.processedComponents = this.getCapabilitiesForCurrentVariant(data.workspace, variantId);
           this.emitChange();
         }.bind(this)
       });
