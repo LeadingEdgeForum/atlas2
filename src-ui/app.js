@@ -133,7 +133,7 @@ ReactDOM.render(
                       history={props.history}
                       singleWorkspaceStore={singleWorkspaceStore} />
                 </Route>
-                <Route exact path="/fixit/:workspaceID">
+                <Route path="/fixit/:workspaceID/variant/:variantId">
                   <FixitPage
                       auth={auth}
                       history={props.history}

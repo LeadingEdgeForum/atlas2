@@ -136,11 +136,11 @@ export default class MapEditorPage extends React.Component {
       </NavDropdown>;
   }
 
-  prepareMapMenu(){
+  prepareMapMenu(currentMap){
     const workspaceID = this.props.singleMapStore.getWorkspaceId();
     const variants = this.props.singleMapStore.getVariants();
 
-    const deduplicateHref = '/fixit/' + workspaceID;
+    const deduplicateHref = '/fixit/' + workspaceID + '/variant/' + (currentMap ? currentMap.timesliceId : null);
     var mapID = this.props.singleMapStore.getMapId();
 
     var tempName = mapID + '.png';
@@ -201,7 +201,7 @@ export default class MapEditorPage extends React.Component {
     const comments = singleMapStore.getMap().map.comments;
 
     const canvasStore = this.canvasStore;
-    const mapMenu = this.prepareMapMenu(canvasStore);
+    const mapMenu = this.prepareMapMenu(this.state.map);
 
     const helpDialog = <GetHelpDialog open={this.state.openHelpDialog} close={this.closeHelpDialog}/>;
     const helpMenu = <NavItem eventKey={7} href="#" onClick={this.openHelpDialog} key="help">

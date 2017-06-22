@@ -71,7 +71,20 @@ export default class MapListPage extends React.Component {
 
   prepareWorkspaceMenu(){
     const workspaceID = this.props.singleWorkspaceStore.getWorkspaceId();
-    const deduplicateHref = '/fixit/' + workspaceID;
+    let variantId = this.state.tabselection;
+    if(!variantId){ // no selection
+      const timeline = this.state.workspace.timeline;
+      if(timeline){
+        for(let i = 0; i < timeline.length; i++){
+          let key = timeline[i]._id;
+          if(timeline[i].current){
+            variantId = timeline[i]._id;
+            break;
+          }
+        }
+      }
+    }
+    const deduplicateHref = '/fixit/' + workspaceID + '/variant/' + variantId;
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditWorkspaceDialog.bind(this)}>
           <Glyphicon glyph="edit"></Glyphicon>
