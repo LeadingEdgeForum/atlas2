@@ -29,12 +29,10 @@ export default class SplashPage extends React.Component {
     super(props);
   }
   login(){
-    this.props.auth.setHistory(this.props.history);
-    this.props.auth.login(this.props.history);
+    this.props.auth.login();
   }
   signUp(){
-    this.props.auth.history = this.props.history;
-    this.props.auth.signUp(this.props.history);
+    this.props.auth.signUp();
   }
   render() {
     var loginNav = [
@@ -78,6 +76,5 @@ export default class SplashPage extends React.Component {
   }
 }
 SplashPage.propTypes = {
-  auth : React.PropTypes.object.isRequired,
-  history : React.PropTypes.object.isRequired
+  auth : React.PropTypes.object.isRequired
 };
