@@ -46,7 +46,7 @@ var CreateCategoryDialog = React.createClass({
 
   _submit: function() {
     this.internalState.workspaceID = this.props.workspaceID;
-    Actions.submitNewCategoryDialog(this.props.workspaceID, this.internalState.name);
+    Actions.submitNewCategoryDialog(this.props.workspaceID, this.props.variantId, this.internalState.name);
   },
 
   _handleDialogChange: function(parameterName, event) {

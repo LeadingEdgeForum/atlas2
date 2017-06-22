@@ -47,6 +47,7 @@ var CreateMarketReferenceDialog = React.createClass({
 
   _submit: function() {
     Actions.submitAddMarketReferenceToCapabilityDialog(
+      this.props.variantId,
       this.state.capability,
       this.internalState.name ? this.internalState.name : 'Anonymous competitor',
       this.internalState.description,

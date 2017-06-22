@@ -53,6 +53,7 @@ var EditMarketReferenceDialog = React.createClass({
   _submit: function() {
     Actions.submitEditMarketReferenceDialog(
       this.internalState.workspaceId,
+      this.props.variantId,
       this.internalState.capability._id,
       this.internalState.marketReferenceId,
       this.internalState.name ? this.internalState.name : 'Anonymous competitor',
@@ -69,7 +70,6 @@ var EditMarketReferenceDialog = React.createClass({
     var show = this.state.open;
     var activityName = this.state.capability ? this.state.capability.aliases[0].nodes[0].name : null;
 
-    console.log(this.internalState);
     return (
       <div>
         <Modal show={show} onHide={this._close}>
