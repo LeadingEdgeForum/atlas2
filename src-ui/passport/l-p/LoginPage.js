@@ -41,9 +41,7 @@ export class Login extends React.Component {
     e.preventDefault();
     const { email, password } = this.getAuthParams();
     var _this = this;
-    this.props.auth.loginPasswordLogin(email, password, function(){
-      _this.props.history.push('/');
-    });
+    this.props.auth.loginPasswordLogin(email, password);
   }
 
   render() {

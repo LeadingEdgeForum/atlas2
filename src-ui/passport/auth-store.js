@@ -44,7 +44,7 @@ class AuthStore extends Store {
     return this._loggedIn;
   }
 
-  loginPasswordLogin(login, password, next){
+  loginPasswordLogin(login, password){
     if(this._loggedIn){
       return; //no op if already logged in
     }
@@ -62,9 +62,6 @@ class AuthStore extends Store {
           this.inProgress = false;
           this.meQueried = true;
           this.emitChange();
-          if(next){
-            next();
-          }
         }.bind(this),
         error: function(err) {
           this.inProgress = false;
