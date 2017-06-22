@@ -189,4 +189,5 @@ class MainApp extends React.Component {
     );
   }
 }
+
 ReactDOM.render( <MainApp auth={auth}/>, document.getElementById('app-container'));

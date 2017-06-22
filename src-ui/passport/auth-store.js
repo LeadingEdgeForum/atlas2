@@ -11,12 +11,11 @@ class AuthStore extends Store {
     this.inProgress = false;
     this.meQueried = false;
     this.loggedIn = this.loggedIn.bind(this);
+    this.loginPasswordLogin = this.loginPasswordLogin.bind(this);
     this.logout = this.logout.bind(this);
-    this.history = null;
   }
 
-  loggedIn(history, referrer){
-    this.history = history;
+  loggedIn(){
     if(this._loggedIn){
       return true;
     }
@@ -33,9 +32,6 @@ class AuthStore extends Store {
           this.inProgress = false;
           this.meQueried = true;
           this.emitChange();
-          if(history){
-            history.replace(referrer ? referrer : '/');
-          }
         }.bind(this),
         error: function(err) {
           this.inProgress = false;
@@ -66,7 +62,9 @@ class AuthStore extends Store {
           this.inProgress = false;
           this.meQueried = true;
           this.emitChange();
-          if(next) next();
+          if(next){
+            next();
+          }
         }.bind(this),
         error: function(err) {
           this.inProgress = false;
@@ -78,14 +76,13 @@ class AuthStore extends Store {
     }
   }
 
-  logout(history){
+  logout(){
     $.ajax({
       type: 'GET',
       url: '/logout',
       success: function(data2) {
         this._loggedIn = false;
         this.emitChange();
-        history.replace('/');
       }.bind(this)
     });
   }
