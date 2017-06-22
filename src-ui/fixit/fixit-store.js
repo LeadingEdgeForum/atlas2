@@ -260,11 +260,11 @@ class DeduplicatorStore extends Store {
   /**
     list of maps with unprocessed components
   */
-  getAvailableComponents(){
+  getAvailableComponents(variantId){
     if(!this.state.loadedAvailable){
       $.ajax({
         type: 'GET',
-        url: '/api/workspace/' + this.workspaceID + '/components/unprocessed',
+        url: '/api/workspace/' + this.workspaceID + '/components/' + variantId + '/unprocessed',
         dataType: 'json',
         success: function(data) {
           this.state.availableComponents = data.maps;
@@ -279,11 +279,11 @@ class DeduplicatorStore extends Store {
   /**
     list of maps with processed components
   */
-  getProcessedComponents(){
+  getProcessedComponents(variantId){
     if(!this.state.loadedProcessed){
       $.ajax({
         type: 'GET',
-        url: '/api/workspace/' + this.workspaceID + '/components/processed',
+        url: '/api/workspace/' + this.workspaceID + '/components/' + variantId + '/processed',
         dataType: 'json',
         success: function(data) {
           this.state.processedComponents = data.workspace.capabilityCategories;

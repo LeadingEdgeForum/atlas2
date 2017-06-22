@@ -17,7 +17,7 @@ var ObjectId = mongoose.Types.ObjectId;
 var String = Schema.Types.String;
 var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
-
+var deduplicationLogger = require('./../../log').getLogger('deduplication');
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work
@@ -237,6 +237,7 @@ module.exports = function(conn) {
           })
           .select('user purpose name')
           .then(function(maps) {
+              deduplicationLogger.debug('found maps' + maps);
               var loadPromises = [];
               maps.forEach(function(cv, i, a) {
                   loadPromises.push(Node
@@ -253,7 +254,9 @@ module.exports = function(conn) {
                   .then(function(results) {
                       var finalResults = [];
                       return results.filter(function(map) {
-                          return map.nodes && map.nodes.length > 0;
+                          let hasNodes = map.nodes && map.nodes.length > 0;
+                          deduplicationLogger.debug('map ' + map._id + ' has nodes ' + hasNodes);
+                          return hasNodes;
                       });
                   });
           });
@@ -272,9 +275,16 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.findProcessedNodes = function(timesliceId) {
+        deduplicationLogger.trace('looking for processed node for workspace ' + this._id + ' variant ' + timesliceId);
         var _this = this;
 
         var timeSlice = this.getTimeSlice(timesliceId);
+
+        deduplicationLogger.trace('variant ' + timesliceId + ' found ' + timeSlice);
+
+        if(!timeSlice) {
+          return null;
+        }
 
         //this is a temporary mechanism that should be removed when the database is properly migrated
         if (!timeSlice.capabilityCategories[0].name) { // rough check, no name -> needs migration

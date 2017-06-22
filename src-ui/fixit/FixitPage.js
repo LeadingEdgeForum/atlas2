@@ -118,11 +118,13 @@ export default class FixitPage extends React.Component {
     const pageTitle = 'Fix your organization!';
 
     const workspaceID = fixitStore.getWorkspaceId();
+    const variantId = this.props.variantId;
+    console.log(this.props);
     const workspaceName = workspaceStore.getWorkspaceInfo().workspace.name + ' - ' + workspaceStore.getWorkspaceInfo().workspace.purpose;
 
 
-    var unprocessedComponents = fixitStore.getAvailableComponents();
-    var processedComponents = fixitStore.getProcessedComponents();
+    var unprocessedComponents = fixitStore.getAvailableComponents(variantId);
+    var processedComponents = fixitStore.getProcessedComponents(variantId);
 
     var _unprocessedComponents = unprocessedComponents.map(map => this.renderAvailableComponents(map));
 

@@ -1231,7 +1231,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.get(
-      '/workspace/:workspaceID/components/unprocessed',
+      '/workspace/:workspaceID/components/:variantId/unprocessed',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
@@ -1244,9 +1244,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               if (!result) {
                   return res.send(403);
               }
-              result.findUnprocessedNodes()
+              result.findUnprocessedNodes(req.params.variantId)
                   .fail(function(e) {
-                      res.status(500).json(e);
+                      return res.status(500).json(e);
                   })
                   .done(function(maps) {
                       res.json({
@@ -1258,7 +1258,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.get(
-      '/workspace/:workspaceID/components/processed',
+      '/workspace/:workspaceID/components/:variantId/processed',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
@@ -1273,7 +1273,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   if (!workspace) {
                       return res.send(404);
                   }
-                  return workspace.findProcessedNodes();
+                  return workspace.findProcessedNodes(req.params.variantId);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding...', e);
