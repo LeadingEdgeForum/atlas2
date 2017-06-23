@@ -461,22 +461,31 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.createNewMarketReferenceInCapability = function(timesliceId, capabilityID, name, description, evolution) {
+      if(!timesliceId){ //noop
+        return this.populate({
+            path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+            model: 'Node',
+        }).execPopulate();
+      }
+
       var timeSlice = this.getTimeSlice(timesliceId);
 
         var promises = [];
         var capability = null;
         for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-            for (var j = 0; j < this.capabilityCategories[i].capabilities.length; j++) {
+            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
                 if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
                     capability = timeSlice.capabilityCategories[i].capabilities[j];
                 }
             }
         }
-        capability.marketreferences.push({
-          name: name,
-          description: description,
-          evolution: evolution
-        });
+        if(capability){
+          capability.marketreferences.push({
+            name: name,
+            description: description,
+            evolution: evolution
+          });
+        }
         promises.push(this.save());
         return q.allSettled(promises).then(function(res) {
             return res[0].value.populate({
@@ -487,61 +496,86 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.deleteMarketReferenceInCapability = function(timesliceId, capabilityID, marketReferenceId) {
+      if(!timesliceId){ //noop
+        return this.populate({
+            path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+            model: 'Node',
+        }).execPopulate();
+      }
+
       var timeSlice = this.getTimeSlice(timesliceId);
 
-        var promises = [];
-        var capability = null;
-        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
-                if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
-                    capability = timeSlice.capabilityCategories[i].capabilities[j];
-                    for(var k = capability.marketreferences.length - 1; k >=0; k--){
-                      if(capability.marketreferences[k]._id.equals(marketReferenceId)){
-                        capability.marketreferences.splice(k,1);
-                      }
-                    }
-                }
+      if(!timeSlice){ //noop
+        return this.populate({
+            path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+            model: 'Node',
+        }).execPopulate();
+      }
+
+      var promises = [];
+      var capability = null;
+      for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+        for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+          if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+            capability = timeSlice.capabilityCategories[i].capabilities[j];
+            for (var k = capability.marketreferences.length - 1; k >= 0; k--) {
+              if (capability.marketreferences[k]._id.equals(marketReferenceId)) {
+                capability.marketreferences.splice(k, 1);
+              }
             }
+          }
         }
+      }
 
-        promises.push(this.save());
+      promises.push(this.save());
 
-        return q.allSettled(promises).then(function(res) {
-            return res[0].value.populate({
-                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
-                model: 'Node',
-            }).execPopulate();
-        });
-    };
+      return q.allSettled(promises).then(function(res) {
+        return res[0].value.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+        }).execPopulate();
+      });
+      };
 
     workspaceSchema.methods.updateMarketReferenceInCapability = function(timesliceId, capabilityID, marketReferenceId, name, description, evolution) {
+      if (!timesliceId) { //noop
+        return this.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+        }).execPopulate();
+      }
       var timeSlice = this.getTimeSlice(timesliceId);
-
-        var promises = [];
-        var capability = null;
-        for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
-                if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
-                    capability = timeSlice.capabilityCategories[i].capabilities[j];
-                    for(var k = capability.marketreferences.length - 1; k >=0; k--){
-                      if(capability.marketreferences[k]._id.equals(marketReferenceId)){
-                        capability.marketreferences[k].name = name;
-                        capability.marketreferences[k].description = description;
-                        capability.marketreferences[k].evolution = evolution;
-                      }
-                    }
-                }
+      if (!timeSlice) { //noop
+        return this.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+        }).execPopulate();
+      }
+      var promises = [];
+      var capability = null;
+      for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+        for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+          if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+            capability = timeSlice.capabilityCategories[i].capabilities[j];
+            for (var k = capability.marketreferences.length - 1; k >= 0; k--) {
+              if (capability.marketreferences[k]._id.equals(marketReferenceId)) {
+                capability.marketreferences[k].name = name;
+                capability.marketreferences[k].description = description;
+                capability.marketreferences[k].evolution = evolution;
+              }
             }
+          }
         }
+      }
 
-        promises.push(this.save());
+      promises.push(this.save());
 
-        return q.allSettled(promises).then(function(res) {
-            return res[0].value.populate({
-                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
-                model: 'Node',
-            }).execPopulate();
-        });
+      return q.allSettled(promises).then(function(res) {
+        return res[0].value.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+        }).execPopulate();
+      });
     };
 
     workspaceSchema.methods.addNodeToAlias = function(timesliceId,aliasID, nodeID) {

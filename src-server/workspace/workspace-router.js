@@ -1471,12 +1471,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
+          let variantId = new ObjectId(req.params.variantId);
           var capabilityID = new ObjectId(req.params.capabilityID);
           var name = req.body.name;
           var description = req.body.description;
           var evolution = req.body.evolution;
-          capabilityLogger.trace(workspaceID, capabilityID, name, description, evolution);
+          capabilityLogger.trace(workspaceID, variantId, capabilityID, name, description, evolution);
           Workspace
             .findOne({
               _id: workspaceID,
