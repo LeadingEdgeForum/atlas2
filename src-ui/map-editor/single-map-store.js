@@ -256,6 +256,7 @@ export default class SingleWorkspaceStore extends Store {
           this.submapReferencesDialog.submapID = action.data.submapID;
           this.submapReferencesDialog.node = action.data.node;
           this.submapReferencesDialog.workspaceID = action.data.workspaceID;
+          this.submapReferencesDialog.variantId = action.data.variantId;
           $.ajax({
             type: 'GET',
             url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
@@ -277,6 +278,7 @@ export default class SingleWorkspaceStore extends Store {
           this.referencesDialog.currentName = action.data.currentName;
           this.referencesDialog.node = action.data.node;
           this.referencesDialog.workspaceID = action.data.workspaceID;
+          this.referencesDialog.variantId = action.data.variantId;
           this.emitChange();
           break;
         case ActionTypes.CLOSE_REFERENCES:

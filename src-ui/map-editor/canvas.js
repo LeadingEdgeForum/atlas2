@@ -496,6 +496,7 @@ export default class MapCanvas extends React.Component {
 
 
     var mapID = this.props.mapID;
+    let variantId = this.props.variantId;
     var workspaceID = this.props.workspaceID;
     var state = this.state;
     var canvasStore = this.props.canvasStore;
@@ -578,6 +579,7 @@ export default class MapCanvas extends React.Component {
             <MapComponent
               canvasStore={canvasStore}
               workspaceID={workspaceID}
+              variantId={variantId}
               mapID={mapID} node={component}
               size={size}
               key={component._id}

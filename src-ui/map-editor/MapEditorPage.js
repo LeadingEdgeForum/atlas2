@@ -196,6 +196,7 @@ export default class MapEditorPage extends React.Component {
     const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
+    const variantId = singleMapStore.getMap().map.timesliceId;
     const diff = this.state.diff;
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
@@ -241,6 +242,7 @@ export default class MapEditorPage extends React.Component {
                   comments={comments}
                   mapID={mapID}
                   workspaceID={workspaceID}
+                  variantId={variantId}
                   canvasStore={canvasStore}
                   diff={diff}/>
             </Col>

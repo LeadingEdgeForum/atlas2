@@ -83,7 +83,7 @@ var MapComponent = React.createClass({
     if (this.state.hover === "remove") {
       var id = this.props.id;
       var mapID = this.props.mapID;
-      var workspaceID = this.props.workspaceID;
+      let workspaceID = this.props.workspaceID;
       Actions.deleteNode(workspaceID, mapID, id);
     }
     if (this.state.hover === "pencil") {
@@ -103,19 +103,12 @@ var MapComponent = React.createClass({
       var submapID = this.props.node.submapID;
       var currentName = this.props.node.name;
       var node = this.props.node; //jshint ignore:line
-      var workspaceID = this.props.workspaceID;
+      let workspaceID = this.props.workspaceID;
+      var variantId = this.props.variantId;
       if(submapID){
-        Actions.openSubmapReferencesDialog(
-           currentName: currentName,
-           mapID:mapID,
-           submapID:submapID,
-           node :node,
-           workspaceID:workspaceID);
+        Actions.openSubmapReferencesDialog(currentName, mapID, submapID, node, workspaceID, variantId);
       } else {
-        Actions.openReferencesDialog(
-           currentName: currentName,
-           node:node,
-           workspaceID:workspaceID);
+        Actions.openReferencesDialog(currentName, node, workspaceID, variantId);
       }
     }
 

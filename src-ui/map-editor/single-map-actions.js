@@ -439,7 +439,7 @@ var SingleMapActions = {
       });
     },
 
-    openSubmapReferencesDialog: function(currentName, mapID, submapID, node, workspaceID){
+    openSubmapReferencesDialog: function(currentName, mapID, submapID, node, workspaceID, variantId){
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.SHOW_SUBMAP_REFERENCES,
           data : {
@@ -447,7 +447,8 @@ var SingleMapActions = {
             mapID:mapID,
             submapID:submapID,
             node :node,
-            workspaceID:workspaceID
+            workspaceID:workspaceID,
+            variantId : variantId
           }
       });
     },
@@ -458,13 +459,14 @@ var SingleMapActions = {
       });
     },
 
-    openReferencesDialog: function(currentName, node, workspaceID){
+    openReferencesDialog: function(currentName, node, workspaceID, variantId){
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.SHOW_REFERENCES,
           data : {
             currentName: currentName,
             node:node,
-            workspaceID:workspaceID
+            workspaceID:workspaceID,
+            variantId : variantId
           }
       });
     },
