@@ -151,7 +151,7 @@ var UsageInfo = React.createClass({
   },
 
   componentDidMount() {
-    var queryLink = '/api/workspace/' + this.props.workspaceID + '/node/' + this.props.node._id + '/usage';
+    var queryLink = '/api/workspace/' + this.props.workspaceID +  '/variant/' + this.props.variantId + '/node/' + this.props.node._id + '/usage';
     var _this = this;
     this.serverRequest = $.get(queryLink, function(result) {
       _this.setState(result);

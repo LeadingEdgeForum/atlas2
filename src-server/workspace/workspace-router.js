@@ -1615,11 +1615,12 @@ module.exports = function(authGuardian, mongooseConnection) {
       });
 
   module.router.get(
-    '/workspace/:workspaceID/node/:nodeID/usage',
+    '/workspace/:workspaceID/variant/:variantId/node/:nodeID/usage',
     authGuardian.authenticationRequired,
     function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
+      var variantId = new ObjectId(req.params.variantId);
       var nodeID = new ObjectId(req.params.nodeID);
       Workspace
           .findOne({
@@ -1629,7 +1630,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           }) // this is not the best security check as we do not check relation between workspace & cap & node
           .exec()
         .then(function(workspace){
-          return workspace.getNodeUsageInfo(null, nodeID);
+          return workspace.getNodeUsageInfo(variantId, nodeID);
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);

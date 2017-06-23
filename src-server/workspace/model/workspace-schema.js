@@ -612,33 +612,39 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.getNodeUsageInfo = function(timesliceId, nodeID) {
-        var timeSlice = this.getTimeSlice(timesliceId);
-        var _this = this;
-        return this.populate({
-                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
-                model: 'Node',
-                populate: {
-                    model: 'WardleyMap',
-                    path: 'parentMap'
+      if(!timesliceId){
+        return null;
+      }
+      var timeSlice = this.getTimeSlice(timesliceId);
+      if(!timeSlice){
+        return null;
+      }
+      var _this = this;
+      return this.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+          populate: {
+            model: 'WardleyMap',
+            path: 'parentMap'
+          }
+        })
+        .execPopulate()
+        .then(function(workspace) {
+          var capability = null;
+          for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
+            for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+              for (var k = 0; k < timeSlice.capabilityCategories[i].capabilities[j].aliases.length; k++) {
+                for (var l = 0; l < timeSlice.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
+                  if (nodeID.equals(timeSlice.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
+                    capability = timeSlice.capabilityCategories[i].capabilities[j];
+                  }
                 }
-            })
-            .execPopulate()
-            .then(function(workspace) {
-                var capability = null;
-                for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-                    for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
-                        for (var k = 0; k < timeSlice.capabilityCategories[i].capabilities[j].aliases.length; k++) {
-                            for (var l = 0; l < timeSlice.capabilityCategories[i].capabilities[j].aliases[k].nodes.length; l++) {
-                                if (nodeID.equals(timeSlice.capabilityCategories[i].capabilities[j].aliases[k].nodes[l]._id)) {
-                                    capability = timeSlice.capabilityCategories[i].capabilities[j];
-                                }
-                            }
-                        }
-                    }
-                }
-                return capability;
-            });
-          };
+              }
+            }
+          }
+          return capability;
+        });
+    };
 
       workspaceSchema.methods.removeNodeUsageInfo = function(node) {
           var WardleyMap = require('./map-schema')(conn);
