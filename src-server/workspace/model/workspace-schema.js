@@ -266,6 +266,7 @@ module.exports = function(conn) {
       if(!timesliceId){
         timesliceId = this.nowId;
       }
+      timesliceId = new ObjectId(timesliceId);
       for(var i = 0; i < this.timeline.length; i++){
         if(this.timeline[i]._id.equals(timesliceId)){
           return  this.timeline[i];
@@ -467,8 +468,14 @@ module.exports = function(conn) {
             model: 'Node',
         }).execPopulate();
       }
-
       var timeSlice = this.getTimeSlice(timesliceId);
+      deduplicationLogger.debug('timeslice not found ' + timesliceId + ' ' + capabilityID + ' ' +  name + ' ' +  description + ' ' + evolution);
+      if(!timeSlice){ //noop
+        return this.populate({
+            path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+            model: 'Node',
+        }).execPopulate();
+      }
 
         var promises = [];
         var capability = null;
