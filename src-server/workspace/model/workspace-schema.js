@@ -18,6 +18,7 @@ var String = Schema.Types.String;
 var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
+var variantLogger = require('./../../log').getLogger('variants');
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work
@@ -780,6 +781,7 @@ module.exports = function(conn) {
       var WardleyMap = require('./map-schema')(conn);
       var Node = require('./node-schema')(conn);
 
+      variantLogger.info('cloning variant ' + sourceTimeSliceId + ' in workspace ' + this._id);
 
       if (!sourceTimeSliceId) {
         throw new Error('source not specified');
@@ -795,7 +797,15 @@ module.exports = function(conn) {
       }).execPopulate()
         .then(function(popWorkspace) {
 
+          variantLogger.debug('workspace ' + popWorkspace._id + ' populated');
+
           var sourceTimeSlice = popWorkspace.getTimeSlice(sourceTimeSliceId);
+          if(!sourceTimeSlice && !sourceTimeSlice._id.equals(sourceTimeSliceId)){
+            variantLogger.warn('sourceTimeSlice not found');
+            return null;
+          }
+
+          variantLogger.debug('sourceTimeSlice found ' + sourceTimeSlice._id);
 
           var mappings = {
             maps: {},
@@ -806,6 +816,7 @@ module.exports = function(conn) {
           for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
             mappings.maps[sourceTimeSlice.maps[i]._id] = new ObjectId();
           }
+          variantLogger.debug('map ids mappings ' + JSON.stringify(mappings.maps));
           // part two, book future nodes ids
           for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
             let nodes = sourceTimeSlice.maps[i].nodes;
@@ -813,6 +824,7 @@ module.exports = function(conn) {
               mappings.nodes[nodes[j]._id] = new ObjectId();
             }
           }
+          variantLogger.debug('nodes ids mappings ' + JSON.stringify(mappings.nodes));
           // part three, clone nodes
           var nodesToSave = [];
           for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
@@ -887,9 +899,10 @@ module.exports = function(conn) {
               nodesToSave.push(oldNode.save());
             }
           }
-
+          variantLogger.debug('nodes copied');
           return q.allSettled(nodesToSave)
             .then(function(savedNodes) {
+              variantLogger.debug('nodes saved');
               // part four - clone maps
               var mapsToSave = [];
               for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
@@ -935,9 +948,10 @@ module.exports = function(conn) {
                 mapsToSave.push(oldMap.save());
                 mapsToSave.push(newMap.save());
               }
-
+              variantLogger.debug('maps copied');
               return q.allSettled(mapsToSave)
                 .then(function(savedMaps) {
+                  variantLogger.debug('maps saved');
                   // prepare a new timeslice
                   var newTimeSlice = {
                     _id: mappings.newTimeSliceId,
@@ -950,11 +964,12 @@ module.exports = function(conn) {
                     capabilityCategories: []
                   };
                   sourceTimeSlice.next.push(newTimeSlice._id);
-
+                  variantLogger.debug('maps insterted into new timeslice');
                   for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
                     newTimeSlice.maps.push(new ObjectId(mappings.maps[sourceTimeSlice.maps[i]._id]));
                   }
 
+                  variantLogger.trace('    ' + sourceTimeSlice.capabilityCategories.length + ' capability categories to migrate');
                   for (let i = 0; i < sourceTimeSlice.capabilityCategories.length; i++) {
                     let oldCapabilityCategory = sourceTimeSlice.capabilityCategories[i];
 
@@ -967,34 +982,23 @@ module.exports = function(conn) {
                       marketreferences: []
                     };
                     oldCapabilityCategory.next.push(newCapabilityCategory._id);
-
-                    if (oldCapabilityCategory.marketreferences) {
-                      for (let j = 0; j < oldCapabilityCategory.marketreferences.length; j++) {
-                        let oldMarketReference = oldCapabilityCategory.marketreferences[j];
-                        newCapabilityCategory.marketreferences.push({
-                          _id: new ObjectId(),
-                          name: oldMarketReference.name,
-                          description: oldMarketReference.description,
-                          evolution: oldMarketReference.evolution,
-                          next: [],
-                          previous: oldMarketReference._id
-                        });
-                        oldMarketReference.next.push(newCapabilityCategory._id);
-                      }
-                    }
+                    variantLogger.trace('    ' + oldCapabilityCategory._id + ' cloned');
 
                     if (oldCapabilityCategory.capabilities) {
+                      variantLogger.trace('    ' + oldCapabilityCategory._id + ' has '+ oldCapabilityCategory.capabilities.length + ' capabilities');
                       for (let j = 0; j < oldCapabilityCategory.capabilities.length; j++) {
                         let oldCapability = oldCapabilityCategory.capabilities[j];
                         var newCapability = {
                           _id: new ObjectId(),
                           aliases: [],
+                          marketreferences : [],
                           next: [],
                           previous: oldCapability._id
                         };
                         oldCapability.next.push(newCapability._id);
 
                         for (let k = 0; k < oldCapability.aliases.length; k++) {
+                          variantLogger.trace('        ' + oldCapability._id + ' has '+ oldCapability.aliases.length + ' aliases');
                           let oldAlias = oldCapability.aliases[k];
                           var newAlias = {
                             _id : new ObjectId(),
@@ -1003,21 +1007,43 @@ module.exports = function(conn) {
                             previous: oldAlias._id
                           };
                           oldAlias.next.push(newAlias._id);
+                          variantLogger.trace('           ' + oldAlias._id + ' has '+ oldAlias.nodes.length + ' nodes');
                           for (var z = 0; z < oldAlias.nodes.length; z++) {
-                            newAlias.push(mappings.nodes[oldAlias.nodes[z]]);
+                            newAlias.nodes.push(mappings.nodes[oldAlias.nodes[z]]);
                           }
                           newCapability.aliases.push(newAlias);
                         }
 
+                        variantLogger.trace('        ' + oldCapability._id + ' has '+ oldCapability.marketreferences.length + ' market references');
+                        for (let k = 0; k < oldCapability.marketreferences.length; k++) {
+                          let oldMarketReference = oldCapability.marketreferences[k];
+                          variantLogger.trace('            processing old market reference' + oldMarketReference._id);
+                          var newMarketReference = {
+                            _id : new ObjectId(),
+                            name: oldMarketReference.name,
+                            description: oldMarketReference.description,
+                            evolution : oldMarketReference.evolution,
+                            next: [],
+                            previous: oldMarketReference._id
+                          };
+                          oldMarketReference.next.push(newMarketReference._id);
+                          variantLogger.trace('            setting new reference');
+                          newCapability.marketreferences.push(newMarketReference);
+                          variantLogger.trace('            adding to new capability');
+                        }
+                        variantLogger.trace('        adding capability to category');
                         newCapabilityCategory.capabilities.push(newCapability);
                       }
                     }
-
+                    variantLogger.trace('   adding category to timeslice');
                     newTimeSlice.capabilityCategories.push(newCapabilityCategory);
                   }
 
+                  variantLogger.debug('capabilities  cloned');
+
                   popWorkspace.timeline.push(newTimeSlice);
                   return popWorkspace.save().then(function(wrkspc){
+                    variantLogger.debug('workspace saved');
                     return wrkspc.populate({
                       path : 'timeline.maps',
                       ref :'WardleyMap',
