@@ -342,6 +342,9 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.editCategory = function(timesliceId, capabilityCategoryID, name){
+      if(!timesliceId){
+        return null;
+      }
       var timeSlice = this.getTimeSlice(timesliceId);
 
       for (var i = timeSlice.capabilityCategories.length - 1; i > -1 ; i--) {
@@ -360,6 +363,9 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.createCategory = function(timesliceId, name){
+      if(!timesliceId){
+        return null;
+      }
       var timeSlice = this.getTimeSlice(timesliceId);
 
       timeSlice.capabilityCategories.push({ name:name, capabilities : []});
@@ -373,6 +379,9 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.deleteCategory = function(timesliceId, capabilityCategoryID){
+      if(!timesliceId){
+        return null;
+      }
       var timeSlice = this.getTimeSlice(timesliceId);
 
       var Node = require('./node-schema')(conn);
