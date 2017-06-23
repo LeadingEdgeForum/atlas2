@@ -35,13 +35,14 @@ var CreateMarketReferenceDialog = React.createClass({
     this.props.fixitStore.removeChangeListener(this._onChange);
   },
 
-  internalState: {},
+  internalState: {evolution : 0.1},
 
   _onChange: function() {
     this.setState(this.props.fixitStore.getCreateMarketReferenceDialogState());
   },
 
   _close: function() {
+    this.internalState = {evolution : 0.1};
     Actions.closeAddMarketReferenceToCapabilityDialog();
   },
 
@@ -52,6 +53,7 @@ var CreateMarketReferenceDialog = React.createClass({
       this.internalState.name ? this.internalState.name : 'Anonymous competitor',
       this.internalState.description,
       this.internalState.evolution / 100); //slider operates 0-100, nodes have 0-1
+    this.internalState = {evolution : 0.1};
   },
 
   _handleDialogChange: function(parameterName, event) {

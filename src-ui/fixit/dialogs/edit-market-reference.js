@@ -60,7 +60,7 @@ var EditMarketReferenceDialog = React.createClass({
       this.internalState.name ? this.internalState.name : 'Anonymous competitor',
       this.internalState.description,
       this.internalState.evolution / 100); //slider operates 0-100, nodes have 0-1
-    this.internalState = {};
+      this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {

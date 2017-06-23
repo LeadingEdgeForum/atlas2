@@ -470,13 +470,18 @@ module.exports = function(conn) {
         }).execPopulate();
       }
       var timeSlice = this.getTimeSlice(timesliceId);
-      deduplicationLogger.debug('timeslice not found ' + timesliceId + ' ' + capabilityID + ' ' +  name + ' ' +  description + ' ' + evolution);
-      if(!timeSlice){ //noop
+
+      if(!timeSlice || !timeSlice._id.equals(timesliceId)){ //noop
+        deduplicationLogger.debug('timeslice not found ' + timesliceId + ' ' + capabilityID + ' ' +  name + ' ' +  description + ' ' + evolution);
         return this.populate({
             path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
             model: 'Node',
         }).execPopulate();
       }
+
+        if(isNaN(evolution)){
+          evolution = 0.5;
+        }
 
         var promises = [];
         var capability = null;
