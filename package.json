@@ -7,7 +7,7 @@
     "test": "mocha server-tests/*_tests.js"
   },
   "dependencies": {
-    "async": "2.4.1",
+    "async": "2.5.0",
     "atob": "^2.0.3",
     "auth0": "^2.6.0",
     "auth0-js": "^8.5.0",
