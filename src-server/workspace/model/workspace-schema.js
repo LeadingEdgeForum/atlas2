@@ -207,7 +207,6 @@ module.exports = function(conn) {
         params.purpose = "be busy with nothing";
       }
       var newId = new ObjectId();
-      console.log('nn' + newId, newId.value, newId.oid);
       return this.insertMapIdAt(newId, timesliceId)
         .then(function(workspace) {
           return new WardleyMap({
@@ -384,48 +383,143 @@ module.exports = function(conn) {
       if(!timesliceId){
         return null;
       }
-      var timeSlice = this.getTimeSlice(timesliceId);
+      let timeSlice = this.getTimeSlice(timesliceId);
+
+      if(!timeSlice) {
+        return this.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+        }).execPopulate();
+      }
+
+      let promises = [];
+
+      let capabilityCategoryToRemove = null;
+      let capabilitiesToRemove = [];
+      let aliasesToRemove = [];
 
       var Node = require('./node-schema')(conn);
-        var promises = [];
-        var capabilityCategoryToRemove = null;
-        for (var i = timeSlice.capabilityCategories.length - 1; i > -1 ; i--) {
-            if (capabilityCategoryID.equals(timeSlice.capabilityCategories[i]._id)) {
-                capabilityCategoryToRemove = timeSlice.capabilityCategories.splice(i,1)[0];
-                promises.push(this.save());
-                break;
-            }
-        }
-        if(capabilityCategoryToRemove.capabilities){
-          for (var j = 0; j < capabilityCategoryToRemove.capabilities.length; j++){
-            var capability = capabilityCategoryToRemove.capabilities[j];
-            if(capability.aliases){
-              for(var k = 0; k < capability.aliases.length; k++){
-                var alias = capability.aliases[k];
-                if(alias.nodes){
-                  for(var l = 0; l < alias.nodes.length; l++){
 
-                    var node = alias.nodes[l];
-                    promises.push(Node.findOneAndUpdate({
-                        _id: node
-                    }, {
-                        $set: {
-                            processedForDuplication: false
-                        }
-                    }).exec());
-                  }
+      for (let i = timeSlice.capabilityCategories.length - 1; i > -1; i--) {
+        if (capabilityCategoryID.equals(timeSlice.capabilityCategories[i]._id)) {
+          capabilityCategoryToRemove = timeSlice.capabilityCategories.splice(i, 1)[0];
+          break;
+        }
+      }
+
+      if (capabilityCategoryToRemove && capabilityCategoryToRemove.capabilities) {
+
+        for (let i = 0; i < capabilityCategoryToRemove.capabilities.length; i++) {
+
+          let capability = capabilityCategoryToRemove.capabilities[i];
+          capabilitiesToRemove.push(capability._id);
+
+          if (capability.aliases) {
+            for (let j = 0; j < capability.aliases.length; j++) {
+              let alias = capability.aliases[j];
+              aliasesToRemove.push(alias._id);
+              if (alias.nodes) {
+                for (let k = 0; k < alias.nodes.length; k++) {
+                  let node = alias.nodes[k];
+                  promises.push(Node.findOneAndUpdate({
+                    _id: node
+                  }, {
+                    $set: {
+                      processedForDuplication: false
+                    }
+                  }).exec());
                 }
               }
             }
           }
+
         }
 
-        return q.allSettled(promises).then(function(res) {
-            return res[0].value.populate({
-                path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
-                model: 'Node',
-            }).execPopulate();
-        });
+      }
+
+      let previousTimeSlice = this.getTimeSlice(timeSlice.previous);
+      let previousCapabilityCategory;
+      if(previousTimeSlice){
+        for(let i =0; i < previousTimeSlice.capabilityCategories.length; i++){
+            let candidate = previousTimeSlice.capabilityCategories[i];
+            let position = candidate.next.indexOf(capabilityCategoryToRemove._id);
+            if(position >= 0){
+              previousCapabilityCategory = candidate;
+              previousCapabilityCategory.next.splice(position,1);
+            }
+        }
+      }
+
+      if(previousCapabilityCategory && previousCapabilityCategory.capabilities){
+        for(let i =0; i < previousCapabilityCategory.capabilities.length; i++){
+            let capabilityCandidate = previousCapabilityCategory.capabilities[i];
+
+            for(let k = 0; k < capabilitiesToRemove.length; k++){
+              let nextPos = capabilityCandidate.next.indexOf(capabilitiesToRemove[k]);
+
+              if(nextPos >= 0){
+                capabilityCandidate.splice(nextPos, 1);
+                for(let l = 0; l < capabilityCandidate.aliases.length; l++){
+                  let aliasCandidate = capabilityCandidate.aliases[l];
+
+                  for(let m = 0; m < aliasesToRemove.length; m++){
+                    let aliasPos = aliasCandidate.next.indexOf(aliasesToRemove[m]);
+                    if(aliasPos >= 0){
+                      aliasCandidate.next.splice(aliasPos,1);
+                    }
+                  }
+                }
+              }
+            }
+        }
+      }
+
+      for (let z = 0; z < timeSlice.next.length; z++) {
+        let affectedTimeSlice = this.getTimeSlice(timeSlice.next[z]);
+        let affectedCapabilityCategory;
+        if (affectedTimeSlice) {
+          for (let i = 0; i < affectedTimeSlice.capabilityCategories.length; i++) {
+            let candidate = affectedTimeSlice.capabilityCategories[i];
+            if (capabilityCategoryToRemove._id.equals(candidate.previous)) {
+              affectedCapabilityCategory = candidate;
+              affectedCapabilityCategory.previous = null;
+            }
+          }
+        }
+
+        if(affectedCapabilityCategory && affectedCapabilityCategory.capabilities){
+          for(let i =0; i < affectedCapabilityCategory.capabilities.length; i++){
+              let capabilityCandidate = affectedCapabilityCategory.capabilities[i];
+
+              for(let k = 0; k < capabilitiesToRemove.length; k++){
+
+                if(capabilitiesToRemove[k].equals(capabilityCandidate.previous)){
+                  capabilityCandidate.previous = null;
+
+                  for(let l = 0; l < capabilityCandidate.aliases.length; l++){
+                    let aliasCandidate = capabilityCandidate.aliases[l];
+
+                    for(let m = 0; m < aliasesToRemove.length; m++){
+                      if(aliasesToRemove[m].equals(aliasCandidate.previous)){
+                        aliasCandidate.previous = null;
+                      }
+                    }
+                  }
+                }
+              }
+          }
+        }
+      }
+
+
+      promises.push(this.save());
+
+      return q.allSettled(promises).then(function(res) {
+        return res[0].value.populate({
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
+        }).execPopulate();
+      });
 
     };
 
@@ -509,19 +603,19 @@ module.exports = function(conn) {
     };
 
     workspaceSchema.methods.deleteMarketReferenceInCapability = function(timesliceId, capabilityID, marketReferenceId) {
-      if(!timesliceId){ //noop
+      if (!timesliceId) { //noop
         return this.populate({
-            path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
-            model: 'Node',
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
         }).execPopulate();
       }
 
       var timeSlice = this.getTimeSlice(timesliceId);
 
-      if(!timeSlice){ //noop
+      if (!timeSlice) { //noop
         return this.populate({
-            path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
-            model: 'Node',
+          path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
+          model: 'Node',
         }).execPopulate();
       }
 
@@ -548,7 +642,7 @@ module.exports = function(conn) {
           model: 'Node',
         }).execPopulate();
       });
-      };
+    };
 
     workspaceSchema.methods.updateMarketReferenceInCapability = function(timesliceId, capabilityID, marketReferenceId, name, description, evolution) {
       if (!timesliceId) { //noop
@@ -660,96 +754,96 @@ module.exports = function(conn) {
     };
 
       workspaceSchema.methods.removeNodeUsageInfo = function(node) {
-          var WardleyMap = require('./map-schema')(conn);
-          var workspace = this;
-          var dependencyToRemove = node._id;
+        var WardleyMap = require('./map-schema')(conn);
+        var workspace = this;
+        var dependencyToRemove = node._id;
 
-          return WardleyMap.findById(node.parentMap._id || node.parentMap).exec()
-            .then(function(parentMap){
-              let timeSliceId = parentMap.timesliceId;
-              let timeSlice = workspace.getTimeSlice(timeSliceId);
+        return WardleyMap.findById(node.parentMap._id || node.parentMap).exec()
+          .then(function(parentMap) {
+            let timeSliceId = parentMap.timesliceId;
+            let timeSlice = workspace.getTimeSlice(timeSliceId);
 
-              let aliasBeingRemoved = null;
-              let capabilityBeingRemoved = null;
+            let aliasBeingRemoved = null;
+            let capabilityBeingRemoved = null;
 
-              for (let capabilityCategoriesCounter = timeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
-                  let capabilityCategory = timeSlice.capabilityCategories[capabilityCategoriesCounter];
+            for (let capabilityCategoriesCounter = timeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
+              let capabilityCategory = timeSlice.capabilityCategories[capabilityCategoriesCounter];
+              for (let capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
+                let capability = capabilityCategory.capabilities[capabilitiesCounter];
+                for (let aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
+                  let alias = capability.aliases[aliasCounter];
+                  for (let nodeCounter = alias.nodes.length - 1; nodeCounter >= 0; nodeCounter--) {
+                    let node = alias.nodes[nodeCounter];
+                    if (node._id === dependencyToRemove) {
+                      alias.nodes.splice(nodeCounter, 1);
+                      break;
+                    }
+                  }
+                  if (alias.nodes.length === 0) {
+                    aliasBeingRemoved = capability.aliases.splice(aliasCounter, 1);
+                  }
+                }
+                if (capability.aliases.length === 0) {
+                  capabilityBeingRemoved = capabilityCategory.capabilities.splice(capabilitiesCounter, 1);
+                }
+              }
+            }
+            if (aliasBeingRemoved) {
+
+              let previousTimeSlice = workspace.getTimeSlice(timeSlice.previous);
+
+              if (previousTimeSlice) {
+
+                for (let capabilityCategoriesCounter = previousTimeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
+                  let capabilityCategory = previousTimeSlice.capabilityCategories[capabilityCategoriesCounter];
                   for (let capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
-                      let capability = capabilityCategory.capabilities[capabilitiesCounter];
-                      for (let aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
-                          let alias = capability.aliases[aliasCounter];
-                          for (let nodeCounter = alias.nodes.length - 1; nodeCounter >= 0; nodeCounter--) {
-                              let node = alias.nodes[nodeCounter];
-                              if (node._id === dependencyToRemove) {
-                                  alias.nodes.splice(nodeCounter, 1);
-                                  break;
-                              }
-                          }
-                          if (alias.nodes.length === 0) {
-                              aliasBeingRemoved = capability.aliases.splice(aliasCounter, 1);
-                          }
-                      }
-                      if (capability.aliases.length === 0) {
-                          capabilityBeingRemoved = capabilityCategory.capabilities.splice(capabilitiesCounter, 1);
-                      }
-                  }
-              }
-              if (aliasBeingRemoved) {
-
-                let previousTimeSlice = workspace.getTimeSlice(timeSlice.previous);
-
-                if (previousTimeSlice) {
-
-                  for (let capabilityCategoriesCounter = previousTimeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
-                    let capabilityCategory = previousTimeSlice.capabilityCategories[capabilityCategoriesCounter];
-                    for (let capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
-                      let capability = capabilityCategory.capabilities[capabilitiesCounter];
-                      for (let aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
-                        let alias = capability.aliases[aliasCounter];
-                        if (alias.next.indexOf(aliasBeingRemoved._id) !== -1) {
-                          alias.next.pull(aliasBeingRemoved._id);
-                        }
-                      }
-                      if (capabilityBeingRemoved && capability.next.indexOf(capabilityBeingRemoved._id) !== -1) {
-                        capability.next.pull(capabilityBeingRemoved._id);
+                    let capability = capabilityCategory.capabilities[capabilitiesCounter];
+                    for (let aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
+                      let alias = capability.aliases[aliasCounter];
+                      if (alias.next.indexOf(aliasBeingRemoved._id) !== -1) {
+                        alias.next.pull(aliasBeingRemoved._id);
                       }
                     }
+                    if (capabilityBeingRemoved && capability.next.indexOf(capabilityBeingRemoved._id) !== -1) {
+                      capability.next.pull(capabilityBeingRemoved._id);
+                    }
                   }
-
                 }
+
               }
+            }
 
-              for(let i = 0; i < timeSlice.next.length; i++){
-                let nextTimeSlice = workspace.getTimeSlice(timeSlice.previous);
+            for (let i = 0; i < timeSlice.next.length; i++) {
+              let nextTimeSlice = workspace.getTimeSlice(timeSlice.previous);
 
-                if (nextTimeSlice) {
+              if (nextTimeSlice) {
 
-                  for (let capabilityCategoriesCounter = nextTimeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
-                    let capabilityCategory = nextTimeSlice.capabilityCategories[capabilityCategoriesCounter];
-                    for (let capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
-                      let capability = capabilityCategory.capabilities[capabilitiesCounter];
-                      for (let aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
-                        let alias = capability.aliases[aliasCounter];
-                        if (alias.previous.equals(aliasBeingRemoved._id)) {
-                          alias.previous = null;
-                        }
-                      }
-                      if (capabilityBeingRemoved && capability.previous.equals(capabilityBeingRemoved._id)) {
-                        capability.previous = null;
+                for (let capabilityCategoriesCounter = nextTimeSlice.capabilityCategories.length - 1; capabilityCategoriesCounter >= 0; capabilityCategoriesCounter--) {
+                  let capabilityCategory = nextTimeSlice.capabilityCategories[capabilityCategoriesCounter];
+                  for (let capabilitiesCounter = capabilityCategory.capabilities.length - 1; capabilitiesCounter >= 0; capabilitiesCounter--) {
+                    let capability = capabilityCategory.capabilities[capabilitiesCounter];
+                    for (let aliasCounter = capability.aliases.length - 1; aliasCounter >= 0; aliasCounter--) {
+                      let alias = capability.aliases[aliasCounter];
+                      if (alias.previous.equals(aliasBeingRemoved._id)) {
+                        alias.previous = null;
                       }
                     }
+                    if (capabilityBeingRemoved && capability.previous.equals(capabilityBeingRemoved._id)) {
+                      capability.previous = null;
+                    }
                   }
-
                 }
 
               }
 
+            }
 
 
-              return workspace.save();
-            });
 
-    };
+            return workspace.save();
+          });
+
+      };
 
     workspaceSchema.methods.removeCapability = function(timesliceId, capabilityID) {
       var Node = require('./node-schema')(conn);
@@ -758,28 +852,28 @@ module.exports = function(conn) {
       var promises = [];
       var capability = null;
       for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-          for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
-              if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
-                  capability = timeSlice.capabilityCategories[i].capabilities[j];
-                  timeSlice.capabilityCategories[i].capabilities.splice(j, 1);
-                  break;
-              }
+        for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+          if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
+            capability = timeSlice.capabilityCategories[i].capabilities[j];
+            timeSlice.capabilityCategories[i].capabilities.splice(j, 1);
+            break;
           }
+        }
       }
       promises.push(this.save());
       for (var k = 0; k < capability.aliases.length; k++) {
-          for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
-              promises.push(Node.findOne({
-                  _id: capability.aliases[k].nodes[l]
-              }).exec().then(function(node){
-                node.processedForDuplication = false;
-                return node.save();
-              }));
-          }
+        for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
+          promises.push(Node.findOne({
+            _id: capability.aliases[k].nodes[l]
+          }).exec().then(function(node) {
+            node.processedForDuplication = false;
+            return node.save();
+          }));
+        }
       }
       return q.all(promises);
 
-  };
+    };
 
 
     workspaceSchema.methods.cloneTimeslice = function(sourceTimeSliceId, name, description) {
