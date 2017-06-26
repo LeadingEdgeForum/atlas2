@@ -652,6 +652,7 @@ describe('Workspaces & maps', function() {
         var copyOfMap;
         var copyOfWorkspace;
         var submapName = "submapname";
+        var variantId;
 
         var createNodeInAMap = function(index, done) {
             var nodeName = "name";
@@ -706,6 +707,8 @@ describe('Workspaces & maps', function() {
                         throw new Error('_id should be assigned during workspace creation');
                     }
                     workspaceID = res.body._id;
+                    copyOfWorkspace = res.body;
+                    variantId = copyOfWorkspace.timeline[copyOfWorkspace.timeline.length-1]._id;
                 })
                 .expect(200)
                 .end(function(err, res) {
@@ -795,7 +798,7 @@ describe('Workspaces & maps', function() {
 
         it('verify unprocessed components', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/components/unprocessed')
+            get('/api/workspace/' + workspaceID + '/components/' + variantId + '/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -827,7 +830,7 @@ describe('Workspaces & maps', function() {
 
         it('create a capability', function(done) {
             userAgent1.
-            post('/api/workspace/' + workspaceID + '/capabilitycategory/' + category + '/node/' + nodeID[0])
+            post('/api/workspace/' + workspaceID + '/variant/' + variantId + '/capabilitycategory/' + category + '/node/' + nodeID[0])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -840,9 +843,9 @@ describe('Workspaces & maps', function() {
         });
 
         var capabilityID = null;
-        it('check capability creation', function(done) {
+          it('check capability creation', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/components/processed')
+            get('/api/workspace/' + workspaceID + '/components/' + variantId + '/processed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -859,7 +862,7 @@ describe('Workspaces & maps', function() {
         var aliasID = null;
         it('add a node to capability', function(done) {
             userAgent1.
-            put('/api/workspace/' + workspaceID + '/capability/' + capabilityID + '/node/' + nodeID[1])
+            put('/api/workspace/' + workspaceID + '/variant/' + variantId + '/capability/' + capabilityID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -879,7 +882,7 @@ describe('Workspaces & maps', function() {
 
         it('add a node to an alias', function(done) {
             userAgent1.
-            put('/api/workspace/' + workspaceID + '/alias/' + aliasID + '/node/' + nodeID[1])
+            put('/api/workspace/' + workspaceID + '/variant/' + variantId + '/alias/' + aliasID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -897,7 +900,7 @@ describe('Workspaces & maps', function() {
 
         it('get info', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
+            get('/api/workspace/' + workspaceID + '/variant/' + variantId + '/node/' + nodeID[0] + '/usage/')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -911,7 +914,7 @@ describe('Workspaces & maps', function() {
 
         it('delete capability', function(done) {
             userAgent1.
-            delete('/api/workspace/' + workspaceID + '/capability/' + capabilityID)
+            delete('/api/workspace/' + workspaceID + '/variant/' + variantId +'/capability/' + capabilityID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -926,7 +929,7 @@ describe('Workspaces & maps', function() {
 
         it('verify unprocessed components', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/components/unprocessed')
+            get('/api/workspace/' + workspaceID + '/components/' + variantId + '/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -941,7 +944,7 @@ describe('Workspaces & maps', function() {
 
         it('get info', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
+            get('/api/workspace/' + workspaceID + '/variant/' + variantId + '/node/' + nodeID[0] + '/usage/')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)

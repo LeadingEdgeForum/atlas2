@@ -178,9 +178,8 @@ describe('Duplication tests', function() {
 
   it("verify usage info", function(done) {
     var timeslice = currentWorkspace.getTimeSlice(null); //current
-    currentWorkspace.getNodeUsageInfo(null, maps[0].nodes[0]._id)
+    currentWorkspace.getNodeUsageInfo(timeslice._id, maps[0].nodes[0]._id)
       .then(function(capability) {
-        console.log(capability);
         should.exist(capability);
         (timeslice.capabilityCategories[0].capabilities[0]._id === capability._id).should.ok;
       })
