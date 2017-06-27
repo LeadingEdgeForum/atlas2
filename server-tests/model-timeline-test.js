@@ -333,6 +333,34 @@ describe('Timeline deduplication tests', function() {
         should.not.exist(currentWorkspace.timeline[4].capabilityCategories[1].previous);
     });
 
+    it("verify capability references after deletion", function() {
+        currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].next.length.should.be.equal(1); //second one was removed
+        currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].next[0].equals(currentWorkspace.timeline[2].capabilityCategories[1].capabilities[0]._id).should.be.true;
+
+        should.not.exist(currentWorkspace.timeline[3].capabilityCategories[1].capabilities[0].previous);
+
+        should.not.exist(currentWorkspace.timeline[4].capabilityCategories[1].capabilities[0].previous);
+    });
+
+    it("verify aliases references after deletion", function() {
+        currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].aliases[0].next.length.should.be.equal(1); //second one was removed
+        currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].aliases[0].next[0].equals(currentWorkspace.timeline[2].capabilityCategories[1].capabilities[0].aliases[0]._id).should.be.true;
+
+        should.not.exist(currentWorkspace.timeline[3].capabilityCategories[1].capabilities[0].aliases[0].previous);
+
+        should.not.exist(currentWorkspace.timeline[4].capabilityCategories[1].capabilities[0].aliases[0].previous);
+    });
+
+    it("verify marketreferences references after deletion", function() {
+      
+        currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].marketreferences[0].next.length.should.be.equal(1); //second one was removed
+        currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].marketreferences[0].next[0].equals(currentWorkspace.timeline[2].capabilityCategories[1].capabilities[0].marketreferences[0]._id).should.be.true;
+
+        should.not.exist(currentWorkspace.timeline[3].capabilityCategories[1].capabilities[0].marketreferences[0].previous);
+
+        should.not.exist(currentWorkspace.timeline[4].capabilityCategories[1].capabilities[0].marketreferences[0].previous);
+    });
+
 
 
 });

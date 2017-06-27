@@ -384,6 +384,7 @@ module.exports = function(conn) {
       let capabilityCategoryToRemove = null;
       let capabilitiesToRemove = [];
       let aliasesToRemove = [];
+      var referencesToRemove = [];
 
       var Node = require('./node-schema')(conn);
 
@@ -419,9 +420,10 @@ module.exports = function(conn) {
               }
             }
           }
-
+          if(capability.marketreferences){
+            referencesToRemove = capability.marketreferences;
+          }
         }
-
       }
 
       let previousTimeSlice = this.getTimeSlice(timeSlice.previous);
@@ -453,6 +455,17 @@ module.exports = function(conn) {
                     let aliasPos = aliasCandidate.next.indexOf(aliasesToRemove[m]);
                     if(aliasPos >= 0){
                       aliasCandidate.next.splice(aliasPos,1);
+                    }
+                  }
+                }
+
+                for(let l = 0; l < capabilityCandidate.marketreferences.length; l++){
+                  let referenceCandidate = capabilityCandidate.marketreferences[l];
+
+                  for(let m = 0; m < referencesToRemove.length; m++){
+                    let refPos = referenceCandidate.next.indexOf(referencesToRemove[m]._id);
+                    if(refPos >= 0){
+                      referenceCandidate.next.splice(refPos,1);
                     }
                   }
                 }
@@ -489,6 +502,16 @@ module.exports = function(conn) {
                     for(let m = 0; m < aliasesToRemove.length; m++){
                       if(aliasesToRemove[m].equals(aliasCandidate.previous)){
                         aliasCandidate.previous = null;
+                      }
+                    }
+                  }
+
+                  for(let l = 0; l < capabilityCandidate.marketreferences.length; l++){
+                    let marketRefCandidate = capabilityCandidate.marketreferences[l];
+
+                    for(let m = 0; m < referencesToRemove.length; m++){
+                      if(referencesToRemove[m]._id.equals(marketRefCandidate.previous)){
+                        marketRefCandidate.previous = null;
                       }
                     }
                   }
