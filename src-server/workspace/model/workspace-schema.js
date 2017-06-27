@@ -182,20 +182,7 @@ module.exports = function(conn) {
         throw new Error('Specified timeslice ' + timesliceId + ' is not present in workspace ' + this._id);
     };
 
-    /*TODO:
-     1. create a map
-      a. if specified where - add it there and all future states
-      b. if not specified where, add it to latest and all future states
-     2. create a timeslice (part of the timeline)
-      a. if specified parent timeslice, add it after
-      b. copy all maps from the previous time splice
-      c. ensure they are interconnected
-     3. delete a map
-      a. if there is just one timeslice, delete the map
-      b. if there is more than one timeslice, delete the map from the last one
-      c. if the map belongs to the past, do not delete it
-     4. delete timeslice (should it be possible at all)?
-    */
+
     workspaceSchema.methods.createAMap = function(params, timesliceId) {
       var WardleyMap = require('./map-schema')(conn);
       var Workspace = require('./workspace-schema')(conn);
@@ -620,14 +607,63 @@ module.exports = function(conn) {
       }
 
       var promises = [];
+
       var capability = null;
-      for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-        for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+      var previousMarketReference = null;
+      var nextMarketReferences = [];
+
+      for (let i = 0; i < timeSlice.capabilityCategories.length; i++) {
+        for (let j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
           if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
             capability = timeSlice.capabilityCategories[i].capabilities[j];
-            for (var k = capability.marketreferences.length - 1; k >= 0; k--) {
+            for (let k = capability.marketreferences.length - 1; k >= 0; k--) {
               if (capability.marketreferences[k]._id.equals(marketReferenceId)) {
-                capability.marketreferences.splice(k, 1);
+                let reference = capability.marketreferences.splice(k, 1);
+                previousMarketReference = reference.previous;
+                nextMarketReferences = reference.next;
+              }
+            }
+          }
+        }
+      }
+
+      if(previousMarketReference && timeSlice.previous){
+        let previousTimeSlice = this.getTimeSlice(timeSlice.previous);
+
+        for (let i = 0; i < previousTimeSlice.capabilityCategories.length; i++) {
+          for (let j = 0; j < previousTimeSlice.capabilityCategories[i].capabilities.length; j++) {
+            for(let k = 0; k < previousTimeSlice.capabilityCategories[i].capabilities[j].next.length; k++){
+              if (capabilityID.equals(previousTimeSlice.capabilityCategories[i].capabilities[j].next[k])) {
+                let affectedCapability = previousTimeSlice.capabilityCategories[i].capabilities[j];
+                for (let l = affectedCapability.marketreferences.length - 1; l >= 0; l--) {
+                  if (affectedCapability.marketreferences[k]._id.equals(previousMarketReference)) {
+                    let index = affectedCapability.marketreferences[k].next.indexOf(marketReferenceId);
+                    affectedCapability.marketreferences.next.splice(index, 1);
+                  }
+                }
+                break;
+              }
+            }
+          }
+        }
+
+      }
+
+      if(capability && timeSlice.next && timeSlice.next.length > 0){
+        for(let z = 0; z < timeSlice.next.length; z++){
+          let nextTimeSlice = this.getTimeSlice(timeSlice.next[z]);
+
+          for (let i = 0; i < nextTimeSlice.capabilityCategories.length; i++) {
+            for (let j = 0; j < nextTimeSlice.capabilityCategories[i].capabilities.length; j++) {
+              if (capabilityID.equals(nextTimeSlice.capabilityCategories[i].capabilities[j].previous)) {
+                let affectedCapability = nextTimeSlice.capabilityCategories[i].capabilities[j];
+
+                for (let l = affectedCapability.marketreferences.length - 1; l >= 0; l--) {
+                  let potentiallyAffectedMarketRefernce = affectedCapability.marketreferences[l];
+                  if (potentiallyAffectedMarketRefernce.previous.equals(previousMarketReference)) {
+                    potentiallyAffectedMarketRefernce.previous = null;
+                  }
+                }
               }
             }
           }
@@ -847,32 +883,113 @@ module.exports = function(conn) {
 
     workspaceSchema.methods.removeCapability = function(timesliceId, capabilityID) {
       var Node = require('./node-schema')(conn);
-      var timeSlice = this.getTimeSlice(timesliceId);
 
-      var promises = [];
-      var capability = null;
-      for (var i = 0; i < timeSlice.capabilityCategories.length; i++) {
-        for (var j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
+      if(!timesliceId){
+        return null;
+      }
+      let timeSlice = this.getTimeSlice(timesliceId);
+      if(!timeSlice){
+        return null;
+      }
+
+      let promises = [];
+
+      let removedCapability = null;
+      let removedMarketReferences = [];
+      let removedAliases = [];
+
+      for (let i = 0; i < timeSlice.capabilityCategories.length; i++) {
+        for (let j = 0; j < timeSlice.capabilityCategories[i].capabilities.length; j++) {
           if (capabilityID.equals(timeSlice.capabilityCategories[i].capabilities[j]._id)) {
-            capability = timeSlice.capabilityCategories[i].capabilities[j];
+            removedCapability = timeSlice.capabilityCategories[i].capabilities[j];
             timeSlice.capabilityCategories[i].capabilities.splice(j, 1);
+            removedMarketReferences =  removedCapability.marketreferences;
+            removedAliases = removedCapability.aliases;
             break;
           }
         }
       }
+
+
       promises.push(this.save());
-      for (var k = 0; k < capability.aliases.length; k++) {
-        for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
+
+      for (let k = 0; k < removedCapability.aliases.length; k++) {
+        for (let l = 0; l < removedCapability.aliases[k].nodes.length; l++) {
           promises.push(Node.findOne({
-            _id: capability.aliases[k].nodes[l]
+            _id: removedCapability.aliases[k].nodes[l]
           }).exec().then(function(node) {
             node.processedForDuplication = false;
             return node.save();
           }));
         }
       }
-      return q.all(promises);
 
+      if(timeSlice.previous){
+        let previousTimeSlice = this.getTimeSlice(timeSlice.previous);
+        for (let i = 0; i < previousTimeSlice.capabilityCategories.length; i++) {
+          for (let j = 0; j < previousTimeSlice.capabilityCategories[i].capabilities.length; j++) {
+            let affectedCapability = previousTimeSlice.capabilityCategories[i].capabilities[j];
+            let index = affectedCapability.next.indexOf(capabilityID);
+
+            if(index >= 0){ //right capbility
+              affectedCapability.next.splice(index,1); // remove reference to future removed version
+
+              for (let k = 0; k < affectedCapability.marketreferences.length; k++) {
+                let affectedMarketReference = affectedCapability.marketreferences[k];
+                for(let l = 0; l < removedMarketReferences.length; l++){
+                  let refIndex = affectedMarketReference.next.indexOf(removedMarketReferences[l]._id);
+                  if(refIndex >= 0){
+                    affectedMarketReference.next.splice(refIndex,1);
+                  }
+                }
+              }
+
+              for (let k = 0; k < affectedCapability.aliases.length; k++) {
+                let affectedAlias = affectedCapability.aliases[k];
+                for(let l = 0; l < removedAliases.length; l++){
+                  let refIndex = affectedAlias.next.indexOf(removedAliases[l]._id);
+                  if(refIndex >= 0){
+                    affectedAlias.next.splice(refIndex,1);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      for(let z = 0; z < timeSlice.next.length; z++){
+        let affectedTimeSlice = this.getTimeSlice(timeSlice.next[z]);
+        for (let i = 0; i < affectedTimeSlice.capabilityCategories.length; i++) {
+          for (let j = 0; j < affectedTimeSlice.capabilityCategories[i].capabilities.length; j++) {
+            let affectedCapability = affectedTimeSlice.capabilityCategories[i].capabilities[j];
+
+            if(affectedCapability.previous.equals(capabilityID)){ //right capbility
+              affectedCapability.previous = null; // remove reference to future removed version
+
+              for (let k = 0; k < affectedCapability.marketreferences.length; k++) {
+                let affectedMarketReference = affectedCapability.marketreferences[k];
+                for(let l = 0; l < removedMarketReferences.length; l++){
+                  if(removedMarketReferences[l]._id.equals(affectedMarketReference.previous)){
+                    affectedMarketReference.previous = null;
+                  }
+                }
+              }
+
+              for (let k = 0; k < affectedCapability.aliases.length; k++) {
+                let affectedAlias = affectedCapability.aliases[k];
+                for(let l = 0; l < removedAliases.length; l++){
+                  if(removedAliases[l]._id.equals(affectedAlias.previous)){
+                    affectedAlias.previous = null;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      return q.all(promises);
     };
 
 
