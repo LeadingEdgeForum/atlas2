@@ -445,7 +445,7 @@ module.exports = function(conn) {
               let nextPos = capabilityCandidate.next.indexOf(capabilitiesToRemove[k]);
 
               if(nextPos >= 0){
-                capabilityCandidate.splice(nextPos, 1);
+                capabilityCandidate.next.splice(nextPos, 1);
                 for(let l = 0; l < capabilityCandidate.aliases.length; l++){
                   let aliasCandidate = capabilityCandidate.aliases[l];
 
@@ -502,7 +502,7 @@ module.exports = function(conn) {
       promises.push(this.save());
 
       return q.allSettled(promises).then(function(res) {
-        return res[0].value.populate({
+        return res[res.length-1].value.populate({
           path: 'timeline.capabilityCategories.capabilities.aliases.nodes',
           model: 'Node',
         }).execPopulate();
@@ -1047,6 +1047,10 @@ module.exports = function(conn) {
             let nodes = sourceTimeSlice.maps[i].nodes;
             for (let j = 0; j < nodes.length; j++) {
               let oldNode = nodes[j];
+              if(!oldNode._id){
+                variantLogger.fatal('node not populated');
+                console.error('node not populated');
+              }
               var newNode = new Node({
                 _id: new ObjectId(mappings.nodes[oldNode._id]),
                 workspace: oldNode.workspace,
