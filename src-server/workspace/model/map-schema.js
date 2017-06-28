@@ -475,7 +475,9 @@ module.exports = function(conn) {
             workspace: _this.workspace,
             timesliceId: _this.timesliceId,
             archived: false,
-            responsiblePerson: params.responsiblePerson
+            responsiblePerson: params.responsiblePerson,
+            previous : null,
+            next : []
         });
 
         var submapNodeID = new ObjectId();
@@ -485,7 +487,9 @@ module.exports = function(conn) {
             workspace: _this.workspace,
             parentMap: _this,
             type: 'SUBMAP',
-            submapID: submapID
+            submapID: submapID,
+            next : [],
+            previous : null
         });
 
         var promises = [];
