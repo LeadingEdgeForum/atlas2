@@ -156,7 +156,10 @@ export default class MapCanvas extends React.Component {
         this.props.canvasStore.addChangeListener(this._onChange.bind(this));
         window.addEventListener('resize', this.handleResize);
     }
-    this.handleResize();
+    var _this = this;
+    jsPlumb.ready(function() {
+        _this.handleResize();
+    });
   }
 
   componentWillUnmount() {

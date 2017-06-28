@@ -45,6 +45,14 @@ export default class AuthService extends Store {
   _doAuthentication(authResult) {
       this.setToken(authResult.idToken);
       this.emitChange();
+      this.history.push(this.location);
+      this.history = null;
+      this.location = null;
+  }
+
+  next(location,history){
+    this.location = location;
+    this.history = history;
   }
 
   setProfile(profile) {
