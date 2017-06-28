@@ -57,6 +57,5 @@ export default class SplashPage extends React.Component {
   }
 }
 SplashPage.propTypes = {
-  auth : React.PropTypes.object.isRequired,
-  history : React.PropTypes.object.isRequired
+  auth : React.PropTypes.object.isRequired
 };

@@ -3,11 +3,14 @@
 import Auth0Lock from 'auth0-lock';
 import { browserHistory } from 'react-router';
 import { isTokenExpired } from './jwtHelper';
+import Store from '../store';
+
 /* globals localStorage */
 /* globals window */
 
-export default class AuthService {
+export default class AuthService extends Store {
   constructor(clientId, domain) {
+    super();
 
     this.auth0 = new Auth0Lock(clientId, domain, {
       auth: {
@@ -31,7 +34,6 @@ export default class AuthService {
 
     this.login = this.login.bind(this);
     this.signUp = this.signUp.bind(this);
-    this.setHistory = this.setHistory.bind(this);
     this._doAuthentication = this._doAuthentication.bind(this);
     this.setToken = this.setToken.bind(this);
     this.getToken = this.getToken.bind(this);
@@ -41,23 +43,15 @@ export default class AuthService {
   }
 
   _doAuthentication(authResult) {
-      // Saves the user token
       this.setToken(authResult.idToken);
-      // navigate to the home route
-      if(this.history){
-        this.history.replace('/');
-      }
-  }
-
-  setHistory(history){
-    this.history = history;
+      this.emitChange();
   }
 
   setProfile(profile) {
       // Saves profile data to local storage
       localStorage.setItem('profile', JSON.stringify(profile));
-      // Triggers profile_updated event to update the UI
-      // this.emit('profile_updated', profile);
+      // Triggers update
+      this.emitChange();
   }
 
   getProfile() {
@@ -66,8 +60,7 @@ export default class AuthService {
       return profile ? JSON.parse(localStorage.profile) : {};
   }
 
-  login(history) {
-    this.history = history;
+  login() {
     this.auth0.removeAllListeners();
     this.auth0.show({
       allowSignUp : false,
@@ -75,12 +68,11 @@ export default class AuthService {
     });
   }
 
-  signUp(history){
+  signUp(){
     this.auth0.show({
       allowSignUp : true,
       allowLogin	 : false
     });
-    this.history = history;
   }
 
   loggedIn() {
@@ -97,12 +89,10 @@ export default class AuthService {
     return localStorage.getItem('id_token');
   }
 
-  logout(history) {
+  logout() {
     // Clear user token and profile data from local storage
     localStorage.removeItem('id_token');
     localStorage.removeItem('profile');
-    if(history){
-      history.replace('/');
-    }
+    this.emitChange();
   }
 }
