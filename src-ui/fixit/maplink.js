@@ -2,6 +2,7 @@
 
 import React, {PropTypes} from 'react';
 import $ from 'jquery';
+import {LinkContainer} from 'react-router-bootstrap';
 
 export default class MapLink extends React.Component {
   //we do expect mapID
@@ -18,7 +19,7 @@ export default class MapLink extends React.Component {
     if(textOnly){
       return <span>{name}</span>;
     } else {
-      return <a href={targetURL}>{name}</a>;
+      return <LinkContainer to={targetURL}><a href={targetURL}>{name}</a></LinkContainer>;
     }
   }
 

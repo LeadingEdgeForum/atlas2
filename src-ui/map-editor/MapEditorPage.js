@@ -88,6 +88,8 @@ export default class MapEditorPage extends React.Component {
         type: 'sub',
         id: this.props.singleMapStore.getMapId()
       });
+      this.setState(this.props.singleMapStore.getMap());
+      this.setState({diff:this.props.singleMapStore.getDiff()});
     }
   }
 
@@ -134,19 +136,19 @@ export default class MapEditorPage extends React.Component {
     if(variants.past){
       let name = variants.past.name;
       let href = '/map/' + variants.past.mapId;
-      variantItems.push(<MenuItem href={href}>{name} (past)</MenuItem>);
+      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (past)</MenuItem></LinkContainer>);
       variantItems.push(<MenuItem divider />);
     }
     for(let i = 0; i < variants.alternatives.length; i++){
       let name = variants.alternatives[i].name;
       let href = '/map/' + variants.alternatives[i].mapId;
-      variantItems.push(<MenuItem href={href}>{name} (alternative)</MenuItem>);
+      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (alternative)</MenuItem></LinkContainer>);
     }
     variantItems.push(<MenuItem divider />);
     for(let i = 0; i < variants.futures.length; i++){
       let name = variants.futures[i].name;
       let href = '/map/' + variants.futures[i].mapId;
-      variantItems.push(<MenuItem href={href}>{name} (future)</MenuItem>);
+      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (future)</MenuItem></LinkContainer>);
     }
     return <NavDropdown eventKey="4" title="Related" id="nav-dropdown">
         {variantItems}

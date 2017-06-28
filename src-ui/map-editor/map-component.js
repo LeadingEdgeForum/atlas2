@@ -316,7 +316,7 @@ var MapComponent = React.createClass({
     if(this.props.node.type === Constants.SUBMAP){
       var href = "/map/" + this.props.node.submapID;
       var linkContainer = (
-        <a href={href} key='zoom-in'><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} key='zoom-in'></Glyphicon></a>
+        <LinkContainer to={href}><a href={href} key='zoom-in'><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} key='zoom-in'></Glyphicon></a></LinkContainer>
       );
       var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
       menuItems.push(linkContainer);
