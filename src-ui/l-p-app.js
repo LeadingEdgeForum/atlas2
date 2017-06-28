@@ -125,7 +125,7 @@ class MainApp extends React.Component {
             }/>
             <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
                   if(!loggedIn) {
-              		auth.next(props.location, props.history);
+              		  auth.next(props.location, props.history);
                     return AuthRedirect;
                   }
 
