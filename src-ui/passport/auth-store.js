@@ -24,24 +24,37 @@ class AuthStore extends Store {
     }
     if(!this.inProgress){
       this.inProgress = true;
+      var _this = this;
       $.ajax({
         type: 'GET',
         url: '/me',
         success: function(data2) {
-          this._loggedIn = true;
-          this.inProgress = false;
-          this.meQueried = true;
-          this.emitChange();
-        }.bind(this),
+          _this._loggedIn = true;
+          _this.inProgress = false;
+          _this.meQueried = true;
+          _this.emitChange();
+          console.log('hl', _this.history, _this.location);
+          if(_this.history){
+              _this.history.push(_this.location);
+              _this.history = null;
+              _this.location = null;
+          }
+        },
         error: function(err) {
-          this.inProgress = false;
-          this._loggedIn = false;
-          this.meQueried = true;
-          this.emitChange();
-        }.bind(this)
+          _this.inProgress = false;
+          _this._loggedIn = false;
+          _this.meQueried = true;
+          _this.emitChange();
+        }
       });
     }
     return this._loggedIn;
+  }
+
+  // record history
+  next(location,history){
+    this.location = location;
+    this.history = history;
   }
 
   loginPasswordLogin(login, password){

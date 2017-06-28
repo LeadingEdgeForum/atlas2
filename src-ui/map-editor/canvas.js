@@ -143,7 +143,11 @@ export default class MapCanvas extends React.Component {
     this.setState({coords:coord});
     if (this.props.canvasStore) { // no store means rendering on the server
       CanvasActions.updateCanvasSizeAndOffset(coord);
-      jsPlumb.revalidate(this.input);
+      var _this = this;
+      jsPlumb.ready(function() {
+        jsPlumb.revalidate(_this.input);
+      });
+
     }
   }
 
