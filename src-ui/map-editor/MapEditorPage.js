@@ -194,6 +194,7 @@ export default class MapEditorPage extends React.Component {
   }
 
   toggleDiff(){
+    jsPlumb.reset();
     this.canvasStore.toggleDiff();
   }
 
