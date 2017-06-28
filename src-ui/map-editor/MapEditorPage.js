@@ -56,6 +56,7 @@ export default class MapEditorPage extends React.Component {
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
     this.prepareVariantsSwitch = this.prepareVariantsSwitch.bind(this);
     this.state.diff = this.props.singleMapStore.getDiff();
+    this.componentDidUpdate = this.componentDidUpdate.bind(this);
   }
 
   componentDidMount() {
@@ -72,6 +73,22 @@ export default class MapEditorPage extends React.Component {
       type: 'unsub',
       id: this.props.singleMapStore.getMapId()
     });
+  }
+
+  componentDidUpdate(oldProps, oldState){
+    if(oldProps.singleMapStore.getMap().map._id !== this.props.singleMapStore.getMap().map._id){
+      // map changed, pretend to remount
+      oldProps.singleMapStore.removeChangeListener(this._onChange);
+      oldProps.singleMapStore.io.emit('map', {
+        type: 'sub',
+        id: oldProps.singleMapStore.getMapId()
+      });
+      this.props.singleMapStore.addChangeListener(this._onChange);
+      this.props.singleMapStore.io.emit('map', {
+        type: 'sub',
+        id: this.props.singleMapStore.getMapId()
+      });
+    }
   }
 
   _onChange() {
