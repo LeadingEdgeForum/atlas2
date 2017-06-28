@@ -244,10 +244,10 @@ export default class MapEditorPage extends React.Component {
           </Row>
           <Row className="show-grid">
             <Breadcrumb>
-              <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
-              <Breadcrumb.Item href={"/workspace/" + workspaceID}>
+              <LinkContainer to="/"><Breadcrumb.Item href="/">Home</Breadcrumb.Item></LinkContainer>
+              <LinkContainer to={"/workspace/" + workspaceID}><Breadcrumb.Item href={"/workspace/" + workspaceID}>
                 {workspaceName}
-              </Breadcrumb.Item>
+              </Breadcrumb.Item></LinkContainer>
               <Breadcrumb.Item active>
                 {mapName}
               </Breadcrumb.Item>

@@ -235,10 +235,10 @@ export default class MapListPage extends React.Component {
           </Row>
           <Row className="show-grid">
             <Breadcrumb>
-              <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
-              <Breadcrumb.Item href={"/workspace/"+workspaceID} active>
+              <LinkContainer to="/"><Breadcrumb.Item href="/">Home</Breadcrumb.Item></LinkContainer>
+              <LinkContainer to={"/workspace/"+workspaceID}><Breadcrumb.Item href={"/workspace/"+workspaceID} active>
                 {name} - {purpose}
-              </Breadcrumb.Item>
+              </Breadcrumb.Item></LinkContainer>
             </Breadcrumb>
           </Row>
           <Row className="show-grid">

@@ -17,6 +17,7 @@ import CapabilitiesView from './capabilities-view';
 import MapLink from './maplink.js';
 import CreateCategoryDialog from './dialogs/create-category';
 import EditCategoryDialog from './dialogs/edit-category';
+import {LinkContainer} from 'react-router-bootstrap';
 
 var draggableComponentStyle = {
   borderWidth: '1px',
@@ -146,10 +147,10 @@ export default class FixitPage extends React.Component {
           </Row>
           <Row className="show-grid">
             <Breadcrumb>
-              <Breadcrumb.Item href="/">Home</Breadcrumb.Item>
-              <Breadcrumb.Item href={"/workspace/" + workspaceID}>
+              <LinkContainer to="/"><Breadcrumb.Item href="/">Home</Breadcrumb.Item></LinkContainer>
+              <LinkContainer to={"/workspace/" + workspaceID}><Breadcrumb.Item href={"/workspace/" + workspaceID}>
                 {workspaceName}
-              </Breadcrumb.Item>
+              </Breadcrumb.Item></LinkContainer>
               <Breadcrumb.Item active>
                 Fixing it!
               </Breadcrumb.Item>
