@@ -62,7 +62,7 @@
     "should": "11.2.1",
     "supertest": "*",
     "babel-core": "^6.23.1",
-    "babel-loader": "7.0.0",
+    "babel-loader": "7.1.0",
     "babel-plugin-react-transform": "^2.0.2",
     "babel-preset-es2015": "^6.9.0",
     "babel-preset-react": "^6.11.1",
