@@ -127,9 +127,6 @@ class MainApp extends React.Component {
                   if(!loggedIn) {
                     return AuthRedirect;
                   }
-                  const workspaceID = props.match.params.workspaceID;
-                  const singleWorkspaceStore = getWorkspaceStore(workspaceID);
-                  const fixitStore = getFixitStore(workspaceID);
 
                   return (
                       <Switch>
@@ -137,15 +134,15 @@ class MainApp extends React.Component {
                             <MapListPage
                               auth={auth}
                               history={props.history}
-                              singleWorkspaceStore={singleWorkspaceStore} />
+                              singleWorkspaceStore={getWorkspaceStore(props.match.params.workspaceID)} />
                         </Route>
                         <Route path="/fixit/:workspaceID/variant/:variantId" render={
                           (props) => {
                             return <FixitPage
                                 auth={auth}
                                 history={props.history}
-                                singleWorkspaceStore={singleWorkspaceStore}
-                                fixitStore={fixitStore}
+                                singleWorkspaceStore={getWorkspaceStore(props.match.params.workspaceID)}
+                                fixitStore={getFixitStore(props.match.params.workspaceID)}
                                 variantId={props.match.params.variantId}/>;
                           }
                         }/>

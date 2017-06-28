@@ -35,6 +35,7 @@ import CanvasWithBackground from './canvas-with-background';
 import ToParentMap from './to-parent-map';
 import $ from 'jquery';
 var Blob = require('blob');
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 /* globals document */
 /* globals window */
 
@@ -90,6 +91,7 @@ export default class MapEditorPage extends React.Component {
       });
       this.setState(this.props.singleMapStore.getMap());
       this.setState({diff:this.props.singleMapStore.getDiff()});
+      jsPlumb.reset();
     }
   }
 
