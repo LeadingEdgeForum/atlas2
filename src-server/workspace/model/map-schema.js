@@ -21,21 +21,6 @@ var q = require('q');
 
 var wardleyMap = {};
 
-var ensureDepedencyData = function(node){
-  if(!node.dependencyData){
-    node.dependencyData = {
-      inbound : {},
-      outbound : {}
-    };
-    return;
-  }
-  if(!node.dependencyData.inbound){
-    node.dependencyData.inbound = {};
-  }
-  if(!node.dependencyData.outbound){
-    node.dependencyData.outbound = {};
-  }
-};
 
 var calculateMean = function(list, field) {
     // submapLogger.trace('multisave', list, field);
@@ -92,6 +77,9 @@ module.exports = function(conn) {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'
         },
+        next : [Schema.Types.ObjectId],
+        previous : Schema.Types.ObjectId,
+        timesliceId : Schema.Types.ObjectId,
         nodes: [{
             type: Schema.Types.ObjectId,
             ref: 'Node'
@@ -99,10 +87,14 @@ module.exports = function(conn) {
         comments: [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
-            text: Schema.Types.String
+            text: Schema.Types.String,
+            next : [Schema.Types.ObjectId],
+            previous : Schema.Types.ObjectId,
         }],
-        responsiblePerson: Schema.Types.String
+        responsiblePerson: Schema.Types.String,
+        schemaVersion : Schema.Types.Number
     });
+
 
     _MapSchema.methods.makeComment = function(data) {
         this.comments.push(data);
@@ -141,12 +133,169 @@ module.exports = function(conn) {
         var _this = this;
         return Workspace.findOne({
             owner: user,
-            maps: mapID
+            'timeline.maps': mapID
         }).exec().then(function(workspace) {
             if (workspace) {
                 return _this; // if we found workspace, then we have access to the map
             }
-            throw new Error('User ' + user + ' has no access to map' + mapID);
+            throw new Error('User ' + user + ' has no access to map ' + mapID);
+        });
+    };
+
+    _MapSchema.methods.calculateDiff = function() {
+        var Workspace = require('./workspace-schema')(conn);
+        var mapID = this._id;
+        var _this = this;
+        return _this.populate({
+            path: 'nodes',
+            model: 'Node',
+            populate : {
+              path: 'previous',
+              model: 'Node'
+            }
+        }).populate({
+            path: 'previous',
+            model: 'WardleyMap',
+            populate : {
+                path: 'nodes',
+                model: 'Node'
+            }
+        }).execPopulate()
+        .then(function(map){
+          let added = [];
+          for (let i = 0; i < map.nodes.length; i++) {
+            if (!map.nodes[i].previous) {
+              added.push({_id : map.nodes[i]._id});
+            }
+          }
+          // console.log('added', added);
+
+          let modified = [];
+          let hasCounterpart = {};
+          for (let i = 0; i < map.nodes.length; i++) {
+            let differs = false;
+            let diff = {};
+            let currentNode = map.nodes[i];
+            let previousNode = currentNode.previous;
+            if(!previousNode){
+              continue;
+            }
+            if (currentNode.name !== previousNode.name){
+              differs = true;
+              diff.name = {
+                old : previousNode.name,
+                new : currentNode.name
+              };
+            }
+            if (currentNode.type !== previousNode.type){
+              differs = true;
+              diff.type = {
+                old : previousNode.type,
+                new : currentNode.type
+              };
+            }
+            if (currentNode.x !== previousNode.x){
+              differs = true;
+              diff.x = {
+                old : previousNode.x,
+                new : currentNode.x
+              };
+            }
+            if(differs){
+              modified.push({
+                  _id : currentNode._id, diff: diff
+              });
+            }
+            hasCounterpart[previousNode._id] = true;
+          }
+
+          // console.log('modified', modified);
+
+          let removed = [];
+          let previousMap = map.previous;
+          // console.log(hasCounterpart);
+          if (previousMap) {
+            for (let i = 0; i < previousMap.nodes.length; i++) {
+              let candidateNode = previousMap.nodes[i];
+              if (!hasCounterpart[candidateNode._id]) {
+                removed.push(candidateNode); // add full removed node as we want to show where it was);
+              }
+            }
+          }
+          // console.log('removed', removed);
+
+          return {
+            removed : removed,
+            added : added,
+            modified : modified
+          };
+        });
+    };
+
+
+    _MapSchema.methods.getRelevantVariants = function() {
+      return this.populate({
+          path: 'previous',
+          model: 'WardleyMap',
+          populate: {
+            path: 'next',
+            model: 'WardleyMap'
+          }
+        }).populate({
+          path: 'workspace',
+          model: 'Workspace'
+        }).populate({
+            path: 'next',
+            model: 'WardleyMap'
+        }).execPopulate()
+        .then(function(populatedMap) {
+          let result = {
+              past : null,
+              alternatives : [],
+              futures : []
+          };
+
+          let previousMap = populatedMap.previous;
+          let alternativeMaps = [];
+          let futureMaps = populatedMap.next;
+
+          if (previousMap) {
+            for (let i = 0; i < previousMap.next.length; i++) {
+              if (!populatedMap._id.equals(previousMap.next[i]._id)) {
+                alternativeMaps.push(previousMap.next[i]);
+              }
+            }
+          }
+
+          for (let i = 0; i < populatedMap.workspace.timeline.length; i++) {
+            let timeSlice = populatedMap.workspace.timeline[i];
+            // find alternatives maps
+            for (let j = 0; j < alternativeMaps.length; j++) {
+              if (timeSlice._id.equals(alternativeMaps[j].timesliceId)) {
+                result.alternatives.push({
+                  name: timeSlice.name,
+                  mapId: alternativeMaps[j]._id
+                });
+              }
+            }
+            // find future maps
+            for (let j = 0; j < futureMaps.length; j++) {
+              if (timeSlice._id.equals(futureMaps[j].timesliceId)) {
+                result.futures.push({
+                  name: timeSlice.name,
+                  mapId: futureMaps[j]._id
+                });
+              }
+            }
+            // find ancestor
+            if (previousMap && timeSlice._id.equals(previousMap.timesliceId)) {
+              result.past = {
+                name: timeSlice.name,
+                mapId: previousMap._id
+              };
+            }
+          }
+          return result;
         });
     };
 
@@ -181,7 +330,11 @@ module.exports = function(conn) {
             .then(function(savedWardleyMap) {
                 return savedWardleyMap.populate({
                     path: 'nodes',
-                    model: 'Node'
+                    model: 'Node',
+                    populate : {
+                      path: 'previous',
+                      model: 'Node'
+                    }
                 }).execPopulate();
             });
     };
@@ -219,7 +372,11 @@ module.exports = function(conn) {
                 }
                 return q.allSettled([node.save(), _this.populate({
                     path: 'nodes',
-                    model: 'Node'
+                    model: 'Node',
+                    populate : {
+                      path: 'previous',
+                      model: 'Node'
+                    }
                 }).execPopulate()]);
             });
     };
@@ -234,7 +391,11 @@ module.exports = function(conn) {
             .then(function(node) {
                 return q.allSettled([node.remove(), _this.populate({
                     path: 'nodes',
-                    model: 'Node'
+                    model: 'Node',
+                    populate : {
+                      path: 'previous',
+                      model: 'Node'
+                    }
                 }).execPopulate()]);
             });
     };
@@ -245,48 +406,57 @@ module.exports = function(conn) {
             .findOne({
                 _id: this._id
             })
-            .populate('nodes workspace')
+            .populate({
+                path: 'nodes',
+                model: 'Node',
+                populate : {
+                  path: 'previous',
+                  model: 'Node'
+                }
+            })
             .exec();
     };
 
     _MapSchema.methods.getAvailableSubmaps = function() {
-        var WardleyMap = require('./map-schema')(conn);
-        var _this = this;
-        return WardleyMap.find({
-            workspace: _this.workspace,
-            archived: false,
-            isSubmap: true
-        }).exec();
+      var WardleyMap = require('./map-schema')(conn);
+      var _this = this;
+      return WardleyMap.find({
+        workspace: _this.workspace,
+        archived: false,
+        timesliceId: _this.timesliceId,
+        isSubmap: true
+      }).exec();
     };
 
     _MapSchema.methods.getSubmapUsage = function() {
-        var WardleyMap = require('./map-schema')(conn);
-        var Node = require('./node-schema')(conn);
-        var _this = this;
+      var WardleyMap = require('./map-schema')(conn);
+      var Node = require('./node-schema')(conn);
+      var _this = this;
 
-        return Node.find({
-                type: 'SUBMAP',
-                submapID: _this._id
-            }).select('parentMap').exec()
-            .then(function(listOfNodes) {
-                var ids = [];
-                listOfNodes.forEach(item => ids.push(item.parentMap));
-                return ids;
+      return Node.find({
+          type: 'SUBMAP',
+          submapID: _this._id
+        }).select('parentMap').exec()
+        .then(function(listOfNodes) {
+          var ids = [];
+          listOfNodes.forEach(item => ids.push(item.parentMap));
+          return ids;
+        })
+        .then(function(listOfMapIds) {
+          return WardleyMap
+            .find({
+              archived: false,
+              _id: {
+                $in: listOfMapIds
+              },
+              workspace: _this.workspace
             })
-            .then(function(listOfMapIds) {
-                return WardleyMap
-                    .find({
-                        archived: false,
-                        _id: {
-                            $in: listOfMapIds
-                        },
-                        workspace: _this.workspace
-                    })
-                    .populate('nodes')
-                    .select('name user purpose _id')
-                    .exec();
-            });
+            .populate('nodes')
+            .select('name user purpose _id')
+            .exec();
+        });
     };
+
     _MapSchema.methods.formASubmap = function(params) {
         var WardleyMap = require('./map-schema')(conn);
         var Node = require('./node-schema')(conn);
@@ -303,6 +473,7 @@ module.exports = function(conn) {
             name: params.submapName,
             isSubmap: true,
             workspace: _this.workspace,
+            timesliceId: _this.timesliceId,
             archived: false,
             responsiblePerson: params.responsiblePerson
         });
@@ -317,7 +488,8 @@ module.exports = function(conn) {
             submapID: submapID
         });
 
-        _this.workspace.maps.push(submap);
+        var promises = [];
+        promises.push(_this.workspace.insertMapIdAt(submap, _this.timesliceId));
         _this.nodes.push(submapNode);
 
         // at this point we have placeholders for the submap and the new node
@@ -410,60 +582,94 @@ module.exports = function(conn) {
         removeDuplicatesDependencies(nodesToSave);
 
         var totalNodesToSave = nodesToSave.concat(transferredNodes);
-        var promises = [];
+
         for (var z = 0; z < totalNodesToSave.length; z++) {
             promises.push(totalNodesToSave[z].save());
         }
-        
+
         removeDuplicatesDependencies([submapNode]);
         promises.push(submapNode.save());
         promises.push(submap.save());
-        promises.push(_this.workspace.save());
         promises.push(_this.save());
         return q.allSettled(promises).then(function(results){
           return results[results.length-1].value;
         });
     };
 
+    /*
+    * This method is to clean up the state after removing a map, that is:
+    *  - remove nodes belonging to the map
+    *  - remove all references if removing a map that is a submap
+    * TODO: if map is being saved, ensure the workspace has the timeslice existing
+    */
     _MapSchema.pre('save', function(next) {
-        modelLogger.trace('pre save on', this._id, this.archived, this.nodes.length);
-        var beingArchived = this.archived;
-        if (!beingArchived) {
-            modelLogger.trace('not being archived', this._id, this.isSubmap);
-            // not being removed, so we are not processing anything any further
-            return next();
-        }
-        var promises = [];
-        var Node = require('./node-schema')(conn);
-        // remove all nodes (we may have components pointing out to other submaps)
-        for (var i = 0; i < this.nodes.length; i++) {
-            promises.push(
-                Node.findById(this.nodes[i]._id || this.nodes[i]).exec().then(function(node) {
-                    return node.remove();
-                }));
-        }
-        // if we are not a submap, then it is the end
-        if (!this.isSubmap) {
-            return next();
-        }
-        // otherwise it is necessary to find every Node that uses this map and delete it.
-        Node.find({
-            submapID: new ObjectId(this._id),
-            type: 'SUBMAP'
-        }).exec(function(err, results) {
-            for (var j = 0; j < results.length; j++) {
-                modelLogger.trace('removing submap node', results[j]._id, results[j].name);
-                promises.push(results[j].remove());
+      modelLogger.trace('pre save on', this._id, this.archived, this.nodes.length);
+      var beingArchived = this.archived;
+      if (!beingArchived) {
+        modelLogger.trace('not being archived', this._id, this.isSubmap);
+        // not being removed, so we are not processing anything any further
+        return next();
+      }
+      var promises = [];
+      var Node = require('./node-schema')(conn);
+      // remove all nodes (we may have components pointing out to other submaps)
+      for (var i = 0; i < this.nodes.length; i++) {
+        promises.push(
+          Node.findById(this.nodes[i]._id || this.nodes[i]).exec().then(function(node) {
+            if(node){
+                return node.remove();
             }
-            q.all(promises)
-                .then(function(results) {
-                    next();
-                }, function(err) {
-                    modelLogger.error(err);
-                    next(err);
-                });
+          }));
+      }
+
+      var WardleyMap = require('./map-schema')(conn);
+      var _this = this;
+      if (this.previous) {
+        promises.push(WardleyMap.findOne({
+            _id: _this.previous
+          }).exec()
+          .then(function(map) {
+            map.next.pull(_this._id);
+            return map.save();
+          }));
+      }
+      if (this.next && this.next.length > 0) {
+        for (let i = 0; i < this.next.length; i++) {
+          promises.push(WardleyMap.findOne({
+              _id: _this.next[i]
+            }).exec()
+            .then(function(map) {
+              map.previous = null;
+              return map.save();
+            }));
+        }
+      }
+
+      // if we are not a submap, then this is the end
+      if (!this.isSubmap) {
+        return q.allSettled(promises).then(function(r) {
+          next();
         });
+      }
+      // otherwise it is necessary to find every Node that uses this map and delete it.
+      Node.find({
+        submapID: new ObjectId(this._id),
+        type: 'SUBMAP'
+      }).exec(function(err, results) {
+        for (var j = 0; j < results.length; j++) {
+          modelLogger.trace('removing submap node', results[j]._id, results[j].name);
+          promises.push(results[j].remove());
+        }
+        q.all(promises)
+          .then(function(results) {
+            next();
+          }, function(err) {
+            modelLogger.error(err);
+            next(err);
+          });
+      });
     });
+
     wardleyMap[conn] = conn.model('WardleyMap', _MapSchema);
     return wardleyMap[conn];
 };

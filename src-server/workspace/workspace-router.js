@@ -130,6 +130,58 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
   });
 
+  module.router.post('/workspace/:workspaceID/variant/:sourceTimeSlice', authGuardian.authenticationRequired, function(req, res) {
+    if(req.params.sourceTimeSlice === 'null'){
+      req.params.sourceTimeSlice = null;
+    }
+    Workspace
+      .findOne({
+        owner: getUserIdFromReq(req),
+        _id: req.params.workspaceID,
+        archived: false
+      }).exec()
+      .then(function(workspace){
+        return workspace.cloneTimeslice(req.params.sourceTimeSlice || workspace.nowId, req.body.name, req.body.description);
+      })
+      .then(function(workspace) {
+        return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
+      })
+      .then(function(workspace, err) {
+        if (err) {
+          return res.send(500);
+        }
+        res.json({
+          workspace: workspace.toObject()
+        });
+      });
+  });
+
+  module.router.put('/workspace/:workspaceID/variant/:sourceTimeSlice', authGuardian.authenticationRequired, function(req, res) {
+    if(req.params.sourceTimeSlice === 'null'){
+      req.params.sourceTimeSlice = null;
+    }
+    Workspace
+      .findOne({
+        owner: getUserIdFromReq(req),
+        _id: req.params.workspaceID,
+        archived: false
+      }).exec()
+      .then(function(workspace){
+        return workspace.modifyTimeslice(req.params.sourceTimeSlice || workspace.nowId, req.body.name, req.body.description, req.body.current);
+      })
+      .then(function(workspace) {
+        return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
+      })
+      .then(function(workspace, err) {
+        if (err) {
+          return res.send(500);
+        }
+        res.json({
+          workspace: workspace.toObject()
+        });
+      });
+  });
+
   module.router.get('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
       Workspace
           .findOne({
@@ -137,7 +189,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               _id: req.params.workspaceID,
               archived: false
           })
-          .populate('maps capabilityCategories')
+          .populate('timeline timeline.maps timeline.capabilityCategories')
           .exec(function(err, result) {
               if (err) {
                   return res.send(500);
@@ -168,6 +220,46 @@ module.exports = function(authGuardian, mongooseConnection) {
               res.json({
                   map: map
               });
+          });
+  });
+
+  module.router.get('/map/:mapID/diff', authGuardian.authenticationRequired, function(req, res) {
+      WardleyMap.findOne({
+              _id: req.params.mapID,
+              archived: false
+          })
+          .exec()
+          .then(function(result) {
+              return result.verifyAccess(getUserIdFromReq(req));
+          })
+          .then(function(result){
+            return result.calculateDiff();
+          })
+          .fail(function(e) {
+              defaultAccessDenied(res, e);
+          })
+          .done(function(diffResult) {
+              res.json(diffResult);
+          });
+  });
+
+  module.router.get('/map/:mapID/variants', authGuardian.authenticationRequired, function(req, res) {
+      WardleyMap.findOne({
+              _id: req.params.mapID,
+              archived: false
+          })
+          .exec()
+          .then(function(result) {
+              return result.verifyAccess(getUserIdFromReq(req));
+          })
+          .then(function(result){
+            return result.getRelevantVariants();
+          })
+          .fail(function(e) {
+              defaultAccessDenied(res, e);
+          })
+          .done(function(diffResult) {
+              res.json(diffResult);
           });
   });
 
@@ -362,7 +454,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             res.status(500).json(err2);
           }
           Workspace.populate(result2, {
-              path: 'maps capabilityCategories'
+              path: 'timeline timeline.maps timeline.capabilityCategories'
           }, function(err, result3) {
               if (err) {
                   return res.send(500);
@@ -389,10 +481,10 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.verifyAccess(owner);
           })
           .then(function(map) {
-              map.workspace.maps.pull(map._id);
+              map.workspace.getTimeSlice(map.timesliceId).maps.pull(map._id);
               var workspacePromise = map.workspace.save()
               .then(function(workspace){
-                  return workspace.populate('maps capabilityCategories').execPopulate();
+                  return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
               });
 
               map.archived = true;
@@ -448,7 +540,43 @@ module.exports = function(authGuardian, mongooseConnection) {
               if (!workspace) {
                   throw new Error("Workspace not found");
               }
-              return workspace.createMap(editor, req.body.user, req.body.purpose, req.body.responsiblePerson);
+              return workspace.createAMap({
+                user : req.body.user,
+                purpose: req.body.purpose,
+                responsiblePerson : req.body.responsiblePerson,
+              });
+          })
+          .fail(function(e) {
+              defaultAccessDenied.bind(res, e);
+          })
+          .done(function(result) {
+              res.json({
+                  map: result
+              });
+              track(editor,'create_map',{
+                'id' : result._id,
+                'body' : JSON.stringify(req.body)
+              });
+          });
+  });
+
+  module.router.post('/variant/:timesliceId/map', authGuardian.authenticationRequired, function(req, res) {
+      var editor = getUserIdFromReq(req);
+      Workspace
+          .findOne({
+              _id: new ObjectId(req.body.workspaceID),
+              owner: editor
+          })
+          .exec()
+          .then(function(workspace) {
+              if (!workspace) {
+                  throw new Error("Workspace not found");
+              }
+              return workspace.createAMap({
+                user : req.body.user,
+                purpose: req.body.purpose,
+                responsiblePerson : req.body.responsiblePerson,
+              }, req.params.timesliceId);
           })
           .fail(function(e) {
               defaultAccessDenied.bind(res, e);
@@ -519,7 +647,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return workspace.save();
           })
           .then(function(workspace){
-            return workspace.populate('maps capabilityCategories').execPopulate();
+            return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
           })
           .fail(function(e){
             return defaultAccessDenied(res, e);
@@ -568,7 +696,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             return workspace.save();
         })
         .then(function(workspace){
-          return workspace.populate('maps capabilityCategories').execPopulate();
+          return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
         })
         .fail(function(e) {
             return defaultAccessDenied(res, e);
@@ -982,10 +1110,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               authGuardian.authenticationRequired,
               function(req, res) {
                 var owner = getUserIdFromReq(req);
-                var workspaceId = req.params.workspaceId;
-                var mapId = req.params.mapId;
+                var workspaceId = new ObjectId(req.params.workspaceId);
+                var mapId = new ObjectId(req.params.mapId);
                 var nodeId = new ObjectId(req.params.nodeId);
-
                 WardleyMap.findOne({
                     _id: mapId,
                     archived: false,
@@ -1104,7 +1231,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.get(
-      '/workspace/:workspaceID/components/unprocessed',
+      '/workspace/:workspaceID/components/:variantId/unprocessed',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
@@ -1117,9 +1244,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               if (!result) {
                   return res.send(403);
               }
-              result.findUnprocessedNodes()
+              result.findUnprocessedNodes(req.params.variantId)
                   .fail(function(e) {
-                      res.status(500).json(e);
+                      return res.status(500).json(e);
                   })
                   .done(function(maps) {
                       res.json({
@@ -1131,7 +1258,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.get(
-      '/workspace/:workspaceID/components/processed',
+      '/workspace/:workspaceID/components/:variantId/processed',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
@@ -1146,7 +1273,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   if (!workspace) {
                       return res.send(404);
                   }
-                  return workspace.findProcessedNodes();
+                  return workspace.findProcessedNodes(req.params.variantId);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding...', e);
@@ -1161,11 +1288,12 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.post(
-      '/workspace/:workspaceID/capabilitycategory/:categoryID/node/:nodeID',
+      '/workspace/:workspaceID/variant/:variantId/capabilitycategory/:categoryID/node/:nodeID',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var categoryID = new ObjectId(req.params.categoryID);
           var nodeID = new ObjectId(req.params.nodeID);
           capabilityLogger.trace(workspaceID, categoryID, nodeID);
@@ -1181,7 +1309,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       res.status(404).json("workspace not found");
                       return null;
                   }
-                  return workspace.createNewCapabilityAndAliasForNode(categoryID, nodeID);
+                  return workspace.createNewCapabilityAndAliasForNode(variantId, categoryID, nodeID);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding with error', e);
@@ -1196,11 +1324,12 @@ module.exports = function(authGuardian, mongooseConnection) {
       });
 
       module.router.delete(
-        '/workspace/:workspaceID/capabilitycategory/:categoryID',
+        '/workspace/:workspaceID/variant/:variantId/capabilitycategory/:categoryID',
         authGuardian.authenticationRequired,
         function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var categoryID = new ObjectId(req.params.categoryID);
           capabilityLogger.trace(workspaceID, categoryID);
           Workspace
@@ -1215,7 +1344,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 res.status(404).json("workspace not found");
                 return null;
               }
-              return workspace.deleteCategory(categoryID);
+              return workspace.deleteCategory(variantId, categoryID);
             })
             .fail(function(e) {
               capabilityLogger.error('responding with error', e);
@@ -1230,11 +1359,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
 
       module.router.post(
-        '/workspace/:workspaceID/capabilitycategory/',
+        '/workspace/:workspaceID/variant/:variantId/capabilitycategory/',
         authGuardian.authenticationRequired,
         function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var name = req.body.name;
           capabilityLogger.trace(workspaceID, name);
           Workspace
@@ -1249,7 +1379,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 res.status(404).json("workspace not found");
                 return null;
               }
-              return workspace.createCategory(name);
+              return workspace.createCategory(variantId, name);
             })
             .fail(function(e) {
               capabilityLogger.error('responding with error', e);
@@ -1264,11 +1394,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
 
       module.router.put(
-        '/workspace/:workspaceID/capabilitycategory/:categoryID',
+        '/workspace/:workspaceID/variant/:variantId/capabilitycategory/:categoryID',
         authGuardian.authenticationRequired,
         function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var categoryID = new ObjectId(req.params.categoryID);
           var name = req.body.name;
           capabilityLogger.trace(workspaceID, categoryID, name);
@@ -1284,7 +1415,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 res.status(404).json("workspace not found");
                 return null;
               }
-              return workspace.editCategory(categoryID, name);
+              return workspace.editCategory(variantId, categoryID, name);
             })
             .fail(function(e) {
               capabilityLogger.error('responding with error', e);
@@ -1299,11 +1430,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
 
   module.router.put(
-      '/workspace/:workspaceID/capability/:capabilityID/node/:nodeID',
+      '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/node/:nodeID',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var capabilityID = new ObjectId(req.params.capabilityID);
           var nodeID = new ObjectId(req.params.nodeID);
           capabilityLogger.trace(workspaceID, capabilityID, nodeID);
@@ -1319,7 +1451,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       res.status(404).json("workspace not found");
                       return null;
                   }
-                  return workspace.createNewAliasForNodeInACapability(capabilityID, nodeID);
+                  return workspace.createNewAliasForNodeInACapability(variantId, capabilityID, nodeID);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding...', e);
@@ -1334,16 +1466,17 @@ module.exports = function(authGuardian, mongooseConnection) {
       });
 
       module.router.post(
-        '/workspace/:workspaceID/capability/:capabilityID/marketreference/',
+        '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/marketreference/',
         authGuardian.authenticationRequired,
         function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = new ObjectId(req.params.variantId);
           var capabilityID = new ObjectId(req.params.capabilityID);
           var name = req.body.name;
           var description = req.body.description;
           var evolution = req.body.evolution;
-          capabilityLogger.trace(workspaceID, capabilityID, name, description, evolution);
+          capabilityLogger.trace(workspaceID, variantId, capabilityID, name, description, evolution);
           Workspace
             .findOne({
               _id: workspaceID,
@@ -1356,7 +1489,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 res.status(404).json("workspace not found");
                 return null;
               }
-              return workspace.createNewMarketReferenceInCapability(capabilityID, name, description, evolution);
+              return workspace.createNewMarketReferenceInCapability(variantId, capabilityID, name, description, evolution);
             })
             .fail(function(e) {
               capabilityLogger.error('responding...', e);
@@ -1371,11 +1504,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
 
       module.router.delete(
-        '/workspace/:workspaceID/capability/:capabilityID/marketreference/:marketReferenceId',
+        '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/marketreference/:marketReferenceId',
         authGuardian.authenticationRequired,
         function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var capabilityID = new ObjectId(req.params.capabilityID);
           var marketReferenceId = new ObjectId(req.params.marketReferenceId);
           capabilityLogger.trace(workspaceID, capabilityID, marketReferenceId);
@@ -1391,7 +1525,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 res.status(404).json("workspace not found");
                 return null;
               }
-              return workspace.deleteMarketReferenceInCapability(capabilityID, marketReferenceId);
+              return workspace.deleteMarketReferenceInCapability(variantId, capabilityID, marketReferenceId);
             })
             .fail(function(e) {
               capabilityLogger.error('responding...', e);
@@ -1406,11 +1540,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         });
 
         module.router.put(
-          '/workspace/:workspaceID/capability/:capabilityID/marketreference/:marketReferenceId',
+          '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/marketreference/:marketReferenceId',
           authGuardian.authenticationRequired,
           function(req, res) {
             var owner = getUserIdFromReq(req);
             var workspaceID = req.params.workspaceID;
+            let variantId = req.params.variantId;
             var capabilityID = new ObjectId(req.params.capabilityID);
             var marketReferenceId = new ObjectId(req.params.marketReferenceId);
             var name = req.body.name;
@@ -1429,7 +1564,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   res.status(404).json("workspace not found");
                   return null;
                 }
-                return workspace.updateMarketReferenceInCapability(capabilityID, marketReferenceId, name, description, evolution);
+                return workspace.updateMarketReferenceInCapability(variantId, capabilityID, marketReferenceId, name, description, evolution);
               })
               .fail(function(e) {
                 capabilityLogger.error('responding...', e);
@@ -1444,11 +1579,12 @@ module.exports = function(authGuardian, mongooseConnection) {
           });
 
   module.router.put(
-      '/workspace/:workspaceID/alias/:aliasID/node/:nodeID',
+      '/workspace/:workspaceID/variant/:variantId/alias/:aliasID/node/:nodeID',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
+          let variantId = req.params.variantId;
           var aliasID = new ObjectId(req.params.aliasID);
           var nodeID = new ObjectId(req.params.nodeID);
           capabilityLogger.trace(workspaceID, aliasID, nodeID);
@@ -1464,7 +1600,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   if (!workspace) {
                       return res.status(404).json("workspace not found");
                   }
-                  return workspace.addNodeToAlias(aliasID, nodeID);
+                  return workspace.addNodeToAlias(variantId, aliasID, nodeID);
               })
               .fail(function(e) {
                   capabilityLogger.error('responding...', e);
@@ -1479,11 +1615,12 @@ module.exports = function(authGuardian, mongooseConnection) {
       });
 
   module.router.get(
-    '/workspace/:workspaceID/node/:nodeID/usage',
+    '/workspace/:workspaceID/variant/:variantId/node/:nodeID/usage',
     authGuardian.authenticationRequired,
     function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
+      var variantId = new ObjectId(req.params.variantId);
       var nodeID = new ObjectId(req.params.nodeID);
       Workspace
           .findOne({
@@ -1493,7 +1630,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           }) // this is not the best security check as we do not check relation between workspace & cap & node
           .exec()
         .then(function(workspace){
-          return workspace.getNodeUsageInfo(nodeID);
+          return workspace.getNodeUsageInfo(variantId, nodeID);
         })
         .fail(function(e){
           capabilityLogger.error('responding...', e);
@@ -1506,11 +1643,12 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.delete(
-    '/workspace/:workspaceID/capability/:capabilityID',
+    '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID',
     authGuardian.authenticationRequired,
     function(req, res) {
         var owner = getUserIdFromReq(req);
         var workspaceID = req.params.workspaceID;
+        let variantId = req.params.variantId;
         var capabilityID = new ObjectId(req.params.capabilityID);
         capabilityLogger.trace(workspaceID, capabilityID);
         Workspace
@@ -1525,29 +1663,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                     res.status(404).json("workspace not found");
                     return null;
                 }
-                var promises = [];
-                var capability = null;
-                for (var i = 0; i < workspace.capabilityCategories.length; i++) {
-                    for (var j = 0; j < workspace.capabilityCategories[i].capabilities.length; j++) {
-                        if (capabilityID.equals(workspace.capabilityCategories[i].capabilities[j]._id)) {
-                            capability = workspace.capabilityCategories[i].capabilities[j];
-                            workspace.capabilityCategories[i].capabilities.splice(j, 1);
-                            break;
-                        }
-                    }
-                }
-                promises.push(workspace.save());
-                for (var k = 0; k < capability.aliases.length; k++) {
-                    for (var l = 0; l < capability.aliases[k].nodes.length; l++) {
-                        promises.push(Node.findOne({
-                            _id: capability.aliases[k].nodes[l]
-                        }).exec().then(function(node){
-                          node.processedForDuplication = false;
-                          return node.save();
-                        }));
-                    }
-                }
-                return q.all(promises);
+                return workspace.removeCapability(variantId, capabilityID);
             })
             .then(function(ur) {
                 capabilityLogger.trace('populating response...');

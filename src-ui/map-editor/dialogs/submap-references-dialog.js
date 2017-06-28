@@ -62,6 +62,7 @@ var SubmapReferencesDialog = React.createClass({
     var currentName = this.state.currentName;
     var node = this.state.node;
     var workspaceID = this.state.workspaceID;
+    var variantId = this.state.variantId;
     var message = this.constructMessage();
 
     return (
@@ -74,7 +75,7 @@ var SubmapReferencesDialog = React.createClass({
           </Modal.Header>
           <Modal.Body>
               {message}
-              <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={false} alternativeNames={true} excludeList={this.state.referencingMaps} showMarketReferences={true}/>
+              <UsageInfo node={node} workspaceID={workspaceID} variantId={variantId} emptyInfo={false} alternativeNames={true} excludeList={this.state.referencingMaps} showMarketReferences={true}/>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>

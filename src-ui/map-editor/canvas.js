@@ -9,14 +9,17 @@ var _ = require('underscore');
 import SingleMapActions from './single-map-actions';
 import CanvasActions from './canvas-actions';
 var MapComponent = require('./map-component');
+var HistoricComponent = require('./historic-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
-import {endpointOptions, actionEndpointOptions} from './component-styles';
+import {endpointOptions, actionEndpointOptions, moveEndpointOptions} from './component-styles';
 
 //remove min to fix connections
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
 jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
+
+jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
@@ -166,10 +169,8 @@ export default class MapCanvas extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     var _this = this;
-    jsPlumb.bind("ready", function() {
       _this.reconcileDependencies();
-      jsPlumb.setSuspendDrawing(false, true);
-    });
+      // jsPlumb.setSuspendDrawing(false, true);
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
@@ -422,11 +423,56 @@ export default class MapCanvas extends React.Component {
               }
           }
       }
+
+      //movement
+      // iterate over all nodes
+      // round one - find all the connections we should have
+      let desiredMovementConnections = [];
+      if(this.props.canvasStore.isDiffEnabled()){ // if diff is disable - remove everything
+        for(let ii = 0; ii < this.props.diff.modified.length; ii++){
+          if(this.props.diff.modified[ii].diff.x){ // evolution changed
+            desiredMovementConnections.push(this.props.diff.modified[ii]._id);
+          }
+        }
+      }
+      jsPlumb.logEnabled = true;
+      jsPlumb.select({scope:'WM_MOVED'}).each(function(connection){
+        let index = desiredMovementConnections.indexOf(connection.targetId);
+        if( index === -1){ // connection should not exist, delete it
+          jsPlumb.deleteConnection(connection);
+        } else { //connection should exist, remove it from further processing
+          desiredMovementConnections.splice(index, 1);
+        }
+      });
+      // now we have only missing connections left, so let's establish them
+      for(let ii = 0; ii < desiredMovementConnections.length; ii++){
+        let historicConnectionToCreate = desiredMovementConnections[ii];
+        let createdHistoricConnection = jsPlumb.connect({
+            source: historicConnectionToCreate + '_history',
+            target: historicConnectionToCreate,
+            scope: "WM_MOVED",
+            anchors: [
+                "Right", "Left"
+            ],
+            deleteEndpointsOnDetach : true,
+            paintStyle: moveEndpointOptions.connectorStyle,
+            endpoint: moveEndpointOptions.endpoint,
+            connector: moveEndpointOptions.connector,
+            endpointStyles: [
+                moveEndpointOptions.paintStyle, moveEndpointOptions.paintStyle
+            ],
+            overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [  ])
+        });
+        if(createdHistoricConnection){
+          createdHistoricConnection.addType('movement');
+        }
+      }
   }
 
 
   render() {
-    jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
+    // jsPlumb.setSuspendDrawing(true, false); // this will be cleaned in did update
+    console.log('workaround for https://github.com/jsplumb/jsPlumb/issues/651 still active');
     var style = _.clone(mapCanvasStyle);
     if (this.state && this.state.dropTargetHighlight) {
       style = _.extend(style, {
@@ -446,13 +492,33 @@ export default class MapCanvas extends React.Component {
     }
     var components = null;
     var arrowends = [];
+    var oldComponents = [];
 
 
     var mapID = this.props.mapID;
+    let variantId = this.props.variantId;
     var workspaceID = this.props.workspaceID;
     var state = this.state;
     var canvasStore = this.props.canvasStore;
     var multiSelection = state ? state.multiNodeSelection : false;
+    let diff = this.props.diff;
+    let removed = diff.removed;
+    for(let i = 0; i < removed.length; i++){
+      var removedNode = removed[i];
+      oldComponents.push(
+        <HistoricComponent
+          canvasStore={canvasStore}
+          workspaceID={workspaceID}
+          mapID={removedNode.parentMap} node={removedNode}
+          size={size}
+          key={removedNode._id}
+          id={removedNode._id}
+          inertia={removedNode.inertia}
+          type="DELETED"
+          />
+      );
+    }
+
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
         var focused = false;
@@ -461,6 +527,27 @@ export default class MapCanvas extends React.Component {
                 if (component._id === state.currentlySelectedNodes[i]) {
                     focused = true;
                 }
+            }
+        }
+
+        if(canvasStore.isDiffEnabled()){
+            for(let z = 0; z < diff.modified.length; z++){
+              if( (diff.modified[z]._id === component._id) && diff.modified[z].diff.x){
+                var ghost = JSON.parse(JSON.stringify(component));
+                ghost.x = diff.modified[z].diff.x.old;
+                oldComponents.push(
+                  <HistoricComponent
+                    canvasStore={canvasStore}
+                    workspaceID={workspaceID}
+                    mapID={ghost.parentMap} node={ghost}
+                    size={size}
+                    key={ghost._id + '_history'}
+                    id={ghost._id + '_history'}
+                    inertia={ghost.inertia}
+                    type="MOVED"
+                    />
+                );
+              }
             }
         }
 
@@ -475,18 +562,32 @@ export default class MapCanvas extends React.Component {
               key = {component.action[j]._id}
               action = {component.action[j]}/>);
         }
+        let nodeDiff =  null;
+        for(let k = 0; k < diff.modified.length; k++){
+          if(diff.modified[k]._id === component._id){
+            nodeDiff = diff.modified[k].diff;
+          }
+        }
+
+        for(let k = 0; k < diff.added.length; k++){
+          if(diff.added[k]._id === component._id){
+            nodeDiff = "ADDED";
+          }
+        }
 
         return (
             <MapComponent
               canvasStore={canvasStore}
               workspaceID={workspaceID}
+              variantId={variantId}
               mapID={mapID} node={component}
               size={size}
               key={component._id}
               id={component._id}
               focused={focused}
               inertia={component.inertia}
-              multi={multiSelection}/>);
+              multi={multiSelection}
+              diff={nodeDiff}/>);
       });
     }
 
@@ -519,6 +620,7 @@ export default class MapCanvas extends React.Component {
         {components}
         {arrowends}
         {comments}
+        {oldComponents}
       </div>
     );
   }

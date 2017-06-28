@@ -83,7 +83,7 @@ var MapComponent = React.createClass({
     if (this.state.hover === "remove") {
       var id = this.props.id;
       var mapID = this.props.mapID;
-      var workspaceID = this.props.workspaceID;
+      let workspaceID = this.props.workspaceID;
       Actions.deleteNode(workspaceID, mapID, id);
     }
     if (this.state.hover === "pencil") {
@@ -103,19 +103,12 @@ var MapComponent = React.createClass({
       var submapID = this.props.node.submapID;
       var currentName = this.props.node.name;
       var node = this.props.node; //jshint ignore:line
-      var workspaceID = this.props.workspaceID;
+      let workspaceID = this.props.workspaceID;
+      var variantId = this.props.variantId;
       if(submapID){
-        Actions.openSubmapReferencesDialog(
-           currentName: currentName,
-           mapID:mapID,
-           submapID:submapID,
-           node :node,
-           workspaceID:workspaceID);
+        Actions.openSubmapReferencesDialog(currentName, mapID, submapID, node, workspaceID, variantId);
       } else {
-        Actions.openReferencesDialog(
-           currentName: currentName,
-           node:node,
-           workspaceID:workspaceID);
+        Actions.openReferencesDialog(currentName, node, workspaceID, variantId);
       }
     }
 
@@ -362,9 +355,24 @@ var MapComponent = React.createClass({
     }
     return node.name;
   },
+
+  decorateDiffStyle(node, style, diff) {
+    if (!this.props.canvasStore.isDiffEnabled()) {
+      return;
+    }
+    if (!diff) {
+      return;
+    }
+    if (diff === 'ADDED') {
+      style.boxShadow = "0 0 3px 3px green";
+      return;
+    }
+    style.boxShadow = "0 0 3px 3px orange";
+  },
+
   render: function() {
     var node = this.props.node;
-
+    var diff = this.props.diff;
     var style = getStyleForType(node.type);
     var left = node.x * this.props.size.width;
     var top = node.y * this.props.size.height;
@@ -374,6 +382,7 @@ var MapComponent = React.createClass({
       position: 'absolute',
       cursor: 'pointer'
     });
+    this.decorateDiffStyle(node, style, diff);
     var name = this.renderName(node);
     var menu = this.renderMenu();
     var shouldBeDraggable = this.props.focused;

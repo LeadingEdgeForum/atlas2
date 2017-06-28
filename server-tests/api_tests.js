@@ -56,7 +56,7 @@ describe('Workspaces & maps', function() {
             });
     });
 
-    it('create workspace', function(done) {
+    it('create a workspace', function(done) {
         userAgent1.
         post('/api/workspace')
             .set('Content-type', 'application/json')
@@ -77,7 +77,7 @@ describe('Workspaces & maps', function() {
             });
     });
 
-    it('get workspaces and confirm creation', function(done) {
+    it('get workspace list and confirm creation', function(done) {
         userAgent1.
         get('/api/workspaces')
             .set('Content-type', 'application/json')
@@ -92,11 +92,10 @@ describe('Workspaces & maps', function() {
                     if (res.body.workspaces[i].workspace._id === workspaceID) {
                         found = true;
                         copyOfWorkspace = res.body.workspaces[i];
-                        // copyOfWorkspace.capabilityCategories.length.should.not.equal(0);
                     }
                 }
                 if (!found) {
-                    throw new Error('Workspace ' + workspaceID + ' not present on the list');
+                    throw new Error('Workspace ' + workspaceID + ' is not confirmed to exist and be accessible');
                 }
 
             })
@@ -105,14 +104,14 @@ describe('Workspaces & maps', function() {
             });
     });
 
-    it('get workspace', function(done) {
+    it('get workspace directly', function(done) {
         userAgent1.
         get('/api/workspace/' + workspaceID)
             .set('Content-type', 'application/json')
             .set('Accept', 'application/json')
             .expect(200)
             .expect(function(res) {
-              res.body.workspace.capabilityCategories.length.should.not.equal(0);
+              res.body.workspace.timeline[0].capabilityCategories.length.should.not.equal(0);
             })
             .end(function(err, res) {
                 done(err);
@@ -141,7 +140,7 @@ describe('Workspaces & maps', function() {
             });
     });
 
-    it('verify map created (/api/map/mapID)', function(done) {
+    it('verify map created is directly accessible', function(done) {
         userAgent1.
         get('/api/map/' + mapID)
             .set('Content-type', 'application/json')
@@ -164,7 +163,7 @@ describe('Workspaces & maps', function() {
 
 
 
-    it('verify map created (/api/workspace/workspaceID)', function(done) {
+    it('verify map created is accessible via workspace', function(done) {
         userAgent1.
         get('/api/workspace/' + workspaceID)
             .set('Content-type', 'application/json')
@@ -172,8 +171,8 @@ describe('Workspaces & maps', function() {
             .expect(200)
             .expect(function(res) {
                 var found = null;
-                for (var i = 0; i < res.body.workspace.maps.length; i++) {
-                    var _map = res.body.workspace.maps[i];
+                for (var i = 0; i < res.body.workspace.timeline[0].maps.length; i++) {
+                    var _map = res.body.workspace.timeline[0].maps[i];
                     if (_map._id === mapID) {
                         found = _map;
                     }
@@ -602,6 +601,47 @@ describe('Workspaces & maps', function() {
         });
 
 
+        it('create another map', function(done) {
+            userAgent1.
+            post('/api/map')
+                .set('Content-type', 'application/json')
+                .set('Accept', 'application/json')
+                .send({
+                    workspaceID: workspaceID,
+                    user: "Sample user",
+                    purpose: "Sample purpose"
+                })
+                .expect(200)
+                .expect(function(res) {
+                    if (!res.body.map._id) {
+                        throw new Error('_id should be assigned during map creation');
+                    }
+                    mapID = res.body.map._id;
+                })
+                .end(function(err, res) {
+                    done(err);
+                });
+        });
+
+        it('create a node in a map', createNodeInAMap.bind(this,0));
+
+        it('turn component into submap', function(done){
+          userAgent1.
+          put('/api/workspace/' + workspaceID + '/map/' + mapID + '/node/' + nodeID[nodeID.length - 1] + '/submap/')
+              .set('Content-type', 'application/json')
+              .set('Accept', 'application/json')
+              .expect(200)
+              .expect(function(res) {
+                  if (!res.body.map._id) {
+                      throw new Error('_id should be assigned during map creation');
+                  }
+                  res.body.map.nodes[res.body.map.nodes.length - 1].type.should.equal("SUBMAP");
+                  res.body.map.nodes[res.body.map.nodes.length - 1].submapID.should.not.be.null;
+              })
+              .end(function(err, res) {
+                  done(err);
+              });
+        });
     });
 
     describe('Duplication', function() {
@@ -612,6 +652,7 @@ describe('Workspaces & maps', function() {
         var copyOfMap;
         var copyOfWorkspace;
         var submapName = "submapname";
+        var variantId;
 
         var createNodeInAMap = function(index, done) {
             var nodeName = "name";
@@ -666,6 +707,8 @@ describe('Workspaces & maps', function() {
                         throw new Error('_id should be assigned during workspace creation');
                     }
                     workspaceID = res.body._id;
+                    copyOfWorkspace = res.body;
+                    variantId = copyOfWorkspace.timeline[copyOfWorkspace.timeline.length-1]._id;
                 })
                 .expect(200)
                 .end(function(err, res) {
@@ -755,7 +798,7 @@ describe('Workspaces & maps', function() {
 
         it('verify unprocessed components', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/components/unprocessed')
+            get('/api/workspace/' + workspaceID + '/components/' + variantId + '/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -776,9 +819,9 @@ describe('Workspaces & maps', function() {
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
-                  res.body.workspace.capabilityCategories.length.should.not.equal(0);
-                  category = res.body.workspace.capabilityCategories[0]._id;
-                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
+                  res.body.workspace.timeline[0].capabilityCategories.length.should.not.equal(0);
+                  category = res.body.workspace.timeline[0].capabilityCategories[0]._id;
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities.length.should.equal(0);
                 })
                 .end(function(err, res) {
                     done(err);
@@ -787,12 +830,12 @@ describe('Workspaces & maps', function() {
 
         it('create a capability', function(done) {
             userAgent1.
-            post('/api/workspace/' + workspaceID + '/capabilitycategory/' + category + '/node/' + nodeID[0])
+            post('/api/workspace/' + workspaceID + '/variant/' + variantId + '/capabilitycategory/' + category + '/node/' + nodeID[0])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
-                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities.length.should.equal(1);
                 })
                 .end(function(err, res) {
                     done(err);
@@ -800,16 +843,16 @@ describe('Workspaces & maps', function() {
         });
 
         var capabilityID = null;
-        it('check capability creation', function(done) {
+          it('check capability creation', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/components/processed')
+            get('/api/workspace/' + workspaceID + '/components/' + variantId + '/processed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0]);
-                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
-                  capabilityID = res.body.workspace.capabilityCategories[0].capabilities[0]._id;
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities.length.should.equal(1);
+                  capabilityID = res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0]._id;
                 })
                 .end(function(err, res) {
                     done(err);
@@ -819,18 +862,18 @@ describe('Workspaces & maps', function() {
         var aliasID = null;
         it('add a node to capability', function(done) {
             userAgent1.
-            put('/api/workspace/' + workspaceID + '/capability/' + capabilityID + '/node/' + nodeID[1])
+            put('/api/workspace/' + workspaceID + '/variant/' + variantId + '/capability/' + capabilityID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
-                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases.length.should.equal(2);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(1);
-                  aliasID = res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1]._id;
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes[0].should.have.property('_id');
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities.length.should.equal(1);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases.length.should.equal(2);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(1);
+                  aliasID = res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases[1]._id;
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases[0].nodes[0].should.have.property('_id');
                 })
                 .end(function(err, res) {
                     done(err);
@@ -839,30 +882,30 @@ describe('Workspaces & maps', function() {
 
         it('add a node to an alias', function(done) {
             userAgent1.
-            put('/api/workspace/' + workspaceID + '/alias/' + aliasID + '/node/' + nodeID[1])
+            put('/api/workspace/' + workspaceID + '/variant/' + variantId + '/alias/' + aliasID + '/node/' + nodeID[1])
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
                   // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
-                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(1);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases.length.should.equal(2);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
-                  res.body.workspace.capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(2);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities.length.should.equal(1);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases.length.should.equal(2);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases[0].nodes.length.should.equal(1);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0].aliases[1].nodes.length.should.equal(2);
                 })
                 .end(function(err, res) {
                     done(err);
                 });
         });
+
         it('get info', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
+            get('/api/workspace/' + workspaceID + '/variant/' + variantId + '/node/' + nodeID[0] + '/usage/')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
-                  console.log(res.body);
-                  // res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
+                  res.body.capability.aliases.length.should.not.be.equal(0);
                 })
                 .end(function(err, res) {
                     done(err);
@@ -871,13 +914,13 @@ describe('Workspaces & maps', function() {
 
         it('delete capability', function(done) {
             userAgent1.
-            delete('/api/workspace/' + workspaceID + '/capability/' + capabilityID)
+            delete('/api/workspace/' + workspaceID + '/variant/' + variantId +'/capability/' + capabilityID)
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
-                  // console.log(res.body.workspace.capabilityCategories[0].capabilities[0]);
-                  res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
+                  // console.log(res.body.workspace.timeline[0].capabilityCategories[0].capabilities[0]);
+                  res.body.workspace.timeline[0].capabilityCategories[0].capabilities.length.should.equal(0);
                 })
                 .end(function(err, res) {
                     done(err);
@@ -886,7 +929,7 @@ describe('Workspaces & maps', function() {
 
         it('verify unprocessed components', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/components/unprocessed')
+            get('/api/workspace/' + workspaceID + '/components/' + variantId + '/unprocessed')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
@@ -901,13 +944,12 @@ describe('Workspaces & maps', function() {
 
         it('get info', function(done) {
             userAgent1.
-            get('/api/workspace/' + workspaceID + '/node/' + nodeID[0] + '/usage/')
+            get('/api/workspace/' + workspaceID + '/variant/' + variantId + '/node/' + nodeID[0] + '/usage/')
                 .set('Content-type', 'application/json')
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
-                  console.log(res.body);
-                  // res.body.workspace.capabilityCategories[0].capabilities.length.should.equal(0);
+                  should.not.exist(res.body.capability);
                 })
                 .end(function(err, res) {
                     done(err);
@@ -965,8 +1007,8 @@ describe('Workspaces & maps', function() {
             .expect(200)
             .expect(function(res) {
                 var found = null;
-                for (var i = 0; i < res.body.workspace.maps.length; i++) {
-                    var _map = res.body.workspace.maps[i];
+                for (var i = 0; i < res.body.workspace.timeline[0].maps.length; i++) {
+                    var _map = res.body.workspace.timeline[0].maps[i];
                     if (_map._id === mapID) {
                         found = _map;
                     }

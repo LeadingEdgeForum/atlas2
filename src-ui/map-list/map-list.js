@@ -44,7 +44,8 @@ export default class MapList extends React.Component {
         {_mapsToShow}
         <MapListElementNew
           workspaceID={workspaceID}
-          singleWorkspaceStore={singleWorkspaceStore} />
+          singleWorkspaceStore={singleWorkspaceStore}
+          selectedVariant={this.props.selectedVariant}/>
       </ListGroup>
     );
   }

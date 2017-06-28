@@ -73,7 +73,7 @@ export default class FixitPage extends React.Component {
     this.forceUpdate();
   }
 
-  renderAvailableComponents(map) {
+  renderAvailableComponents(map, variantId) {
     var nodes = [];
     nodes = map.nodes.map(node =>
       (<div data-item={node}
@@ -89,7 +89,7 @@ export default class FixitPage extends React.Component {
     return (<div key={map._id}><h5><MapLink mapID={map._id}/></h5>{nodes}</div>);
   }
 
-  renderDeduplicationRow(workspaceId, fixitStore, unprocessedComponents, processedComponents){
+  renderDeduplicationRow(workspaceId, variantId, fixitStore, unprocessedComponents, processedComponents){
     return <Row className="show-grid">
       <Col xs={3}>
         <h4>Unclassified components:</h4>
@@ -97,15 +97,15 @@ export default class FixitPage extends React.Component {
       </Col>
       <Col xs={9}>
         <h4>Capabilities:</h4>
-        <CapabilitiesView dragStarted={dragStarted} fixitStore={fixitStore} workspaceId={workspaceId} categories={processedComponents}/>
+        <CapabilitiesView dragStarted={dragStarted} fixitStore={fixitStore} workspaceId={workspaceId} variantId={variantId} categories={processedComponents}/>
       </Col>
     </Row>;
   }
 
-  renderDeduplicationResultsOnly(workspaceId,fixitStore, processedComponents){
+  renderDeduplicationResultsOnly(workspaceId, variantId, fixitStore, processedComponents){
     return <Row className="show-grid">
       <Col xs={12}>
-        <CapabilitiesView dragStarted={dragStarted} fixitStore={fixitStore} workspaceId={workspaceId} categories={processedComponents}/>
+        <CapabilitiesView dragStarted={dragStarted} fixitStore={fixitStore} variantId={variantId} workspaceId={workspaceId} categories={processedComponents}/>
       </Col>
     </Row>;
   }
@@ -118,19 +118,20 @@ export default class FixitPage extends React.Component {
     const pageTitle = 'Fix your organization!';
 
     const workspaceID = fixitStore.getWorkspaceId();
+    const variantId = this.props.variantId;
     const workspaceName = workspaceStore.getWorkspaceInfo().workspace.name + ' - ' + workspaceStore.getWorkspaceInfo().workspace.purpose;
 
 
-    var unprocessedComponents = fixitStore.getAvailableComponents();
-    var processedComponents = fixitStore.getProcessedComponents();
+    var unprocessedComponents = fixitStore.getAvailableComponents(variantId);
+    var processedComponents = fixitStore.getProcessedComponents(variantId);
 
-    var _unprocessedComponents = unprocessedComponents.map(map => this.renderAvailableComponents(map));
+    var _unprocessedComponents = unprocessedComponents.map(map => this.renderAvailableComponents(map, variantId));
 
     var row = null;
     if(_unprocessedComponents.length > 0){
-      row = this.renderDeduplicationRow(workspaceID, fixitStore, _unprocessedComponents, processedComponents);
+      row = this.renderDeduplicationRow(workspaceID, variantId, fixitStore, _unprocessedComponents, processedComponents);
     } else {
-      row = this.renderDeduplicationResultsOnly(workspaceID, fixitStore, processedComponents);
+      row = this.renderDeduplicationResultsOnly(workspaceID, variantId, fixitStore, processedComponents);
     }
 
     return (
@@ -155,8 +156,8 @@ export default class FixitPage extends React.Component {
             </Breadcrumb>
           </Row>
           {row}
-          <CreateCategoryDialog fixitStore={fixitStore} workspaceID={workspaceID}/>
-          <EditCategoryDialog fixitStore={fixitStore} workspaceID={workspaceID}/>
+          <CreateCategoryDialog fixitStore={fixitStore} workspaceID={workspaceID} variantId={variantId}/>
+          <EditCategoryDialog fixitStore={fixitStore} workspaceID={workspaceID} variantId={variantId}/>
         </Grid>
       </DocumentTitle>
     );

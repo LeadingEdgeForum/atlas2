@@ -21,6 +21,7 @@ export default class WorkspaceList extends React.Component {
     this.componentDidMount = this.componentDidMount.bind(this);
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this._onChange = this._onChange.bind(this);
+    this.getMaps = this.getMaps.bind(this);
   }
 
   componentDidMount() {
@@ -35,11 +36,22 @@ export default class WorkspaceList extends React.Component {
     this.setState(this.props.workspaceListStore.getWorkspaces());
   }
 
+  getMaps(workspace){
+    if(!workspace){
+      return [];
+    }
+    if(!workspace.timeline){
+      return [];
+    }
+    var timelineLength = workspace.timeline.length;
+    return workspace.timeline[timelineLength - 1].maps; //now for now
+  }
+
   render() {
     const workspaceListStore = this.props.workspaceListStore;
     var _workspacesToShow = [];
     if (this.state && this.state.workspaces && Array.isArray(this.state.workspaces)) {
-      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} purpose={item.workspace.purpose} description={item.workspace.description} maps={item.workspace.maps}></WorkspaceListElement>);
+      _workspacesToShow = this.state.workspaces.map(item => <WorkspaceListElement key={item.workspace._id} id={item.workspace._id} name={item.workspace.name} purpose={item.workspace.purpose} description={item.workspace.description} maps={this.getMaps(item.workspace)}></WorkspaceListElement>);
     }
     return (
         <Row className="show-grid">

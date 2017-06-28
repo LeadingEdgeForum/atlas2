@@ -69,6 +69,8 @@ export default class SingleWorkspaceStore extends Store {
 
       this.dispatchToken = null;
       this.redispatch();
+
+      this.fetchMap = this.fetchMap.bind(this);
   }
 
   redispatch(){
@@ -254,6 +256,7 @@ export default class SingleWorkspaceStore extends Store {
           this.submapReferencesDialog.submapID = action.data.submapID;
           this.submapReferencesDialog.node = action.data.node;
           this.submapReferencesDialog.workspaceID = action.data.workspaceID;
+          this.submapReferencesDialog.variantId = action.data.variantId;
           $.ajax({
             type: 'GET',
             url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
@@ -275,6 +278,7 @@ export default class SingleWorkspaceStore extends Store {
           this.referencesDialog.currentName = action.data.currentName;
           this.referencesDialog.node = action.data.node;
           this.referencesDialog.workspaceID = action.data.workspaceID;
+          this.referencesDialog.variantId = action.data.variantId;
           this.emitChange();
           break;
         case ActionTypes.CLOSE_REFERENCES:
@@ -315,6 +319,7 @@ export default class SingleWorkspaceStore extends Store {
                 this.turnIntoSubmapDialog = {
                   open: false
                 };
+                this.diff = null;
                 this.emitChange();
                 this.io.emit('map', {
                   type: 'change',
@@ -418,6 +423,26 @@ export default class SingleWorkspaceStore extends Store {
     }
   }
 
+  fetchMapDiff(){
+    if(!this.diffServerRequest){
+      this.diffServerRequest = $.get('/api/map/' + this.mapID + '/diff', function(result) {
+        this.diff = result;
+        this.diffServerRequest = null;
+        this.emitChange();
+      }.bind(this));
+    }
+  }
+
+  fetchMapVariants(){
+    if(!this.variantsServerRequest){
+      this.variantsServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
+        this.variants = result;
+        this.variantsServerRequest = null;
+        this.emitChange();
+      }.bind(this));
+    }
+  }
+
   getMap(){
     if(!this.map){
       this.fetchMap();
@@ -432,6 +457,31 @@ export default class SingleWorkspaceStore extends Store {
     }
     return this.map;
   }
+
+  getDiff(){
+    if(!this.diff){
+      this.fetchMapDiff();
+      return {
+        removed : [],
+        added : [],
+        modified : []
+      };
+    }
+    return this.diff;
+  }
+
+  getVariants(){
+    if(!this.variants){
+      this.fetchMapVariants();
+      return {
+        past : null,
+        alternatives : [],
+        futures : []
+      };
+    }
+    return this.variants;
+  }
+
 
   submitEditMapDialog(data){
     this.map.map.user = data.user;
@@ -448,6 +498,7 @@ export default class SingleWorkspaceStore extends Store {
         this.editMapDialog = {
             open : false,
         };
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',
@@ -479,6 +530,7 @@ export default class SingleWorkspaceStore extends Store {
         this.newNodeDialog = {
           open: false
         };
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',
@@ -516,6 +568,7 @@ export default class SingleWorkspaceStore extends Store {
       url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + data.nodeId,
       success: function(data2) {
         this.map = data2;
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',
@@ -548,6 +601,7 @@ export default class SingleWorkspaceStore extends Store {
         this.editNodeDialog = {
             open : false
         };
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',
@@ -571,6 +625,7 @@ export default class SingleWorkspaceStore extends Store {
             this.addCommentDialog = {
               open : false
             };
+            this.diff = null;
             this.emitChange();
             this.io.emit('map', {
                 type: 'change',
@@ -591,6 +646,7 @@ export default class SingleWorkspaceStore extends Store {
       success: function(data2) {
         this.map = data2;
         this.addSubmapDialog = {open:false};
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',
@@ -619,6 +675,7 @@ export default class SingleWorkspaceStore extends Store {
           success: function(data2) {
             this.map = data2;
             this.addSubmapDialog = {open:false};
+            this.diff = null;
             this.emitChange();
             this.io.emit('map', {
               type: 'change',
@@ -648,6 +705,7 @@ export default class SingleWorkspaceStore extends Store {
         success: function(data2) {
           this.map = data2;
           this.editCommentDialog = {open:false};
+          this.diff = null;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
@@ -664,6 +722,7 @@ export default class SingleWorkspaceStore extends Store {
         success: function(data2) {
           this.map = data2;
           this.editCommentDialog = {open:false};
+          this.diff = null;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
@@ -687,6 +746,7 @@ export default class SingleWorkspaceStore extends Store {
         data: coords,
         success: function(data2) {
           this.map = data2;
+          this.diff = null;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
@@ -716,6 +776,7 @@ export default class SingleWorkspaceStore extends Store {
         success: function(data2) {
           this.map = data2;
           this.actionDialog = {open:false};
+          this.diff = null;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
@@ -734,6 +795,7 @@ export default class SingleWorkspaceStore extends Store {
             '/action/' + data.actionId,
         success: function(data2) {
           this.map = data2;
+          this.diff = null;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
@@ -752,6 +814,7 @@ export default class SingleWorkspaceStore extends Store {
             '/outgoingDependency/' + data.targetId,
       success: function(data2) {
         this.map = data2;
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',
@@ -773,6 +836,7 @@ export default class SingleWorkspaceStore extends Store {
         success: function(data2) {
           this.map = data2;
           this.connectionDialog = {open:false};
+          this.diff = null;
           this.emitChange();
           this.io.emit('map', {
             type: 'change',
@@ -791,6 +855,7 @@ export default class SingleWorkspaceStore extends Store {
             '/outgoingDependency/' + data.targetId,
       success: function(data2) {
         this.map = data2;
+        this.diff = null;
         this.emitChange();
         this.io.emit('map', {
           type: 'change',

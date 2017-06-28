@@ -78,7 +78,7 @@ export default class CapabilitiesView extends React.Component {
 
   handleDropNewCapability(cat, e) {
     var item = JSON.parse(e.dataTransfer.getData('json'));
-    Actions.createNewCapability(this.props.workspaceId, cat, item._id);
+    Actions.createNewCapability(this.props.workspaceId, this.props.variantId, cat, item._id);
   }
 
   cancelDialog() {
@@ -92,7 +92,7 @@ export default class CapabilitiesView extends React.Component {
 
   submitAssignDialog(nodeBeingAssignedID) {
     var capability = this.state.assignExistingCapabilityDialog.capability;
-    Actions.assignNodeToCapability(this.props.workspaceId,  capability._id, nodeBeingAssignedID);
+    Actions.assignNodeToCapability(this.props.workspaceId, this.props.variantId, capability._id, nodeBeingAssignedID);
     this.setState({
         assignExistingCapabilityDialog: {
           open: false
@@ -101,7 +101,7 @@ export default class CapabilitiesView extends React.Component {
   }
 
   submitAssignAlias(nodeBeingAssignedID, aliasID) {
-    Actions.assignNodeToAlias(this.props.workspaceId, aliasID, nodeBeingAssignedID);
+    Actions.assignNodeToAlias(this.props.workspaceId, this.props.variantId, aliasID, nodeBeingAssignedID);
     this.setState({
         assignExistingCapabilityDialog: {
           open: false
@@ -114,7 +114,7 @@ export default class CapabilitiesView extends React.Component {
       e.preventDefault();
     }
     e.stopPropagation();
-    Actions.deleteCapability(this.props.workspaceId, capability._id);
+    Actions.deleteCapability(this.props.workspaceId, this.props.variantId, capability._id);
   }
 
   openAddMarketReferenceToCapabilityDialog(capability){
@@ -131,8 +131,9 @@ export default class CapabilitiesView extends React.Component {
     style.position = 'absolute';
     style.top = "10px";
     var workspaceID = this.props.workspaceId;
+    let variantId = this.props.variantId;
     var _popover = <Popover id={node._id} title="Component details">
-            <UsageInfo node={node} workspaceID={workspaceID} emptyInfo={true} alternativeNames={false} originInfo={true}/>
+            <UsageInfo node={node} workspaceID={workspaceID} variantId={variantId} emptyInfo={true} alternativeNames={false} originInfo={true}/>
         </Popover>;
     return (
       <OverlayTrigger trigger="click" placement="bottom" overlay={_popover}>
@@ -155,12 +156,13 @@ export default class CapabilitiesView extends React.Component {
       style.position = 'absolute';
       style.top = "10px";
       var workspaceId = this.props.workspaceId;
+      let variantId = this.props.variantId;
       var popoverTitle = "Market reference \'" + marketreference.name + "\'.";
       var _popover = <Popover id={marketreference._id} title={popoverTitle}>
                         {marketreference.description} <br/>
                         <ButtonGroup bsSize="xsmall">
                           <Button bsSize="xsmall" href="" onClick={this.openEditMarketReferenceDialog.bind(this, workspaceId, capability, marketreference)}><Glyphicon glyph="edit"/></Button>
-                          <Button bsSize="xsmall" href="" onClick={Actions.deleteMarketReference.bind(Actions, workspaceId, capability._id, marketreference._id)}><Glyphicon glyph="remove"/></Button>
+                          <Button bsSize="xsmall" href="" onClick={Actions.deleteMarketReference.bind(Actions, workspaceId, variantId, capability._id, marketreference._id)}><Glyphicon glyph="remove"/></Button>
                         </ButtonGroup>
                      </Popover>;
       return (
@@ -175,6 +177,7 @@ export default class CapabilitiesView extends React.Component {
     var _capabilityStyleToSet = _.clone(capabilityStyle);
     var _greyLaneStyleToSet = _.clone(greyLaneStyle);
     var workspaceId = this.props.workspaceId;
+    let variantId = this.props.variantId;
     var greyLaneText = null;
     var _this = this;
     if (this.props.dragStarted) {
@@ -214,7 +217,7 @@ export default class CapabilitiesView extends React.Component {
           <Col xs={1}>
             <ButtonGroup bsSize="xsmall">
               <Button bsSize="xsmall" href="" onClick={Actions.openEditCategoryDialog.bind(Actions, workspaceId, category._id, category.name)}><span><Glyphicon glyph="edit"/></span></Button>
-              <Button bsSize="xsmall" href="" onClick={Actions.deleteCategory.bind(Actions, workspaceId, category._id)}><span style={{color:'dimgray'}}><Glyphicon glyph="remove"/></span></Button>
+              <Button bsSize="xsmall" href="" onClick={Actions.deleteCategory.bind(Actions, workspaceId, variantId, category._id)}><span style={{color:'dimgray'}}><Glyphicon glyph="remove"/></span></Button>
             </ButtonGroup>
           </Col>
         </Row>
@@ -281,7 +284,7 @@ export default class CapabilitiesView extends React.Component {
         {categories}
         <Row className="show-grid" key="new_category_button">
           <Col xs={12}>
-            <Button bsSize="xsmall" href="" onClick={Actions.openNewCategoryDialog.bind(Actions,workspaceId)}><span style={{color:'dimgray'}}><Glyphicon glyph="plus"/>Add a new category</span></Button>
+            <Button bsSize="xsmall" href="" onClick={Actions.openNewCategoryDialog.bind(Actions, workspaceId, variantId)}><span style={{color:'dimgray'}}><Glyphicon glyph="plus"/>Add a new category</span></Button>
           </Col>
         </Row>
         <AssignExistingCapabilityDialog
@@ -292,8 +295,8 @@ export default class CapabilitiesView extends React.Component {
           submitAssignDialog={_this.submitAssignDialog.bind(_this)}
           submitAssignAlias={_this.submitAssignAlias.bind(_this)}
           />
-        <CreateMarketReferenceDialog fixitStore={fixitStore} />
-        <EditMarketReferenceDialog fixitStore={fixitStore} />
+        <CreateMarketReferenceDialog fixitStore={fixitStore} variantId={variantId}/>
+        <EditMarketReferenceDialog fixitStore={fixitStore} variantId={variantId}/>
       </Grid>
     );
   }

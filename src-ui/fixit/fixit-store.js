@@ -40,16 +40,16 @@ class DeduplicatorStore extends Store {
     if(this.dispatchToken){
       return;
     }
+    var _this = this;
     this.dispatchToken = Dispatcher.register(action => {
       switch (action.actionType) {
-
         case Constants.ACTION_TYPES.NEW_CAPABILITY:
           $.ajax({
             type: 'POST',
-            url: '/api/workspace/' + action.data.workspaceID + '/capabilitycategory/' + action.data.capabilityCategoryID + '/node/' + action.data.nodeID,
+            url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/capabilitycategory/' + action.data.capabilityCategoryID + '/node/' + action.data.nodeID,
             success: function(data2) {
               this.state.loadedAvailable = false;
-              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
               this.emitChange();
             }.bind(this)
           });
@@ -57,10 +57,10 @@ class DeduplicatorStore extends Store {
         case Constants.ACTION_TYPES.DELETE_CAPABILITY:
             $.ajax({
               type: 'DELETE',
-              url: '/api/workspace/' + action.data.workspaceID + '/capability/' + action.data.capabilityID,
+              url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/capability/' + action.data.capabilityID,
               success: function(data2) {
                 this.state.loadedAvailable = false;
-                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
                 this.emitChange();
               }.bind(this)
             });
@@ -68,10 +68,10 @@ class DeduplicatorStore extends Store {
         case Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY:
           $.ajax({
             type: 'PUT',
-            url: '/api/workspace/' + action.data.workspaceID + '/capability/' + action.data.capabilityID + '/node/' + action.data.nodeID,
+            url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/capability/' + action.data.capabilityID + '/node/' + action.data.nodeID,
             success: function(data2) {
               this.state.loadedAvailable = false;
-              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
               this.emitChange();
             }.bind(this)
           });
@@ -79,10 +79,10 @@ class DeduplicatorStore extends Store {
         case Constants.ACTION_TYPES.ASSIGN_NODE_TO_ALIAS:
           $.ajax({
             type: 'PUT',
-            url: '/api/workspace/' + action.data.workspaceID + '/alias/' + action.data.aliasID + '/node/' + action.data.nodeID,
+            url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/alias/' + action.data.aliasID + '/node/' + action.data.nodeID,
             success: function(data2) {
               this.state.loadedAvailable = false;
-              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
               this.emitChange();
             }.bind(this)
           });
@@ -90,16 +90,16 @@ class DeduplicatorStore extends Store {
         case Constants.ACTION_TYPES.DELETE_CATEGORY:
           $.ajax({
             type: 'DELETE',
-            url: '/api/workspace/' + action.data.workspaceID + '/capabilitycategory/' + action.data.capabilityCategoryID,
+            url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/capabilitycategory/' + action.data.capabilityCategoryID,
             success: function(data2) {
               this.state.loadedAvailable = false;
-              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
               this.emitChange();
             }.bind(this)
           });
           break;
         case Constants.ACTION_TYPES.NEW_CATEGORY_OPEN_DIALOG:
-          this.state.newCategoryDialogState = {open:true};
+          this.state.newCategoryDialogState = {open:true, workspaceID:action.data.workspaceID, variantId : action.data.variantId};
           this.emitChange();
         break;
         case Constants.ACTION_TYPES.NEW_CATEGORY_CLOSE_DIALOG:
@@ -109,7 +109,7 @@ class DeduplicatorStore extends Store {
         case Constants.ACTION_TYPES.NEW_CATEGORY_SUBMIT_DIALOG:
           $.ajax({
             type: 'POST',
-            url: '/api/workspace/' + action.data.workspaceID + '/capabilitycategory/',
+            url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/capabilitycategory/',
             data: {
               name: action.data.name
             },
@@ -118,7 +118,7 @@ class DeduplicatorStore extends Store {
                 open: false
               };
               this.state.loadedAvailable = false;
-              this.state.processedComponents = data2.workspace.capabilityCategories;
+              this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
               this.emitChange();
             }.bind(this)
           });
@@ -142,7 +142,7 @@ class DeduplicatorStore extends Store {
           case Constants.ACTION_TYPES.EDIT_CATEGORY_SUBMIT_DIALOG:
             $.ajax({
               type: 'PUT',
-              url: '/api/workspace/' + action.data.workspaceID + '/capabilitycategory/' + action.data.capabilityCategoryID,
+              url: '/api/workspace/' + action.data.workspaceID + '/variant/' + action.data.variantId + '/capabilitycategory/' + action.data.capabilityCategoryID,
               data: {
                 name: action.data.name
               },
@@ -151,7 +151,7 @@ class DeduplicatorStore extends Store {
                   open: false
                 };
                 this.state.loadedAvailable = false;
-                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
                 this.emitChange();
               }.bind(this)
             });
@@ -174,7 +174,7 @@ class DeduplicatorStore extends Store {
             case Constants.ACTION_TYPES.SUBMIT_CREATE_NEW_MARKET_REFERENCE_DIALOG:
             $.ajax({
               type: 'POST',
-              url: '/api/workspace/' + this.workspaceID + '/capability/' + action.data.capability._id + '/marketreference/',
+              url: '/api/workspace/' + this.workspaceID + '/variant/' + action.data.variantId + '/capability/' + action.data.capability._id + '/marketreference/',
               data : {
                 name: action.data.name,
                 description : action.data.description,
@@ -182,7 +182,7 @@ class DeduplicatorStore extends Store {
               },
               success: function(data2) {
                 this.state.loadedAvailable = false;
-                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
                 this.state.createMarketReferenceDialogState = {
                   open: false
                 };
@@ -212,7 +212,7 @@ class DeduplicatorStore extends Store {
             case Constants.ACTION_TYPES.SUBMIT_EDIT_NEW_MARKET_REFERENCE_DIALOG:
               $.ajax({
                 type: 'PUT',
-                url: '/api/workspace/' + this.workspaceID + '/capability/' + action.data.capabilityId + '/marketreference/' + action.data.marketReferenceId,
+                url: '/api/workspace/' + this.workspaceID + '/variant/' + action.data.variantId + '/capability/' + action.data.capabilityId + '/marketreference/' + action.data.marketReferenceId,
                 data : {
                   name: action.data.name,
                   description : action.data.description,
@@ -220,7 +220,7 @@ class DeduplicatorStore extends Store {
                 },
                 success: function(data2) {
                   this.state.loadedAvailable = false;
-                  this.state.processedComponents = data2.workspace.capabilityCategories;
+                  this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
                   this.state.editMarketReferenceDialogState = {
                     open: false
                   };
@@ -232,10 +232,10 @@ class DeduplicatorStore extends Store {
             case Constants.ACTION_TYPES.DELETE_MARKET_REFERENCE:
             $.ajax({
               type: 'DELETE',
-              url: '/api/workspace/' + this.workspaceID + '/capability/' + action.data.capabilityId + '/marketreference/' + action.data.marketReferenceId,
+              url: '/api/workspace/' + this.workspaceID + '/variant/' + action.data.variantId + '/capability/' + action.data.capabilityId + '/marketreference/' + action.data.marketReferenceId,
               success: function(data2) {
                 this.state.loadedAvailable = false;
-                this.state.processedComponents = data2.workspace.capabilityCategories;
+                this.state.processedComponents = _this.getCapabilitiesForCurrentVariant(data2.workspace, action.data.variantId);
                 this.emitChange();
               }.bind(this)
             });
@@ -260,11 +260,11 @@ class DeduplicatorStore extends Store {
   /**
     list of maps with unprocessed components
   */
-  getAvailableComponents(){
+  getAvailableComponents(variantId){
     if(!this.state.loadedAvailable){
       $.ajax({
         type: 'GET',
-        url: '/api/workspace/' + this.workspaceID + '/components/unprocessed',
+        url: '/api/workspace/' + this.workspaceID + '/components/' + variantId + '/unprocessed',
         dataType: 'json',
         success: function(data) {
           this.state.availableComponents = data.maps;
@@ -276,17 +276,29 @@ class DeduplicatorStore extends Store {
     return this.state.availableComponents;
   }
 
+  getCapabilitiesForCurrentVariant(workspace, variantId){
+    if(!workspace || !workspace.timeline || !workspace.timeline.length || !variantId){
+      return [];
+    }
+    for(let i = 0; i < workspace.timeline.length; i++){
+      if(workspace.timeline[i]._id === variantId){
+        return workspace.timeline[i].capabilityCategories;
+      }
+    }
+    return [];
+  }
+
   /**
     list of maps with processed components
   */
-  getProcessedComponents(){
+  getProcessedComponents(variantId){
     if(!this.state.loadedProcessed){
       $.ajax({
         type: 'GET',
-        url: '/api/workspace/' + this.workspaceID + '/components/processed',
+        url: '/api/workspace/' + this.workspaceID + '/components/' + variantId + '/processed',
         dataType: 'json',
         success: function(data) {
-          this.state.processedComponents = data.workspace.capabilityCategories;
+          this.state.processedComponents = this.getCapabilitiesForCurrentVariant(data.workspace, variantId);
           this.emitChange();
         }.bind(this)
       });

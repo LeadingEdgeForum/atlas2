@@ -47,17 +47,20 @@ var EditMarketReferenceDialog = React.createClass({
   },
 
   _close: function() {
+    this.internalState = {};
     Actions.closeEditMarketReferenceDialog();
   },
 
   _submit: function() {
     Actions.submitEditMarketReferenceDialog(
       this.internalState.workspaceId,
+      this.props.variantId,
       this.internalState.capability._id,
       this.internalState.marketReferenceId,
       this.internalState.name ? this.internalState.name : 'Anonymous competitor',
       this.internalState.description,
       this.internalState.evolution / 100); //slider operates 0-100, nodes have 0-1
+      this.internalState = {};
   },
 
   _handleDialogChange: function(parameterName, event) {
@@ -69,7 +72,6 @@ var EditMarketReferenceDialog = React.createClass({
     var show = this.state.open;
     var activityName = this.state.capability ? this.state.capability.aliases[0].nodes[0].name : null;
 
-    console.log(this.internalState);
     return (
       <div>
         <Modal show={show} onHide={this._close}>

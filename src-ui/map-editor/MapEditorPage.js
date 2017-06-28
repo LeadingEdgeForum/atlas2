@@ -9,7 +9,9 @@ import {
   Col,
   Breadcrumb,
   NavItem,
-  Glyphicon
+  Glyphicon,
+  NavDropdown,
+  MenuItem
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
@@ -52,6 +54,8 @@ export default class MapEditorPage extends React.Component {
     this.closeHelpDialog = this.closeHelpDialog.bind(this);
     this.openHelpDialog = this.openHelpDialog.bind(this);
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
+    this.prepareVariantsSwitch = this.prepareVariantsSwitch.bind(this);
+    this.state.diff = this.props.singleMapStore.getDiff();
   }
 
   componentDidMount() {
@@ -72,6 +76,7 @@ export default class MapEditorPage extends React.Component {
 
   _onChange() {
     this.setState(this.props.singleMapStore.getMap());
+    this.setState({diff:this.props.singleMapStore.getDiff()});
   }
 
   openEditMapDialog() {
@@ -104,15 +109,45 @@ export default class MapEditorPage extends React.Component {
 
   }
 
-  prepareMapMenu(){
+  prepareVariantsSwitch(variants){
+    if(!variants || !(variants.alternatives.length || variants.past || variants.futures.length )){
+      return null;
+    }
+    let variantItems = [];
+    if(variants.past){
+      let name = variants.past.name;
+      let href = '/map/' + variants.past.mapId;
+      variantItems.push(<MenuItem href={href}>{name} (past)</MenuItem>);
+      variantItems.push(<MenuItem divider />);
+    }
+    for(let i = 0; i < variants.alternatives.length; i++){
+      let name = variants.alternatives[i].name;
+      let href = '/map/' + variants.alternatives[i].mapId;
+      variantItems.push(<MenuItem href={href}>{name} (alternative)</MenuItem>);
+    }
+    variantItems.push(<MenuItem divider />);
+    for(let i = 0; i < variants.futures.length; i++){
+      let name = variants.futures[i].name;
+      let href = '/map/' + variants.futures[i].mapId;
+      variantItems.push(<MenuItem href={href}>{name} (future)</MenuItem>);
+    }
+    return <NavDropdown eventKey="4" title="Related" id="nav-dropdown">
+        {variantItems}
+      </NavDropdown>;
+  }
+
+  prepareMapMenu(currentMap){
     const workspaceID = this.props.singleMapStore.getWorkspaceId();
-    const deduplicateHref = '/fixit/' + workspaceID;
+    const variants = this.props.singleMapStore.getVariants();
+
+    const deduplicateHref = '/fixit/' + workspaceID + '/variant/' + (currentMap ? currentMap.timesliceId : null);
     var mapID = this.props.singleMapStore.getMapId();
 
     var tempName = mapID + '.png';
     var downloadMapHref = '/img/' + tempName;
 
     const goBack = this.prepareGoBackForSubmap();
+    const variantSwitch = this.prepareVariantsSwitch(variants);
 
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this)}>
@@ -128,8 +163,17 @@ export default class MapEditorPage extends React.Component {
               <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
               &nbsp;Fix it!
           </NavItem>
-      </LinkContainer>
+      </LinkContainer>,
+      <NavItem eventKey={5} href="#" key="5" onClick={this.toggleDiff.bind(this)}>
+          <Glyphicon glyph="tags" style={{color: "basil"}}></Glyphicon>
+          &nbsp;Diff
+      </NavItem>,
+      variantSwitch
     ];
+  }
+
+  toggleDiff(){
+    this.canvasStore.toggleDiff();
   }
 
   closeHelpDialog() {
@@ -144,7 +188,6 @@ export default class MapEditorPage extends React.Component {
     const auth = this.props.auth;
     const history = this.props.history;
     const singleMapStore = this.props.singleMapStore;
-    const mapMenu = this.prepareMapMenu();
 
     const nameAndPurpose = singleMapStore.getWorkspaceNameAndPurpose();
     const workspaceID = singleMapStore.getWorkspaceId();
@@ -153,10 +196,14 @@ export default class MapEditorPage extends React.Component {
     const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
+    const variantId = singleMapStore.getMap().map.timesliceId;
+    const diff = this.state.diff;
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
 
     const canvasStore = this.canvasStore;
+    const mapMenu = this.prepareMapMenu(this.state.map);
+
     const helpDialog = <GetHelpDialog open={this.state.openHelpDialog} close={this.closeHelpDialog}/>;
     const helpMenu = <NavItem eventKey={7} href="#" onClick={this.openHelpDialog} key="help">
       <Glyphicon glyph="education"></Glyphicon>Get help!
@@ -195,7 +242,9 @@ export default class MapEditorPage extends React.Component {
                   comments={comments}
                   mapID={mapID}
                   workspaceID={workspaceID}
-                  canvasStore={canvasStore} />
+                  variantId={variantId}
+                  canvasStore={canvasStore}
+                  diff={diff}/>
             </Col>
           </Row>
           <EditMapDialog singleMapStore={singleMapStore}/>

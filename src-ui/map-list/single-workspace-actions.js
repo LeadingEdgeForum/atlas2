@@ -110,6 +110,71 @@ var SingleWorkspaceActions = {
       });
     },
 
+    submitNewVariantDialog: function(sourceTimeSliceId, name, description) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.CREATE_NEW_VARIANT,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null,
+              name : name,
+              description: description
+            }
+        });
+    },
+
+    openNewVariantDialog: function(sourceTimeSliceId) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.OPEN_NEW_VARIANT_DIALOG,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null
+            }
+        });
+    },
+
+    closeNewVariantDialog: function() {
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_NEW_VARIANT_DIALOG
+      });
+    },
+
+    submitEditVariantDialog: function(sourceTimeSliceId, name, description) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.MODIFY_VARIANT,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null,
+              name : name,
+              description: description
+            }
+        });
+    },
+
+    openEditVariantDialog: function(sourceTimeSliceId) {
+        Dispatcher.dispatch({
+            actionType: ACTION_TYPES.OPEN_EDIT_VARIANT_DIALOG,
+            data : {
+              sourceTimeSliceId : sourceTimeSliceId || null
+            }
+        });
+    },
+
+    closeEditVariantDialog: function() {
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_VARIANT_DIALOG
+      });
+    },
+
+    setVariantAsCurrent: function(sourceTimeSliceId) {
+      if(!sourceTimeSliceId) {
+        console.log('ignoring because of empty sourceTimeSliceId');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SET_VARIANT_AS_CURRENT,
+          data : {
+            sourceTimeSliceId : sourceTimeSliceId,
+            current : true
+          }
+      });
+    },
 
 };
 

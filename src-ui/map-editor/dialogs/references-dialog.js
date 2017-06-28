@@ -38,6 +38,7 @@ var ReferencesDialog = React.createClass({
     var currentName = this.state.currentName;
     var node = this.state.node;
     var workspaceID = this.state.workspaceID;
+    var variantId = this.state.variantId;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -47,7 +48,7 @@ var ReferencesDialog = React.createClass({
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-              <UsageInfo node={node} workspaceID={workspaceID} alternativeNames={true} emptyInfo={true} showMarketReferences={true}/>
+              <UsageInfo node={node} workspaceID={workspaceID} variantId={variantId} alternativeNames={true} emptyInfo={true} showMarketReferences={true}/>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>

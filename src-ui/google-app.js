@@ -133,13 +133,16 @@ class MainApp extends React.Component {
                               history={props.history}
                               singleWorkspaceStore={singleWorkspaceStore} />
                         </Route>
-                        <Route exact path="/fixit/:workspaceID">
-                          <FixitPage
-                              auth={auth}
-                              history={props.history}
-                              singleWorkspaceStore={singleWorkspaceStore}
-                              fixitStore={fixitStore}/>
-                        </Route>
+                        <Route path="/fixit/:workspaceID/variant/:variantId" render={
+                          (props) => {
+                            return <FixitPage
+                                auth={auth}
+                                history={props.history}
+                                singleWorkspaceStore={singleWorkspaceStore}
+                                fixitStore={fixitStore}
+                                variantId={props.match.params.variantId}/>;
+                          }
+                        }/>
                       </Switch>
                   );
                 }

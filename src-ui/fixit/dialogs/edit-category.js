@@ -46,7 +46,7 @@ var EditCategoryDialog = React.createClass({
   },
 
   _submit: function() {
-    Actions.submitEditCategoryDialog(this.state.workspaceID, this.state.capabilityCategoryID, this.internalState.name);
+    Actions.submitEditCategoryDialog(this.state.workspaceID, this.props.variantId, this.state.capabilityCategoryID, this.internalState.name);
   },
 
   _handleDialogChange: function(parameterName, event) {

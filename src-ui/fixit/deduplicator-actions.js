@@ -5,54 +5,75 @@ var Constants = require('./deduplicator-constants');
 export default class Actions {
 
 
-  static createNewCapability(workspaceID, capabilityCategoryID, nodeID) {
+  static createNewCapability(workspaceID, variantId, capabilityCategoryID, nodeID) {
+    if(!workspaceID || !variantId || !capabilityCategoryID || !nodeID){
+        console.log('none of those should be null: workspaceID, variantId, capabilityCategoryID, nodeID');
+        return;
+    }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.NEW_CAPABILITY,
       data: {
         workspaceID: workspaceID,
+        variantId : variantId,
         capabilityCategoryID: capabilityCategoryID,
         nodeID: nodeID
       }
     });
   }
 
-  static assignNodeToCapability(workspaceID, capabilityID, nodeID) {
+  static assignNodeToCapability(workspaceID, variantId, capabilityID, nodeID) {
+    if(!workspaceID || !variantId || !capabilityID || !nodeID){
+        console.log('none of those should be null: workspaceID, variantId, capabilityID, nodeID');
+        return;
+    }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.ASSIGN_NODE_TO_CAPABILITY,
       data: {
         workspaceID: workspaceID,
+        variantId : variantId,
         capabilityID: capabilityID,
         nodeID: nodeID
       }
     });
   }
 
-  static assignNodeToAlias(workspaceID, aliasID, nodeID) {
+  static assignNodeToAlias(workspaceID, variantId, aliasID, nodeID) {
+    if(!workspaceID || !variantId || !aliasID || !nodeID){
+        console.log('none of those should be null: workspaceID, variantId, aliasID, nodeID');
+        return;
+    }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.ASSIGN_NODE_TO_ALIAS,
       data: {
         workspaceID: workspaceID,
+        variantId : variantId,
         aliasID: aliasID,
         nodeID: nodeID
       }
     });
   }
 
-  static deleteCapability(workspaceID, capabilityID) {
+  static deleteCapability(workspaceID, variantId, capabilityID) {
+    if(!workspaceID || !variantId || !capabilityID){
+        console.log('none of those should be null: workspaceID, variantId, capabilityID');
+        return;
+    }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.DELETE_CAPABILITY,
       data: {
         capabilityID: capabilityID,
+        variantId : variantId,
         workspaceID:workspaceID
       }
     });
   }
 
-  static deleteCategory(workspaceID, capabilityCategoryID) {
+  static deleteCategory(workspaceID, variantId, capabilityCategoryID) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.DELETE_CATEGORY,
       data: {
         capabilityCategoryID: capabilityCategoryID,
+        variantId : variantId,
         workspaceID: workspaceID
       }
     });
@@ -78,22 +99,24 @@ export default class Actions {
     });
   }
 
-  static submitEditCategoryDialog(workspaceID, capabilityCategoryID, name) {
+  static submitEditCategoryDialog(workspaceID, variantId, capabilityCategoryID, name) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.EDIT_CATEGORY_SUBMIT_DIALOG,
       data: {
         workspaceID: workspaceID,
+        variantId:variantId,
         capabilityCategoryID: capabilityCategoryID,
         name: name
       }
     });
   }
 
-  static openNewCategoryDialog(workspaceID) {
+  static openNewCategoryDialog(workspaceID, variantId) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.NEW_CATEGORY_OPEN_DIALOG,
       data: {
-        workspaceID: workspaceID
+        workspaceID: workspaceID,
+        variantId:variantId
       }
     });
   }
@@ -107,11 +130,12 @@ export default class Actions {
     });
   }
 
-  static submitNewCategoryDialog(workspaceID, name) {
+  static submitNewCategoryDialog(workspaceID, variantId, name) {
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.NEW_CATEGORY_SUBMIT_DIALOG,
       data: {
         workspaceID: workspaceID,
+        variantId : variantId,
         name: name
       }
     });
@@ -137,7 +161,7 @@ export default class Actions {
     });
   }
 
-  static submitAddMarketReferenceToCapabilityDialog(capability, name, description, evolution){
+  static submitAddMarketReferenceToCapabilityDialog(variantId, capability, name, description, evolution){
     if((!capability) || (!capability._id)){
       console.error('this capability should not be null');
       return null;
@@ -151,7 +175,8 @@ export default class Actions {
           capability : capability,
           name : name,
           description : description,
-          evolution : evolution
+          evolution : evolution,
+          variantId : variantId
       }
     });
   }
@@ -177,15 +202,16 @@ export default class Actions {
     });
   }
 
-  static submitEditMarketReferenceDialog(workspaceId, capabilityId, marketReferenceId, name, description, evolution) {
-    if (!workspaceId || !marketReferenceId || !capabilityId || !name || evolution === undefined || evolution === null) {
-      console.log('missing data', workspaceId, capabilityId, marketReferenceId, name, evolution);
+  static submitEditMarketReferenceDialog(workspaceId, variantId, capabilityId, marketReferenceId, name, description, evolution) {
+    if (!workspaceId || !variantId || !marketReferenceId || !capabilityId || !name || evolution === undefined || evolution === null) {
+      console.log('missing data', workspaceId, variantId, capabilityId, marketReferenceId, name, evolution);
       return;
     }
     Dispatcher.dispatch({
       actionType: Constants.ACTION_TYPES.SUBMIT_EDIT_NEW_MARKET_REFERENCE_DIALOG,
       data: {
         workspaceId: workspaceId,
+        variantId : variantId,
         capabilityId: capabilityId,
         marketReferenceId: marketReferenceId,
         name: name,
@@ -195,7 +221,7 @@ export default class Actions {
     });
   }
 
-  static deleteMarketReference(workspaceId, capabilityId, marketReferenceId) {
+  static deleteMarketReference(workspaceId, variantId, capabilityId, marketReferenceId) {
     if (!workspaceId || !marketReferenceId || !capabilityId) {
       console.log('missing data', workspaceId, capabilityId, marketReferenceId);
       return;
@@ -204,6 +230,7 @@ export default class Actions {
       actionType: Constants.ACTION_TYPES.DELETE_MARKET_REFERENCE,
       data: {
         workspaceId: workspaceId,
+        variantId : variantId,
         capabilityId: capabilityId,
         marketReferenceId: marketReferenceId
       }

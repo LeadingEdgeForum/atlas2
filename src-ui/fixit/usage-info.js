@@ -70,8 +70,8 @@ var UsageInfo = React.createClass({
     }
 
     var alias = null;
-    for(var i = 0; i < capability.aliases.length; i++){
-      for(var j = 0; j < capability.aliases[i].nodes.length; j++){
+    for(let i = 0; i < capability.aliases.length; i++){
+      for(let j = 0; j < capability.aliases[i].nodes.length; j++){
         if(capability.aliases[i].nodes[j]._id === node._id){
           alias = capability.aliases[i];
         }
@@ -93,13 +93,13 @@ var UsageInfo = React.createClass({
 
     var aliasLinks = [];
     alias.nodes.forEach(function(_node){
-      var onExlucedList = false;
+      var onExcludedList = false;
       for(var i = 0; i < excludedList.length; i++){
         if(excludedList[i]._id === _node.parentMap._id){
-          onExlucedList = true;
+          onExcludedList = true;
         }
       }
-      if ((_node._id !== node._id) && (!onExlucedList)) {
+      if ((_node._id !== node._id) && (!onExcludedList)) {
           aliasLinks.push(( <li><b> {_node.name}</b>, from map <MapLink mapID={_node.parentMap._id}/><br/></li>));
       }
     });
@@ -114,19 +114,19 @@ var UsageInfo = React.createClass({
     }
 
     var alternativeAliases = [];
-    for(var i = 0; i < capability.aliases.length; i++){
+    for(let i = 0; i < capability.aliases.length; i++){
       if(capability.aliases[i]._id !== alias._id){
           var _alias = capability.aliases[i];
-          for(var j = 0; j < _alias.nodes.length; j++){
+          for(let j = 0; j < _alias.nodes.length; j++){
             var _node = _alias.nodes[j];
-            var onExlucedList = false;
-            for(var ii = 0; ii < excludedList.length; ii++){
-              console.log('checking exclusion',excludedList[ii]._id , _node.parentMap._id);
+            var onExcludedList = false;
+            for(let ii = 0; ii < excludedList.length; ii++){
+              // console.log('checking exclusion',excludedList[ii]._id , _node.parentMap._id);
               if(excludedList[ii]._id === _node.parentMap._id){
-                onExlucedList = true;
+                onExcludedList = true;
               }
             }
-            if ((_node._id !== node._id) && (!onExlucedList)) {
+            if ((_node._id !== node._id) && (!onExcludedList)) {
                 alternativeAliases.push(( <li><b> {_node.name}</b>, from map <MapLink mapID={_node.parentMap._id}/><br/></li>));
                 break;
             }
@@ -151,7 +151,7 @@ var UsageInfo = React.createClass({
   },
 
   componentDidMount() {
-    var queryLink = '/api/workspace/' + this.props.workspaceID + '/node/' + this.props.node._id + '/usage';
+    var queryLink = '/api/workspace/' + this.props.workspaceID +  '/variant/' + this.props.variantId + '/node/' + this.props.node._id + '/usage';
     var _this = this;
     this.serverRequest = $.get(queryLink, function(result) {
       _this.setState(result);
