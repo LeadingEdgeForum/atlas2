@@ -8,6 +8,8 @@ services:
       - /usr/app/node_modules
     ports:
       - "6001:6001"
+    depends_on:
+      - mongo
     environment:
       DATABASE_URL: "mongodb://mongo"
   mongo:
