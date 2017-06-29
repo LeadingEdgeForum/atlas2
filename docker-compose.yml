@@ -7,7 +7,7 @@ services:
       - .:/usr/app/
       - /usr/app/node_modules
     ports:
-      - "8080:8080"
+      - "6001:6001"
     environment:
       DATABASE_URL: "mongodb://mongo"
   mongo:
