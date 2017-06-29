@@ -29,7 +29,7 @@ var mongoose = require('mongoose');
 var q = require('q');
 mongoose.Promise = q.Promise;
 var MongoDBConnection = require('./src-server/mongodb-helper');
-var conn = mongoose.createConnection(MongoDBConnection.connectionURL, MongoDBConnection.options);
+var conn = mongoose.createConnection(MongoDBConnection.atlas2.connectionURL, MongoDBConnection.atlas2.options);
 if (!(typeof global.it === 'function')) {
   require('./src-server/workspace/model/migrator')(conn);
 }

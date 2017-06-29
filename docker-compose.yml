@@ -11,6 +11,8 @@ services:
     depends_on:
       - mongo
     environment:
-      DATABASE_URL: "mongodb://mongo"
+      MONGO_URL_ATLAS2: "mongodb://mongo:27017/atlas2"
+      MONGO_URL_TEST_DUPLICATION: "mongodb://mongo:27017/test-duplication"
+      MONGO_URL_TEST_USAGE: "mongodb://mongo:27017/test-usage"
   mongo:
     image: mongo:3.0

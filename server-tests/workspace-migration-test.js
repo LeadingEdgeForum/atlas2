@@ -26,9 +26,9 @@ var Number = Schema.Types.Number;
 var migrator = require('../src-server/workspace/model/workspace-schema').migrator;
 
 var owner = "testy@mactest.test";
-
-var mongooseConnection1 = mongoose.createConnection("mongodb://localhost:27017/test-usage");
-var mongooseConnection2 = mongoose.createConnection("mongodb://localhost:27017/test-usage");
+var MongoDBConnection = require('../src-server/mongodb-helper');
+var mongooseConnection1 = mongoose.createConnection(MongoDBConnection.test_usage.connectionURL);
+var mongooseConnection2 = mongoose.createConnection(MongoDBConnection.test_usage.connectionURL);
 
 var oldWorkspaceSchema = new Schema({
   name: Schema.Types.String,
