@@ -4,7 +4,7 @@ services:
     build: .
     command: npm start
     volumes:
-      - .:/usr/app/
+      - .:/usr/app/:Z
       - /usr/app/node_modules
     ports:
       - "6001:6001"
