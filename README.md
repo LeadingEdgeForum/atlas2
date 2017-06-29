@@ -6,6 +6,8 @@ A new mapping tool, this time sponsored by the [Leading Edge Forum](http://www.w
 
 The tool is running live [here](https://atlas2.wardleymaps.com).
 
+To test it out locally, you may run `docker-compose up` and visit http://localhost:6001.
+
 # Licence
 The code is licenced under creative commons (CC-BY-SA), except the LEF logo (atlas2/build-ui/img/LEF_logo.png).
 
