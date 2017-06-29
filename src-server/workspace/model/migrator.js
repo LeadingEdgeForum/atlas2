@@ -54,6 +54,8 @@ module.exports = function(conn) {
           console.log('updating maps');
           return q.allSettled(mapPromises);
         }));
+        workspace.schemaVersion = 1;
+        promises.push(workspace.save());
 
 
     });
