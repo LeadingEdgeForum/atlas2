@@ -32,6 +32,15 @@ var EditConnectionDialog = React.createClass({
     this.props.singleMapStore.removeChangeListener(this._onChange);
   },
 
+  componentDidUpdate(oldProps, oldState){
+    if(oldProps.singleMapStore.getMap().map._id !== this.props.singleMapStore.getMap().map._id){
+      // map changed, pretend to remount
+      oldProps.singleMapStore.removeChangeListener(this._onChange);
+      this.props.singleMapStore.addChangeListener(this._onChange);
+      this._onChange();
+    }
+  },
+
   internalState: {},
 
   _onChange: function() {
