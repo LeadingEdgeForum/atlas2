@@ -138,7 +138,7 @@ export default class MapEditorPage extends React.Component {
     if(variants.past){
       let name = variants.past.name;
       let href = '/map/' + variants.past.mapId;
-      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (past)</MenuItem></LinkContainer>);
+      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (ancestor)</MenuItem></LinkContainer>);
       variantItems.push(<MenuItem divider />);
     }
     for(let i = 0; i < variants.alternatives.length; i++){

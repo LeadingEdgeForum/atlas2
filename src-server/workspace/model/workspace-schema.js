@@ -19,6 +19,7 @@ var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
 var variantLogger = require('./../../log').getLogger('variants');
+variantLogger.setLevel('ALL');
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work
@@ -49,7 +50,9 @@ function migrator(doc, fn){
       capabilityCategories : doc._doc.capabilityCategories
     }];
     delete doc._doc.maps;
+    delete doc.maps;
     delete doc._doc.capabilityCategories;
+    delete doc.capabilityCategories;
   }
   fn();
 }
@@ -175,7 +178,9 @@ module.exports = function(conn) {
         }
         for(var i = 0; i < this.timeline.length; i++){
           if(this.timeline[i]._id.equals(timesliceId)){
-            this.timeline[i].maps.push(mapId);
+            if(this.timeline[i].maps.indexOf(mapId) === -1){
+              this.timeline[i].maps.push(mapId);
+            }
             return this.save();
           }
         }
@@ -1149,8 +1154,8 @@ module.exports = function(conn) {
               // part four - clone maps
               var mapsToSave = [];
               for (let i = 0; i < sourceTimeSlice.maps.length; i++) {
-                var oldMap = sourceTimeSlice.maps[i];
-                var newMap = new WardleyMap({
+                let oldMap = sourceTimeSlice.maps[i];
+                let newMap = new WardleyMap({
                   _id: new ObjectId(mappings.maps[oldMap._id]),
                   user: oldMap.user,
                   purpose: oldMap.purpose,
@@ -1166,7 +1171,12 @@ module.exports = function(conn) {
                   comments: [],
                   nodes: []
                 });
-                oldMap.next.push(newMap._id);
+                variantLogger.debug('setting next ' + newMap._id + ' in ' + oldMap._id);
+                // if(oldMap.next.indexOf(newMap._id) >= 0){
+                //   variantLogger.warn('already set ' + oldMap.next);
+                // } else {
+                  oldMap.next.push(newMap._id);
+                // }
 
                 // transfer comments
                 for (let j = 0; j < oldMap.comments.length; j++) {

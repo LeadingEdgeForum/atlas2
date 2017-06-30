@@ -18,7 +18,7 @@ module.exports = function(conn) {
 
   console.log('starting migration');
 
-  Workspace.find({
+  return Workspace.find({
     schemaVersion: {
       $exists: false
     }
@@ -56,13 +56,38 @@ module.exports = function(conn) {
         }));
         workspace.schemaVersion = 1;
         promises.push(workspace.save());
-
-
     });
     console.log('waiting for the migration to end');
     return q.allSettled(promises);
+  }).then(function(){
+    return Workspace.find({
+      schemaVersion: 1
+    })
+    .exec()
+    .then(function(workspaces) {
+      let prom = [];
+
+      workspaces.forEach(function(workspace) {
+        workspace.set('capabilityCategories', undefined, {strict:true});
+        workspace.set('maps', undefined, {strict:true});
+        workspace.schemaVersion = 2;
+        workspace.timeline.forEach(function(timeslice){
+          let mapList = timeslice.maps;
+          timeslice.maps = [];
+          mapList.forEach(function(map){
+            if(timeslice.maps.indexOf(map) === -1){
+              timeslice.maps.push(map);
+            } else {
+              console.log('removed duplicate');
+            }
+          });
+        });
+        workspace.markModified('timeline');
+        prom.push(workspace.save());
+      });
+
+      return q.allSettled(prom);
+    });
   });
 
-
-  return;
 };
