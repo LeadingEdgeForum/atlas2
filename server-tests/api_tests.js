@@ -965,7 +965,18 @@ describe('Workspaces & maps', function() {
           .expect(200)
           .expect('Content-type', 'image/png')
           .expect(function(res){
-            res.body.length.should.be.within(15000, 16000); //measured by hand
+            let imageSize = res.body.length;
+            let isSizeExpected = false;
+            if(imageSize === 12812){ // docker seems to produce images of constant size
+                isSizeExpected = true;
+            }
+            // generated png size depends heavily on the platform.
+            // range was set experimentally, and sometimes, something may slip
+            // but it is still better than no verification
+            if(imageSize > 15000 && imageSize < 16000){
+                isSizeExpected = true;
+            }
+            isSizeExpected.should.be.true; //measured by hand
           })
           .end(function(err, res) {
               done(err);
