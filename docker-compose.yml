@@ -1,0 +1,18 @@
+version: '2'
+services:
+  web:
+    build: .
+    command: npm start
+    volumes:
+      - .:/usr/app/:Z
+      - /usr/app/node_modules
+    ports:
+      - "6001:6001"
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URL_ATLAS2: "mongodb://mongo:27017/atlas2"
+      MONGO_URL_TEST_DUPLICATION: "mongodb://mongo:27017/test-duplication"
+      MONGO_URL_TEST_USAGE: "mongodb://mongo:27017/test-usage"
+  mongo:
+    image: mongo:3.0

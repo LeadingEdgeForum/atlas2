@@ -29,7 +29,11 @@ if(mongoDBService && mongoDBService.credentials && (mongoDBService.credentials.u
   }
 } else {
     logger.warn('mongoDB service not configured (or configured improperly), defaulting to local database');
-    connectionURL = 'mongodb://localhost:27017/atlas2';
+    connectionURL = process.env.MONGO_URL_ATLAS2 || 'mongodb://localhost:27017/atlas2';
 }
 
-module.exports = {connectionURL:connectionURL, options:options};
+module.exports = {
+  'atlas2': { connectionURL:connectionURL, options:options },
+  'test_duplication': { connectionURL:process.env.MONGO_URL_TEST_DUPLICATION || "mongodb://localhost:27017/test-duplication" },
+  'test_usage': { connectionURL:process.env.MONGO_URL_TEST_USAGE || "mongodb://localhost:27017/test-usage" }
+};

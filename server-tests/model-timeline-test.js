@@ -22,7 +22,8 @@ var q = require('q');
 var owner = "testy@mactest.test";
 var mongoose = require('mongoose');
 mongoose.Promise = q.Promise;
-var mongooseConnection = mongoose.createConnection("mongodb://localhost:27017/test-usage");
+var MongoDBConnection = require('../src-server/mongodb-helper');
+var mongooseConnection = mongoose.createConnection(MongoDBConnection.test_usage.connectionURL);
 
 var WardleyMap = require('../src-server/workspace/model/map-schema')(mongooseConnection);
 var Workspace = require('../src-server/workspace/model/workspace-schema')(mongooseConnection);
