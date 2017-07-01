@@ -39,7 +39,7 @@
     "passport-local": "^1.0.0",
     "path": "*",
     "phantom": "^4.0.0",
-    "phantom-pool": "^1.2.0",
+    "phantom-pool": "^1.2.2",
     "prop-types": "^15.5.10",
     "q": "*",
     "react": "^15.5.4",
