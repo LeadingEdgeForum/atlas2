@@ -16,3 +16,5 @@ services:
       MONGO_URL_TEST_USAGE: "mongodb://mongo:27017/test-usage"
   mongo:
     image: mongo:3.0
+    volumes:
+      - ./data:/data/db:Z
