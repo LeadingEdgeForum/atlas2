@@ -20,12 +20,13 @@ jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
 jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
 
 jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
+var $ = require('jquery');
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
   position: 'relative',
   top: 0,
-  height: '98%',
+  minHeight : '500px',
   width: '98%',
   left: '2%',
   zIndex: 4
@@ -127,6 +128,18 @@ export default class MapCanvas extends React.Component {
     if (!this.input) {
       return;
     }
+
+    let windowHeight =  $(window).height();
+    let offset = $('#mainmapeditor').offset() ? $('#mainmapeditor').offset().top : 0;
+
+    let newHeight = windowHeight - offset - 20; // some margin
+    if(newHeight < 500) {
+      newHeight = 500;
+    }
+    if(mapCanvasStyle.height !== newHeight){
+      mapCanvasStyle.height = newHeight;
+    }
+
     var coord = {
       offset: {
         top: getElementOffset(this.input).top,
@@ -134,7 +147,7 @@ export default class MapCanvas extends React.Component {
       },
       size: {
         width: this.input.offsetWidth,
-        height: this.input.offsetHeight
+        height: newHeight//this.input.offsetHeight
       }
     };
     if(global.OPTS && global.OPTS.coords){
@@ -143,11 +156,7 @@ export default class MapCanvas extends React.Component {
     this.setState({coords:coord});
     if (this.props.canvasStore) { // no store means rendering on the server
       CanvasActions.updateCanvasSizeAndOffset(coord);
-      var _this = this;
-      jsPlumb.ready(function() {
-        jsPlumb.revalidate(_this.input);
-      });
-
+      this.forceUpdate();
     }
   }
 
@@ -176,9 +185,11 @@ export default class MapCanvas extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     var _this = this;
+    jsPlumb.ready(function() {
       _this.reconcileDependencies();
       // jsPlumb.setSuspendDrawing(false, true);
       jsPlumb.repaintEverything();
+    });
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
@@ -624,7 +635,7 @@ export default class MapCanvas extends React.Component {
             }
         }
     return (
-      <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
+      <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections} id="mainmapeditor">
         {components}
         {arrowends}
         {comments}
