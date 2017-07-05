@@ -20,7 +20,6 @@ jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
 jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
 
 jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
-var $ = require('jquery');
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
@@ -128,9 +127,12 @@ export default class MapCanvas extends React.Component {
     if (!this.input) {
       return;
     }
+    if(this.resizeHeavyWork){
+      clearTimeout(this.resizeHeavyWork);
+    }
 
-    let windowHeight =  $(window).height();
-    let offset = $('#mainmapeditor').offset() ? $('#mainmapeditor').offset().top : 0;
+    let windowHeight =  window.innerHeight;
+    let offset = getElementOffset(this.input).top;
 
     let newHeight = windowHeight - offset - 20; // some margin
     if(newHeight < 500) {
@@ -150,14 +152,13 @@ export default class MapCanvas extends React.Component {
         height: newHeight//this.input.offsetHeight
       }
     };
-    if(global.OPTS && global.OPTS.coords){
-      coord = global.OPTS.coords;
-    }
-    this.setState({coords:coord});
-    if (this.props.canvasStore) { // no store means rendering on the server
+    let _this = this;
+    _this.resizeHeavyWork = setTimeout(function(){
+      _this.setState({coords:coord});
       CanvasActions.updateCanvasSizeAndOffset(coord);
-      this.forceUpdate();
-    }
+      _this.forceUpdate();
+      _this.resizeHeavyWork = null;
+    }, 100);
   }
 
   componentDidMount() {
@@ -635,7 +636,7 @@ export default class MapCanvas extends React.Component {
             }
         }
     return (
-      <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections} id="mainmapeditor">
+      <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
         {arrowends}
         {comments}
