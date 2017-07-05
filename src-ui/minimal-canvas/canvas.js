@@ -10,8 +10,8 @@ var Comment = require('./comment');
 import {endpointOptions, actionEndpointOptions} from './component-styles';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
-jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
-jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
+jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'#EC7063'}});
+jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'#1ABC9C'}});
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
@@ -69,13 +69,15 @@ export default class MapCanvas extends React.Component {
     } else {
         fromStyle = [];
     }
+    let fontStyle = this.props.otherFontSize + 'px Helvetica Neue,Helvetica,Arial,sans-serif';
     fromStyle.push([
         "Label", {
           label:labelText,
           id : "label",
           labelStyle :{
-            font : '11px Helvetica Neue,Helvetica,Arial,sans-serif',
+            font : fontStyle,
             fill: 'white',
+            color: '#333'
           }
         }
     ]
@@ -155,6 +157,7 @@ export default class MapCanvas extends React.Component {
     jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
     var size = global.OPTS.coords.size;
     var nodeFontSize = this.props.nodeFontSize;
+    var otherFontSize = this.props.otherFontSize;
 
     var components = null;
     if (this.props.nodes) {
@@ -182,7 +185,7 @@ export default class MapCanvas extends React.Component {
               comments.push( <Comment comment = { this.props.comments[ii] }
                   id = { this.props.comments[ii]._id }
                   key = { this.props.comments[ii]._id }
-                  size = {size} />);
+                  size = {size} otherFontSize={otherFontSize} />);
             }
         }
     return (

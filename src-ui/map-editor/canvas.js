@@ -16,8 +16,8 @@ import {endpointOptions, actionEndpointOptions, moveEndpointOptions} from './com
 
 //remove min to fix connections
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
-jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'red'}});
-jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'blue'}});
+jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'#EC7063'}});
+jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'#1ABC9C'}});
 
 jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
 
@@ -218,13 +218,15 @@ export default class MapCanvas extends React.Component {
         id: "menuOverlay"
       }
     ]);
+    let fontStyle = this.props.canvasStore.getOtherFontSize() + 'px Helvetica Neue,Helvetica,Arial,sans-serif';
     fromStyle.push([
         "Label", {
           label:labelText,
           id : "label",
           labelStyle :{
-            font : '11px Helvetica Neue,Helvetica,Arial,sans-serif',
+            font : fontStyle,
             fill: 'white',
+            color: '#333'
           }
         }
     ]

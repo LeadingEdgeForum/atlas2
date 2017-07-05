@@ -7,7 +7,6 @@ import {Glyphicon} from 'react-bootstrap';
 
 
 var itemCaptionStyle = {
-  top: -10,
   left: 10,
   position: 'absolute',
   zIndex: 20,
@@ -17,7 +16,7 @@ var itemCaptionStyle = {
   maxHeight: 22,
   marginBottom: -20,
   fontSize: 10,
-  lineHeight: '11px'
+  lineHeight: 1.1
 };
 
 var inertiaStyle = {
@@ -96,7 +95,9 @@ var HistoricComponent = React.createClass({
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);
     var canvasStore = this.props.canvasStore;
-
+    itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+    itemCaptionStyle.top = - itemCaptionStyle.fontSize;
+    
     return (
       <div style={style} id={id} key={id}>
         <div style={itemCaptionStyle}>{name}</div>

@@ -176,6 +176,8 @@ var Comment = React.createClass({
     var workspaceID = this.props.workspaceID;
     var menu = this.renderMenu(focused);
     var canvasStore = this.props.canvasStore;
+    style.fontSize = canvasStore.getOtherFontSize();
+    style.padding = style.fontSize / 6 + 'px';
 
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {

@@ -111,7 +111,8 @@ export default class MapEditorPage extends React.Component {
     let data = {
       width : size.width,
       height: size.height,
-      nodeFontSize : canvasStore.getNodeFontSize()
+      nodeFontSize : canvasStore.getNodeFontSize(),
+      otherFontSize : canvasStore.getOtherFontSize()
     };
     $.ajax({
       url: maplink,
@@ -239,12 +240,13 @@ export default class MapEditorPage extends React.Component {
     const helpMenu = <NavItem eventKey={7} href="#" onClick={this.openHelpDialog} key="help">
       <Glyphicon glyph="education"></Glyphicon>Get help!
     </NavItem>;
-    const increaseFont =<NavItem eventKey={7} href="#" onClick={CanvasActions.increaseNodeFontSize} key="increaseFont">
-      <Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"></Glyphicon>
-    </NavItem>;
-    const decreaseFont = <NavItem eventKey={7} href="#" onClick={CanvasActions.decreaseNodeFontSize} key="decreaseFont">
-      <Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"></Glyphicon>
-    </NavItem>;
+    const resizeTitle = <Glyphicon glyph="text-height"></Glyphicon>;
+    const fontResizeMenu = <NavDropdown eventKey={8} title={resizeTitle}>
+        <MenuItem onClick={CanvasActions.increaseNodeFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"/> Component</MenuItem>
+        <MenuItem onClick={CanvasActions.decreaseNodeFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"/> Component</MenuItem>
+        <MenuItem onClick={CanvasActions.increaseOtherFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"/> Other</MenuItem>
+        <MenuItem onClick={CanvasActions.decreaseOtherFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"/> Other</MenuItem>
+    </NavDropdown>;
 
     return (
       <DocumentTitle title={mapName}>
@@ -255,7 +257,7 @@ export default class MapEditorPage extends React.Component {
                 auth={auth}
                 history={history}
                 mainMenu={mapMenu}
-                rightMenu={[increaseFont, decreaseFont, helpMenu]}/>
+                rightMenu={[fontResizeMenu, helpMenu]}/>
             </Col>
           </Row>
           <Row className="show-grid">

@@ -29,6 +29,7 @@ jsPlumb.ready(function() {
           mapID       = {global.window.OPTS.mapID}
           workspaceID = { global.window.OPTS.workspaceID}
           nodeFontSize = {global.window.OPTS.nodeFontSize}
+          otherFontSize = {global.window.OPTS.otherFontSize}
           background = "true" /> ,
         document.getElementById('root'));
 });

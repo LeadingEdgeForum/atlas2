@@ -15,6 +15,8 @@ module.exports  = keyMirror({
       CANVAS_FOCUS_ADD_COMMENT : null,
       CANVAS_FOCUS_REMOVE_COMMENT : null,
       CANVAS_INCREASE_NODE_FONT_SIZE : null,
-      CANVAS_DECREASE_NODE_FONT_SIZE : null
+      CANVAS_DECREASE_NODE_FONT_SIZE : null,
+      CANVAS_INCREASE_OTHER_FONT_SIZE : null,
+      CANVAS_DECREASE_OTHER_FONT_SIZE : null
   }
 });

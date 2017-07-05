@@ -142,7 +142,12 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
 
         var nodeFontSize = Number(req.query.nodeFontSize);
         if(!Number.isInteger(nodeFontSize) || nodeFontSize < 0 || nodeFontSize > 30){
-          nodeFontSize = 10;
+          nodeFontSize = 11;
+        }
+
+        var otherFontSize = Number(req.query.otherFontSize);
+        if(!Number.isInteger(otherFontSize) || otherFontSize < 0 || otherFontSize > 30){
+          otherFontSize = 10;
         }
 
         WardleyMap
@@ -168,7 +173,8 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                             height: height
                         }
                     },
-                    nodeFontSize : nodeFontSize
+                    nodeFontSize : nodeFontSize,
+                    otherFontSize : otherFontSize
                 };
                 var pageText = renderFullPage(opts, script || webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH));
 

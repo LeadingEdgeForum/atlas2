@@ -30,7 +30,8 @@ export default class CanvasStore extends Store {
           height: 1
         }
       },
-      nodeFontSize : 10,
+      nodeFontSize : 13,
+      otherFontSize : 10,
       diffEnabled : false
     };
     this.dispatchToken = Dispatcher.register(action => {
@@ -96,6 +97,14 @@ export default class CanvasStore extends Store {
           this.state.nodeFontSize --;
           this.emitChange();
           break;
+        case ActionTypes.CANVAS_INCREASE_OTHER_FONT_SIZE:
+            this.state.otherFontSize ++;
+            this.emitChange();
+            break;
+        case ActionTypes.CANVAS_DECREASE_OTHER_FONT_SIZE:
+            this.state.otherFontSize --;
+            this.emitChange();
+            break;
         default:
           return;
       }
@@ -181,6 +190,10 @@ export default class CanvasStore extends Store {
 
   getNodeFontSize(){
     return this.state.nodeFontSize;
+  }
+
+  getOtherFontSize(){
+    return this.state.otherFontSize;
   }
 
   emitChange() {

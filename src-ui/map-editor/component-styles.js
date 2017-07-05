@@ -70,7 +70,7 @@ var genericCommentStyle = {
   border: '1px solid orange',
   backgroundColor: 'yellow',
   fontSize: 10,
-  lineHeight: '11px',
+  lineHeight: 1.1,
   padding: '1px',
   float: 'left',
   maxWidth: '150px'

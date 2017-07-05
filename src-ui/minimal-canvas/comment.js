@@ -24,7 +24,9 @@ var Comment = React.createClass({
       position: 'absolute',
       cursor: 'pointer'
     });
-    
+    style.fontSize = this.props.otherFontSize;
+    style.padding = style.fontSize / 6 + 'px';
+
     var id = this.props.id;
     var txt = comment.text;
 

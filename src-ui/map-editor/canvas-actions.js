@@ -56,4 +56,12 @@ export default class CanvasActions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_DECREASE_NODE_FONT_SIZE});
   }
 
+  static increaseOtherFontSize(){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_INCREASE_OTHER_FONT_SIZE});
+  }
+
+  static decreaseOtherFontSize(){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_DECREASE_OTHER_FONT_SIZE});
+  }
+
 }
