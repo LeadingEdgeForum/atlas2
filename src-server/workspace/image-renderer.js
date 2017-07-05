@@ -140,6 +140,11 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
           height = 800;
         }
 
+        var nodeFontSize = Number(req.query.nodeFontSize);
+        if(!Number.isInteger(nodeFontSize) || nodeFontSize < 0 || nodeFontSize > 30){
+          nodeFontSize = 10;
+        }
+
         WardleyMap
             .findOne({
                 _id: mapID,
@@ -162,7 +167,8 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                             width: width,
                             height: height
                         }
-                    }
+                    },
+                    nodeFontSize : nodeFontSize
                 };
                 var pageText = renderFullPage(opts, script || webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH));
 

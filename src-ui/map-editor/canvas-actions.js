@@ -48,4 +48,12 @@ export default class CanvasActions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_REMOVE_COMMENT, data: commentID});
   }
 
+  static increaseNodeFontSize(){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_INCREASE_NODE_FONT_SIZE});
+  }
+
+  static decreaseNodeFontSize(){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_DECREASE_NODE_FONT_SIZE});
+  }
+
 }

@@ -28,6 +28,7 @@ jsPlumb.ready(function() {
           comments    = {global.window.OPTS.comments}
           mapID       = {global.window.OPTS.mapID}
           workspaceID = { global.window.OPTS.workspaceID}
+          nodeFontSize = {global.window.OPTS.nodeFontSize}
           background = "true" /> ,
         document.getElementById('root'));
 });

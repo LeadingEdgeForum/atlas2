@@ -23,7 +23,6 @@ var nonInlinedStyle = {
 };
 
 var itemCaptionStyle = {
-  top: -10,
   left: 10,
   position: 'absolute',
   zIndex: 20,
@@ -32,8 +31,7 @@ var itemCaptionStyle = {
   maxWidth: 100,
   maxHeight: 22,
   marginBottom: -20,
-  fontSize: 10,
-  lineHeight: '11px'
+  lineHeight: 1.1
 };
 
 /* globals document */
@@ -393,6 +391,8 @@ var MapComponent = React.createClass({
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);
     var canvasStore = this.props.canvasStore;
+    itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+    itemCaptionStyle.top = - itemCaptionStyle.fontSize;
 
     var cleanPosse = this.cleanPosse;
     return (

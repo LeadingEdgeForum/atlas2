@@ -154,11 +154,12 @@ export default class MapCanvas extends React.Component {
   render() {
     jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
     var size = global.OPTS.coords.size;
+    var nodeFontSize = this.props.nodeFontSize;
 
     var components = null;
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
-        return (<MapComponent node={component} size={size} key={component._id} id={component._id} inertia={component.inertia} />);
+        return (<MapComponent node={component} size={size} key={component._id} id={component._id} inertia={component.inertia} nodeFontSize={nodeFontSize}/>);
       });
     }
     var arrowends = [];

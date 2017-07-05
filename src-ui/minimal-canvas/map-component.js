@@ -9,7 +9,6 @@ var nonInlinedStyle = {
 };
 
 var itemCaptionStyle = {
-  top: -10,
   left: 10,
   position: 'absolute',
   zIndex: 20,
@@ -18,8 +17,7 @@ var itemCaptionStyle = {
   maxWidth: 100,
   maxHeight: 22,
   marginBottom: -20,
-  fontSize: 10,
-  lineHeight: '11px'
+  lineHeight: 1.1
 };
 
 var inertiaStyle = {
@@ -72,6 +70,9 @@ var MapComponent = React.createClass({
     var name = this.renderName(node);
     var id = this.props.id;
     var inertia = this.renderInertia(this.props.inertia);
+    var nodeFontSize = this.props.nodeFontSize;
+    itemCaptionStyle.fontSize = nodeFontSize;
+    itemCaptionStyle.top = - nodeFontSize;
     return (
       <div style={style}  id={id} >
         <div style={itemCaptionStyle}>{name}</div>

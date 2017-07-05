@@ -131,9 +131,10 @@ export default class CanvasWithBackground extends React.Component {
       outerStyle.backgroundColor = 'white';
       outerStyle.marginTop= '-7px';
     }
+    var nodeFontSize = this.props.nodeFontSize;
     return (
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background}></MapCanvas>
+              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background} nodeFontSize={nodeFontSize}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>

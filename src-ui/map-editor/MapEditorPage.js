@@ -32,6 +32,7 @@ import {calculateMapName} from '../map-list/map-name-calculator';
 import Palette from './palette';
 import CanvasStore from './canvas-store';
 import CanvasWithBackground from './canvas-with-background';
+import CanvasActions from './canvas-actions';
 import ToParentMap from './to-parent-map';
 import $ from 'jquery';
 var Blob = require('blob');
@@ -107,10 +108,15 @@ export default class MapEditorPage extends React.Component {
   download(maplink, tempName) {
     let canvasStore = this.canvasStore;
     let size = canvasStore.getCanvasSize();
+    let data = {
+      width : size.width,
+      height: size.height,
+      nodeFontSize : canvasStore.getNodeFontSize()
+    };
     $.ajax({
       url: maplink,
       type: 'GET',
-      data : size,
+      data : data,
       xhrFields: {
         responseType: 'blob'
       },
@@ -233,6 +239,12 @@ export default class MapEditorPage extends React.Component {
     const helpMenu = <NavItem eventKey={7} href="#" onClick={this.openHelpDialog} key="help">
       <Glyphicon glyph="education"></Glyphicon>Get help!
     </NavItem>;
+    const increaseFont =<NavItem eventKey={7} href="#" onClick={CanvasActions.increaseNodeFontSize} key="increaseFont">
+      <Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"></Glyphicon>
+    </NavItem>;
+    const decreaseFont = <NavItem eventKey={7} href="#" onClick={CanvasActions.decreaseNodeFontSize} key="decreaseFont">
+      <Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"></Glyphicon>
+    </NavItem>;
 
     return (
       <DocumentTitle title={mapName}>
@@ -243,7 +255,7 @@ export default class MapEditorPage extends React.Component {
                 auth={auth}
                 history={history}
                 mainMenu={mapMenu}
-                rightMenu={[helpMenu]}/>
+                rightMenu={[increaseFont, decreaseFont, helpMenu]}/>
             </Col>
           </Row>
           <Row className="show-grid">

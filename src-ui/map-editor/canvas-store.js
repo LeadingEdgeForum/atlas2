@@ -30,6 +30,7 @@ export default class CanvasStore extends Store {
           height: 1
         }
       },
+      nodeFontSize : 10,
       diffEnabled : false
     };
     this.dispatchToken = Dispatcher.register(action => {
@@ -85,6 +86,14 @@ export default class CanvasStore extends Store {
         case ActionTypes.CANVAS_FOCUS_REMOVE_COMMENT:
           var pos = this.state.currentlySelectedComments.indexOf(action.data);
           this.state.currentlySelectedComments.splice(pos, 1);
+          this.emitChange();
+          break;
+        case ActionTypes.CANVAS_INCREASE_NODE_FONT_SIZE:
+          this.state.nodeFontSize ++;
+          this.emitChange();
+          break;
+        case ActionTypes.CANVAS_DECREASE_NODE_FONT_SIZE:
+          this.state.nodeFontSize --;
           this.emitChange();
           break;
         default:
@@ -168,6 +177,10 @@ export default class CanvasStore extends Store {
         height: 100
       };
     }
+  }
+
+  getNodeFontSize(){
+    return this.state.nodeFontSize;
   }
 
   emitChange() {

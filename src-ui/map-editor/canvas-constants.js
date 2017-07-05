@@ -13,6 +13,8 @@ module.exports  = keyMirror({
       CANVAS__ADD_FOCUS_SINGLE_NODE : null,
       CANVAS_FOCUS_SINGLE_COMMENT : null,
       CANVAS_FOCUS_ADD_COMMENT : null,
-      CANVAS_FOCUS_REMOVE_COMMENT : null
+      CANVAS_FOCUS_REMOVE_COMMENT : null,
+      CANVAS_INCREASE_NODE_FONT_SIZE : null,
+      CANVAS_DECREASE_NODE_FONT_SIZE : null
   }
 });
