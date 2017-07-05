@@ -156,6 +156,20 @@ export default class CanvasStore extends Store {
     return this.state;
   }
 
+  getCanvasSize(){
+    if(this.state && this.state.coords && this.state.coords.size){
+      return {
+        width: this.state.coords.size.width,
+        height: this.state.coords.size.height
+      };
+    } else {
+      return {
+        width: 100,
+        height: 100
+      };
+    }
+  }
+
   emitChange() {
     this.state.multiNodeSelection = this.state.currentlySelectedNodes.length + this.state.currentlySelectedComments.length > 1;
     super.emitChange();

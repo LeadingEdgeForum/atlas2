@@ -105,9 +105,12 @@ export default class MapEditorPage extends React.Component {
   }
 
   download(maplink, tempName) {
+    let canvasStore = this.canvasStore;
+    let size = canvasStore.getCanvasSize();
     $.ajax({
       url: maplink,
       type: 'GET',
+      data : size,
       xhrFields: {
         responseType: 'blob'
       },

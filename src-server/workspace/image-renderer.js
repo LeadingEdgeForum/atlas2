@@ -130,6 +130,16 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
         }
         var mapID = new ObjectId(splitMapName[0]);
 
+        var width = Number(req.query.width);
+        if(!Number.isInteger(width) || width < 0 || width > 4000){
+          width = 1024;
+        }
+
+        var height = Number(req.query.height);
+        if(!Number.isInteger(height) || height < 0 || height > 2000){
+          height = 800;
+        }
+
         WardleyMap
             .findOne({
                 _id: mapID,
@@ -149,8 +159,8 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                     background: true,
                     coords: {
                         size: {
-                            width: 1280,
-                            height: 800
+                            width: width,
+                            height: height
                         }
                     }
                 };
