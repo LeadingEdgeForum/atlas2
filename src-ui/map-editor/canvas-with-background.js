@@ -10,7 +10,7 @@ var outerStyle = { //this is style applied to the entire map area (without palet
   width: 'auto',
   left: 0,
   right: 0,
-  height: '100%',
+  // height: '100%',
   minHeight: '500px',
   float: 'left',
   position: 'absolute',

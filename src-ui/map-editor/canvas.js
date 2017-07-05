@@ -25,7 +25,7 @@ jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
 var mapCanvasStyle = {
   position: 'relative',
   top: 0,
-  height: '98%',
+  minHeight : '500px',
   width: '98%',
   left: '2%',
   zIndex: 4
@@ -127,6 +127,21 @@ export default class MapCanvas extends React.Component {
     if (!this.input) {
       return;
     }
+    if(this.resizeHeavyWork){
+      clearTimeout(this.resizeHeavyWork);
+    }
+
+    let windowHeight =  window.innerHeight;
+    let offset = getElementOffset(this.input).top;
+
+    let newHeight = windowHeight - offset - 20; // some margin
+    if(newHeight < 500) {
+      newHeight = 500;
+    }
+    if(mapCanvasStyle.height !== newHeight){
+      mapCanvasStyle.height = newHeight;
+    }
+
     var coord = {
       offset: {
         top: getElementOffset(this.input).top,
@@ -134,21 +149,16 @@ export default class MapCanvas extends React.Component {
       },
       size: {
         width: this.input.offsetWidth,
-        height: this.input.offsetHeight
+        height: newHeight//this.input.offsetHeight
       }
     };
-    if(global.OPTS && global.OPTS.coords){
-      coord = global.OPTS.coords;
-    }
-    this.setState({coords:coord});
-    if (this.props.canvasStore) { // no store means rendering on the server
+    let _this = this;
+    _this.resizeHeavyWork = setTimeout(function(){
+      _this.setState({coords:coord});
       CanvasActions.updateCanvasSizeAndOffset(coord);
-      var _this = this;
-      jsPlumb.ready(function() {
-        jsPlumb.revalidate(_this.input);
-      });
-
-    }
+      _this.forceUpdate();
+      _this.resizeHeavyWork = null;
+    }, 100);
   }
 
   componentDidMount() {
@@ -176,9 +186,11 @@ export default class MapCanvas extends React.Component {
 
   componentDidUpdate(prevProps, prevState) {
     var _this = this;
+    jsPlumb.ready(function() {
       _this.reconcileDependencies();
       // jsPlumb.setSuspendDrawing(false, true);
       jsPlumb.repaintEverything();
+    });
   }
 
   getOverlays(fromStyle, menuDefinition, labelText) {
