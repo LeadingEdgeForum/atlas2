@@ -71,7 +71,7 @@
     "imports-loader": "^0.7.0",
     "script-loader": "^0.7.0",
     "webpack-dev-middleware": "^1.8.4",
-    "webpack": "3.0.0-rc.1"
+    "webpack": "3.1.0"
   },
   "repository": {},
   "engines": {
