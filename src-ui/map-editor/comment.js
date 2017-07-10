@@ -35,10 +35,16 @@ var Comment = React.createClass({
   },
 
   resizeHandler : function(newWidth) {
+      if(this.resizeHandlerTimeout){
+        clearTimeout(this.resizeHandlerTimeout);
+      }
       var id = this.props.id;
       var mapID = this.props.mapID;
       var workspaceID = this.props.workspaceID;
-      Actions.updateComment(workspaceID, mapID, id, null, newWidth);
+      var updateCall = function(){
+        Actions.updateComment(workspaceID, mapID, id, null, newWidth);
+      };
+      this.resizeHandlerTimeout = setTimeout(updateCall,100);
   },
 
   onClickHandler : function(event){
