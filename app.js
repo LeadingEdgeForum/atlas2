@@ -218,5 +218,6 @@ io.on('connection', function(socket) {
 });
 
 server.___app = app;
+server.___conn = conn;
 server.___app.io = io;
 module.exports=server;

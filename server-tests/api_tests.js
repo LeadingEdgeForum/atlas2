@@ -39,6 +39,11 @@ describe('Workspaces & maps', function() {
         }
     });
 
+    after(function(done) {
+      app.___conn.db.dropDatabase();
+      done();
+    });
+
     it('verify login', function(done) {
         userAgent1.post('/login').
         send({

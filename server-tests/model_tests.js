@@ -153,7 +153,7 @@ describe('Model tests', function() {
     });
 
     it("rename second node in the second map", function(done) {
-      currentMap2.changeNode("2", 0.7, 0.7, "INTERNAL", currentMap2.nodes[1]._id, "description", 1, owner)
+      currentMap2.changeNode("2", 0.7, 0.7, null, "INTERNAL", currentMap2.nodes[1]._id, "description", 1, owner)
         .then(function(result) {
           return result[1].value.formJSON();
         })
