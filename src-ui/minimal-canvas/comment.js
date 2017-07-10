@@ -26,6 +26,8 @@ var Comment = React.createClass({
     });
     style.fontSize = this.props.otherFontSize;
     style.padding = style.fontSize / 6 + 'px';
+    style.width = comment.width ? comment.width + 'px' : '100px';
+    style.maxWidth = '300px';
 
     var id = this.props.id;
     var txt = comment.text;

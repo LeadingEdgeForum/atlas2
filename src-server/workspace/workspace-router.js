@@ -754,6 +754,7 @@ module.exports = function(authGuardian, mongooseConnection) {
       var mapID = req.params.mapID;
       var x = req.body.x;
       var y = req.body.y;
+      var width = req.body.width;
       var text = req.body.text;
       var commentID = req.params.commentID;
 
@@ -769,7 +770,8 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.updateComment(commentID, {
                   x: x,
                   y: y,
-                  text: text
+                  text: text,
+                  width : width
               });
           })
           .then(function(map) {

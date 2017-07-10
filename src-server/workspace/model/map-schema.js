@@ -88,6 +88,7 @@ module.exports = function(conn) {
             x: Schema.Types.Number,
             y: Schema.Types.Number,
             text: Schema.Types.String,
+            width : Schema.Types.Number,
             next : [Schema.Types.ObjectId],
             previous : Schema.Types.ObjectId,
         }],
@@ -101,15 +102,18 @@ module.exports = function(conn) {
         return this.save();
     };
 
-    _MapSchema.methods.updateComment = function(seq, dataPos) {
+    _MapSchema.methods.updateComment = function(id, dataPos) {
         for (var i = 0; i < this.comments.length; i++) {
-            if ('' + this.comments[i]._id === seq) {
+            if ('' + this.comments[i]._id === id) {
                 if (dataPos.x && dataPos.y) {
                     this.comments[i].set('x', dataPos.x);
                     this.comments[i].set('y', dataPos.y);
                 }
                 if (dataPos.text) {
                     this.comments[i].set('text', dataPos.text);
+                }
+                if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
+                  this.comments[i].set('width', dataPos.width);
                 }
             }
         }

@@ -72,8 +72,7 @@ var genericCommentStyle = {
   fontSize: 10,
   lineHeight: 1.1,
   padding: '1px',
-  float: 'left',
-  maxWidth: '150px'
+  float: 'left'
 };
 
 var getStyleForType = function(type) {

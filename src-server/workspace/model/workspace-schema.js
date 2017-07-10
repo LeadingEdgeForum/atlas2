@@ -1185,6 +1185,7 @@ module.exports = function(conn) {
                     _id: newCommentId,
                     x: oldMap.comments[j].x,
                     y: oldMap.comments[j].y,
+                    width: oldMap.comments[j].width,
                     text: oldMap.comments[j].text,
                     next: [],
                     previous : oldMap.comments[j]._id

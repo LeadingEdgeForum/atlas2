@@ -9,6 +9,7 @@ import {endpointOptions} from './component-styles';
 import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
+import ReactResizeDetector from 'react-resize-detector';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
@@ -33,10 +34,16 @@ var Comment = React.createClass({
     return {focused:false};
   },
 
+  resizeHandler : function(newWidth) {
+      var id = this.props.id;
+      var mapID = this.props.mapID;
+      var workspaceID = this.props.workspaceID;
+      Actions.updateComment(workspaceID, mapID, id, null, newWidth);
+  },
+
   onClickHandler : function(event){
     event.preventDefault();
     event.stopPropagation();
-
     if (this.state.hover === "remove") {
       var id = this.props.id;
       var mapID = this.props.mapID;
@@ -179,6 +186,14 @@ var Comment = React.createClass({
     style.fontSize = canvasStore.getOtherFontSize();
     style.padding = style.fontSize / 6 + 'px';
 
+    let textStyle = {};
+    textStyle.width = comment.width ? comment.width + 'px' : '100px';
+    textStyle.maxWidth =  '300px';
+    if(focused){
+      textStyle.resize = 'horizontal';
+      textStyle.overflow = 'auto';
+    }
+
     return (
       <div style={style} onClick={this.onClickHandler} id={id} ref={input => {
         if (input) {
@@ -200,7 +215,10 @@ var Comment = React.createClass({
             Actions.updateComment(workspaceID, mapID, id, {x : coords.x,y:coords.y});
           }
         });
-      }}> {txt} {menu}
+      }}>
+      <div style={textStyle}>{txt}
+        <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
+      </div> {menu}
       </div>
     );
   }

@@ -697,6 +697,9 @@ export default class SingleWorkspaceStore extends Store {
       payload.x = data.pos.x;
       payload.y = data.pos.y;
     }
+    if(data.width){
+      payload.width = data.width;
+    }
     $.ajax({
         type: 'PUT',
         url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/comment/' + data.id,

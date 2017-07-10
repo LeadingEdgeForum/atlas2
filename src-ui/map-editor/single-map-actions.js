@@ -207,9 +207,9 @@ var SingleMapActions = {
       });
     },
 
-    updateComment: function(workspaceID, mapID, id, pos /*{pos:[x,y]}*/){
-      if(!workspaceID || !mapID || !id || !pos || !pos.x || !pos.y){
-        console.error('missing data', workspaceID, mapID, id, pos);
+    updateComment: function(workspaceID, mapID, id, pos /*{pos:[x,y]}*/, width){
+      if(!workspaceID || !mapID || !id || ! ((pos && pos.x && pos.y) || width)){
+        console.error('missing data', workspaceID, mapID, id, pos, width);
       }
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.MOVE_COMMENT,
@@ -217,7 +217,8 @@ var SingleMapActions = {
             workspaceID: workspaceID,
             mapID: mapID,
             id: id,
-            pos: pos
+            pos: pos,
+            width:width
           }
       });
     },
