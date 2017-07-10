@@ -37,6 +37,9 @@ if (!(typeof global.it === 'function')) {
 
 var debug = false;
 debug = true;
+if (typeof global.it === 'function') {
+  debug = false;
+}
 if (debug){
   try{
     var webpack = require('webpack');
@@ -62,6 +65,11 @@ try {
 
 }
 
+if (typeof global.it === 'function') {
+  //testing, use anonymous
+  config.userProvider.type = 'passport';
+  config.userProvider.strategy = 'anonymous';
+}
 
 app.use(morgan('combined'));
 app.use(bodyParser.json()); // to support JSON-encoded bodies
