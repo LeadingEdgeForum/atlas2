@@ -37,26 +37,34 @@ log4js.configure({
 			appenders: ['console', 'mainFile'],
       level: 'ERROR'
 		},
-		variantLogger : {
-			appenders: ['console', 'mainFile'],
+    NodeSchema : {
+      appenders: ['console', 'mainFile'],
       level: 'ERROR'
+    },
+    NodeRemoval : {
+      appenders: ['console', 'mainFile'],
+      level: 'ERROR'
+    },
+		variants : {
+			appenders: ['console', 'mainFile'],
+      level: 'error'
 		},
-		deduplicationLogger : {
+		deduplication : {
 			appenders: ['console', 'mainFile'],
       level: 'DEBUG'
 		},
-		nodeRemovalLogger : {
-			appenders: ['console', 'mainFile'],
-			level: 'ERROR'
-		},
-		modelLogger : {
+		submap : {
 			appenders: ['console', 'mainFile'],
 			level: 'DEBUG'
 		},
-		rendererLogger : {
+		renderer : {
 			appenders: ['console', 'mainFile'],
 			level: 'WARN'
-		}
+		},
+    capability : {
+      appenders: ['console', 'mainFile'],
+      level: 'ERROR'
+    }
   }
 });
 
