@@ -18,16 +18,46 @@ var fs = require('fs');
 fs.mkdir('logs', function ignore (err) {
 });
 
-
 log4js.configure({
-	appenders : [ {
-		type : 'console'
-	}, {
-		type : 'file',
-		filename : 'logs/wardleymaps.log',
-		category : 'wardleymaps'
-	} ],
-	replaceConsole : true
+  appenders: {
+    console: {
+      type: 'console'
+    },
+    mainFile: {
+      type: 'file',
+      filename: 'logs/wardleymaps.log'
+    }
+  },
+  categories: {
+    default: {
+      appenders: ['console', 'mainFile'],
+      level: 'ALL'
+    },
+		MapSchema : {
+			appenders: ['console', 'mainFile'],
+      level: 'ERROR'
+		},
+		variantLogger : {
+			appenders: ['console', 'mainFile'],
+      level: 'ERROR'
+		},
+		deduplicationLogger : {
+			appenders: ['console', 'mainFile'],
+      level: 'DEBUG'
+		},
+		nodeRemovalLogger : {
+			appenders: ['console', 'mainFile'],
+			level: 'ERROR'
+		},
+		modelLogger : {
+			appenders: ['console', 'mainFile'],
+			level: 'DEBUG'
+		},
+		rendererLogger : {
+			appenders: ['console', 'mainFile'],
+			level: 'WARN'
+		}
+  }
 });
 
 

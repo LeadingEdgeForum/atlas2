@@ -19,7 +19,6 @@ var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
 var variantLogger = require('./../../log').getLogger('variants');
-variantLogger.setLevel('ALL');
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work

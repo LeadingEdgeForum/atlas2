@@ -26,11 +26,6 @@ var ReactDom = require('react-dom');
 var fs = require('fs');
 var track = require('../tracker-helper');
 
-var log4js = require('log4js');
-rendererLogger.setLevel(log4js.levels.WARN);
-
-
-
 
 var getUserIdFromReq = function(req) {
     if (req && req.user && req.user.email) {

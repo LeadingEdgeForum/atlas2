@@ -30,7 +30,7 @@
     "jwt-decode": "^2.2.0",
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
-    "log4js": "*",
+    "log4js": "2.0.1",
     "mongoose": "4.11.1",
     "morgan": "^1.7.0",
     "passport": "^0.3.2",
@@ -72,7 +72,7 @@
     "imports-loader": "^0.7.0",
     "script-loader": "^0.7.0",
     "webpack-dev-middleware": "^1.8.4",
-    "webpack": "3.0.0-rc.1"
+    "webpack": "3.1.0"
   },
   "repository": {},
   "engines": {

@@ -17,7 +17,6 @@ var ObjectId = mongoose.Types.ObjectId;
 var modelLogger = require('./../../log').getLogger('MapSchema');
 var _ = require('underscore');
 var q = require('q');
-modelLogger.setLevel('ERROR');
 
 var wardleyMap = {};
 

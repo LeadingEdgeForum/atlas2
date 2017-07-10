@@ -20,7 +20,6 @@ var Schema = mongoose.Schema;
 var ObjectId = mongoose.Types.ObjectId;
 var modelLogger = require('./../../log').getLogger('NodeSchema');
 var nodeRemovalLogger = require('./../../log').getLogger('NodeRemoval');
-nodeRemovalLogger.setLevel('ALL');
 var q = require('q');
 
 var node = {};
