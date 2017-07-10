@@ -1086,6 +1086,7 @@ module.exports = function(conn) {
                 name: oldNode.name,
                 x: oldNode.x,
                 y: oldNode.y,
+                width: oldNode.width,
                 type: oldNode.type,
                 constraint: oldNode.constraint,
                 previous: oldNode._id,

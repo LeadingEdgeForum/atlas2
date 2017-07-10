@@ -317,7 +317,7 @@ var SingleMapActions = {
       });
     },
 
-    updateNode: function(workspaceId, mapId, nodeId, pos,
+    updateNode: function(workspaceId, mapId, nodeId, pos, width,
       name, type, person, inertia, description, constraint){
       if(!nodeId){
         console.error('missing node id');
@@ -330,6 +330,7 @@ var SingleMapActions = {
             mapId: mapId,
             nodeId :nodeId,
             pos : pos ? pos : null,
+            width : width,
             name : name,
             type : type,
             person : person,

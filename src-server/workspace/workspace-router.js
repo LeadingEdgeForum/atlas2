@@ -824,6 +824,7 @@ module.exports = function(authGuardian, mongooseConnection) {
       var name = req.body.name;
       var x = req.body.x;
       var y = req.body.y;
+      var width = req.body.width;
       var type = req.body.type;
       var desiredNodeId = new ObjectId(req.params.nodeID);
       var description = req.body.description;
@@ -843,7 +844,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.verifyAccess(owner);
           })
           .then(function(map) {
-              return map.changeNode(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
+              return map.changeNode(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
           })
           .then(function(result) {
               return result[1].value.formJSON();

@@ -583,6 +583,9 @@ export default class SingleWorkspaceStore extends Store {
       payload.x = data.pos.x;
       payload.y = data.pos.y;
     }
+    if(data.width){
+      payload.width = data.width;
+    }
     if(data.name || data.type || data.person || data.inertia || data.description || data.constraint !== undefined ){
       payload.name = data.name;
       payload.type = data.type;

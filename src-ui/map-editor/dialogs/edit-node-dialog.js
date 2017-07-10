@@ -60,6 +60,7 @@ var EditNodeDialog = React.createClass({
       this.internalState.mapId,
       this.internalState.nodeId,
       null, /*dialog does not change the pos*/
+      null, /*nor width */
       this.internalState.name,
       this.internalState.type,
       this.internalState.responsiblePerson,

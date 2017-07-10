@@ -10,6 +10,7 @@ import {endpointOptions} from './component-styles';
 import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
+import ReactResizeDetector from 'react-resize-detector';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
@@ -27,11 +28,12 @@ var itemCaptionStyle = {
   position: 'absolute',
   zIndex: 20,
   textShadow: '0 0 5px white, 0 0 3px white, 0 0 7px white, 0 0 1px white',
-  height: 22,
-  maxWidth: 100,
-  maxHeight: 22,
+  maxWidth: 300,
+  maxHeight: 200,
   marginBottom: -20,
-  lineHeight: 1.1
+  lineHeight: 1.1,
+  overflow: 'auto',
+  resize :'horizontal'
 };
 
 /* globals document */
@@ -66,6 +68,19 @@ var MapComponent = React.createClass({
       nextState.hover = null;
     }
     return true;
+  },
+
+  resizeHandler : function(newWidth){
+    if(this.resizeHandlerTimeout){
+      clearTimeout(this.resizeHandlerTimeout);
+    }
+    var id = this.props.id;
+    var mapID = this.props.mapID;
+    var workspaceID = this.props.workspaceID;
+    var updateCall = function(){
+      Actions.updateNode(workspaceID, mapID, id, null, newWidth);
+    };
+    this.resizeHandlerTimeout = setTimeout(updateCall,100);
   },
 
   onClickHandler: function(e) {
@@ -393,6 +408,7 @@ var MapComponent = React.createClass({
     var canvasStore = this.props.canvasStore;
     itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
     itemCaptionStyle.top = - itemCaptionStyle.fontSize;
+    itemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
 
     var cleanPosse = this.cleanPosse;
     return (
@@ -418,7 +434,9 @@ var MapComponent = React.createClass({
           }
         });
       }}>
-        <div style={itemCaptionStyle}>{name}</div>
+        <div style={itemCaptionStyle}>{name}
+          <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
+        </div>
         {inertia}
         {menu}
       </div>

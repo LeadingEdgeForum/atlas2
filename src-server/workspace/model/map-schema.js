@@ -343,7 +343,7 @@ module.exports = function(conn) {
             });
     };
 
-    _MapSchema.methods.changeNode = function(name, x, y, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
+    _MapSchema.methods.changeNode = function(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
         var _this = this;
         var Node = require('./node-schema')(conn);
         return Node.findOne({
@@ -373,6 +373,9 @@ module.exports = function(conn) {
                 }
                 if (constraint !== null && constraint !== undefined) {
                     node.constraint = constraint;
+                }
+                if(width && Number.isInteger(Number.parseInt(width))){
+                  node.width = width;
                 }
                 return q.allSettled([node.save(), _this.populate({
                     path: 'nodes',

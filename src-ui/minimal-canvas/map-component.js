@@ -13,9 +13,9 @@ var itemCaptionStyle = {
   position: 'absolute',
   zIndex: 20,
   textShadow: '0 0 5px white, 0 0 3px white, 0 0 7px white, 0 0 1px white',
-  height: 22,
-  maxWidth: 100,
-  maxHeight: 22,
+  width : 'auto',
+  maxWidth: 300,
+  maxHeight: 200,
   marginBottom: -20,
   lineHeight: 1.1
 };
@@ -73,6 +73,7 @@ var MapComponent = React.createClass({
     var nodeFontSize = this.props.nodeFontSize;
     itemCaptionStyle.fontSize = nodeFontSize;
     itemCaptionStyle.top = - nodeFontSize;
+    itemCaptionStyle.width = node.width ? node.width + 'px' : '100px';
     return (
       <div style={style}  id={id} >
         <div style={itemCaptionStyle}>{name}</div>

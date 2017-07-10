@@ -135,6 +135,7 @@ module.exports = function(conn){
         name: Schema.Types.String,
         x: Schema.Types.Number,
         y: Schema.Types.Number,
+        width : Schema.Types.Number, //label width
         type: Schema.Types.String,
         constraint: Schema.Types.Number, // 0 - none, 10 - constraint, 20 - barrier
         inboundDependencies: [{
