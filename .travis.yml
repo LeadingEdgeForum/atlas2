@@ -1,5 +1,7 @@
 language: node_js
+before_script:
+ - webpack
 node_js:
-  - "6.7.0"
+  - "6.10.2"
 services:
   - mongodb
