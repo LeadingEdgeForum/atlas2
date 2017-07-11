@@ -144,8 +144,9 @@ module.exports = function(conn) {
         }).exec().then(function(workspace) {
             if (workspace) {
                 return _this; // if we found workspace, then we have access to the map
+            } else {
+              return null;
             }
-            throw new Error('User ' + user + ' has no access to map ' + mapID);
         });
     };
 

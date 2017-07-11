@@ -37,9 +37,33 @@ var getUserIdFromReq = function(req) {
     accessLogger.trace('user identified ' + req.user.email);
     return req.user.email;
   }
-  accessLogger.error('user.email not present');
   //should never happen as indicates lack of authentication
   return null;
+};
+
+function AccessError(status, message){
+  this.status = status;
+  this.message = message;
+}
+AccessError.prototype = Object.create(Error.prototype);
+AccessError.prototype.constructor = AccessError;
+
+var checkAccess = function(id, user, map) {
+  if (!user) {
+    accessLogger.error('user.email not present');
+    throw new AccessError(401, 'user.email not present');
+  }
+  if (!map) {
+    accessLogger.warn('map ' + id + ' does not exist');
+    throw new AccessError(404, 'map ' + id + ' does not exist');
+  }
+  return map.verifyAccess(user).then(function(verifiedMap) {
+    if (!verifiedMap) {
+      accessLogger.warn(user + ' has no access to map ' + id + '.');
+      throw new AccessError(403, user + ' has no access to map ' + id + '.');
+    }
+    return verifiedMap;
+  });
 };
 
 module.exports = function(authGuardian, mongooseConnection) {
@@ -52,12 +76,15 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   module.router = require('express').Router();
 
-  var defaultAccessDenied = function(res, err){
-    console.error('default error handler', err);
+  var defaultErrorHandler = function(res, err){
       if(err){
-          return res.send(500);
+          if(err instanceof AccessError){
+            return res.status(err.status).send(err.message);
+          }
+          workspaceLogger.error(err);
+          return res.status(500).send(err.message);
       }
-      res.send(403);
+      res.status(500).send("No more details available");
   };
 
   // TODO: make this client side one day
@@ -70,12 +97,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           })
           .select('user purpose name workspace responsiblePerson')
           .exec()
-          .then(function(map){
-            return map.verifyAccess(owner);
-          })
-          .fail(function(e) {
-              defaultAccessDenied(res, e);
-          })
+          .then(checkAccess.bind(this,req.params.mapID,owner))
           .done(function(result) {
               if (result.user && result.purpose) {
                   res.json({
@@ -92,7 +114,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       }
                   });
               }
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
 
@@ -118,16 +140,15 @@ module.exports = function(authGuardian, mongooseConnection) {
       var owner = getUserIdFromReq(req);
       Workspace
         .initWorkspace(req.body.name, req.body.description, req.body.purpose, owner)
-        .fail(function(e){
-            workspaceLogger.error(e);
-            return res.status(500);
-        })
         .done(function(workspace){
             res.json(workspace);
             track(owner,'create_workspace',{
               'id' : workspace._id,
               body : JSON.stringify(req.body)
             });
+        }, function(e){
+            workspaceLogger.error(e);
+            return res.status(500).send(e);
         });
   });
 
@@ -202,75 +223,62 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.get('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
               _id: req.params.mapID,
               archived: false
           })
-          .then(function(result) {
-              return result.verifyAccess(getUserIdFromReq(req));
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(result){
             return result.defaultPopulate();
-          })
-          .fail(function(e) {
-              defaultAccessDenied(res, e);
           })
           .done(function(map) {
               res.json({
                   map: map
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.get('/map/:mapID/diff', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
               _id: req.params.mapID,
               archived: false
           })
           .exec()
-          .then(function(result) {
-              return result.verifyAccess(getUserIdFromReq(req));
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(result){
             return result.calculateDiff();
           })
-          .fail(function(e) {
-              defaultAccessDenied(res, e);
-          })
           .done(function(diffResult) {
               res.json(diffResult);
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.get('/map/:mapID/variants', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
               _id: req.params.mapID,
               archived: false
           })
           .exec()
-          .then(function(result) {
-              return result.verifyAccess(getUserIdFromReq(req));
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(result){
             return result.getRelevantVariants();
           })
-          .fail(function(e) {
-              defaultAccessDenied(res, e);
-          })
           .done(function(diffResult) {
               res.json(diffResult);
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
               _id: req.params.mapID,
               archived: false
           })
           .exec()
-          .then(function(result) {
-              return result.verifyAccess(getUserIdFromReq(req));
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(result) {
               return result.getAvailableSubmaps();
           })
@@ -284,14 +292,11 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
               return listOfAvailableSubmaps;
           })
-          .fail(function(e) {
-              defaultAccessDenied(res, e);
-          })
           .done(function(listOfAvailableSubmaps) {
               res.json({
                   listOfAvailableSubmaps: listOfAvailableSubmaps
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.get('/submap/:submapID/usage', authGuardian.authenticationRequired, function(req, res){
@@ -302,18 +307,13 @@ module.exports = function(authGuardian, mongooseConnection) {
             archived: false
         })
         .exec()
-        .then(function(result) {
-            return result.verifyAccess(getUserIdFromReq(req));
-        })
+        .then(checkAccess.bind(this, req.params.mapID, owner))
         .then(function(result) {
             return result.getSubmapUsage();
         })
-        .fail(function(e) {
-            defaultAccessDenied(res, e);
-        })
         .done(function(listOfMaps) {
             res.json(listOfMaps);
-        });
+        }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.put('/map/:mapID/submap/:submapID', authGuardian.authenticationRequired, function(req, res) {
@@ -325,16 +325,12 @@ module.exports = function(authGuardian, mongooseConnection) {
     var parentMapPromise = WardleyMap.findOne({
         _id: req.params.mapID,
         archived: false
-    }).exec().then(function(map) {
-        return map.verifyAccess(owner);
-    });
+    }).exec().then(checkAccess.bind(this, req.params.mapID, owner));
 
     var submapPromise = WardleyMap.findOne({
         _id: req.params.submapID,
         archived: false
-    }).exec().then(function(map) {
-        return map.verifyAccess(owner);
-    });
+    }).exec().then(checkAccess.bind(this, req.params.submapID, owner));
 
     q.allSettled([parentMapPromise, submapPromise])
         .then(function(results) {
@@ -359,14 +355,11 @@ module.exports = function(authGuardian, mongooseConnection) {
         .then(function(map) {
             return map.defaultPopulate();
         })
-        .fail(function(e) {
-            return defaultAccessDenied(res, e);
-        })
         .done(function(savedMap) {
             res.json({
                 map: savedMap
             });
-        });
+        }, defaultErrorHandler.bind(this, res));
 });
 
   module.router.put('/map/:mapID/submap', authGuardian.authenticationRequired, function(req, res) {
@@ -395,22 +388,18 @@ module.exports = function(authGuardian, mongooseConnection) {
           .then(function(map) {
               return map.defaultPopulate();
           })
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               return map.formASubmap(params);
           })
           .then(function(map) {
               return map.defaultPopulate();
           })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
-          }).done(function(json) {
+          .done(function(json) {
               res.json({
                   map: json
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.put('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
@@ -419,23 +408,18 @@ module.exports = function(authGuardian, mongooseConnection) {
           _id: req.params.mapID,
           archived: false
       }).exec()
-      .then(function(map){
-        return map.verifyAccess(owner);
-      })
+      .then(checkAccess.bind(this, req.params.mapID, owner))
       .then(function(map){
         return map.newBody(req.body.map);
       })
       .then(function(map){
         return map.defaultPopulate();
       })
-      .fail(function(e){
-        return defaultAccessDenied(res,e);
-      })
       .done(function(json) {
           res.json({
               map: json
           });
-      });
+      }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.put('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
@@ -476,9 +460,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           })
           .populate('workspace')
           .exec()
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               map.workspace.getTimeSlice(map.timesliceId).maps.pull(map._id);
               var workspacePromise = map.workspace.save()
@@ -491,9 +473,6 @@ module.exports = function(authGuardian, mongooseConnection) {
 
               return q.all([workspacePromise, mapPromise]);
           })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
-          })
           .done(function(args) {
               res.json({
                   workspace: args[0]
@@ -501,7 +480,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               track(owner,'delete_map',{
                 'id' : req.params.mapID,
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.delete('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
@@ -545,9 +524,6 @@ module.exports = function(authGuardian, mongooseConnection) {
                 responsiblePerson : req.body.responsiblePerson,
               });
           })
-          .fail(function(e) {
-              defaultAccessDenied.bind(res, e);
-          })
           .done(function(result) {
               res.json({
                   map: result
@@ -556,7 +532,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'id' : result._id,
                 'body' : JSON.stringify(req.body)
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.post('/variant/:timesliceId/map', authGuardian.authenticationRequired, function(req, res) {
@@ -577,9 +553,6 @@ module.exports = function(authGuardian, mongooseConnection) {
                 responsiblePerson : req.body.responsiblePerson,
               }, req.params.timesliceId);
           })
-          .fail(function(e) {
-              defaultAccessDenied.bind(res, e);
-          })
           .done(function(result) {
               res.json({
                   map: result
@@ -588,7 +561,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'id' : result._id,
                 'body' : JSON.stringify(req.body)
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
 
@@ -611,17 +584,12 @@ module.exports = function(authGuardian, mongooseConnection) {
               archived: false,
               workspace: workspaceID
           }).exec()
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               return map.addNode(name, x, y, type, new ObjectId(workspaceID), description, inertia, responsiblePerson, constraint);
           })
           .then(function(map){
               return map.defaultPopulate();
-          })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
           })
           .done(function(map) {
               res.json({
@@ -631,7 +599,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'map_id' : req.params.mapID,
                 'body' : JSON.stringify(req.body)
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.put('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
@@ -651,9 +619,6 @@ module.exports = function(authGuardian, mongooseConnection) {
           .then(function(workspace){
             return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
           })
-          .fail(function(e){
-            return defaultAccessDenied(res, e);
-          })
           .done(function(workspace) {
               res.json({
                   workspace: workspace
@@ -672,7 +637,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'editor' : email,
                 'workspace_id' : workspaceID
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
 
@@ -700,14 +665,11 @@ module.exports = function(authGuardian, mongooseConnection) {
         .then(function(workspace){
           return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
         })
-        .fail(function(e) {
-            return defaultAccessDenied(res, e);
-        })
         .done(function(workspace) {
             res.json({
                 workspace: workspace
             });
-        });
+        }, defaultErrorHandler.bind(this, res));
 });
 
   module.router.post('/workspace/:workspaceID/map/:mapID/comment', authGuardian.authenticationRequired, function(req, res) {
@@ -723,9 +685,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               archived: false,
               workspace: workspaceID
           }).exec()
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               return map.makeComment({
                   x: x,
@@ -736,9 +696,6 @@ module.exports = function(authGuardian, mongooseConnection) {
           .then(function(map) {
               return map.defaultPopulate();
           })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
-          })
           .done(function(jsonResult) {
               res.json({
                   map: jsonResult
@@ -747,7 +704,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'map_id' : req.params.mapID,
                 'body' : JSON.stringify(req.body)
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.put('/workspace/:workspaceID/map/:mapID/comment/:commentID', authGuardian.authenticationRequired, function(req, res) {
@@ -765,9 +722,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               archived: false,
               workspace: workspaceID
           }).exec()
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               return map.updateComment(commentID, {
                   x: x,
@@ -779,14 +734,11 @@ module.exports = function(authGuardian, mongooseConnection) {
           .then(function(map) {
               return map.defaultPopulate();
           })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
-          })
           .done(function(jsonResult) {
               res.json({
                   map: jsonResult
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.delete('/workspace/:workspaceID/map/:mapID/comment/:commentID', authGuardian.authenticationRequired, function(req, res) {
@@ -800,23 +752,18 @@ module.exports = function(authGuardian, mongooseConnection) {
             archived: false,
             workspace: workspaceID
         }).exec()
-        .then(function(map) {
-            return map.verifyAccess(owner);
-        })
+        .then(checkAccess.bind(this, req.params.mapID, owner))
         .then(function(map) {
             return map.deleteComment(commentID);
         })
         .then(function(map) {
             return map.defaultPopulate();
         })
-        .fail(function(e) {
-            return defaultAccessDenied(res, e);
-        })
         .done(function(jsonResult) {
             res.json({
                 map: jsonResult
             });
-        });
+        }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
@@ -842,23 +789,18 @@ module.exports = function(authGuardian, mongooseConnection) {
               nodes: desiredNodeId
           })
           .exec()
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               return map.changeNode(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
           })
           .then(function(result) {
               return result.defaultPopulate();
           })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
-          })
           .done(function(jsonResult) {
               res.json({
                   map: jsonResult
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
@@ -876,23 +818,18 @@ module.exports = function(authGuardian, mongooseConnection) {
               nodes: desiredNodeId
           })
           .exec()
-          .then(function(map) {
-              return map.verifyAccess(owner);
-          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
               return map.removeNode(desiredNodeId);
           })
           .then(function(result) {
               return result.defaultPopulate();
           })
-          .fail(function(e) {
-              return defaultAccessDenied(res, e);
-          })
           .done(function(jsonResult) {
               res.json({
                   map: jsonResult
               });
-          });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.post(
@@ -913,9 +850,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   nodes: nodeID1 // maybe, one day, check the second node, too
               })
               .exec()
-              .then(function(map) {
-                  return map.verifyAccess(owner);
-              })
+              .then(checkAccess.bind(this, req.params.mapID, owner))
               .then(function(map) {
                 return Node
                     .findById(nodeID1) //two ids we are looking for
@@ -925,14 +860,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                         return map.defaultPopulate();
                     });
               })
-              .fail(function(e) {
-                  return defaultAccessDenied(res, e);
-              })
               .done(function(jsonResult) {
                   res.json({
                       map: jsonResult
                   });
-              });
+              }, defaultErrorHandler.bind(this, res));
       });
 
   module.router.put(
@@ -956,9 +888,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           nodes: nodeID1 // maybe, one day, check the second node, too
         })
         .exec()
-        .then(function(map) {
-          return map.verifyAccess(owner);
-        })
+        .then(checkAccess.bind(this, req.params.mapID, owner))
         .then(function(map) {
           return Node
             .findById(nodeID1) //two ids we are looking for
@@ -968,14 +898,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                 return map.defaultPopulate();
             });
         })
-        .fail(function(e) {
-          return defaultAccessDenied(res, e);
-        })
         .done(function(jsonResult) {
           res.json({
             map: jsonResult
           });
-        });
+        }, defaultErrorHandler.bind(this, res));
     });
 
   module.router.delete(
@@ -996,9 +923,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   nodes: nodeID1 // maybe, one day, check the second node, too
               })
               .exec()
-              .then(function(map) {
-                  return map.verifyAccess(owner);
-              })
+              .then(checkAccess.bind(this, req.params.mapID, owner))
               .then(function(map) {
                   return Node
                     .findById(nodeID1) //two ids we are looking for
@@ -1008,14 +933,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                         return map.defaultPopulate();
                     });
               })
-              .fail(function(e) {
-                  return defaultAccessDenied(res, e);
-              })
               .done(function(jsonResult) {
                   res.json({
                       map: jsonResult
                   });
-              });
+              }, defaultErrorHandler.bind(this, res));
       });
 
       module.router.post(
@@ -1036,9 +958,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       nodes: nodeID1
                   })
                   .exec()
-                  .then(function(map) {
-                      return map.verifyAccess(owner);
-                  })
+                  .then(checkAccess.bind(this, req.params.mapID, owner))
                   .then(function(map) {
                       return Node
                         .findById(nodeID1)
@@ -1048,14 +968,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                           return map.defaultPopulate();
                         });
                   })
-                  .fail(function(e) {
-                      return defaultAccessDenied(res, e);
-                  })
                   .done(function(jsonResult) {
                       res.json({
                           map: jsonResult
                       });
-                  });
+                  }, defaultErrorHandler.bind(this, res));
           });
 
           module.router.put(
@@ -1075,9 +992,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   nodes: nodeId
                 })
                 .exec()
-                .then(function(map) {
-                  return map.verifyAccess(owner);
-                })
+                .then(checkAccess.bind(this, req.params.mapID, owner))
                 .then(function(map) {
                   return Node
                     .findById(nodeId)
@@ -1087,14 +1002,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                       return map.defaultPopulate();
                     });
                 })
-                .fail(function(e) {
-                  return defaultAccessDenied(res, e);
-                })
                 .done(function(jsonResult) {
                   res.json({
                     map: jsonResult
                   });
-                });
+                }, defaultErrorHandler.bind(this, res));
             });
 
             module.router.put(
@@ -1112,9 +1024,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                     nodes: nodeId
                   })
                   .exec()
-                  .then(function(map) {
-                    return map.verifyAccess(owner);
-                  })
+                  .then(checkAccess.bind(this, req.params.mapID, owner))
                   .then(function(map) {
                     return Node
                       .findById(nodeId)
@@ -1124,14 +1034,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                         return map.defaultPopulate();
                       });
                   })
-                  .fail(function(e) {
-                    return defaultAccessDenied(res, e);
-                  })
                   .done(function(jsonResult) {
                     res.json({
                       map: jsonResult
                     });
-                  });
+                  }, defaultErrorHandler.bind(this, res));
               });
 
       module.router.put(
@@ -1153,9 +1060,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       nodes: nodeID1
                   })
                   .exec()
-                  .then(function(map) {
-                      return map.verifyAccess(owner);
-                  })
+                  .then(checkAccess.bind(this, req.params.mapID, owner))
                   .then(function(map) {
                       return Node
                           .findById(nodeID1)
@@ -1165,14 +1070,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                             return map.defaultPopulate();
                           });
                   })
-                  .fail(function(e) {
-                      return defaultAccessDenied(res, e);
-                  })
                   .done(function(jsonResult) {
                       res.json({
                           map: jsonResult
                       });
-                  });
+                  }, defaultErrorHandler.bind(this, res));
           });
 
       module.router.delete(
@@ -1193,9 +1095,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                       nodes: nodeID1
                   })
                   .exec()
-                  .then(function(map) {
-                      return map.verifyAccess(owner);
-                  })
+                  .then(checkAccess.bind(this, req.params.mapID, owner))
                   .then(function(map) {
                       return Node
                           .findById(nodeID1)
@@ -1205,14 +1105,11 @@ module.exports = function(authGuardian, mongooseConnection) {
                             return map.defaultPopulate();
                           });
                   })
-                  .fail(function(e) {
-                      return defaultAccessDenied(res, e);
-                  })
                   .done(function(jsonResult) {
                       res.json({
                           map: jsonResult
                       });
-                  });
+                  }, defaultErrorHandler.bind(this, res));
           });
 
 
@@ -1231,13 +1128,12 @@ module.exports = function(authGuardian, mongooseConnection) {
                   return res.send(403);
               }
               result.findUnprocessedNodes(req.params.variantId)
-                  .fail(function(e) {
-                      return res.status(500).json(e);
-                  })
                   .done(function(maps) {
                       res.json({
                           maps: maps
                       });
+                  }, function(e) {
+                      return res.status(500).json(e);
                   });
           });
       });
@@ -1261,14 +1157,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }
                   return workspace.findProcessedNodes(req.params.variantId);
               })
-              .fail(function(e) {
-                  capabilityLogger.error('responding...', e);
-                  res.status(500).json(e);
-              })
               .done(function(wk) {
                   res.json({
                       workspace: wk
                   });
+              },
+              function(e) {
+                capabilityLogger.error('responding...', e);
+                res.status(500).json(e);
               });
       });
 
@@ -1297,15 +1193,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }
                   return workspace.createNewCapabilityAndAliasForNode(variantId, categoryID, nodeID);
               })
-              .fail(function(e) {
-                  capabilityLogger.error('responding with error', e);
-                  res.status(500).json(e);
-              })
               .done(function(wk) {
                   capabilityLogger.trace('responding ...', wk);
                   res.json({
                       workspace: wk
                   });
+              }, function(e) {
+                  capabilityLogger.error('responding with error', e);
+                  res.status(500).json(e);
               });
       });
 
@@ -1332,15 +1227,14 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
               return workspace.deleteCategory(variantId, categoryID);
             })
-            .fail(function(e) {
-              capabilityLogger.error('responding with error', e);
-              res.status(500).json(e);
-            })
             .done(function(wk) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
               });
+            }, function(e) {
+              capabilityLogger.error('responding with error', e);
+              res.status(500).json(e);
             });
         });
 
@@ -1367,15 +1261,14 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
               return workspace.createCategory(variantId, name);
             })
-            .fail(function(e) {
-              capabilityLogger.error('responding with error', e);
-              res.status(500).json(e);
-            })
             .done(function(wk) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
               });
+            },function(e) {
+              capabilityLogger.error('responding with error', e);
+              res.status(500).json(e);
             });
         });
 
@@ -1403,15 +1296,14 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
               return workspace.editCategory(variantId, categoryID, name);
             })
-            .fail(function(e) {
-              capabilityLogger.error('responding with error', e);
-              res.status(500).json(e);
-            })
             .done(function(wk) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
               });
+            }, function(e) {
+              capabilityLogger.error('responding with error', e);
+              res.status(500).json(e);
             });
         });
 
@@ -1439,15 +1331,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }
                   return workspace.createNewAliasForNodeInACapability(variantId, capabilityID, nodeID);
               })
-              .fail(function(e) {
-                  capabilityLogger.error('responding...', e);
-                  res.status(500).json(e);
-              })
               .done(function(wk) {
                   capabilityLogger.trace('responding ...', wk);
                   res.json({
                       workspace: wk
                   });
+              }, function(e) {
+                  capabilityLogger.error('responding...', e);
+                  res.status(500).json(e);
               });
       });
 
@@ -1477,15 +1368,14 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
               return workspace.createNewMarketReferenceInCapability(variantId, capabilityID, name, description, evolution);
             })
-            .fail(function(e) {
-              capabilityLogger.error('responding...', e);
-              res.status(500).json(e);
-            })
             .done(function(wk) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
               });
+            }, function(e) {
+              capabilityLogger.error('responding...', e);
+              res.status(500).json(e);
             });
         });
 
@@ -1513,15 +1403,14 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
               return workspace.deleteMarketReferenceInCapability(variantId, capabilityID, marketReferenceId);
             })
-            .fail(function(e) {
-              capabilityLogger.error('responding...', e);
-              res.status(500).json(e);
-            })
             .done(function(wk) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
               });
+            }, function(e) {
+              capabilityLogger.error('responding...', e);
+              res.status(500).json(e);
             });
         });
 
@@ -1552,15 +1441,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                 }
                 return workspace.updateMarketReferenceInCapability(variantId, capabilityID, marketReferenceId, name, description, evolution);
               })
-              .fail(function(e) {
-                capabilityLogger.error('responding...', e);
-                res.status(500).json(e);
-              })
               .done(function(wk) {
                 capabilityLogger.trace('responding ...', wk);
                 res.json({
                   workspace: wk
                 });
+              }, function(e) {
+                capabilityLogger.error('responding...', e);
+                res.status(500).json(e);
               });
           });
 
@@ -1588,15 +1476,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }
                   return workspace.addNodeToAlias(variantId, aliasID, nodeID);
               })
-              .fail(function(e) {
-                  capabilityLogger.error('responding...', e);
-                  res.status(500).json(e);
-              })
               .done(function(wk) {
                   capabilityLogger.trace('responding ...', wk);
                   res.json({
                       workspace: wk
                   });
+              }, function(e) {
+                capabilityLogger.error('responding...', e);
+                res.status(500).json(e);
               });
       });
 
@@ -1618,12 +1505,11 @@ module.exports = function(authGuardian, mongooseConnection) {
         .then(function(workspace){
           return workspace.getNodeUsageInfo(variantId, nodeID);
         })
-        .fail(function(e){
-          capabilityLogger.error('responding...', e);
-          res.status(500).json(e);
-        })
         .done(function(capability){
             res.json({capability: capability});
+        }, function(e) {
+          capabilityLogger.error('responding...', e);
+          res.status(500).json(e);
         });
   });
 
@@ -1665,15 +1551,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                     });
                 return wkPromise;
             })
-            .then(function(wk) {
+            .done(function(wk) {
                 capabilityLogger.trace('responding ...');
                 res.json({
                     workspace: wk
                 });
-            })
-            .fail(function(e) {
-                capabilityLogger.error('responding...', e);
-                res.status(500).json(e);
+            }, function(e) {
+              capabilityLogger.error('responding...', e);
+              res.status(500).json(e);
             });
     });
 

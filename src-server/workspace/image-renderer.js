@@ -25,6 +25,7 @@ var React = require('react');
 var ReactDom = require('react-dom');
 var fs = require('fs');
 var track = require('../tracker-helper');
+var accessLogger = require('./../log').getLogger('access');
 
 
 var getUserIdFromReq = function(req) {
@@ -47,6 +48,49 @@ if (typeof(window) === 'undefined') {
 } else {
     console.log(typeof(window));
 }
+
+function AccessError(status, message){
+  this.status = status;
+  this.message = message;
+}
+AccessError.prototype = Object.create(Error.prototype);
+AccessError.prototype.constructor = AccessError;
+
+var checkAccess = function(id, user, map) {
+  if (!user) {
+    accessLogger.error('user.email not present');
+    throw new AccessError(401, 'user.email not present');
+  }
+  if (!map) {
+    accessLogger.warn('map ' + id + ' does not exist');
+    throw new AccessError(404, 'map ' + id + ' does not exist');
+  }
+  return map.verifyAccess(user).then(function(verifiedMap) {
+    if (!verifiedMap) {
+      accessLogger.warn(user + ' has no access to map ' + id + '.');
+      throw new AccessError(403, user + ' has no access to map ' + id + '.');
+    }
+    return verifiedMap;
+  });
+};
+
+var checkAccess = function(id, user, map) {
+  if (!user) {
+    accessLogger.error('user.email not present');
+    throw new AccessError(401, 'user.email not present');
+  }
+  if (!map) {
+    accessLogger.warn('map ' + id + ' does not exist');
+    throw new AccessError(404, 'map ' + id + ' does not exist');
+  }
+  return map.verifyAccess(user).then(function(verifiedMap) {
+    if (!verifiedMap) {
+      accessLogger.warn(user + ' has no access to map ' + id + '.');
+      throw new AccessError(403, user + ' has no access to map ' + id + '.');
+    }
+    return verifiedMap;
+  });
+};
 
 //https://github.com/mhart/react-server-example
 // A utility function to safely escape JSON for embedding in a <script> tag
@@ -108,12 +152,15 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
 
     module.router = require('express').Router();
 
-    var defaultAccessDenied = function(res, err) {
-        console.error('default error handler', err);
-        if (err) {
-            return res.send(500);
+    var defaultErrorHandler = function(res, err){
+        if(err){
+            if(err instanceof AccessError){
+              return res.status(err.status).send(err.message);
+            }
+            accessLogger.error(err);
+            return res.status(500).send(err.message);
         }
-        res.send(403);
+        res.status(500).send("No more details available");
     };
 
     module.router.get('/:mapID', authGuardian.authenticationRequired, function(req, res) {
@@ -121,7 +168,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
         var mapName = req.params.mapID;
         var splitMapName = mapName.split(".");
         if (!(splitMapName.length === 2 && (splitMapName[1] === 'png' || splitMapName[1] === 'html'))) {
-            return defaultAccessDenied(res, 'Invalid req');
+            return defaultErrorHandler(res, new AccessError(400, 'wrong request'));
         }
         var mapID = new ObjectId(splitMapName[0]);
 
@@ -152,9 +199,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
             })
             .populate('nodes')
             .exec()
-            .then(function(map) {
-                return map.verifyAccess(owner);
-            })
+            .then(checkAccess.bind(this, req.params.mapID, owner))
             .then(function(map) {
                 var opts = {
                     nodes: map.nodes,
@@ -196,16 +241,13 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                     });
                 });
             })
-            .fail(function(e) {
-                defaultAccessDenied(res, e);
-            })
-            .done(function(v,e){
+            .done(function(v){
               track(owner,'download',{
                 'format' : 'png',
                 'type' : 'map',
                 'id' : splitMapName[0]
               });
-            });
+            }, defaultErrorHandler.bind(this,res));
     });
 
     module.shutdown = function(){
