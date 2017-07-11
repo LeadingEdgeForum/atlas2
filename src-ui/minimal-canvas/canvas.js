@@ -162,7 +162,11 @@ export default class MapCanvas extends React.Component {
     var components = null;
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
-        return (<MapComponent node={component} size={size} key={component._id} id={component._id} inertia={component.inertia} nodeFontSize={nodeFontSize}/>);
+        return (<MapComponent node={component} size={size} key={component._id} id={component._id} inertia={component.inertia} nodeFontSize={nodeFontSize}
+           moved={component.moved}
+           added={component.added}
+           removed={component.removed}
+           changed={component.changed}/>);
       });
     }
     var arrowends = [];

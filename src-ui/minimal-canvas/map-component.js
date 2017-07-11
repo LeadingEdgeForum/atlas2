@@ -74,6 +74,26 @@ var MapComponent = React.createClass({
     itemCaptionStyle.fontSize = nodeFontSize;
     itemCaptionStyle.top = - nodeFontSize;
     itemCaptionStyle.width = node.width ? node.width + 'px' : '100px';
+
+    var moved = this.props.moved;
+    if(moved){
+      style.boxShadow = "0 0 3px 3px orange";
+      style.opacity = "0.8";
+      style.border = '1px solid dimgray';
+    }
+    var added = this.props.added;
+    if(added){
+      style.boxShadow = "0 0 3px 3px green";
+    }
+    var removed = this.props.removed;
+    if(removed){
+      style.boxShadow = "0 0 3px 3px red";
+      style.opacity = "0.8";
+    }
+    var changed = this.props.changed;
+    if(changed){
+      style.boxShadow = "0 0 3px 3px orange";
+    }
     return (
       <div style={style}  id={id} >
         <div style={itemCaptionStyle}>{name}</div>

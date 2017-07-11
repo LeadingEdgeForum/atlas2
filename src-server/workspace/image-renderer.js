@@ -192,6 +192,8 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
           otherFontSize = 10;
         }
 
+        var diff = req.query.diff;
+        rendererLogger.debug('diff requested: ' + diff);
         WardleyMap
             .findOne({
                 _id: mapID,
@@ -200,10 +202,22 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
             .populate('nodes')
             .exec()
             .then(checkAccess.bind(this, req.params.mapID, owner))
+            .then(function(map){
+              if(diff){
+                rendererLogger.debug('rendering diff for map ' + mapID);
+                return map.calculateDiff().then(function(diff){
+                  map.diff = diff;
+                  rendererLogger.trace('diff calculated');
+                  return map;
+                });
+              }
+              return map;
+            })
             .then(function(map) {
                 var opts = {
-                    nodes: map.nodes,
+                    nodes: map.nodes.toObject(),
                     comments: map.comments,
+                    diff : map.diff,
                     mapID: mapID,
                     workspaceID: map.workspace,
                     background: true,
@@ -216,6 +230,47 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                     nodeFontSize : nodeFontSize,
                     otherFontSize : otherFontSize
                 };
+
+                if (diff) {
+                  var listToAdd = [];
+                  // added are simple - no previous
+                  for (let j = 0; j < opts.nodes.length; j++) {
+                    if (!opts.nodes[j].previous) {
+                      opts.nodes[j] = opts.nodes[j].toObject();
+                      opts.nodes[j].added = true;
+                    }
+                  }
+                  rendererLogger.trace('modified nodes ' + opts.diff.modified.length);
+                  for (let i = 0; i < opts.diff.modified.length; i++) {
+                    for (let j = 0; j < opts.nodes.length; j++) {
+                      if (opts.nodes[j]._id.equals(opts.diff.modified[i]._id)) {
+                        if (opts.diff.modified[i].diff.x) {
+                          let ghost = _.clone(opts.nodes[j].toObject());
+                          ghost.moved = true;
+                          ghost._id = ghost._id + '_history';
+                          ghost.x = opts.diff.modified[i].diff.x.old;
+                          listToAdd.push(ghost);
+                        }
+                        opts.nodes[j] = opts.nodes[j].toObject ? opts.nodes[j].toObject() : opts.nodes[j];
+                        opts.nodes[j].changed = true;
+                      }
+                    }
+                  }
+                  // removed are from diff
+                  for (let i = 0; i < opts.diff.removed.length; i++) {
+                    opts.diff.removed[i] = opts.diff.removed[i].toObject();
+                    opts.diff.removed[i].removed = true;
+                    listToAdd.push(opts.diff.removed[i]);
+                  }
+                  rendererLogger.trace('artificail nodes ' + listToAdd.length);
+                  opts.nodes = opts.nodes.concat(listToAdd);
+                }
+
+                for(let i = 0; i < opts.nodes.length; i++){
+                  rendererLogger.trace('nodes ' + opts.nodes[i].x + ' ' + opts.nodes[i].y);
+                }
+
+                rendererLogger.debug('total number of nodes ' + opts.nodes.length);
                 var pageText = renderFullPage(opts, script || webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH));
 
                 if(splitMapName[1] === 'html'){

@@ -108,11 +108,13 @@ export default class MapEditorPage extends React.Component {
   download(maplink, tempName) {
     let canvasStore = this.canvasStore;
     let size = canvasStore.getCanvasSize();
+    let diff = canvasStore.isDiffEnabled();
     let data = {
       width : size.width,
       height: size.height,
       nodeFontSize : canvasStore.getNodeFontSize(),
-      otherFontSize : canvasStore.getOtherFontSize()
+      otherFontSize : canvasStore.getOtherFontSize(),
+      diff : diff
     };
     $.ajax({
       url: maplink,
