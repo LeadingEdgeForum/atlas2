@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-/*jslint node:true, mocha:true */
+/*jslint node:true, mocha:true, expr: true, loopfunc: true */
 
 var should = require('should');
 var q = require('q');
@@ -63,7 +63,9 @@ describe('Duplication tests', function() {
         for (var i = 0; i < 3; i++) {
           for (var j = 0; j < 3; j++) {
             (function(index1, index2) {
-              promises[index1 * 3 + index2] = maps[index1].addNode("name" + index2, 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner);
+              promises[index1 * 3 + index2] = maps[index1].addNode("name" + index2, 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner).then(function(map){
+                return map.defaultPopulate();
+              });
             })(i, j);
           }
         }
@@ -115,20 +117,23 @@ describe('Duplication tests', function() {
 
 
   it("create capability -> alias -> node", function(done) {
-    var timeslice = currentWorkspace.getTimeSlice(null); //current
-    currentWorkspace.createNewCapabilityAndAliasForNode(null, timeslice.capabilityCategories[0], maps[0].nodes[0]._id)
+    currentWorkspace.populateTimeslices()
       .then(function(workspace) {
-        for (var i = 0; i < timeslice.capabilityCategories; i++) {
-          var category = timeslice.capabilityCategories[i];
-          if (i === 0) {
-            category.capabilities.length.should.equal(1);
-            category.capabilities[0].aliases.length.should.equal(1);
-            category.capabilities[0].aliases[0].nodes.length.should.equal(1);
-            should.exist(category.capabilities[0].aliases[0].nodes[0]._id);
-          } else {
-            category.capabilities.length.should.equal(0);
-          }
-        }
+        var timeslice = workspace.getTimeSlice(null); //current
+        return workspace.createNewCapabilityAndAliasForNode(null, timeslice.capabilityCategories[0], maps[0].nodes[0]._id)
+          .then(function(workspace) {
+            for (var i = 0; i < timeslice.capabilityCategories; i++) {
+              var category = timeslice.capabilityCategories[i];
+              if (i === 0) {
+                category.capabilities.length.should.equal(1);
+                category.capabilities[0].aliases.length.should.equal(1);
+                category.capabilities[0].aliases[0].nodes.length.should.equal(1);
+                should.exist(category.capabilities[0].aliases[0].nodes[0]._id);
+              } else {
+                category.capabilities.length.should.equal(0);
+              }
+            }
+          });
       })
       .done(function(v, e) {
         done(e);

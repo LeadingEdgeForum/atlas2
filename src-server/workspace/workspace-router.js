@@ -20,6 +20,7 @@ var logger = require('./../log');
 var workspaceLogger = require('./../log').getLogger('workspace');
 var submapLogger = require('./../log').getLogger('submap');
 var capabilityLogger = require('./../log').getLogger('capability');
+var accessLogger = require('./../log').getLogger('access');
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
 var q = require('q');
@@ -32,12 +33,12 @@ var log4js = require('log4js');
 var track = require('../tracker-helper');
 
 var getUserIdFromReq = function(req) {
-  console.log('user', req.user);
   if (req && req.user && req.user.email) {
+    accessLogger.trace('user identified ' + req.user.email);
     return req.user.email;
   }
+  accessLogger.error('user.email not present');
   //should never happen as indicates lack of authentication
-  console.error('user.email not present');
   return null;
 };
 
@@ -205,13 +206,11 @@ module.exports = function(authGuardian, mongooseConnection) {
               _id: req.params.mapID,
               archived: false
           })
-          .populate('nodes')
-          .exec()
           .then(function(result) {
               return result.verifyAccess(getUserIdFromReq(req));
           })
           .then(function(result){
-            return result.formJSON();
+            return result.defaultPopulate();
           })
           .fail(function(e) {
               defaultAccessDenied(res, e);
@@ -358,7 +357,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 });
         })
         .then(function(map) {
-            return map.populate("nodes").execPopulate();
+            return map.defaultPopulate();
         })
         .fail(function(e) {
             return defaultAccessDenied(res, e);
@@ -393,9 +392,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               _id: req.params.mapID,
               archived: false
           })
-          .populate('nodes')
-          .populate('workspace')
-          .exec()
+          .then(function(map) {
+              return map.defaultPopulate();
+          })
           .then(function(map) {
               return map.verifyAccess(owner);
           })
@@ -403,7 +402,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.formASubmap(params);
           })
           .then(function(map) {
-              return map.formJSON();
+              return map.defaultPopulate();
           })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
@@ -427,7 +426,7 @@ module.exports = function(authGuardian, mongooseConnection) {
         return map.newBody(req.body.map);
       })
       .then(function(map){
-        return map.formJSON();
+        return map.defaultPopulate();
       })
       .fail(function(e){
         return defaultAccessDenied(res,e);
@@ -618,12 +617,15 @@ module.exports = function(authGuardian, mongooseConnection) {
           .then(function(map) {
               return map.addNode(name, x, y, type, new ObjectId(workspaceID), description, inertia, responsiblePerson, constraint);
           })
+          .then(function(map){
+              return map.defaultPopulate();
+          })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
           })
           .done(function(map) {
               res.json({
-                  map: map.toObject()
+                  map: map
               });
               track(owner,'create_node',{
                 'map_id' : req.params.mapID,
@@ -732,7 +734,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
           })
           .then(function(map) {
-              return map.formJSON();
+              return map.defaultPopulate();
           })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
@@ -775,7 +777,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
           })
           .then(function(map) {
-              return map.formJSON();
+              return map.defaultPopulate();
           })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
@@ -805,7 +807,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             return map.deleteComment(commentID);
         })
         .then(function(map) {
-            return map.formJSON();
+            return map.defaultPopulate();
         })
         .fail(function(e) {
             return defaultAccessDenied(res, e);
@@ -847,7 +849,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.changeNode(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
           })
           .then(function(result) {
-              return result[1].value.formJSON();
+              return result.defaultPopulate();
           })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
@@ -881,7 +883,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               return map.removeNode(desiredNodeId);
           })
           .then(function(result) {
-              return result[1].value.formJSON();
+              return result.defaultPopulate();
           })
           .fail(function(e) {
               return defaultAccessDenied(res, e);
@@ -915,15 +917,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                   return map.verifyAccess(owner);
               })
               .then(function(map) {
-                  return q.allSettled([Node
-                      .findById(nodeID1) //two ids we are looking for
-                      .exec().then(function(node) {
-                          return node.makeDependencyTo(nodeID2);
-                      }), map.populate('nodes').execPopulate()
-                  ]);
-              })
-              .then(function(result) {
-                  return result[1].value.formJSON();
+                return Node
+                    .findById(nodeID1) //two ids we are looking for
+                    .exec().then(function(node) {
+                        return node.makeDependencyTo(nodeID2);
+                    }).then(function(){
+                        return map.defaultPopulate();
+                    });
               })
               .fail(function(e) {
                   return defaultAccessDenied(res, e);
@@ -965,11 +965,8 @@ module.exports = function(authGuardian, mongooseConnection) {
             .exec().then(function(node) {
               return node.updateDependencyTo(nodeID2, {type:type, label:label, description:description});
             }).then(function(tr){
-                return map.populate('nodes').execPopulate();
+                return map.defaultPopulate();
             });
-        })
-        .then(function(result) {
-          return result.formJSON();
         })
         .fail(function(e) {
           return defaultAccessDenied(res, e);
@@ -1008,12 +1005,8 @@ module.exports = function(authGuardian, mongooseConnection) {
                     .exec().then(function(node) {
                       return node.removeDependencyTo(nodeID2);
                     }).then(function(tr){
-                        console.log(tr);
-                        return map.populate('nodes').execPopulate();
+                        return map.defaultPopulate();
                     });
-              })
-              .then(function(result) {
-                  return result.formJSON();
               })
               .fail(function(e) {
                   return defaultAccessDenied(res, e);
@@ -1047,15 +1040,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                       return map.verifyAccess(owner);
                   })
                   .then(function(map) {
-                      return q.allSettled([Node
-                          .findById(nodeID1)
-                          .exec().then(function(node) {
-                              return node.makeAction(actionPos);
-                          }), map.populate('nodes').execPopulate()
-                      ]);
-                  })
-                  .then(function(result) {
-                      return result[1].value.formJSON();
+                      return Node
+                        .findById(nodeID1)
+                        .exec().then(function(node) {
+                            return node.makeAction(actionPos);
+                        }).then(function(){
+                          return map.defaultPopulate();
+                        });
                   })
                   .fail(function(e) {
                       return defaultAccessDenied(res, e);
@@ -1088,15 +1079,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                   return map.verifyAccess(owner);
                 })
                 .then(function(map) {
-                  return q.allSettled([Node
+                  return Node
                     .findById(nodeId)
                     .exec().then(function(node) {
                       return node.turnIntoSubmap(refId);
-                    }), map.populate('nodes').execPopulate()
-                  ]);
-                })
-                .then(function(result) {
-                  return result[1].value.formJSON();
+                    }).then(function(){
+                      return map.defaultPopulate();
+                    });
                 })
                 .fail(function(e) {
                   return defaultAccessDenied(res, e);
@@ -1127,15 +1116,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                     return map.verifyAccess(owner);
                   })
                   .then(function(map) {
-                    return q.allSettled([Node
+                    return Node
                       .findById(nodeId)
                       .exec().then(function(node) {
                         return node.turnIntoSubmap();
-                      }), map.populate('nodes').execPopulate()
-                    ]);
-                  })
-                  .then(function(result) {
-                    return result[1].value.formJSON();
+                      }).then(function(){
+                        return map.defaultPopulate();
+                      });
                   })
                   .fail(function(e) {
                     return defaultAccessDenied(res, e);
@@ -1170,15 +1157,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                       return map.verifyAccess(owner);
                   })
                   .then(function(map) {
-                      return q.allSettled([Node
+                      return Node
                           .findById(nodeID1)
                           .exec().then(function(node) {
                               return node.updateAction(seq, actionBody);
-                          }), map.populate('nodes').execPopulate()
-                      ]);
-                  })
-                  .then(function(result) {
-                      return result[1].value.formJSON();
+                          }).then(function(){
+                            return map.defaultPopulate();
+                          });
                   })
                   .fail(function(e) {
                       return defaultAccessDenied(res, e);
@@ -1212,15 +1197,13 @@ module.exports = function(authGuardian, mongooseConnection) {
                       return map.verifyAccess(owner);
                   })
                   .then(function(map) {
-                      return q.allSettled([Node
+                      return Node
                           .findById(nodeID1)
                           .exec().then(function(node) {
                               return node.deleteAction(seq);
-                          }), map.populate('nodes').execPopulate()
-                      ]);
-                  })
-                  .then(function(result) {
-                      return result[1].value.formJSON();
+                          }).then(function(){
+                            return map.defaultPopulate();
+                          });
                   })
                   .fail(function(e) {
                       return defaultAccessDenied(res, e);

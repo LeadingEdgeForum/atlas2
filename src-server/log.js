@@ -51,7 +51,7 @@ log4js.configure({
 		},
 		deduplication : {
 			appenders: ['console', 'mainFile'],
-      level: 'DEBUG'
+      level: 'WARN'
 		},
 		submap : {
 			appenders: ['console', 'mainFile'],
@@ -62,6 +62,10 @@ log4js.configure({
 			level: 'WARN'
 		},
     capability : {
+      appenders: ['console', 'mainFile'],
+      level: 'ERROR'
+    },
+    access : {
       appenders: ['console', 'mainFile'],
       level: 'ERROR'
     }

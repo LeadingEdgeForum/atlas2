@@ -101,6 +101,10 @@ module.exports = function(conn) {
         return this.save();
     };
 
+    _MapSchema.methods.defaultPopulate = function(){
+        return this.populate("workspace nodes nodes.previous").execPopulate();
+    };
+
     _MapSchema.methods.updateComment = function(id, dataPos) {
         for (var i = 0; i < this.comments.length; i++) {
             if ('' + this.comments[i]._id === id) {
@@ -329,16 +333,6 @@ module.exports = function(conn) {
             .then(function(node) {
                 _this.nodes.push(node._id);
                 return _this.save();
-            })
-            .then(function(savedWardleyMap) {
-                return savedWardleyMap.populate({
-                    path: 'nodes',
-                    model: 'Node',
-                    populate : {
-                      path: 'previous',
-                      model: 'Node'
-                    }
-                }).execPopulate();
             });
     };
 
@@ -376,14 +370,9 @@ module.exports = function(conn) {
                 if(width && Number.isInteger(Number.parseInt(width))){
                   node.width = width;
                 }
-                return q.allSettled([node.save(), _this.populate({
-                    path: 'nodes',
-                    model: 'Node',
-                    populate : {
-                      path: 'previous',
-                      model: 'Node'
-                    }
-                }).execPopulate()]);
+                return node.save().then(function(){
+                  return _this.save();
+                });
             });
     };
 
@@ -395,32 +384,10 @@ module.exports = function(conn) {
                 _id: nodeID
             }).exec()
             .then(function(node) {
-                return q.allSettled([node.remove(), _this.populate({
-                    path: 'nodes',
-                    model: 'Node',
-                    populate : {
-                      path: 'previous',
-                      model: 'Node'
-                    }
-                }).execPopulate()]);
+                return node.remove().then(function(){
+                  return _this.save();
+                });
             });
-    };
-
-    _MapSchema.methods.formJSON = function() {
-        var WardleyMap = require('./map-schema')(conn);
-        return WardleyMap
-            .findOne({
-                _id: this._id
-            })
-            .populate({
-                path: 'nodes',
-                model: 'Node',
-                populate : {
-                  path: 'previous',
-                  model: 'Node'
-                }
-            })
-            .exec();
     };
 
     _MapSchema.methods.getAvailableSubmaps = function() {

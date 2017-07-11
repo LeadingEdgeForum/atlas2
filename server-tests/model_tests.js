@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-/*jslint node:true, mocha:true */
+/*jslint node:true, mocha:true, expr: true */
 var should = require('should');
 var q = require('q');
 
@@ -100,6 +100,9 @@ describe('Model tests', function() {
 
     it("add first node to the first map", function(done) {
       currentMap1.addNode("name1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner)
+        .then(function(map){
+          return map.defaultPopulate();
+        })
         .then(function(map) {
           currentMap1 = map;
           should.exist(currentMap1);
@@ -126,6 +129,9 @@ describe('Model tests', function() {
 
     it("add first node to the second map", function(done) {
       currentMap2.addNode("name1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner)
+        .then(function(map){
+          return map.defaultPopulate();
+        })
         .then(function(map) {
           currentMap2 = map;
           should.exist(currentMap2);
@@ -154,8 +160,8 @@ describe('Model tests', function() {
 
     it("rename second node in the second map", function(done) {
       currentMap2.changeNode("2", 0.7, 0.7, null, "INTERNAL", currentMap2.nodes[1]._id, "description", 1, owner)
-        .then(function(result) {
-          return result[1].value.formJSON();
+        .then(function(map){
+          return map.defaultPopulate();
         })
         .then(function(map) {
           currentMap2 = map;

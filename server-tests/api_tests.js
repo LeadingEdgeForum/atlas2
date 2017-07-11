@@ -12,7 +12,7 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.*/
-/*jslint node:true, mocha:true */
+/*jslint node:true, mocha:true, expr: true */
 var should = require('should');
 var app = require('../app');
 var request = require('supertest');
@@ -207,8 +207,8 @@ describe('Workspaces & maps', function() {
             .expect(function(res) {
                 copyOfMap = res.body.map;
                 node1ID = res.body.map.nodes[0]._id;
+                should.exist(node1ID);
                 res.body.map.nodes[0].name.should.equal(node.name);
-                console.log(res.body.map.nodes);
             })
             .end(function(err, res) {
                 done(err);
@@ -280,6 +280,7 @@ describe('Workspaces & maps', function() {
             .expect(function(res) {
                 copyOfMap = res.body.map;
                 node1ID = res.body.map.nodes[0]._id;
+                should.exist(node1ID);
                 res.body.map.nodes[0].name.should.equal(node.name);
             })
             .end(function(err, res) {
@@ -300,6 +301,7 @@ describe('Workspaces & maps', function() {
             .expect(function(res) {
                 copyOfMap = res.body.map;
                 node2ID = res.body.map.nodes[1]._id;
+                should.exist(node2ID);
                 res.body.map.nodes[1].name.should.equal(node.name);
             })
             .end(function(err, res) {
@@ -939,7 +941,7 @@ describe('Workspaces & maps', function() {
                 .set('Accept', 'application/json')
                 .expect(200)
                 .expect(function(res) {
-                    console.log(res.body.maps);
+                    // console.log(res.body.maps);
                     res.body.maps.length.should.equal(2);
                 })
                 .end(function(err, res) {

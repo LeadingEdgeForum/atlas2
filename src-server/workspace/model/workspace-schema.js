@@ -1019,6 +1019,17 @@ module.exports = function(conn) {
       return q.all(promises);
     };
 
+    workspaceSchema.methods.populateTimeslices = function(){
+      return this.populate({
+        path : 'timeline.maps',
+        model :'WardleyMap',
+        populate : {
+          path: 'nodes',
+          model: 'Node'
+        }
+      }).execPopulate();
+    };
+
 
     workspaceSchema.methods.cloneTimeslice = function(sourceTimeSliceId, name, description) {
       var WardleyMap = require('./map-schema')(conn);
@@ -1030,14 +1041,7 @@ module.exports = function(conn) {
         throw new Error('source not specified');
       }
 
-      return this.populate({
-        path : 'timeline.maps',
-        ref :'WardleyMap',
-        populate : {
-          path: 'nodes',
-          ref: 'Node'
-        }
-      }).execPopulate()
+      return this.populateTimeslices()
         .then(function(popWorkspace) {
 
           variantLogger.debug('workspace ' + popWorkspace._id + ' populated');
@@ -1298,14 +1302,7 @@ module.exports = function(conn) {
                   popWorkspace.timeline.push(newTimeSlice);
                   return popWorkspace.save().then(function(wrkspc){
                     variantLogger.debug('workspace saved');
-                    return wrkspc.populate({
-                      path : 'timeline.maps',
-                      ref :'WardleyMap',
-                      populate : {
-                        path: 'nodes',
-                        ref: 'Node'
-                      }
-                    }).execPopulate();
+                    return wrkspc.populateTimeslices();
                   });
 
                 });
@@ -1338,14 +1335,7 @@ module.exports = function(conn) {
         }
       }
       return this.save().then(function(wrkspc) {
-        return wrkspc.populate({
-          path: 'timeline.maps',
-          ref: 'WardleyMap',
-          populate: {
-            path: 'nodes',
-            ref: 'Node'
-          }
-        }).execPopulate();
+        return wrkspc.populateTimeslices();
       });
     };
 

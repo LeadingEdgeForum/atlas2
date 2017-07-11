@@ -89,7 +89,13 @@ describe('Timeline management tests', function() {
           return map.makeComment({x:0.3,y:03, text:'comment'});
         })
         .then(function(map){
+          return map.defaultPopulate();
+        })
+        .then(function(map){
           return map.nodes[0].makeDependencyTo(map.nodes[1]._id);
+        })
+        .then(function(workspace){
+          return currentWorkspace.populateTimeslices();
         })
         .then(function(map){
           return currentWorkspace.cloneTimeslice(currentWorkspace.nowId);
@@ -154,14 +160,7 @@ describe('Timeline deduplication tests', function() {
               return currentMap.addNode('name3', 0.3, 0.3, 'USERNEED', currentWorkspace._id, 'desc3', 1, 'you', 20);
             })
             .then(function() {
-                return currentWorkspace.populate({
-                  path : 'timeline.maps',
-                  ref :'WardleyMap',
-                  populate : {
-                    path: 'nodes',
-                    ref: 'Node'
-                  }
-                }).execPopulate();
+                return currentWorkspace.populateTimeslices();
             })
             .then(function(populatedWorkspace){
               currentWorkspace = populatedWorkspace;
@@ -187,6 +186,9 @@ describe('Timeline deduplication tests', function() {
             })
             .then(function(workspace){
               return workspace.cloneTimeslice(currentWorkspace.timeline[1]._id);
+            })
+            .then(function() {
+                return currentWorkspace.populateTimeslices();
             })
             .then(function(workspace){
               currentWorkspace = workspace;
@@ -353,7 +355,6 @@ describe('Timeline deduplication tests', function() {
     });
 
     it("verify marketreferences references after deletion", function() {
-      
         currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].marketreferences[0].next.length.should.be.equal(1); //second one was removed
         currentWorkspace.timeline[0].capabilityCategories[1].capabilities[0].marketreferences[0].next[0].equals(currentWorkspace.timeline[2].capabilityCategories[1].capabilities[0].marketreferences[0]._id).should.be.true;
 
