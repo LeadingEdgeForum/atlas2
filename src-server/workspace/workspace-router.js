@@ -230,6 +230,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               if (err) {
                   return res.send(500);
               }
+              if(!result){
+                return res.send(404);
+              }
               res.json({
                   workspace: result.toObject()
               });

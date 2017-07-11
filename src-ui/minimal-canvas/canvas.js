@@ -7,11 +7,13 @@ import ReactDOM from 'react-dom';
 var MapComponent = require('./map-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
-import {endpointOptions, actionEndpointOptions} from './component-styles';
+import {endpointOptions, actionEndpointOptions, moveEndpointOptions} from './component-styles';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'#EC7063'}});
 jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'#1ABC9C'}});
+jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
+jsPlumb.registerConnectionType("antimovement", {paintStyle : {stroke:'#E74C3C'}});
 
 //this is style applied to the place where actuall components can be drawn
 var mapCanvasStyle = {
@@ -148,6 +150,32 @@ export default class MapCanvas extends React.Component {
             )
           });
           connection2.getOverlay("label").show();
+        }
+
+        if (_node.moved) {
+          let createdHistoricConnection = jsPlumb.connect({
+            source: _node._id,
+            target: _node.originalId,
+            scope: "WM_MOVED",
+            anchors: [
+              "AutoDefault", "AutoDefault"
+            ],
+            deleteEndpointsOnDetach: true,
+            paintStyle: moveEndpointOptions.connectorStyle,
+            endpoint: moveEndpointOptions.endpoint,
+            connector: moveEndpointOptions.connector,
+            endpointStyles: [
+              moveEndpointOptions.paintStyle, moveEndpointOptions.paintStyle
+            ],
+            overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [])
+          });
+          if (createdHistoricConnection) {
+            if (createdHistoricConnection.source.offsetLeft < createdHistoricConnection.target.offsetLeft) {
+              createdHistoricConnection.addType('movement');
+            } else {
+              createdHistoricConnection.addType('antimovement');
+            }
+          }
         }
     }
   }

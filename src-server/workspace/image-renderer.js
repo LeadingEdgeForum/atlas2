@@ -247,6 +247,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                         if (opts.diff.modified[i].diff.x) {
                           let ghost = _.clone(opts.nodes[j].toObject());
                           ghost.moved = true;
+                          ghost.originalId = ghost._id;
                           ghost._id = ghost._id + '_history';
                           ghost.x = opts.diff.modified[i].diff.x.old;
                           listToAdd.push(ghost);
