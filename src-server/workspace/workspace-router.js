@@ -143,9 +143,8 @@ module.exports = function(authGuardian, mongooseConnection) {
         .done(function(workspace){
             res.json(workspace);
             track(owner,'create_workspace',{
-              'id' : workspace._id,
-              body : JSON.stringify(req.body)
-            });
+              'id' : workspace._id
+            }, req.body);
         }, function(e){
             workspaceLogger.error(e);
             return res.status(500).send(e);
@@ -156,9 +155,10 @@ module.exports = function(authGuardian, mongooseConnection) {
     if(req.params.sourceTimeSlice === 'null'){
       req.params.sourceTimeSlice = null;
     }
+    let owner = getUserIdFromReq(req);
     Workspace
       .findOne({
-        owner: getUserIdFromReq(req),
+        owner: owner,
         _id: req.params.workspaceID,
         archived: false
       }).exec()
@@ -175,6 +175,12 @@ module.exports = function(authGuardian, mongooseConnection) {
         res.json({
           workspace: workspace.toObject()
         });
+        track(owner,'clone_timeslice',{
+          'id' : req.params.workspaceID,
+        }, {
+          'name' : req.body.name,
+          'description' : req.body.description,
+        });
       });
   });
 
@@ -182,6 +188,7 @@ module.exports = function(authGuardian, mongooseConnection) {
     if(req.params.sourceTimeSlice === 'null'){
       req.params.sourceTimeSlice = null;
     }
+    let owner = getUserIdFromReq(req);
     Workspace
       .findOne({
         owner: getUserIdFromReq(req),
@@ -200,6 +207,13 @@ module.exports = function(authGuardian, mongooseConnection) {
         }
         res.json({
           workspace: workspace.toObject()
+        });
+        track(owner,'modify_timeslice',{
+          'id' : req.params.workspaceID,
+        }, {
+          'name' : req.body.name,
+          'description' : req.body.description,
+          'current' : req.body.current,
         });
       });
   });
@@ -399,6 +413,11 @@ module.exports = function(authGuardian, mongooseConnection) {
               res.json({
                   map: json
               });
+              track(owner,'submap_formed',{
+                'id' : req.params.mapID,
+              }, {
+                'components' : listOfNodesToSubmap.length,
+              });
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -530,8 +549,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(editor,'create_map',{
                 'id' : result._id,
-                'body' : JSON.stringify(req.body)
-              });
+              }, req.body);
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -559,8 +577,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(editor,'create_map',{
                 'id' : result._id,
-                'body' : JSON.stringify(req.body)
-              });
+              }, req.body);
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -597,8 +614,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(owner,'create_node',{
                 'map_id' : req.params.mapID,
-                'body' : JSON.stringify(req.body)
-              });
+              }, req.body);
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -702,8 +718,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
               track(owner,'create_comment',{
                 'map_id' : req.params.mapID,
-                'body' : JSON.stringify(req.body)
-              });
+              }, req.body);
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -1198,6 +1213,12 @@ module.exports = function(authGuardian, mongooseConnection) {
                   res.json({
                       workspace: wk
                   });
+                  track(owner,'assign_node',{
+                    'id' : nodeID
+                  }, {
+                    'variantId' : variantId,
+                    'categoryID' : categoryID
+                  });
               }, function(e) {
                   capabilityLogger.error('responding with error', e);
                   res.status(500).json(e);
@@ -1265,6 +1286,12 @@ module.exports = function(authGuardian, mongooseConnection) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
+              });
+              track(owner,'create_category',{
+                'variantId' : variantId,
+                'workspaceID' : workspaceID
+              }, {
+                name:name
               });
             },function(e) {
               capabilityLogger.error('responding with error', e);
@@ -1372,6 +1399,13 @@ module.exports = function(authGuardian, mongooseConnection) {
               capabilityLogger.trace('responding ...', wk);
               res.json({
                 workspace: wk
+              });
+              track(owner,'createmarketreference',{
+                'variantId' : variantId,
+                'capabilityID' : capabilityID
+              }, {
+                name:name,
+                evolution:evolution
               });
             }, function(e) {
               capabilityLogger.error('responding...', e);

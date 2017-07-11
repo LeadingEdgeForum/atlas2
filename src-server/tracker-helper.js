@@ -18,6 +18,7 @@ limitations under the License.*/
 /*jshint esversion: 6 */
 
 var logger = require('./log.js').getLogger('tracker-helper');
+var _ = require('underscore');
 
 var key = process.env.WOOPRA_PROJECT_KEY;
 var woopra = null;
@@ -35,9 +36,9 @@ if (key) {
     logger.warn('tracking not configured');
 }
 
-var track = function(user, eventname, properties) {
+var track = function(user, eventname, p1, p2) {
     if (woopra) {
-        woopra.identify(user).track(eventname, properties);
+        woopra.identify(user).track(eventname, _.extend(_.clone(p1), p2));
     }
 };
 module.exports = track;
