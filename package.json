@@ -33,11 +33,7 @@
     "log4js": "2.1.0",
     "mongoose": "4.11.9",
     "morgan": "^1.7.0",
-<<<<<<< Updated upstream
     "passport": "^0.4.0",
-=======
-    "passport": "0.4.0",
->>>>>>> Stashed changes
     "passport-google-oauth20": "^1.0.0",
     "passport-ldapauth": "^2.0.0",
     "passport-local": "^1.0.0",
@@ -51,11 +47,7 @@
     "react-bootstrap-slider": "^2.0.0",
     "react-document-title": "2.0.3",
     "react-dom": "^15.5.4",
-<<<<<<< Updated upstream
     "react-resize-detector": "^0.6.0",
-=======
-    "react-resize-detector": "0.6.0",
->>>>>>> Stashed changes
     "react-router": "4.2.0",
     "react-router-bootstrap": "0.24.3",
     "react-router-dom": "4.2.2",
