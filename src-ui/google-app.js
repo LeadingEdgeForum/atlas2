@@ -1,3 +1,16 @@
+/* Copyright 2017 Krzysztof Daniel
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 /* globals document */
 import React from 'react';
@@ -15,67 +28,20 @@ import SplashPage from './passport/google/SplashPage';
 import WorkspaceListPage from './workspace/WorkspaceListPage';
 import MapListPage from './map-list/MapListPage';
 import MapEditorPage from './map-editor/MapEditorPage';
-import WorkspaceListStore from './workspace/workspace-list-store';
-import SingleWorkspaceStore from './map-list/single-workspace-store';
-import SingleMapStore from './map-editor/single-map-store';
-var jsPlumb = require('../node_modules/jsplumb/dist/js/jsplumb.min.js').jsPlumb;
-
 import FixitPage from './fixit/FixitPage';
-import FixitStore from './fixit/fixit-store';
+import {
+  workspaceListStore,
+  getWorkspaceStore,
+  getFixitStore,
+  getSingleMapStore,
+  cleanUpStores
+} from './store-management';
 
 import AuthStore from './passport/auth-store';
-
 var auth = new AuthStore();
 
 const AuthRedirect = <Redirect to={{pathname: '/' }}/>;
 
-const workspaceListStore = new WorkspaceListStore();
-
-const singWorkspaceStores = {};
-const fixitStores = {};
-const singleMapStores = {};
-
-function getWorkspaceStore(workspaceID){
-  Object.keys(singWorkspaceStores).forEach(function(key, index) {
-    if(key === workspaceID){
-      singWorkspaceStores[key].redispatch();
-      return;
-    }
-    singWorkspaceStores[key].undispatch();
-  });
-  if(!singWorkspaceStores[workspaceID]){
-    singWorkspaceStores[workspaceID] = new SingleWorkspaceStore(workspaceID);
-  }
-  return singWorkspaceStores[workspaceID];
-}
-
-function getFixitStore(workspaceID){
-  Object.keys(fixitStores).forEach(function(key, index) {
-    if(key === workspaceID){
-      fixitStores[key].redispatch();
-      return;
-    }
-    fixitStores[key].undispatch();
-  });
-  if(!fixitStores[workspaceID]){
-    fixitStores[workspaceID] = new FixitStore(workspaceID);
-  }
-  return fixitStores[workspaceID];
-}
-
-function getSingleMapStore(mapID){
-  Object.keys(singleMapStores).forEach(function(key, index) {
-    if(key === mapID){
-      singleMapStores[key].redispatch();
-      return;
-    }
-    singleMapStores[key].undispatch();
-  });
-  if(!singleMapStores[mapID]){
-    singleMapStores[mapID] = new SingleMapStore(mapID);
-  }
-  return singleMapStores[mapID];
-}
 
 class MainApp extends React.Component {
   constructor(props){
@@ -98,6 +64,11 @@ class MainApp extends React.Component {
   }
 
   _onChange() {
+    //got logged out. Whatever we had cached, remove it.
+    if(!this.props.auth.loggedIn()){
+      cleanUpStores();
+    }
+
     this.setState({
       loggedIn: this.props.auth.loggedIn()
     });
@@ -112,14 +83,18 @@ class MainApp extends React.Component {
             component={
               (props) =>
                 (loggedIn ? <WorkspaceListPage
-                    auth={auth}
-                    history={props.history}
-                    workspaceListStore={workspaceListStore}/>
-                : <SplashPage auth={auth} />)
+                                auth={auth}
+                                history={props.history}
+                                workspaceListStore={workspaceListStore}/>
+                : <SplashPage auth={auth}/>)
             }/>
             <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
                   if(!loggedIn) {
-                    auth.next(props.location, props.history);
+
+                    // for whatever reason, we are not logged in, so it is our duty to clean data in stores before doing anything else
+                    cleanUpStores();
+
+              		  auth.next(props.location, props.history);
                     return AuthRedirect;
                   }
                   const workspaceID = props.match.params.workspaceID;
@@ -153,6 +128,10 @@ class MainApp extends React.Component {
                 render={
                 (props) => {
    		         if (!loggedIn) {
+
+                   // for whatever reason, we are not logged in, so it is our duty to clean data in stores before doing anything else
+                   cleanUpStores();
+
       		        auth.next(props.location, props.history);
        		     }
       		      return (loggedIn ? <MapEditorPage
@@ -163,7 +142,7 @@ class MainApp extends React.Component {
           }}/>
         <Redirect from="*" to="/" />
       </Switch>
-      </Router>
+    </Router>
     );
   }
 }

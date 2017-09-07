@@ -32,19 +32,22 @@ import SplashPage from './auth0/SplashPage';
 import WorkspaceListPage from './workspace/WorkspaceListPage';
 import MapListPage from './map-list/MapListPage';
 import MapEditorPage from './map-editor/MapEditorPage';
-import AuthService from './auth0/AuthService';
-import $ from 'jquery';
-import WorkspaceListStore from './workspace/workspace-list-store';
-import SingleWorkspaceStore from './map-list/single-workspace-store';
-import SingleMapStore from './map-editor/single-map-store';
-
 import FixitPage from './fixit/FixitPage';
-import FixitStore from './fixit/fixit-store';
+import {
+  workspaceListStore,
+  getWorkspaceStore,
+  getFixitStore,
+  getSingleMapStore,
+  cleanUpStores
+} from './store-management';
 
+
+import AuthService from './auth0/AuthService';
 //this is injected at build time
 const auth = new AuthService(___AUTH0_AUDIENCE___, ___AUTH0_ISSUER___);
 
 
+import $ from 'jquery';
 // ensure each ajax request contains autorhization header
 $.ajaxSetup({
     beforeSend: function(xhr) {
@@ -57,53 +60,6 @@ $.ajaxSetup({
 
 const AuthRedirect = <Redirect to={{pathname: '/' }}/>;
 
-const workspaceListStore = new WorkspaceListStore();
-
-const singWorkspaceStores = {};
-const fixitStores = {};
-const singleMapStores = {};
-
-function getWorkspaceStore(workspaceID){
-  Object.keys(singWorkspaceStores).forEach(function(key, index) {
-    if(key === workspaceID){
-      singWorkspaceStores[key].redispatch();
-      return;
-    }
-    singWorkspaceStores[key].undispatch();
-  });
-  if(!singWorkspaceStores[workspaceID]){
-    singWorkspaceStores[workspaceID] = new SingleWorkspaceStore(workspaceID);
-  }
-  return singWorkspaceStores[workspaceID];
-}
-
-function getFixitStore(workspaceID){
-  Object.keys(fixitStores).forEach(function(key, index) {
-    if(key === workspaceID){
-      fixitStores[key].redispatch();
-      return;
-    }
-    fixitStores[key].undispatch();
-  });
-  if(!fixitStores[workspaceID]){
-    fixitStores[workspaceID] = new FixitStore(workspaceID);
-  }
-  return fixitStores[workspaceID];
-}
-
-function getSingleMapStore(mapID){
-  Object.keys(singleMapStores).forEach(function(key, index) {
-    if(key === mapID){
-      singleMapStores[key].redispatch();
-      return;
-    }
-    singleMapStores[key].undispatch();
-  });
-  if(!singleMapStores[mapID]){
-    singleMapStores[mapID] = new SingleMapStore(mapID);
-  }
-  return singleMapStores[mapID];
-}
 
 class MainApp extends React.Component {
   constructor(props){
@@ -126,74 +82,85 @@ class MainApp extends React.Component {
   }
 
   _onChange() {
+    //got logged out. Whatever we had cached, remove it.
+    if(!this.props.auth.loggedIn()){
+      cleanUpStores();
+    }
+
     this.setState({
       loggedIn: this.props.auth.loggedIn()
     });
   }
 
-
-
   render(){
     let loggedIn = this.state.loggedIn;
     return (
       <Router>
-        <Switch>
-          <Route exact path="/"
+      <Switch>
+        <Route exact path="/"
             component={
-                (props) =>
-                  (loggedIn ? <WorkspaceListPage
-                                        auth={auth}
-                                        history={props.history}
-                                        workspaceListStore={workspaceListStore}/>
-                  : <SplashPage auth={auth}/>)
-                }/>
-          <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
-                if(!loggedIn) {
-                  auth.next(props.location, props.history);
-                  return AuthRedirect;
-                }
-                const workspaceID = props.match.params.workspaceID;
-                const singleWorkspaceStore = getWorkspaceStore(workspaceID);
-                const fixitStore = getFixitStore(workspaceID);
-
-                return (
-                    <Switch>
-                      <Route exact path="/workspace/:workspaceID">
-                          <MapListPage
-                            auth={auth}
-                            history={props.history}
-                            singleWorkspaceStore={singleWorkspaceStore} />
-                      </Route>
-                      <Route path="/fixit/:workspaceID/variant/:variantId" render={
-                        (props) => {
-                          return <FixitPage
-                              auth={auth}
-                              history={props.history}
-                              singleWorkspaceStore={singleWorkspaceStore}
-                              fixitStore={fixitStore}
-                              variantId={props.match.params.variantId}/>;
-                        }
-                      }/>
-                    </Switch>
-                );
-              }
-            }>
-          </Route>
-          <Route exact path="/map/:mapID"
-              render={
-              (props) => {
-             if (!loggedIn) {
-                auth.next(props.location, props.history);
-             }
-              return (loggedIn ? <MapEditorPage
+              (props) =>
+                (loggedIn ? <WorkspaceListPage
                                 auth={auth}
                                 history={props.history}
-                                singleMapStore={getSingleMapStore(props.match.params.mapID)}/>
-                  : AuthRedirect);
-        }}/>
-          <Redirect from="*" to="/" />
-    </Switch>
-  </Router>
+                                workspaceListStore={workspaceListStore}/>
+                : <SplashPage auth={auth}/>)
+            }/>
+            <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
+                  if(!loggedIn) {
+
+                    // for whatever reason, we are not logged in, so it is our duty to clean data in stores before doing anything else
+                    cleanUpStores();
+
+              		  auth.next(props.location, props.history);
+                    return AuthRedirect;
+                  }
+                  const workspaceID = props.match.params.workspaceID;
+                  const singleWorkspaceStore = getWorkspaceStore(workspaceID);
+                  const fixitStore = getFixitStore(workspaceID);
+
+                  return (
+                      <Switch>
+                        <Route exact path="/workspace/:workspaceID">
+                            <MapListPage
+                              auth={auth}
+                              history={props.history}
+                              singleWorkspaceStore={singleWorkspaceStore} />
+                        </Route>
+                        <Route path="/fixit/:workspaceID/variant/:variantId" render={
+                          (props) => {
+                            return <FixitPage
+                                auth={auth}
+                                history={props.history}
+                                singleWorkspaceStore={singleWorkspaceStore}
+                                fixitStore={fixitStore}
+                                variantId={props.match.params.variantId}/>;
+                          }
+                        }/>
+                      </Switch>
+                  );
+                }
+              }>
+            </Route>
+            <Route exact path="/map/:mapID"
+                render={
+                (props) => {
+   		         if (!loggedIn) {
+
+                   // for whatever reason, we are not logged in, so it is our duty to clean data in stores before doing anything else
+                   cleanUpStores();
+
+      		        auth.next(props.location, props.history);
+       		     }
+      		      return (loggedIn ? <MapEditorPage
+                                  auth={auth}
+                                  history={props.history}
+                                  singleMapStore={getSingleMapStore(props.match.params.mapID)}/>
+                  	: AuthRedirect);
+          }}/>
+        <Redirect from="*" to="/" />
+      </Switch>
+    </Router>
     );
   }
 }
