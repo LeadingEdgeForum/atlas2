@@ -9,7 +9,9 @@ import {
   Col,
   Breadcrumb,
   NavItem,
-  Glyphicon
+  Glyphicon,
+  Alert,
+  Button
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import {getStyleForType} from '../map-editor/component-styles';
@@ -116,6 +118,25 @@ export default class FixitPage extends React.Component {
     const history = this.props.history;
     const fixitStore = this.props.fixitStore;
     const workspaceStore = this.props.singleWorkspaceStore;
+    if(workspaceStore.getErrorCode()){
+      let message = "";
+      if(workspaceStore.getErrorCode() === 404){
+        message = "You have no rights to access this map. Or maybe it does not exist. One way or another, I cannot display it for you.";
+      } else {
+        message = "I am terribly sorry, I have found errorCode : " + workspaceStore.getErrorCode() + " and I do not know what to do next.";
+      }
+      return (
+        <DocumentTitle title="Sorry! No access!">
+          <Grid fluid={true}>
+            <Row >
+              <Col xs={16}>
+                <Alert bsStyle="warning"><p>{message}</p><br/><LinkContainer to="/"><Button bsStyle="warning">Go back to your workspaces</Button></LinkContainer></Alert>
+              </Col>
+            </Row>
+          </Grid>
+        </DocumentTitle>
+      );
+    }
     const pageTitle = 'Fix your organization!';
 
     const workspaceID = fixitStore.getWorkspaceId();
