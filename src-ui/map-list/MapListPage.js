@@ -14,7 +14,9 @@ import {
   Tab,
   Nav,
   NavDropdown,
-  MenuItem
+  MenuItem,
+  Alert,
+  Button
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import MapList from './map-list';
@@ -220,7 +222,15 @@ export default class MapListPage extends React.Component {
     const maps = this.state.workspace.timeline ? this.state.workspace.timeline[this.state.workspace.timeline.length - 1].maps : [];
     const editors = this.state.workspace.owner;
 
-    const tabs = this.prepareTimelineTabs(this.state.workspace.timeline, workspaceID, singleWorkspaceStore);
+    const errorCode = singleWorkspaceStore.getErrorCode();
+    let tabs;
+    if(!errorCode){
+      tabs = this.prepareTimelineTabs(this.state.workspace.timeline, workspaceID, singleWorkspaceStore);
+    } else if (errorCode === 404) {
+      tabs = (<Alert bsStyle="warning"><p>You have no rights to access that workspace. Or it does not exist. One way or another, I cannot display it for you. </p><br/><LinkContainer to="/"><Button bsStyle="warning">Go back to your workspaces</Button></LinkContainer></Alert>);
+    } else {
+      tabs = (<Alert bsStyle="warning"><p>I am terribly sorry, I have found errorCode : {errorCode} and I do not know what to do next.</p><br/><LinkContainer to="/"><Button bsStyle="warning">Go back to your workspaces</Button></LinkContainer></Alert>);
+    }
 
     return (
       <DocumentTitle title='Atlas2, the mapping Tool'>

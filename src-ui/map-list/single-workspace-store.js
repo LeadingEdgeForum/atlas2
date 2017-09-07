@@ -38,14 +38,23 @@ export default class SingleWorkspaceStore extends Store {
 
       this.io = require('socket.io-client')();
 
-      this.io.on('workspacechange', function(msg) {
-          this.serverRequest = $.get('/api/workspace/' + msg.id, function(result) {
-              this.fetchSingleWorkspaceInfo(msg.id);
-              this.emitChange();
-          }.bind(this));
-      });
+      this.io.on('workspacechange', this.reloadOnSocketMessage);
       this.dispatchToken = null;
       this.redispatch();
+  }
+
+  reloadOnSocketMessage(msg){
+    this.serverRequest = $.get('/api/workspace/' + msg.id, function(result) {
+      //only reload if my workspace is affected
+      if(this.workspaceID === msg.id){
+        this.fetchSingleWorkspaceInfo(msg.id);
+        this.emitChange();
+      }
+    }.bind(this));
+  }
+
+  cleanUp(){
+    this.io.removeListener('workspacechange', this.reloadOnSocketMessage);
   }
 
   redispatch(){
@@ -189,14 +198,24 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   fetchSingleWorkspaceInfo() {
-    this.serverRequest = $.get('/api/workspace/' + this.workspaceID, function(result) {
-      this.workspace = result;
-      this.emitChange();
-    }.bind(this));
+    this.serverRequest = $.get('/api/workspace/' + this.workspaceID)
+      .done(function(result) {
+        this.errorCode = null;
+        this.workspace = result;
+        this.emitChange();
+      }.bind(this))
+      .fail(function(error) {
+        this.errorCode = error.status;
+        this.emitChange();
+      }.bind(this));
+  }
+
+  getErrorCode(){
+    return this.errorCode;
   }
 
   getWorkspaceInfo() {
-    if (!this.workspace) {
+    if (!this.workspace && !this.errorCode) {
       this.fetchSingleWorkspaceInfo();
       return {
         workspace: {

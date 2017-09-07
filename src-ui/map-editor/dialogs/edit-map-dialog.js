@@ -45,6 +45,9 @@ var EditMapDialog = React.createClass({
   internalState: {},
 
   _onChange: function() {
+    if(this.props.singleMapStore.getErrorCode()){
+      return;
+    }
     var newState = this.props.singleMapStore.getMapEditDialogState();
     var map = this.props.singleMapStore.getMap().map;
 

@@ -69,6 +69,7 @@ export function getSingleMapStore(mapID){
 
 function cleanUpStore(store){
   Object.keys(store).forEach(function(key, index){
+    store[key].cleanUp();
     store[key].undispatch();
     delete store[key];
   });

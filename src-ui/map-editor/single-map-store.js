@@ -61,16 +61,27 @@ export default class SingleWorkspaceStore extends Store {
 
       this.io = require('socket.io-client')();
 
-      this.io.on('mapchange', function(msg) {
-          if(msg.id === this.mapID){
-            this.fetchMap();
-          }
-      }.bind(this));
+      this.io.on('mapchange', this.reloadOnSocketMessage);
 
       this.dispatchToken = null;
       this.redispatch();
 
   }
+
+  reloadOnSocketMessage(msg){
+    if(msg.id === this.mapID){
+      this.fetchMap();
+    }
+  }
+
+  cleanUp(){
+    this.io.removeListener('mapchange', this.reloadOnSocketMessage);
+  }
+
+  getErrorCode(){
+    return this.errorCode;
+  }
+
 
   redispatch(){
     if(this.dispatchToken){
@@ -414,16 +425,22 @@ export default class SingleWorkspaceStore extends Store {
 
   fetchMap(){
     if(!this.serverRequest){
-      this.serverRequest = $.get('/api/map/' + this.mapID, function(result) {
+      this.serverRequest = $.get('/api/map/' + this.mapID)
+      .done(function(result) {
         this.map = result;
         this.serverRequest = null;
+        this.emitChange();
+      }.bind(this))
+      .fail(function(error) {
+        console.log('received', error);
+        this.errorCode = error.status;
         this.emitChange();
       }.bind(this));
     }
   }
 
   fetchMapDiff(){
-    if(!this.diffServerRequest){
+    if(!this.diffServerRequest && !this.errorCode){
       this.diffServerRequest = $.get('/api/map/' + this.mapID + '/diff', function(result) {
         this.diff = result;
         this.diffServerRequest = null;
@@ -433,7 +450,7 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   fetchMapVariants(){
-    if(!this.variantsServerRequest){
+    if(!this.variantsServerRequest && !this.errorCode){
       this.variantsServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
         this.variants = result;
         this.variantsServerRequest = null;
@@ -443,12 +460,22 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   getMap(){
-    if(!this.map){
+    if(!this.map && !this.errorCode){
       this.fetchMap();
       return {
         map: {
           name: 'Loading...',
           workspace : 'not yet set',
+          loading: true,
+          nodes: []
+        }
+      };
+    }
+    if(this.errorCode) {
+      return {
+        map: {
+          name: 'Error...',
+          workspace : 'Error',
           loading: true,
           nodes: []
         }

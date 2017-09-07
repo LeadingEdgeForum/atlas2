@@ -36,6 +36,10 @@ class DeduplicatorStore extends Store {
     return this.state.editCategoryDialogState;
   }
 
+  cleanUp(){
+    // noop
+  }
+
   redispatch(){
     if(this.dispatchToken){
       return;

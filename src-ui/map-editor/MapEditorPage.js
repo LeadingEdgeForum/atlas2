@@ -11,7 +11,9 @@ import {
   NavItem,
   Glyphicon,
   NavDropdown,
-  MenuItem
+  MenuItem,
+  Alert,
+  Button
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
@@ -226,6 +228,23 @@ export default class MapEditorPage extends React.Component {
     const nameAndPurpose = singleMapStore.getWorkspaceNameAndPurpose();
     const workspaceID = singleMapStore.getWorkspaceId();
     const workspaceName = nameAndPurpose ? nameAndPurpose.name + ' - ' + nameAndPurpose.purpose : workspaceID;
+    if(singleMapStore.getErrorCode()){
+        let message = "";
+        if(singleMapStore.getErrorCode() === 404){
+          message = "You have no rights to access this map. Or maybe it does not exist. One way or another, I cannot display it for you.";
+        } else {
+          message = "I am terribly sorry, I have found errorCode : " + singleMapStore.getErrorCode() + " and I do not know what to do next.";
+        }
+        return (<DocumentTitle title="No access">
+          <Grid fluid={true}>
+            <Row >
+              <Col xs={16}>
+                <Alert bsStyle="warning"><p>{message}</p><br/><LinkContainer to="/"><Button bsStyle="warning">Go back to your workspaces</Button></LinkContainer></Alert>
+              </Col>
+            </Row>
+          </Grid>
+        </DocumentTitle>);
+    }
 
     const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
     const mapID = singleMapStore.getMapId();
