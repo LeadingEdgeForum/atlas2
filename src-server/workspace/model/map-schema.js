@@ -522,7 +522,7 @@ module.exports = function(conn) {
             } else {
 
                 var transferredNode = _this.nodes.splice(i, 1)[0];
-                transferredNode.parentMap = submap; // transfer the node
+                transferredNode.parentMap = submap._id; // transfer the node
                 submap.nodes.push(transferredNode);
                 transferredNodes.push(transferredNode);
 

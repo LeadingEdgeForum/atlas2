@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
-    "test": "mocha  server-tests/**"
+    "test": "mocha server-tests/**"
   },
   "dependencies": {
     "async": "2.5.0",
@@ -31,7 +31,7 @@
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
     "log4js": "2.1.0",
-    "mongoose": "4.11.9",
+    "mongoose": "4.11.11",
     "morgan": "^1.7.0",
     "passport": "^0.4.0",
     "passport-google-oauth20": "^1.0.0",
