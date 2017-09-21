@@ -23,10 +23,10 @@ var ObjectId = mongoose.Types.ObjectId;
 var String = Schema.Types.String;
 var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
-var migrator = require('../src-server/workspace/model/workspace-schema').migrator;
+var migrator = require('../../src-server/workspace/model/workspace-schema').migrator;
 
 var owner = "testy@mactest.test";
-var MongoDBConnection = require('../src-server/mongodb-helper');
+var MongoDBConnection = require('../../src-server/mongodb-helper');
 var mongooseConnection1 = mongoose.createConnection(MongoDBConnection.test_usage.connectionURL);
 var mongooseConnection2 = mongoose.createConnection(MongoDBConnection.test_usage.connectionURL);
 

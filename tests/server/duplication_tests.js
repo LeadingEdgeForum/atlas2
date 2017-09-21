@@ -21,12 +21,12 @@ var q = require('q');
 var owner = "testy@mactest.test";
 var mongoose = require('mongoose');
 mongoose.Promise = q.Promise;
-var MongoDBConnection = require('../src-server/mongodb-helper');
+var MongoDBConnection = require('../../src-server/mongodb-helper');
 var mongooseConnection = mongoose.createConnection(MongoDBConnection.test_duplication.connectionURL);
 
-var WardleyMap = require('../src-server/workspace/model/map-schema')(mongooseConnection);
-var Workspace = require('../src-server/workspace/model/workspace-schema')(mongooseConnection);
-var Node = require('../src-server/workspace/model/node-schema')(mongooseConnection);
+var WardleyMap = require('../../src-server/workspace/model/map-schema')(mongooseConnection);
+var Workspace = require('../../src-server/workspace/model/workspace-schema')(mongooseConnection);
+var Node = require('../../src-server/workspace/model/node-schema')(mongooseConnection);
 
 
 var currentWorkspace = null;

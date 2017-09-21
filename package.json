@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "node app.js",
-    "test": "mocha server-tests/**"
+    "test": "mocha tests/**"
   },
   "dependencies": {
     "async": "2.5.0",
