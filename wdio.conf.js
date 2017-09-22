@@ -32,7 +32,7 @@ exports.config = {
     // and 30 processes will get spawned. The property handles how many capabilities
     // from the same test should run tests.
     //
-    maxInstances: 10,
+    maxInstances: 1,
     //
     // If you have trouble getting all important capabilities together, check out the
     // Sauce Labs platform configurator - a great tool to configure your capabilities:
@@ -80,7 +80,8 @@ exports.config = {
     //
     // Set a base URL in order to shorten url command calls. If your url parameter starts
     // with "/", then the base url gets prepended.
-    baseUrl: 'http://localhost:6001',
+  
+    baseUrl: process.env.TRAVIS_EVENT_TYPE !== 'cron' ? 'http://localhost:6001' : process.env.MONITORED_URL,
     //
     // Default timeout for all waitFor* commands.
     waitforTimeout: 30000,
@@ -150,7 +151,9 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      */
     onPrepare: function (config, capabilities) {
-        require('./app.js');
+      if(process.env.TRAVIS_EVENT_TYPE !== 'cron'){
+          this.app = require('./app.js');
+      }
     },
     /**
      * Gets executed just before initialising the webdriver session and test framework. It allows you
@@ -244,6 +247,10 @@ exports.config = {
      * possible to defer the end of the process using a promise.
      * @param {Object} exitCode 0 - success, 1 - fail
      */
-    // onComplete: function(exitCode) {
-    // }
+    onComplete: function(exitCode) {
+      if(process.env.TRAVIS_EVENT_TYPE !== 'cron'){
+        this.app.___conn.db.dropDatabase();
+      }
+      return exitCode;
+    }
 };

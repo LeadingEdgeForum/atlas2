@@ -8,3 +8,5 @@ node_js:
   - "6"
 services:
   - mongodb
+script:
+  - if [ $TRAVIS_EVENT_TYPE -eq "cron" ] ; then npm run test-e2e; else npm test; fi
