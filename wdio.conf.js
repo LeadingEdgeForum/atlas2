@@ -80,6 +80,7 @@ exports.config = {
     //
     // Set a base URL in order to shorten url command calls. If your url parameter starts
     // with "/", then the base url gets prepended.
+  
     baseUrl: process.env.TRAVIS_EVENT_TYPE !== 'cron' ? 'http://localhost:6001' : process.env.MONITORED_URL,
     //
     // Default timeout for all waitFor* commands.
@@ -232,7 +233,6 @@ exports.config = {
      * @param {Array.<String>} specs List of spec file paths that ran
      */
     // after: function (result, capabilities, specs) {
-    //
     // },
     /**
      * Gets executed right after terminating the webdriver session.
