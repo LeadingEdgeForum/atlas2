@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jslint node:true, mocha:true, expr: true */
 var should = require('should');
-var app = require('../app');
+var app = require('../../app');
 var request = require('supertest');
 var userAgent1 = request.agent(app);
 
@@ -425,6 +425,7 @@ describe('Workspaces & maps', function() {
         };
 
         it('create workspace', function(done) {
+          console.log('<<<<');
             userAgent1.
             post('/api/workspace')
                 .set('Content-type', 'application/json')
