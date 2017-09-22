@@ -80,7 +80,7 @@ exports.config = {
     //
     // Set a base URL in order to shorten url command calls. If your url parameter starts
     // with "/", then the base url gets prepended.
-    baseUrl: 'http://localhost:6001',
+    baseUrl: process.ENV.TRAVIS_EVENT_TYPE === 'cron' ? 'https://wardleymaps.com' : 'http://localhost:6001',
     //
     // Default timeout for all waitFor* commands.
     waitforTimeout: 30000,
@@ -150,7 +150,9 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      */
     onPrepare: function (config, capabilities) {
-        this.app = require('./app.js');
+      if(process.ENV.TRAVIS_EVENT_TYPE !== 'cron'){
+          this.app = require('./app.js');
+      }
     },
     /**
      * Gets executed just before initialising the webdriver session and test framework. It allows you
@@ -246,7 +248,9 @@ exports.config = {
      * @param {Object} exitCode 0 - success, 1 - fail
      */
     onComplete: function(exitCode) {
-      this.app.___conn.db.dropDatabase();
+      if(process.ENV.TRAVIS_EVENT_TYPE !== 'cron'){
+        this.app.___conn.db.dropDatabase();
+      }
       return exitCode;
     }
 };
