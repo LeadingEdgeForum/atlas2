@@ -25,44 +25,26 @@ describe('Atlas 2 E2E tests', function() {
 
 
   // before(function(done) {
-    // chromedriver.start();
-    // browser.perform(function() {
-    //   console.log('beforeAll');
-    // });
-    // client.start(done);
   // });
 
 
   // beforeEach(function(done) {
-    // browser.perform(function() {
-    //   console.log('beforeEach');
-    // });
-    // client.start(done);
   // });
 
 
-  it('should have the right title - the fancy generator way', function() {
-      browser.url('https://duckduckgo.com/');
-      browser.setValue('#search_form_input_homepage', 'WebdriverIO');
-      browser.click('#search_button_homepage');
-      browser.getTitle().should.be.equal('WebdriverIO at DuckDuckGo');
+  it('LEF logo should always point to HOME', function() {
+      browser.url('/');
+      browser.getAttribute('#app-container > div > div:nth-child(1) > div > nav > div > div.navbar-header > a', 'href').should.be.equal(browser.getUrl());
+      browser.getAttribute('#app-container > div > div:nth-child(1) > div > nav > div > div.navbar-header > a > img', 'src').should.be.equal(browser.getUrl() + 'img/LEF_logo.png');
+      browser.getTitle().should.be.equal('Atlas2, the mapping Tool');
   });
 
 
   // afterEach(function(done) {
-    // browser.perform(function() {
-    //   console.log('afterEach');
-    // });
-    // client.start(done);
   // });
 
 
   // after(function(done) {
-    // browser.end(function() {
-    //   console.log('afterAll');
-    //   chromedriver.stop();
-    // });
-    // client.start(done);
   // });
 
 

@@ -150,6 +150,7 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      */
     onPrepare: function (config, capabilities) {
+        require('./app.js');
     },
     /**
      * Gets executed just before initialising the webdriver session and test framework. It allows you
