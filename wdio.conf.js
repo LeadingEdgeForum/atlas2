@@ -150,7 +150,7 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      */
     onPrepare: function (config, capabilities) {
-        require('./app.js');
+        this.app = require('./app.js');
     },
     /**
      * Gets executed just before initialising the webdriver session and test framework. It allows you
@@ -230,6 +230,7 @@ exports.config = {
      * @param {Array.<String>} specs List of spec file paths that ran
      */
     // after: function (result, capabilities, specs) {
+    //
     // },
     /**
      * Gets executed right after terminating the webdriver session.
@@ -244,6 +245,8 @@ exports.config = {
      * possible to defer the end of the process using a promise.
      * @param {Object} exitCode 0 - success, 1 - fail
      */
-    // onComplete: function(exitCode) {
-    // }
+    onComplete: function(exitCode) {
+      this.app.___conn.db.dropDatabase();
+      return exitCode;
+    }
 };
