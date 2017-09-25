@@ -154,10 +154,10 @@ exports.config = {
       if(process.env.TRAVIS_EVENT_TYPE !== 'cron'){
           this.app = require('./app.js');
       }
-      if(process.env.TEST_USER1_LOGIN){
+      if(!process.env.TEST_USER1_LOGIN){
         console.error('No test user configured, set env variable TEST_USER1_LOGIN');
       }
-      if(process.env.TEST_USER1_PASSWORD){
+      if(!process.env.TEST_USER1_PASSWORD){
         console.error('No test user configured, set env variable TEST_USER1_PASSWORD');
       }
     },
