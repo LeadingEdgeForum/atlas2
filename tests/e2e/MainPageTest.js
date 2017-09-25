@@ -17,6 +17,7 @@ limitations under the License.*/
 /*global browser */
 
 var should = require('should');
+var config = require('../../config.json');
 
 describe('Atlas 2 E2E tests', function() {
 
@@ -39,6 +40,49 @@ describe('Atlas 2 E2E tests', function() {
       browser.getTitle().should.be.equal('Atlas2, the mapping Tool');
   });
 
+  it('Login mechanism', function() {
+    var selectedLoginType = config.userProvider.type;
+    if(process.env.TRAVIS_EVENT_TYPE === 'cron'){
+      // cron tests 'https://atlas2.wardleymaps.com'
+      selectedLoginType = 'auth0';
+    }
+    if(selectedLoginType === 'auth0'){
+      browser.url('/');
+      browser.click("=Login");
+      browser.waitForVisible(".auth0-lock-container");
+      browser.waitForVisible('[name="email"]');
+      browser.waitForVisible('[name="password"]');
+      browser.waitForVisible('button[type="submit"]');
+      browser.click('[name="email"]');
+      browser.setValue('[name="email"]', process.env.TEST_USER1_LOGIN);
+      browser.click('[name="password"]');
+      browser.setValue('[name="password"]', process.env.TEST_USER1_PASSWORD);
+      browser.click('button[type="submit"]');
+      browser.waitForVisible("=Logout");
+      browser.waitForVisible("button h4.list-group-item-heading");
+      browser.getText("button h4.list-group-item-heading").should.equal("Create a new organization");
+    } else if (selectedLoginType === 'passport'){
+      if(config.userProvider.strategy === 'anonymous'){
+        browser.url('/');
+        browser.click("=Login now!");
+        browser.waitForVisible("#email");
+        browser.waitForVisible('#password');
+        browser.waitForVisible('button[type="submit"]');
+        browser.click('#email');
+        browser.setValue('#email', process.env.TEST_USER1_LOGIN);
+        browser.click('#password');
+        browser.setValue('#password', process.env.TEST_USER1_PASSWORD);
+        browser.click('button[type="submit"]');
+        browser.waitForVisible("=Logout");
+        browser.waitForVisible("button h4.list-group-item-heading");
+        browser.getText("button h4.list-group-item-heading").should.equal("Create a new organization");
+      } else {
+        console.warn('No tests for passport strategy', config.userProvider.provider);
+      }
+    } else {
+      console.warn('No tests for login type ', selectedLoginType);
+    }
+  });
 
   // afterEach(function(done) {
   // });
