@@ -1,3 +1,4 @@
+/*global browser */
 exports.config = {
 
     //
@@ -45,15 +46,7 @@ exports.config = {
         maxInstances: 1,
         //
         browserName: 'chrome'
-    }, {
-        // maxInstances can get overwritten per capability. So if you have an in-house Selenium
-        // grid with only 5 firefox instances available you can make sure that not more than
-        // 5 instances get started at a time.
-        maxInstances: 1,
-        //
-        browserName: 'firefox'
-    },
-    ],
+    }],
     //
     // ===================
     // Test Configurations
@@ -80,7 +73,6 @@ exports.config = {
     //
     // Set a base URL in order to shorten url command calls. If your url parameter starts
     // with "/", then the base url gets prepended.
-  
     baseUrl: process.env.TRAVIS_EVENT_TYPE !== 'cron' ? 'http://localhost:6001' : process.env.MONITORED_URL,
     //
     // Default timeout for all waitFor* commands.
@@ -176,8 +168,36 @@ exports.config = {
      * @param {Array.<Object>} capabilities list of capabilities details
      * @param {Array.<String>} specs List of spec file paths that are to be run
      */
-    // before: function (capabilities, specs) {
-    // },
+    before: function (capabilities, specs) {
+      browser.addCommand("newNode", function (type, nodeText) {
+        browser.dragAndDrop('#jsPlumb_1_' + type, '#app-container > div > div:nth-child(3) > div.col-lg-11.col-md-10.col-sm-10.col-xs-9 > div > div:nth-child(1)');
+
+        browser.waitForVisible('h4.modal-title');
+        browser.getText('h4.modal-title').should.equal('Create a new node');
+
+
+        browser.setValue('input#name', nodeText);
+        browser.setValue('textarea#description', "Component description");
+        browser.setValue('input#responsiblePerson', "dummy@dummy.dummy");
+
+
+        browser.click('button=Create');
+        browser.waitForVisible('button=Create',5000, true);
+        browser.waitForVisible('div=' + nodeText);
+      });
+      browser.addCommand("moveNode", function (nodeText, x, y) {
+        browser.click('div=' + nodeText);
+        browser.moveToObject('.glyphicon-move',0,0);
+        browser.buttonDown(0);
+        browser.moveToObject('.glyphicon-move',x,y);
+        browser.buttonUp(0);
+        // browser.click('div=' + nodeText);
+      });
+      browser.addCommand("connectNodes", function (nodeText1, nodeText2) {
+        browser.click('div=' + nodeText2);
+        browser.dragAndDrop('.glyphicon-link','div='+nodeText1);
+      });
+    },
     //
     /**
      * Hook that gets executed before the suite starts
