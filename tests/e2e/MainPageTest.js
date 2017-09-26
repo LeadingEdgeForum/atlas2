@@ -249,6 +249,7 @@ describe('Atlas 2 E2E tests', function() {
       browser.waitForVisible("a.list-group-item");
       while(browser.$('.list-group').$$('a.list-group-item').length > 0){
         browser.click('button.dropdown-toggle');
+        browser.waitForVisible(".glyphicon-remove");
         browser.click('.glyphicon-remove');
       }
   });
