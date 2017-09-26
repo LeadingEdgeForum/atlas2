@@ -247,11 +247,14 @@ describe('Atlas 2 E2E tests', function() {
   after(function() {
       browser.url('/');
       browser.waitForVisible("a.list-group-item");
-      while(browser.$$('button.dropdown-toggle').length > 0){
+      var maxValue = browser.$('.list-group').$$('a.list-group-item').length - 1;
+      while( maxValue > -1){
+        browser.$('.list-group').$$('a.list-group-item')[maxValue].waitForVisible('button.dropdown-toggle');
         browser.click('button.dropdown-toggle');
         browser.waitForVisible('.glyphicon-remove');
         browser.click('.glyphicon-remove');
         browser.waitForVisible('.glyphicon-remove', 5000, true);
+        maxValue --;
       }
   });
 
