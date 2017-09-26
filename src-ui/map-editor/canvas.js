@@ -128,9 +128,6 @@ export default class MapCanvas extends React.Component {
     if (!this.input) {
       return;
     }
-    if(this.resizeHeavyWork){
-      clearTimeout(this.resizeHeavyWork);
-    }
 
     let windowHeight =  window.innerHeight;
     let offset = getElementOffset(this.input).top;
@@ -154,13 +151,12 @@ export default class MapCanvas extends React.Component {
       }
     };
     let _this = this;
-    _this.resizeHeavyWork = setTimeout(function(){
-      _this.setState({coords:coord});
-      CanvasActions.updateCanvasSizeAndOffset(coord);
-      _this.forceUpdate();
-      _this.resizeHeavyWork = null;
-    }, 100);
-  }
+    _this.setState({
+      coords: coord
+    });
+    CanvasActions.updateCanvasSizeAndOffset(coord);
+    _this.forceUpdate();
+    }
 
   componentDidMount() {
     if (this.props.canvasStore) {
@@ -189,8 +185,7 @@ export default class MapCanvas extends React.Component {
     var _this = this;
     jsPlumb.ready(function() {
       _this.reconcileDependencies();
-      // jsPlumb.setSuspendDrawing(false, true);
-      jsPlumb.repaintEverything();
+      jsPlumb.setSuspendDrawing(false, true);
     });
   }
 
@@ -237,7 +232,7 @@ export default class MapCanvas extends React.Component {
 
   overlayClickHandler(obj) {
     if(obj.component && obj.id !== 'label'){
-      var conn = obj.component;
+      let conn = obj.component;
       conn.___overlayVisible = false;
       conn.getOverlay("menuOverlay").setVisible(conn.___overlayVisible);
       conn.getOverlay("label").setVisible(!conn.___overlayVisible);
@@ -451,46 +446,42 @@ export default class MapCanvas extends React.Component {
       // iterate over all nodes
       // round one - find all the connections we should have
       let desiredMovementConnections = [];
-      if(this.props.canvasStore.isDiffEnabled()){ // if diff is disable - remove everything
+      // jsPlumb cannot handle div recreation
+      jsPlumb.select({scope:'WM_MOVED'}).each(function(connection){
+          jsPlumb.deleteConnection(connection);
+      });
+      if(this.props.canvasStore.isDiffEnabled()){ // if diff is disabled - make it easier to connect
         for(let ii = 0; ii < this.props.diff.modified.length; ii++){
           if(this.props.diff.modified[ii].diff.x){ // evolution changed
             desiredMovementConnections.push(this.props.diff.modified[ii]._id);
           }
         }
-      }
-      jsPlumb.logEnabled = true;
-      jsPlumb.select({scope:'WM_MOVED'}).each(function(connection){
-        let index = desiredMovementConnections.indexOf(connection.targetId);
-        if( index === -1){ // connection should not exist, delete it
-          jsPlumb.deleteConnection(connection);
-        } else { //connection should exist, remove it from further processing
-          desiredMovementConnections.splice(index, 1);
-        }
-      });
-      // now we have only missing connections left, so let's establish them
-      for(let ii = 0; ii < desiredMovementConnections.length; ii++){
-        let historicConnectionToCreate = desiredMovementConnections[ii];
-        let createdHistoricConnection = jsPlumb.connect({
-            source: historicConnectionToCreate + '_history',
-            target: historicConnectionToCreate,
-            scope: "WM_MOVED",
-            anchors: [
-                "AutoDefault", "AutoDefault"
-            ],
-            deleteEndpointsOnDetach : true,
-            paintStyle: moveEndpointOptions.connectorStyle,
-            endpoint: moveEndpointOptions.endpoint,
-            connector: moveEndpointOptions.connector,
-            endpointStyles: [
-                moveEndpointOptions.paintStyle, moveEndpointOptions.paintStyle
-            ],
-            overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [  ])
-        });
-        if(createdHistoricConnection){
-          if(createdHistoricConnection.source.offsetLeft < createdHistoricConnection.target.offsetLeft){
-              createdHistoricConnection.addType('movement');
-          } else {
-            createdHistoricConnection.addType('antimovement');
+
+
+        for(let ii = 0; ii < desiredMovementConnections.length; ii++){
+          let historicConnectionToCreate = desiredMovementConnections[ii];
+          let createdHistoricConnection = jsPlumb.connect({
+              source: historicConnectionToCreate + '_history',
+              target: historicConnectionToCreate,
+              scope: "WM_MOVED",
+              anchors: [
+                  "AutoDefault", "AutoDefault"
+              ],
+              deleteEndpointsOnDetach : true,
+              paintStyle: moveEndpointOptions.connectorStyle,
+              endpoint: moveEndpointOptions.endpoint,
+              connector: moveEndpointOptions.connector,
+              endpointStyles: [
+                  moveEndpointOptions.paintStyle, moveEndpointOptions.paintStyle
+              ],
+              overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [  ])
+          });
+          if(createdHistoricConnection){
+            if(createdHistoricConnection.source.offsetLeft < createdHistoricConnection.target.offsetLeft){
+                createdHistoricConnection.addType('movement');
+            } else {
+              createdHistoricConnection.addType('antimovement');
+            }
           }
         }
       }
@@ -498,8 +489,7 @@ export default class MapCanvas extends React.Component {
 
 
   render() {
-    // jsPlumb.setSuspendDrawing(true, false); // this will be cleaned in did update
-    console.log('workaround for https://github.com/jsplumb/jsPlumb/issues/651 still active');
+    jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
     var style = _.clone(mapCanvasStyle);
     if (this.state && this.state.dropTargetHighlight) {
       style = _.extend(style, {
