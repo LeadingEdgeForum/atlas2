@@ -225,7 +225,8 @@ describe('Atlas 2 E2E tests', function() {
         for(let i = 0; i < svgList.length; i++){
           let img = svgList[i];
           //only sufficiently large images may be connections
-          if (img.getCssProperty('width').parsed.value > 5 && img.getCssProperty('height').parsed.value > 5) {
+          if (img.getCssProperty('width').parsed && img.getCssProperty('height').parsed &&
+              img.getCssProperty('width').parsed.value > 5 && img.getCssProperty('height').parsed.value > 5) {
             if (img.getCssProperty('left').parsed.value < 50 || img.getCssProperty('top').parsed.value < 50) {
               flag = false;
             }
