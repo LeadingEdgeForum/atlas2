@@ -241,7 +241,6 @@ export default class MapCanvas extends React.Component {
   }
 
   overlayClickHandler(obj) {
-    console.log(obj);
     if(obj.component && obj.id !== 'label'){
       let conn = obj.component;
       conn.___overlayVisible = false;
@@ -455,7 +454,7 @@ export default class MapCanvas extends React.Component {
 
       // jsPlumb cannot handle div recreation
 
-      if (this.props.users) {
+      if (this.props.users && this.props.users.length > 0) {
         for (let z = 0; z < this.props.users.length; z++) {
           let user = this.props.users[z];
           let existingConnections = jsPlumb.getConnections({
