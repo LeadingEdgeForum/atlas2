@@ -12,6 +12,7 @@ var MapComponent = require('./map-component');
 var HistoricComponent = require('./historic-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
+var User = require('./user');
 import {endpointOptions, actionEndpointOptions, moveEndpointOptions} from './component-styles';
 
 //remove min to fix connections
@@ -632,12 +633,27 @@ export default class MapCanvas extends React.Component {
                   />);
             }
         }
+        var users = [];
+        if (this.props.users) {
+            for (var i = 0; i < this.props.users.length; i++) {
+              users.push(
+                <User workspaceID = {workspaceID}
+                  canvasStore = {canvasStore}
+                  mapID = {mapID}
+                  user = {this.props.users[i]}
+                  id = {this.props.users[i]._id}
+                  key = {this.props.users[i]._id}
+                  size = {size}
+                  />);
+            }
+        }
     return (
       <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
         {arrowends}
         {comments}
         {oldComponents}
+        {users}
       </div>
     );
   }

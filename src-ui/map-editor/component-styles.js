@@ -15,7 +15,14 @@ var mapComponentStyle = {
   backgroundColor: 'silver',
   float: 'left'
 };
-
+var userStyle = {
+  zIndex: 5,
+  width : 15,
+  height : 30,
+  backgroundImage: "url(\"/img/human-figure.svg\")",
+  backgroundSize: "100% 100%",
+  float: 'left'
+};
 var userNeedStyle = _.extend(_.clone(mapComponentStyle), {
   border: '3px solid #00789b',
   backgroundColor: '#00789b'
@@ -78,6 +85,9 @@ var genericCommentStyle = {
 var getStyleForType = function(type) {
   var style = null;
   switch (type) {
+    case Constants.USER:
+      style = userStyle;
+      break;
     case Constants.USERNEED:
       style = userNeedStyle;
       break;
@@ -185,6 +195,7 @@ var moveEndpointOptions = {
   ]
 };
 export {
+  userStyle,
   userNeedStyle,
   externalStyle,
   internalStyle,

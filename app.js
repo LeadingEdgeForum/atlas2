@@ -125,6 +125,10 @@ app.get('/img/LEF_logo.png', function(req, res) {
     res.sendFile(path.join(__dirname, '/build-ui/img/LEF_logo.png'));
 });
 
+app.get('/img/human-figure.svg', function(req, res) {
+    res.sendFile(path.join(__dirname, '/build-ui/img/human-figure.svg'));
+});
+
 var appJs = path.join(__dirname, '/build-ui/js/app.js');
 var index = path.join(__dirname, '/build-ui/index.html');
 if(config.userProvider.type === 'passport'){

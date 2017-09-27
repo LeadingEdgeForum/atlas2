@@ -18,6 +18,7 @@ import {
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
 import CreateNewNodeDialog from './dialogs/create-new-node-dialog';
+import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
 import EditActionDialog from './dialogs/edit-action-dialog';
 import EditConnectionDialog from './dialogs/edit-connection-dialog';
@@ -253,6 +254,7 @@ export default class MapEditorPage extends React.Component {
     const diff = this.state.diff;
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
+    const users = singleMapStore.getMap().map.users;
 
     const canvasStore = this.canvasStore;
     const mapMenu = this.prepareMapMenu(this.state.map);
@@ -298,6 +300,7 @@ export default class MapEditorPage extends React.Component {
             </Col>
             <Col xs={9} sm={10} md={10} lg={11}>
                 <CanvasWithBackground
+                  users={users}
                   nodes={nodes}
                   comments={comments}
                   mapID={mapID}
@@ -318,6 +321,7 @@ export default class MapEditorPage extends React.Component {
           <SubmapReferencesDialog singleMapStore={singleMapStore}/>
           <ReferencesDialog singleMapStore={singleMapStore}/>
           <ChangeIntoSubmapDialog singleMapStore={singleMapStore}/>
+          <CreateNewUserDialog singleMapStore={singleMapStore}/>
           {helpDialog}
         </Grid>
       </DocumentTitle>
