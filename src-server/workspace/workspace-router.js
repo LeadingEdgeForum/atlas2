@@ -784,6 +784,58 @@ module.exports = function(authGuardian, mongooseConnection) {
         }, defaultErrorHandler.bind(this, res));
   });
 
+  module.router.delete('/workspace/:workspaceID/map/:mapID/user/:userID/dep/:nodeID', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var userID = req.params.userID;
+    var nodeID = req.params.nodeID;
+
+    WardleyMap.findOne({
+            _id: mapID,
+            archived: false,
+            workspace: workspaceID
+        }).exec()
+        .then(checkAccess.bind(this, req.params.mapID, owner))
+        .then(function(map) {
+            return map.deleteUserDepTo(userID, nodeID);
+        })
+        .then(function(map) {
+            return map.defaultPopulate();
+        })
+        .done(function(jsonResult) {
+            res.json({
+                map: jsonResult
+            });
+        }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.post('/workspace/:workspaceID/map/:mapID/user/:userID/dep/:nodeID', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var userID = req.params.userID;
+    var nodeID = req.params.nodeID;
+
+    WardleyMap.findOne({
+            _id: mapID,
+            archived: false,
+            workspace: workspaceID
+        }).exec()
+        .then(checkAccess.bind(this, req.params.mapID, owner))
+        .then(function(map) {
+            return map.makeUserDepTo(userID, nodeID);
+        })
+        .then(function(map) {
+            return map.defaultPopulate();
+        })
+        .done(function(jsonResult) {
+            res.json({
+                map: jsonResult
+            });
+        }, defaultErrorHandler.bind(this, res));
+  });
+
   module.router.post('/workspace/:workspaceID/map/:mapID/user', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;

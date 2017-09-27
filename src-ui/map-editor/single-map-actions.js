@@ -433,6 +433,38 @@ var SingleMapActions = {
       });
     },
 
+    recordUserConnection : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.RECORD_USER_CONNECTION,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
+      });
+    },
+
+    deleteUserConnection : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.DELETE_USER_CONNECTION,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
+      });
+    },
+
     openEditConnectionDialog: function(workspaceId, mapId, sourceId, targetId, label, description, type){
       if(!sourceId || !targetId){
         console.error('no data to open the dialog');

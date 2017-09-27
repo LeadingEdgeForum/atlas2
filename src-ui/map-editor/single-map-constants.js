@@ -59,6 +59,8 @@ module.exports  = keyMirror({
       CLOSE_ADD_NEW_USER_DIALOG : null,
       SUBMIT_ADD_NEW_USER_DIALOG : null,
       DELETE_USER : null,
-      UPDATE_USER : null
+      UPDATE_USER : null,
+      RECORD_USER_CONNECTION : null,
+      DELETE_USER_CONNECTION : null
   }
 });

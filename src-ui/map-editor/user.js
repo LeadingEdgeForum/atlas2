@@ -6,8 +6,7 @@ var Constants = require('../constants');
 import Actions from './single-map-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
-import {endpointOptions} from './component-styles';
-import {actionEndpointOptions} from './component-styles';
+import {userEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import ReactResizeDetector from 'react-resize-detector';
@@ -152,7 +151,7 @@ var User = React.createClass({
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
         jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeSource(this.input, endpointOptions, {anchor: "BottomCenter"});
+        jsPlumb.makeSource(this.input, userEndpointOptions, {anchor: "BottomCenter"});
       }
     }
     var moveStyle = {

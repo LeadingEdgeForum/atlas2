@@ -13,7 +13,12 @@ var HistoricComponent = require('./historic-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
 var User = require('./user');
-import {endpointOptions, actionEndpointOptions, moveEndpointOptions} from './component-styles';
+import {
+  userEndpointOptions,
+  endpointOptions,
+  actionEndpointOptions,
+  moveEndpointOptions
+} from './component-styles';
 
 //remove min to fix connections
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
@@ -84,7 +89,11 @@ export default class MapCanvas extends React.Component {
       //connection already exists, so do not do anything
       return false;
     }
-    SingleMapActions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
+    if(scope === "WM_User"){
+      SingleMapActions.recordUserConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
+    } else {
+      SingleMapActions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
+    }
     //never create connection as they will be reconciled
     return false;
   }
@@ -232,6 +241,7 @@ export default class MapCanvas extends React.Component {
   }
 
   overlayClickHandler(obj) {
+    console.log(obj);
     if(obj.component && obj.id !== 'label'){
       let conn = obj.component;
       conn.___overlayVisible = false;
@@ -441,6 +451,57 @@ export default class MapCanvas extends React.Component {
                   }
               }
           }
+      }
+
+      // jsPlumb cannot handle div recreation
+
+      if (this.props.users) {
+        for (let z = 0; z < this.props.users.length; z++) {
+          let user = this.props.users[z];
+          let existingConnections = jsPlumb.getConnections({
+            scope: "WM_Users",
+            source: '' + user._id
+          });
+          for (let zz = 0; zz < user.associatedNeeds.length; zz++) {
+            let exists = false;
+            for (let k = 0; k < existingConnections.length; k++) {
+              if (existingConnections[k].targetId === user.associatedNeeds[zz]) {
+                existingConnections.splice(k, 1);
+                exists = true;
+              }
+            }
+            if (!exists) {
+              let _connection = jsPlumb.connect({
+                source: user._id,
+                target: user.associatedNeeds[zz],
+                scope: "WM_Users",
+                anchors: [
+                  "BottomCenter", "TopCenter"
+                ],
+                paintStyle: userEndpointOptions.connectorStyle,
+                endpoint: userEndpointOptions.endpoint,
+                connector: userEndpointOptions.connector,
+                endpointStyles: [
+                  userEndpointOptions.paintStyle, userEndpointOptions.paintStyle
+                ],
+                overlays: this.getOverlays(null, [
+                  ["remove", SingleMapActions.deleteUserConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, user._id, user.associatedNeeds[zz])]
+                ])
+              });
+              _connection.___overlayVisible = false;
+              _connection.getOverlay("label").hide();
+              _connection.getOverlay("menuOverlay").hide();
+              _connection.bind('click', this.overlayClickHandler);
+            }
+          }
+          for (let k = 0; k < existingConnections.length; k++) { // what is left are existing connections that should not exist
+            jsPlumb.deleteConnection(existingConnections[k]);
+          }
+        }
+      } else {
+        jsPlumb.select({scope:'WM_Users'}).each(function(connection){
+            jsPlumb.deleteConnection(connection);
+        });
       }
 
       //movement

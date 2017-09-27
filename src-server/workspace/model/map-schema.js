@@ -184,6 +184,50 @@ module.exports = function(conn) {
         return this.save();
     };
 
+    _MapSchema.methods.makeUserDepTo = function(user, node) {
+      if (!user || !node) {
+        throw new Error('unspecified attributes');
+      }
+      for (let i = 0; i < this.users.length; i++) {
+        if ('' + this.users[i]._id === user) {
+          let selectedUser = this.users[i];
+          let found = false;
+          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+            if ('' + selectedUser.associatedNeeds[j] === node) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            selectedUser.associatedNeeds.push(new ObjectId(node));
+          }
+          break;
+        }
+      }
+      this.markModified('users');
+      return this.save();
+    };
+
+    _MapSchema.methods.deleteUserDepTo = function(user, node) {
+      if (!user || !node) {
+        throw new Error('unspecified attributes');
+      }
+      for (let i = 0; i < this.users.length; i++) {
+        if ('' + this.users[i]._id === user) {
+          let selectedUser = this.users[i];
+          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+            if ('' + selectedUser.associatedNeeds[j] === node) {
+              selectedUser.associatedNeeds.splice(j,1);
+              break;
+            }
+          }
+          break;
+        }
+      }
+      this.markModified('users');
+      return this.save();
+    };
+
     _MapSchema.methods.verifyAccess = function(user) {
         var Workspace = require('./workspace-schema')(conn);
         var mapID = this._id;

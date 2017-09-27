@@ -364,6 +364,12 @@ export default class SingleWorkspaceStore extends Store {
           case ActionTypes.UPDATE_USER:
             this.updateUser(action.data);
             break;
+          case ActionTypes.RECORD_USER_CONNECTION:
+          this.recordUserConnection(action.data);
+            break;
+          case ActionTypes.DELETE_USER_CONNECTION:
+          this.deleteUserConnection(action.data);
+            break;
         default:
           return;
       }
@@ -985,6 +991,44 @@ export default class SingleWorkspaceStore extends Store {
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
             '/outgoingDependency/' + data.targetId,
+      success: function(data2) {
+        this.map = data2;
+        this.diff = null;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  recordUserConnection(data){
+    $.ajax({
+      type: 'POST',
+      url:  '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/user/' + data.sourceId +
+            '/dep/' + data.targetId,
+      success: function(data2) {
+        this.map = data2;
+        this.diff = null;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  deleteUserConnection(data){
+    $.ajax({
+      type: 'DELETE',
+      url:  '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/user/' + data.sourceId +
+            '/dep/' + data.targetId,
       success: function(data2) {
         this.map = data2;
         this.diff = null;

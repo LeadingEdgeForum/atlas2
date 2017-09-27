@@ -135,6 +135,30 @@ var endpointOptions = {
   uniqueEndpoints: true
 };
 
+var userEndpointOptions = {
+  paintStyle: {
+    fillStyle: "transparent",
+    outlineColor: 'transparent'
+  },
+  allowLoopback: false,
+  connector: "Straight",
+  connectorStyle: {
+    strokeWidth: 1,
+    stroke: 'silver',
+    outlineStroke: "transparent",
+    outlineWidth: 10,
+    dashstyle: '6 6'
+  },
+  scope: "WM_User",
+  endpoint: [
+    "Dot", {
+      radius: 1
+    }
+  ],
+  deleteEndpointsOnDetach: false,
+  uniqueEndpoints: true
+};
+
 var actionEndpointOptions = {
   paintStyle: {
     fillStyle: "transparent",
@@ -203,6 +227,7 @@ export {
   genericCommentPalletteStyle,
   getStyleForType,
   endpointOptions,
+  userEndpointOptions,
   actionEndpointOptions,
   moveEndpointOptions
 };

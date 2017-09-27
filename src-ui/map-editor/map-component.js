@@ -183,7 +183,11 @@ var MapComponent = React.createClass({
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
         jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeTarget(this.input, endpointOptions, {anchor: "TopCenter"});
+        jsPlumb.makeTarget(this.input,
+          endpointOptions,
+          {anchor: "TopCenter",
+            scope: jsPlumb.Defaults.Scope + " WM_User"
+          });
       }
       return null;
     }
