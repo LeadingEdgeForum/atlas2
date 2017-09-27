@@ -473,16 +473,25 @@ module.exports = function(conn) {
 
 
     _MapSchema.methods.removeNode = function(nodeID) {
-        var _this = this;
-        var Node = require('./node-schema')(conn);
-        return Node.findOne({
-                _id: nodeID
-            }).exec()
-            .then(function(node) {
-                return node.remove().then(function(){
-                  return _this.save();
-                });
-            });
+      var _this = this;
+      for (let i = 0; i < this.users.length; i++) {
+        let selectedUser = this.users[i];
+        for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
+          if ('' + selectedUser.associatedNeeds[j] === '' + nodeID) {
+            selectedUser.associatedNeeds.splice(j, 1);
+            this.markModified('users');
+          }
+        }
+      }
+      var Node = require('./node-schema')(conn);
+      return Node.findOne({
+          _id: nodeID
+        }).exec()
+        .then(function(node) {
+          return node.remove().then(function() {
+            return _this.save();
+          });
+        });
     };
 
     _MapSchema.methods.getAvailableSubmaps = function() {
