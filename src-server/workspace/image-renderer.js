@@ -216,6 +216,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
             .then(function(map) {
                 var opts = {
                     nodes: map.nodes.toObject(),
+                    users: map.users.toObject(),
                     comments: map.comments,
                     diff : map.diff,
                     mapID: mapID,

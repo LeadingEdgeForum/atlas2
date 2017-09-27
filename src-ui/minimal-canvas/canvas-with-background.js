@@ -123,6 +123,7 @@ export default class CanvasWithBackground extends React.Component {
 
   render() {
     var nodes = this.props.nodes;
+    var users = this.props.users;
     var comments = this.props.comments;
     var workspaceID = this.props.workspaceID;
     var mapID = this.props.mapID;
@@ -135,7 +136,7 @@ export default class CanvasWithBackground extends React.Component {
     var otherFontSize = this.props.otherFontSize;
     return (
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background} nodeFontSize={nodeFontSize} otherFontSize={otherFontSize}></MapCanvas>
+              <MapCanvas users={users} nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} background={background} nodeFontSize={nodeFontSize} otherFontSize={otherFontSize}></MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>
