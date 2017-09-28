@@ -479,6 +479,28 @@ export default class MapCanvas extends React.Component {
               }
             }
             if (!exists) {
+              /*
+                Yet another workaround for jsPlumb issues. Since endpoints are
+                improperly cached, which results in connections starting in the
+                top left corner, it is necessary to remove them all, and draw
+                connections again.
+                However, removal of endpoints confuses programmatical connections,
+                for some reason connecting with the userEndpointOptions style
+                creates classic connections with endpointOptions (the other style
+                that is supplied).
+                As a workaround/kludge, I am forcing the jsPlumb to make a new
+                endpoint through calling makeTarget and supplying desired
+                options before calling the 'connect' method.
+                May have undesired consequences.
+              */
+              jsPlumb.makeTarget(user.associatedNeeds[zz],
+                userEndpointOptions,
+                {anchor: "TopCenter",
+                  scope: jsPlumb.Defaults.Scope + " WM_User"
+                });
+
+
+
               let _connection = jsPlumb.connect({
                 source: user._id,
                 target: user.associatedNeeds[zz],
