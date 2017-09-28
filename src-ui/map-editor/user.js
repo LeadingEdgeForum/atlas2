@@ -92,9 +92,12 @@ var User = React.createClass({
     if (this.state.hover === "pencil") {
       let id = this.props.id;
       let mapID = this.props.mapID;
-      Actions.openEditUserDialog(mapID, id);
+      let workspaceID = this.props.workspaceID;
+      let name = this.props.user.name;
+      let description = this.props.user.description;
+      Actions.openEditUserDialog(workspaceID, mapID, id, name, description);
     }
-    this.setState({focus:!this.state.focus});
+    this.setState({focus:!this.state.focus, hover:null});
   },
 
   mouseOver: function(target) {

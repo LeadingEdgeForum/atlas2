@@ -20,6 +20,7 @@ import EditMapDialog from './dialogs/edit-map-dialog';
 import CreateNewNodeDialog from './dialogs/create-new-node-dialog';
 import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
+import EditUserDialog from './dialogs/edit-user-dialog';
 import EditActionDialog from './dialogs/edit-action-dialog';
 import EditConnectionDialog from './dialogs/edit-connection-dialog';
 import NewGenericCommentDialog from './dialogs/create-new-comment-dialog';
@@ -322,6 +323,7 @@ export default class MapEditorPage extends React.Component {
           <ReferencesDialog singleMapStore={singleMapStore}/>
           <ChangeIntoSubmapDialog singleMapStore={singleMapStore}/>
           <CreateNewUserDialog singleMapStore={singleMapStore}/>
+          <EditUserDialog singleMapStore={singleMapStore}/>
           {helpDialog}
         </Grid>
       </DocumentTitle>

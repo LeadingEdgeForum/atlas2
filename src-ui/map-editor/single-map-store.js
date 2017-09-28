@@ -63,6 +63,10 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.editMapUserDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', this.reloadOnSocketMessage);
@@ -368,7 +372,25 @@ export default class SingleWorkspaceStore extends Store {
           this.recordUserConnection(action.data);
             break;
           case ActionTypes.DELETE_USER_CONNECTION:
-          this.deleteUserConnection(action.data);
+            this.deleteUserConnection(action.data);
+            break;
+          case ActionTypes.OPEN_EDIT_USER_DIALOG:
+            this.editMapUserDialog.open = true;
+            this.editMapUserDialog.id = action.id;
+            this.editMapUserDialog.name = action.name;
+            this.editMapUserDialog.description = action.description;
+            this.editMapUserDialog.workspaceID = action.workspaceID;
+            this.editMapUserDialog.mapID = action.mapID;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_EDIT_USER_DIALOG:
+            this.editMapUserDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_EDIT_USER_DIALOG:
+            this.updateUser(action.data);
             break;
         default:
           return;
@@ -397,6 +419,10 @@ export default class SingleWorkspaceStore extends Store {
 
   getNewUserDialogState(){
     return this.addNewUserDialog;
+  }
+
+  getEditUserDialogState(){
+    return this.editMapUserDialog;
   }
 
   getNewCommentDialogState(){
@@ -761,7 +787,7 @@ export default class SingleWorkspaceStore extends Store {
         data: payload,
         success: function(data2) {
           this.map = data2;
-          this.editUserDialog = {open:false};
+          this.editMapUserDialog = {open:false};
           this.diff = null;
           this.emitChange();
           this.io.emit('map', {

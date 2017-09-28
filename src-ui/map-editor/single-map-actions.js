@@ -251,6 +251,40 @@ var SingleMapActions = {
       });
     },
 
+    openEditUserDialog: function(workspaceID, mapID, id, name, description){
+      if(!workspaceID || !mapID || !id || !name || !description){
+        console.error('missing data', workspaceID, mapID, id, name, description);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_EDIT_USER_DIALOG,
+          workspaceID : workspaceID,
+          mapID : mapID,
+          id : id,
+          name : name,
+          description : description
+      });
+    },
+
+    closeEditUserDialog: function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_USER_DIALOG
+      });
+    },
+
+    submitEditUserDialog : function(data){
+      if(!data || !data.id){
+        console.error('missing id');
+        return;
+      }
+      if(!data.name || !data.description){
+        console.error('missing data', data);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_EDIT_USER_DIALOG,
+          data : data
+      });
+    },
+
     deleteComment: function(workspaceID, mapID, id){
       if(!workspaceID || !mapID || !id){
         console.error('missing data', workspaceID, mapID, id);
