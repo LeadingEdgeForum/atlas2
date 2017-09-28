@@ -23,9 +23,7 @@ var itemCaptionStyle = {
   maxWidth: 300,
   maxHeight: 200,
   marginBottom: -20,
-  lineHeight: 1.1,
-  overflow: 'auto',
-  resize :'horizontal'
+  lineHeight: 1.1
 };
 
 
@@ -33,23 +31,8 @@ var humanFigureBase64 = "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4NCjw
 
 var User = React.createClass({
 
-  // decorateDiffStyle(node, style, diff) {
-  //   if (!this.props.canvasStore.isDiffEnabled()) {
-  //     return;
-  //   }
-  //   if (!diff) {
-  //     return;
-  //   }
-  //   if (diff === 'ADDED') {
-  //     style.boxShadow = "0 0 3px 3px green";
-  //     return;
-  //   }
-  //   style.boxShadow = "0 0 3px 3px orange";
-  // },
-
   render: function() {
     let user = this.props.user;
-    // var diff = this.props.diff;
     var style = getStyleForType(Constants.USER);
     var left = user.x * this.props.size.width;
     var top = Math.round(user.y * this.props.size.height);
@@ -59,6 +42,15 @@ var User = React.createClass({
       position: 'absolute',
       cursor: 'pointer'
     });
+    var added = this.props.added;
+    if(added){
+      style.boxShadow = "0 0 3px 3px green";
+    }
+    var removed = this.props.removed;
+    if(removed){
+      style.boxShadow = "0 0 3px 3px red";
+      style.opacity = "0.8";
+    }
     style.backgroundImage = "url(\"data:image/svg+xml;base64," + humanFigureBase64 + "\")";
     // this.decorateDiffStyle(node, style, diff);
     var name = this.props.user.name;

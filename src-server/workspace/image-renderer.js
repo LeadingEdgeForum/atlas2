@@ -233,6 +233,7 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                 };
 
                 if (diff) {
+                  //process nodes
                   var listToAdd = [];
                   // added are simple - no previous
                   for (let j = 0; j < opts.nodes.length; j++) {
@@ -241,16 +242,16 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                       opts.nodes[j].added = true;
                     }
                   }
-                  rendererLogger.trace('modified nodes ' + opts.diff.modified.length);
-                  for (let i = 0; i < opts.diff.modified.length; i++) {
+                  rendererLogger.trace('modified nodes ' + opts.diff.nodesModified.length);
+                  for (let i = 0; i < opts.diff.nodesModified.length; i++) {
                     for (let j = 0; j < opts.nodes.length; j++) {
-                      if (opts.nodes[j]._id.equals(opts.diff.modified[i]._id)) {
-                        if (opts.diff.modified[i].diff.x) {
+                      if (opts.nodes[j]._id.equals(opts.diff.nodesModified[i]._id)) {
+                        if (opts.diff.nodesModified[i].diff.x) {
                           let ghost = _.clone(opts.nodes[j].toObject());
                           ghost.moved = true;
                           ghost.originalId = ghost._id;
                           ghost._id = ghost._id + '_history';
-                          ghost.x = opts.diff.modified[i].diff.x.old;
+                          ghost.x = opts.diff.nodesModified[i].diff.x.old;
                           listToAdd.push(ghost);
                         }
                         opts.nodes[j] = opts.nodes[j].toObject ? opts.nodes[j].toObject() : opts.nodes[j];
@@ -259,20 +260,45 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
                     }
                   }
                   // removed are from diff
-                  for (let i = 0; i < opts.diff.removed.length; i++) {
-                    opts.diff.removed[i] = opts.diff.removed[i].toObject();
-                    opts.diff.removed[i].removed = true;
-                    listToAdd.push(opts.diff.removed[i]);
+                  for (let i = 0; i < opts.diff.nodesRemoved.length; i++) {
+                    opts.diff.nodesRemoved[i] = opts.diff.nodesRemoved[i].toObject();
+                    opts.diff.nodesRemoved[i].removed = true;
+                    listToAdd.push(opts.diff.nodesRemoved[i]);
                   }
                   rendererLogger.trace('artificail nodes ' + listToAdd.length);
                   opts.nodes = opts.nodes.concat(listToAdd);
-                }
+
+
+
+
+                  //process users
+                  let userListToAdd = [];
+                  for (let j = 0; j < opts.users.length; j++) {
+                    if (!opts.users[j].previous) {
+                      // opts.users[j] = opts.users[j].toObject();
+                      opts.users[j].added = true;
+                    }
+                  }
+                  // removed are from diff
+                  for (let i = 0; i < opts.diff.usersRemoved.length; i++) {
+                    opts.diff.usersRemoved[i] = opts.diff.usersRemoved[i].toObject();
+                    opts.diff.usersRemoved[i].removed = true;
+                    userListToAdd.push(opts.diff.usersRemoved[i]);
+                  }
+                  rendererLogger.trace('artificail users ' + userListToAdd.length);
+                  opts.users = opts.users.concat(userListToAdd);
+
+
+
+
+                } // end if diff
 
                 for(let i = 0; i < opts.nodes.length; i++){
                   rendererLogger.trace('nodes ' + opts.nodes[i].x + ' ' + opts.nodes[i].y);
                 }
 
                 rendererLogger.debug('total number of nodes ' + opts.nodes.length);
+
                 var pageText = renderFullPage(opts, script || webpack_middleware.fileSystem.readFileSync(r + CANVAS_WRAPPER_PATH));
 
                 if(splitMapName[1] === 'html'){

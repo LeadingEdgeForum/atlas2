@@ -51,13 +51,20 @@ var User = React.createClass({
     return {focus: false};
   },
 
-  componentWillUnmount: function() {},
-
   shouldComponentUpdate(nextProps, nextState){
     if(nextProps.focused === false){
       nextState.hover = null;
     }
     return true;
+  },
+
+  componentWillUnmount: function() {
+    jsPlumb.select({
+      scope: 'WM_Users',
+      source: this.props.id
+    }).each(function(connection) {
+      jsPlumb.deleteConnection(connection);
+    });
   },
 
   resizeHandler : function(newWidth){
@@ -181,23 +188,23 @@ var User = React.createClass({
     );
   },
 
-  // decorateDiffStyle(node, style, diff) {
-  //   if (!this.props.canvasStore.isDiffEnabled()) {
-  //     return;
-  //   }
-  //   if (!diff) {
-  //     return;
-  //   }
-  //   if (diff === 'ADDED') {
-  //     style.boxShadow = "0 0 3px 3px green";
-  //     return;
-  //   }
-  //   style.boxShadow = "0 0 3px 3px orange";
-  // },
+  decorateDiffStyle(user, style, diff) {
+    if (!this.props.canvasStore.isDiffEnabled()) {
+      return;
+    }
+    if (!diff) {
+      return;
+    }
+    if (diff === 'ADDED') {
+      style.boxShadow = "0 0 3px 3px green";
+      return;
+    }
+    style.boxShadow = "0 0 3px 3px orange";
+  },
 
   render: function() {
     let user = this.props.user;
-    // var diff = this.props.diff;
+    var diff = this.props.diff;
     var style = getStyleForType(Constants.USER);
     var left = user.x * this.props.size.width;
     var top = user.y * this.props.size.height;
@@ -207,7 +214,7 @@ var User = React.createClass({
       position: 'absolute',
       cursor: 'pointer'
     });
-    // this.decorateDiffStyle(node, style, diff);
+    this.decorateDiffStyle(user, style, diff);
     var name = this.props.user.name;
     var menu = this.renderMenu();
     var shouldBeDraggable = this.props.focused;

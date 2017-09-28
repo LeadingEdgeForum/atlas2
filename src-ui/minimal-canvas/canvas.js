@@ -250,7 +250,10 @@ export default class MapCanvas extends React.Component {
                   user = {this.props.users[iii]}
                   id = {this.props.users[iii]._id}
                   key = {this.props.users[iii]._id}
-                  size = {size} otherFontSize={otherFontSize}
+                  added = {this.props.users[iii].added}
+                  removed = {this.props.users[iii].removed}
+                  size = {size}
+                  otherFontSize={otherFontSize}
                   />);
             }
         }

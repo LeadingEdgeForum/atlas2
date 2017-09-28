@@ -163,11 +163,11 @@ describe('Atlas 2 E2E tests', function() {
 
       browser.waitForVisible('ol.breadcrumb li a');
 
-      browser.newNode(1, 'testNode1');
+      browser.newNode(2, 'testNode1');
 
       browser.moveNode('testNode1',200,200);
 
-      browser.newNode(1, 'testNode2');
+      browser.newNode(2, 'testNode2');
 
       browser.moveNode('testNode2',-100,-100);
       browser.connectNodes('testNode2','testNode1');
@@ -214,27 +214,33 @@ describe('Atlas 2 E2E tests', function() {
       browser.click('ul.navbar-nav li a .glyphicon-tags');
 
       browser.moveNode('testNode1',-100,0);
-      browser.newNode(2, 'testNode3');
+      browser.newNode(3, 'testNode3');
       browser.moveNode('testNode3',100,0);
 
       // no connection should start in the left upper corner, as no node is there
-      browser.waitUntil(function(){
+      browser.waitUntil(function() {
         var svgList = browser.$$("//*[name()='svg']");
         var flag = true;
         var oneSet = false;
-        for(let i = 0; i < svgList.length; i++){
+        for (let i = 0; i < svgList.length; i++) {
           let img = svgList[i];
           //only sufficiently large images may be connections
-          if (img.getCssProperty('width').parsed &&
+          // the try catch is necessary as jsplumb is still manipulating images
+          // some references may be stale, we will assert them in the next loop run
+          try {
+            if (img.getCssProperty('width').parsed &&
               img.getCssProperty('height').parsed &&
               img.getCssProperty('left').parsed &&
               img.getCssProperty('top').parsed &&
               img.getCssProperty('width').parsed.value > 5 &&
               img.getCssProperty('height').parsed.value > 5) {
-            if (img.getCssProperty('left').parsed.value < 50 || img.getCssProperty('top').parsed.value < 50) {
-              flag = false;
+              if (img.getCssProperty('left').parsed.value < 50 || img.getCssProperty('top').parsed.value < 50) {
+                flag = false;
+              }
+              oneSet = true;
             }
-            oneSet = true;
+          } catch (e) {
+            console.warn(e);
           }
         }
         return flag && oneSet;

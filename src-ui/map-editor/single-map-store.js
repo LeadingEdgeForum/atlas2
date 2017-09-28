@@ -520,9 +520,11 @@ export default class SingleWorkspaceStore extends Store {
     if(!this.diff){
       this.fetchMapDiff();
       return {
-        removed : [],
-        added : [],
-        modified : []
+        nodesRemoved : [],
+        nodesAdded : [],
+        nodesModified : [],
+        usersAdded : [],
+        usersRemoved : []
       };
     }
     return this.diff;

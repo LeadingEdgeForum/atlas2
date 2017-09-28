@@ -325,11 +325,35 @@ module.exports = function(conn) {
             }
           }
           // console.log('removed', removed);
-
+          let usersAdded = [];
+          for (let i = 0; i < map.users.length; i++) {
+            if (!map.users[i].previous) {
+              usersAdded.push({_id : map.users[i]._id});
+            }
+          }
+          let usersRemoved = [];
+          if (previousMap) {
+            for (let i = 0; i < previousMap.users.length; i++) {
+              let candidateUser = previousMap.users[i];
+              let foundCounterPart = false; // counter part means that an old map has a user that next is set to a user in a new map.
+              // simplest way to check.... go through a list of users in current map and check whether any references back
+              for (let j = 0; j < map.users.length; j++) {
+                if ('' + candidateUser._id === '' + map.users[j].previous) {
+                  foundCounterPart = true;
+                  break;
+                }
+              }
+              if (!foundCounterPart) {
+                usersRemoved.push(candidateUser); // add full removed user as we want to show where it was);
+              }
+            }
+          }
           return {
-            removed : removed,
-            added : added,
-            modified : modified
+            nodesRemoved : removed,
+            nodesAdded : added,
+            nodesModified : modified,
+            usersAdded : usersAdded,
+            usersRemoved: usersRemoved
           };
         });
     };

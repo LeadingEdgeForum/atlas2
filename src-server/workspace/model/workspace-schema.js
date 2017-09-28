@@ -1173,7 +1173,8 @@ module.exports = function(conn) {
                   responsiblePerson: oldMap.responsiblePerson,
                   schemaVersion: oldMap.schemaVersion,
                   comments: [],
-                  nodes: []
+                  nodes: [],
+                  users: []
                 });
                 variantLogger.debug('setting next ' + newMap._id + ' in ' + oldMap._id);
                 // if(oldMap.next.indexOf(newMap._id) >= 0){
@@ -1195,6 +1196,26 @@ module.exports = function(conn) {
                     previous : oldMap.comments[j]._id
                   });
                   oldMap.comments[j].next.push(newCommentId);
+                }
+
+                // transfer users
+                for (let j = 0; j < oldMap.users.length; j++) {
+                  let newUserId = new ObjectId();
+                  let oldUser = oldMap.users[j];
+                  newMap.users.push({
+                    _id: newUserId,
+                    x: oldUser.x,
+                    y: oldUser.y,
+                    width: oldUser.width,
+                    name: oldUser.name,
+                    description: oldUser.description,
+                    next: [],
+                    previous: oldUser._id
+                  });
+                  for (let k = 0; k < oldUser.associatedNeeds.length; k++) {
+                    newMap.users[j].associatedNeeds.push(mappings.nodes[oldUser.associatedNeeds[k]]);
+                  }
+                  oldUser.next.push(newUserId);
                 }
 
                 // transfer nodes
