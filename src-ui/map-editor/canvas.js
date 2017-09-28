@@ -465,7 +465,14 @@ export default class MapCanvas extends React.Component {
             let exists = false;
             for (let k = 0; k < existingConnections.length; k++) {
               if (existingConnections[k].targetId === user.associatedNeeds[zz]) {
-                existingConnections.splice(k, 1);
+                let _temp= existingConnections.splice(k, 1)[0];
+                if(_temp.___overlayVisible){
+                  _temp.getOverlay("label").hide();
+                  _temp.getOverlay("menuOverlay").show();
+                } else {
+                  _temp.getOverlay("label").show();
+                  _temp.getOverlay("menuOverlay").hide();
+                }
                 exists = true;
               }
             }
