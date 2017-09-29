@@ -438,7 +438,7 @@ var MapComponent = React.createClass({
           }
         });
       }}>
-        <div style={itemCaptionStyle}>{name}
+        <div style={itemCaptionStyle} className="node-label">{name}
           <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
         </div>
         {inertia}

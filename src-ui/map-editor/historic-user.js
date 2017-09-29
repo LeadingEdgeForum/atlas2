@@ -72,7 +72,7 @@ var HistoricUser = React.createClass({
 
     return (
       <div style={style} id={id} key={id}>
-        <div style={itemCaptionStyle}>{name}</div>
+        <div style={itemCaptionStyle} className="user-label">{name}</div>
       </div>
     );
   }

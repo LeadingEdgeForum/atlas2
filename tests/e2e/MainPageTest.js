@@ -265,6 +265,18 @@ describe('Atlas 2 E2E tests', function() {
       }, 20000, 'no connection should be in the top left corner');
   });
 
+  it('Verify diff colors', function(){
+      //actually continous the previous test
+      let queryUser3 = '//*/div[contains(@class,"user-label") and contains(string(),"user3-1")]/..';
+      let queryUser1 = '//*/div[contains(@class,"user-label") and contains(string(),"user1-1")]/..';
+      should(browser.$(queryUser3).getCssProperty('box-shadow')).exist;
+      should(browser.$(queryUser1).getCssProperty('box-shadow')).exist;
+      should(browser.$(queryUser3).getCssProperty('box-shadow').value).exist;
+      should(browser.$(queryUser1).getCssProperty('box-shadow').value).exist;
+      should(browser.$(queryUser3).getCssProperty('box-shadow').value).startWith('rgb(0,128,0)');
+      should(browser.$(queryUser1).getCssProperty('box-shadow').value).startWith('rgb(255,0,0)');
+  });
+
 
   after(function() {
       browser.url('/');

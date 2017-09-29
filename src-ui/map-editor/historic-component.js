@@ -107,10 +107,10 @@ var HistoricComponent = React.createClass({
     var canvasStore = this.props.canvasStore;
     itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
     itemCaptionStyle.top = - itemCaptionStyle.fontSize;
-    
+
     return (
       <div style={style} id={id} key={id}>
-        <div style={itemCaptionStyle}>{name}</div>
+        <div style={itemCaptionStyle} className="node-label">{name}</div>
         {inertia}
       </div>
     );

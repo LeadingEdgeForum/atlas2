@@ -253,7 +253,7 @@ var User = React.createClass({
           }
         });
       }}>
-        <div style={itemCaptionStyle}>{name}
+        <div style={itemCaptionStyle} className="user-label">{name}
           <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
         </div>
         {menu}
