@@ -170,9 +170,20 @@ describe('Atlas 2 E2E tests', function() {
       browser.newNode(2, 'testNode2');
 
       browser.moveNode('testNode2',-100,-100);
-      browser.connectNodes('testNode2','testNode1');
+      browser.connectNodes('testNode1','testNode2');
 
       browser.waitForVisible('div=testNode2');
+
+      browser.newNode(1, 'user1-1');
+      browser.moveNode('user1-1', 0, -200);
+      browser.waitForVisible('div=user1-1');
+
+      browser.newNode(1, 'user2-1');
+      browser.moveNode('user2-1', -50, -150);
+      browser.waitForVisible('div=user2-1');
+
+      browser.connectNodes('user1-1','testNode1');
+      browser.connectNodes('user2-1','testNode1');
   });
 
   it('Create a new variant', function(){
@@ -217,6 +228,13 @@ describe('Atlas 2 E2E tests', function() {
       browser.newNode(3, 'testNode3');
       browser.moveNode('testNode3',100,0);
 
+      browser.newNode(1, 'user3-1');
+      browser.moveNode('user3-1', 100, -150);
+      browser.waitForVisible('div=user3-1');
+
+      browser.deleteNode('user1-1');
+
+
       // no connection should start in the left upper corner, as no node is there
       browser.waitUntil(function() {
         var svgList = browser.$$("//*[name()='svg']");
@@ -232,26 +250,20 @@ describe('Atlas 2 E2E tests', function() {
               img.getCssProperty('height').parsed &&
               img.getCssProperty('left').parsed &&
               img.getCssProperty('top').parsed &&
-              img.getCssProperty('width').parsed.value > 5 &&
-              img.getCssProperty('height').parsed.value > 5) {
+              img.getCssProperty('width').parsed.value > 4 &&
+              img.getCssProperty('height').parsed.value > 4) {
               if (img.getCssProperty('left').parsed.value < 50 || img.getCssProperty('top').parsed.value < 50) {
                 flag = false;
               }
               oneSet = true;
             }
           } catch (e) {
-            console.warn(e);
+            // console.warn(e);
           }
         }
         return flag && oneSet;
-      }, 5000, 'no connection should be in the top left corner');
-
-
-      // browser.waitForVisible('blaaah');
+      }, 20000, 'no connection should be in the top left corner');
   });
-
-  // afterEach(function(done) {
-  // });
 
 
   after(function() {

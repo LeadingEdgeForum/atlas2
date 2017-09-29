@@ -173,29 +173,60 @@ exports.config = {
         browser.dragAndDrop('#jsPlumb_1_' + type, '#app-container > div > div:nth-child(3) > div.col-lg-11.col-md-10.col-sm-10.col-xs-9 > div > div:nth-child(1)');
 
         browser.waitForVisible('h4.modal-title');
-        browser.getText('h4.modal-title').should.equal('Create a new node');
-
+        if (type === 1) {
+          browser.getText('h4.modal-title').should.equal('Create a new user');
+        } else {
+          browser.getText('h4.modal-title').should.equal('Create a new node');
+        }
 
         browser.setValue('input#name', nodeText);
         browser.setValue('textarea#description', "Component description");
-        browser.setValue('input#responsiblePerson', "dummy@dummy.dummy");
+        if (type !== 1) {
+          browser.setValue('input#responsiblePerson', "dummy@dummy.dummy");
+        }
 
 
         browser.click('button=Create');
         browser.waitForVisible('button=Create',5000, true);
         browser.waitForVisible('div=' + nodeText);
       });
+
       browser.addCommand("moveNode", function (nodeText, x, y) {
-        browser.click('div=' + nodeText);
+        if(!browser.isExisting('.glyphicon-move')){
+            browser.click('div=' + nodeText);
+        } else {
+          browser.click('div=' + nodeText);
+          browser.click('div=' + nodeText);
+        }
+        browser.waitForVisible('.glyphicon-move');
         browser.moveToObject('.glyphicon-move',0,0);
         browser.buttonDown(0);
         browser.moveToObject('.glyphicon-move',x,y);
         browser.buttonUp(0);
-        // browser.click('div=' + nodeText);
+        if(browser.isExisting('.glyphicon-move')){
+            browser.click('div=' + nodeText);
+        }
       });
+
+      browser.addCommand("deleteNode", function (nodeText) {
+        browser.pause(1000);
+        browser.click('div=' + nodeText);
+        browser.waitForVisible('div.jtk-draggable div .glyphicon-remove');
+        browser.click('div.jtk-draggable div .glyphicon-remove');
+      });
+
       browser.addCommand("connectNodes", function (nodeText1, nodeText2) {
-        browser.click('div=' + nodeText2);
-        browser.dragAndDrop('.glyphicon-link','div='+nodeText1);
+        if(!browser.isExisting('.glyphicon-link')){
+            browser.click('div=' + nodeText1);
+        } else {
+          browser.click('div=' + nodeText1);
+          browser.click('div=' + nodeText1);
+        }
+        browser.waitForVisible('.glyphicon-link');
+        browser.dragAndDrop('.glyphicon-link','div='+nodeText2);
+        if(browser.isExisting('.glyphicon-link')){
+            browser.click('div=' + nodeText1);
+        }
       });
     },
     //
