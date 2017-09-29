@@ -11,12 +11,14 @@ import SingleMapActions from './single-map-actions';
 import CanvasActions from './canvas-actions';
 import Constants from '../constants';
 import {
+  userStyle,
   userNeedStyle,
   externalStyle,
   internalStyle,
   submapStyle,
   genericCommentPalletteStyle
 } from './component-styles';
+import _ from 'underscore';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
@@ -43,6 +45,8 @@ var makeDraggable = function(type, mapID, canvasStore, input) {
         SingleMapActions.openAddSubmapDialog(coords, type);
       } else if (type === Constants.GENERIC_COMMENT){
         SingleMapActions.openAddCommentDialog(coords, type);
+      } else if (type === Constants.USER){
+        SingleMapActions.openAddNewUserDialog(coords, type);
       } else {
         SingleMapActions.openAddNodeDialog(coords, type);
       }
@@ -69,11 +73,23 @@ export default class Palette extends React.Component {
   render() {
     var mapID = this.props.mapID;
     var canvasStore = this.props.canvasStore;
+    var userStyleWithLimitedSize = _.clone(userStyle);
+    userStyleWithLimitedSize.height = 20;
+    userStyleWithLimitedSize.width = 10;
     return (
       <Grid fluid={true}>
         <Row className="show-grid">
           <Col xs={12}>
             <h6>Components</h6>
+          </Col>
+        </Row>
+        <Row className="show-grid">
+          <Col xs={12}>
+            <Button href="#" style={buttonStyle} bsStyle={null}>
+              <div ref={makeDraggable.bind(this, Constants.USER, mapID, canvasStore)} style={HigherMargins}>
+                <div style={userStyleWithLimitedSize}></div>&nbsp;User
+              </div>
+            </Button>
           </Col>
         </Row>
         <Row className="show-grid">

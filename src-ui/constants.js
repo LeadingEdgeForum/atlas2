@@ -3,6 +3,7 @@
 var keyMirror = require('key-mirror-nested');
 
 module.exports  = keyMirror({
+  USER : null,
   USERNEED : null,
   EXTERNAL : null,
   INTERNAL : null,

@@ -163,16 +163,27 @@ describe('Atlas 2 E2E tests', function() {
 
       browser.waitForVisible('ol.breadcrumb li a');
 
-      browser.newNode(1, 'testNode1');
+      browser.newNode(2, 'testNode1');
 
       browser.moveNode('testNode1',200,200);
 
-      browser.newNode(1, 'testNode2');
+      browser.newNode(2, 'testNode2');
 
       browser.moveNode('testNode2',-100,-100);
-      browser.connectNodes('testNode2','testNode1');
+      browser.connectNodes('testNode1','testNode2');
 
       browser.waitForVisible('div=testNode2');
+
+      browser.newNode(1, 'user1-1');
+      browser.moveNode('user1-1', 0, -200);
+      browser.waitForVisible('div=user1-1');
+
+      browser.newNode(1, 'user2-1');
+      browser.moveNode('user2-1', -50, -150);
+      browser.waitForVisible('div=user2-1');
+
+      browser.connectNodes('user1-1','testNode1');
+      browser.connectNodes('user2-1','testNode1');
   });
 
   it('Create a new variant', function(){
@@ -214,38 +225,57 @@ describe('Atlas 2 E2E tests', function() {
       browser.click('ul.navbar-nav li a .glyphicon-tags');
 
       browser.moveNode('testNode1',-100,0);
-      browser.newNode(2, 'testNode3');
+      browser.newNode(3, 'testNode3');
       browser.moveNode('testNode3',100,0);
 
+      browser.newNode(1, 'user3-1');
+      browser.moveNode('user3-1', 100, -150);
+      browser.waitForVisible('div=user3-1');
+
+      browser.deleteNode('user1-1');
+
+
       // no connection should start in the left upper corner, as no node is there
-      browser.waitUntil(function(){
+      browser.waitUntil(function() {
         var svgList = browser.$$("//*[name()='svg']");
         var flag = true;
         var oneSet = false;
-        for(let i = 0; i < svgList.length; i++){
+        for (let i = 0; i < svgList.length; i++) {
           let img = svgList[i];
           //only sufficiently large images may be connections
-          if (img.getCssProperty('width').parsed &&
+          // the try catch is necessary as jsplumb is still manipulating images
+          // some references may be stale, we will assert them in the next loop run
+          try {
+            if (img.getCssProperty('width').parsed &&
               img.getCssProperty('height').parsed &&
               img.getCssProperty('left').parsed &&
               img.getCssProperty('top').parsed &&
-              img.getCssProperty('width').parsed.value > 5 &&
-              img.getCssProperty('height').parsed.value > 5) {
-            if (img.getCssProperty('left').parsed.value < 50 || img.getCssProperty('top').parsed.value < 50) {
-              flag = false;
+              img.getCssProperty('width').parsed.value > 4 &&
+              img.getCssProperty('height').parsed.value > 4) {
+              if (img.getCssProperty('left').parsed.value < 50 || img.getCssProperty('top').parsed.value < 50) {
+                flag = false;
+              }
+              oneSet = true;
             }
-            oneSet = true;
+          } catch (e) {
+            // console.warn(e);
           }
         }
         return flag && oneSet;
-      }, 5000, 'no connection should be in the top left corner');
-
-
-      // browser.waitForVisible('blaaah');
+      }, 20000, 'no connection should be in the top left corner');
   });
 
-  // afterEach(function(done) {
-  // });
+  it('Verify diff colors', function(){
+      //actually continous the previous test
+      let queryUser3 = '//*/div[contains(@class,"user-label") and contains(string(),"user3-1")]/..';
+      let queryUser1 = '//*/div[contains(@class,"user-label") and contains(string(),"user1-1")]/..';
+      should(browser.$(queryUser3).getCssProperty('box-shadow')).exist;
+      should(browser.$(queryUser1).getCssProperty('box-shadow')).exist;
+      should(browser.$(queryUser3).getCssProperty('box-shadow').value).exist;
+      should(browser.$(queryUser1).getCssProperty('box-shadow').value).exist;
+      should(browser.$(queryUser3).getCssProperty('box-shadow').value).startWith('rgb(0,128,0)');
+      should(browser.$(queryUser1).getCssProperty('box-shadow').value).startWith('rgb(255,0,0)');
+  });
 
 
   after(function() {

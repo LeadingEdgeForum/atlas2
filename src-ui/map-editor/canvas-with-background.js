@@ -124,6 +124,7 @@ export default class CanvasWithBackground extends React.Component {
   }
 
   render() {
+    var users = this.props.users;
     var nodes = this.props.nodes;
     var comments = this.props.comments;
     var workspaceID = this.props.workspaceID;
@@ -138,7 +139,17 @@ export default class CanvasWithBackground extends React.Component {
     var canvasStore = this.props.canvasStore;
     return (
             <div style={outerStyle}>
-              <MapCanvas nodes={nodes} comments={comments} mapID={mapID} workspaceID={workspaceID} variantId={variantId} background={background} canvasStore={canvasStore} diff={diff}></MapCanvas>
+              <MapCanvas
+                  users={users}
+                  nodes={nodes}
+                  comments={comments}
+                  mapID={mapID}
+                  workspaceID={workspaceID}
+                  variantId={variantId}
+                  background={background}
+                  canvasStore={canvasStore}
+                  diff={diff}>
+              </MapCanvas>
               <div>
                 <div style={axisX}>
                   <div style={genesisStyle}>Genesis</div>
