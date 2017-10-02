@@ -33,8 +33,6 @@ export default class MapList extends React.Component {
             workspaceID={workspaceID}
             key={item._id}
             id={item._id}
-            user={item.user}
-            purpose={item.purpose}
             name={item.name}
             isSubmap={item.isSubmap}
             responsible={item.responsiblePerson} />);
