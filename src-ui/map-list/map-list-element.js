@@ -67,7 +67,7 @@ export default class MapListElement extends React.Component {
         punctuation = ' and ';
       }
       mapsList.push(
-        <span key={href}>&#39;<a href={href}>{name}</a>&#39;{punctuation}</span>
+        <LinkContainer to={{pathname: href}} ><span key={href}>&#39;<a href={href}>{name}</a>&#39;{punctuation}</span></LinkContainer>
       );
     }
     return (
