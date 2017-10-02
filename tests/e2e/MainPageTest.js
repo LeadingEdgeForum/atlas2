@@ -125,15 +125,13 @@ describe('Atlas 2 E2E tests', function() {
 
       browser.click("button h4.list-group-item-heading");
 
-      browser.waitForVisible('input#user');
-      browser.waitForVisible('input#purpose');
+      browser.waitForVisible('input#name');
       browser.waitForVisible('input#responsiblePerson');
 
-      browser.setValue('input#user', "Chris");
-      browser.setValue('input#purpose', "gain situational awareness");
+      browser.setValue('input#name', "As Chris, I want to gain situational awareness");
       browser.setValue('input#responsiblePerson', "dummy@dummy.dummy");
 
-      browser.getText('h4.modal-title').should.equal('As Chris, I want to gain situational awareness.');
+      browser.getText('h4.modal-title').should.equal('As Chris, I want to gain situational awareness');
       browser.click('button=Create a new map');
 
       browser.waitForVisible('button=Create a new map',5000, true);
@@ -143,7 +141,7 @@ describe('Atlas 2 E2E tests', function() {
       let maps = list.$$('a.list-group-item');
       maps.length.should.be.above(0);
       let mapName = maps[maps.length - 1].$('h4').getText();
-      should(mapName).be.equal('As Chris, I want to gain situational awareness.');
+      should(mapName).be.equal('As Chris, I want to gain situational awareness');
   });
 
 
