@@ -72,10 +72,10 @@ var CreateNewMapDialog = React.createClass({
             <Form horizontal>
               <FormGroup controlId="name">
                 <Col sm={2}>
-                  <ControlLabel>User</ControlLabel>
+                  <ControlLabel>Name</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter map name" onChange={this._handleDialogChange.bind(this, 'user')}/>
+                  <FormControl type="text" placeholder="Enter map name" onChange={this._handleDialogChange.bind(this, 'name')}/>
                   <HelpBlock>What name would reflect the goal of your map?</HelpBlock>
                 </Col>
               </FormGroup>
