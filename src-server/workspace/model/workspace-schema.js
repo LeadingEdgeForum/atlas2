@@ -126,7 +126,10 @@ module.exports = function(conn) {
             } ]
           }
         ],
-        schemaVersion : Number
+        schemaVersion : {
+          type: Number,
+          default : 2
+        }
     });
 
     // always update the schema to the latest possible version
@@ -191,23 +194,19 @@ module.exports = function(conn) {
       var WardleyMap = require('./map-schema')(conn);
       var Workspace = require('./workspace-schema')(conn);
 
-      if (!params.user) {
-        params.user = "your competitor";
-      }
-      if (!params.purpose) {
-        params.purpose = "be busy with nothing";
+      if (!params.name) {
+        params.user = "I am too lazy to set the map title. I prefer getting lost.";
       }
       var newId = new ObjectId();
       return this.insertMapIdAt(newId, timesliceId)
         .then(function(workspace) {
           return new WardleyMap({
-            user: params.user,
-            purpose: params.purpose,
+            name: params.name,
             workspace: workspace._id,
             archived: false,
             timesliceId : timesliceId ? new ObjectId(timesliceId) : workspace.nowId,
             responsiblePerson: params.responsiblePerson,
-            _id: newId
+            _id: newId,
           }).save();
         });
     };
@@ -226,7 +225,7 @@ module.exports = function(conn) {
               workspace: this._id,
               timesliceId : timesliceId
           })
-          .select('user purpose name')
+          .select('name isSubmap')
           .then(function(maps) {
               deduplicationLogger.debug('found maps' + maps);
               var loadPromises = [];
@@ -1161,8 +1160,6 @@ module.exports = function(conn) {
                 let oldMap = sourceTimeSlice.maps[i];
                 let newMap = new WardleyMap({
                   _id: new ObjectId(mappings.maps[oldMap._id]),
-                  user: oldMap.user,
-                  purpose: oldMap.purpose,
                   name: oldMap.name,
                   isSubmap: oldMap.isSubmap,
                   archived: oldMap.archived,

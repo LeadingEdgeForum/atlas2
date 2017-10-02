@@ -54,7 +54,7 @@ var CreateNewMapDialog = React.createClass({
   },
 
   _summary: function() {
-    return calculateMapName("Create a new map", this.internalState.user, this.internalState.purpose);
+    return calculateMapName("Create a new map", this.internalState.name, false);
   },
 
   render: function() {

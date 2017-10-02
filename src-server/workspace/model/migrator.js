@@ -88,6 +88,57 @@ module.exports = function(conn) {
 
       return q.allSettled(prom);
     });
-  });
+  }).then(function(){
+    // versionless maps (not submaps) +  user + purpose -> name
+    return WardleyMap.find({
+      schemaVersion: {
+        $exists: false
+      },
+      isSubmap : false
+    }).then(function(listOfMaps){
+        console.log('Found ' + listOfMaps.length + ' without schema');
+        var mapPromises = [];
 
+        listOfMaps.forEach(function(map) {
+          map.name = "As " + map.user + ", I want to " + map.purpose + ".";
+          map.schemaVersion = 2;
+          mapPromises.push(map.save());
+        });
+
+        return q.allSettled(mapPromises);
+    });
+  }).then(function(){
+    // version 1 maps (not submaps) +  user + purpose -> name
+    return WardleyMap.find({
+      schemaVersion: 1,
+      isSubmap : false
+    }).then(function(listOfMaps){
+        console.log('Found ' + listOfMaps.length + ' without schema');
+        var mapPromises = [];
+
+        listOfMaps.forEach(function(map) {
+          map.name = "As " + map.user + ", I want to " + map.purpose + ".";
+          map.schemaVersion = 2;
+          mapPromises.push(map.save());
+        });
+
+        return q.allSettled(mapPromises);
+    }).then(function(){
+      // version 1 submaps - just bump as they already use name instead of user + purpose
+      return WardleyMap.find({
+        schemaVersion: 1,
+        isSubmap : true
+      }).then(function(listOfMaps){
+          console.log('Found ' + listOfMaps.length + ' submaps');
+          var mapPromises = [];
+
+          listOfMaps.forEach(function(map) {
+            map.schemaVersion = 2;
+            mapPromises.push(map.save());
+          });
+
+          return q.allSettled(mapPromises);
+      });
+    });
+  });
 };

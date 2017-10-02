@@ -78,7 +78,7 @@ var EditMapDialog = React.createClass({
     this.forceUpdate();
   },
   _summary: function(){
-    return calculateMapName("Edit your map", this.internalState.user, this.internalState.purpose, this.internalState.name);
+    return calculateMapName("Edit your map", this.internalState.name, this.internalState.isSubmap);
   },
 
   // catch enter and consider it to be 'submit'

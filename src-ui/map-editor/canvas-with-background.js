@@ -3,7 +3,6 @@
 var React = require('react');
 var PropTypes = React.PropTypes;
 var MapCanvas  = require('./canvas').default;
-var calculateMapName = require('../map-list/map-name-calculator').calculateMapName;
 var _ = require('underscore');
 
 var outerStyle = { //this is style applied to the entire map area (without palette)

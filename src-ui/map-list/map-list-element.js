@@ -58,7 +58,7 @@ export default class MapListElement extends React.Component {
     var mapsList = [];
     for (var i = 0; i < this.state.referencingMaps.length; i++) {
       var href = '/map/' + this.state.referencingMaps[i]._id;
-      var name = calculateMapName('Unknown', this.state.referencingMaps[i].user, this.state.referencingMaps[i].purpose, this.state.referencingMaps[i].name);
+      var name = calculateMapName('Unknown', this.state.referencingMaps[i].name, this.state.referencingMaps[i].isSubmap);
       var punctuation = ', ';
       if (i === this.state.referencingMaps.length - 1) {
         punctuation = null;
@@ -79,7 +79,7 @@ export default class MapListElement extends React.Component {
     var mapid = this.props.id;
     var workspaceID = this.props.workspaceID;
     var href = '/map/' + mapid;
-    var mapName = calculateMapName("I like being lost.", this.props.user, this.props.purpose, this.props.name);
+    var mapName = calculateMapName("I like being lost.", this.props.name, this.props.isSubmap);
 
     var deleteButton = (
       <MenuItem eventKey="1" onClick={this.delete.bind(this, mapid)}><Glyphicon glyph="remove"></Glyphicon>Delete</MenuItem>

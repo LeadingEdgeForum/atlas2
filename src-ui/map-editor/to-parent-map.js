@@ -53,7 +53,7 @@ var ToParentMap = React.createClass({
       </NavItem>;
     }
     if(this.state.referencingMaps.length === 1){
-      var name = calculateMapName('Parent map', this.state.referencingMaps[0].user, this.state.referencingMaps[0].purpose, this.state.referencingMaps[0].name);
+      var name = calculateMapName('Parent map', this.state.referencingMaps[0].name, this.state.referencingMaps[0].isSubmap);
       var href = '/map/' + this.state.referencingMaps[0]._id;
       return <LinkContainer to={href}><NavItem eventKey={4} href={href}>
           <Glyphicon glyph="arrow-up"></Glyphicon> {name}
@@ -61,7 +61,7 @@ var ToParentMap = React.createClass({
     }
     var parentList = [];
     for(var i = 0 ; i < this.state.referencingMaps.length; i++){
-      var name2 = calculateMapName('Parent map', this.state.referencingMaps[i].user, this.state.referencingMaps[i].purpose, this.state.referencingMaps[i].name);
+      var name2 = calculateMapName('Parent map', this.state.referencingMaps[i].name, this.state.referencingMaps[i].isSubmap);
       var href2 = '/map/' + this.state.referencingMaps[i]._id;
       var menuItem = <LinkContainer to={href2}><MenuItem href={href2}>{name2}</MenuItem></LinkContainer>;
       parentList.push(menuItem);
