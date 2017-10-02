@@ -68,6 +68,8 @@ module.exports = function(conn) {
 
     var _MapSchema = new Schema({
         name: Schema.Types.String,
+        user: Schema.Types.String,//must be held until migration happens
+        purpose: Schema.Types.String, //must be held until migration happens
         isSubmap: Schema.Types.Boolean,
         archived: Schema.Types.Boolean,
         workspace: {

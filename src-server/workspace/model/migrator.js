@@ -90,55 +90,31 @@ module.exports = function(conn) {
     });
   }).then(function(){
     // versionless maps (not submaps) +  user + purpose -> name
-    return WardleyMap.find({
-      schemaVersion: {
-        $exists: false
-      },
-      isSubmap : false
-    }).then(function(listOfMaps){
-        console.log('Found ' + listOfMaps.length + ' without schema');
-        var mapPromises = [];
-
-        listOfMaps.forEach(function(map) {
-          map.name = "As " + map.user + ", I want to " + map.purpose + ".";
-          map.schemaVersion = 2;
-          mapPromises.push(map.save());
-        });
-
-        return q.allSettled(mapPromises);
+    let mapsToMigrate =  WardleyMap.find().cursor();
+    mapsToMigrate.on('data', function(_map){
+      let _this = this;
+      // if(!_map.user || !_map.purpose){
+      //   console.warn(_map);
+      // }
+      if(!_map.isSubmap && _map.schemaVersion !== 3 && !_map.archived){
+        if(_map.user && _map.purpose){
+          console.log('updating map', _map.user, _map.purpose, _map.isSubmap);
+          _map.name = "As " + _map.user + ", I want to " + _map.purpose + ".";
+          _map.schemaVersion = 3;
+          _map.save();
+        } else {
+          console.error(_map.user, _map.name, _map.purpose, _map.isSubmap);
+        }
+      }
     });
+    mapsToMigrate.on('error', function(e){
+      console.log(e);
+    });
+    mapsToMigrate.on('close', function(){
+      console.log('done done');
+    });
+
   }).then(function(){
-    // version 1 maps (not submaps) +  user + purpose -> name
-    return WardleyMap.find({
-      schemaVersion: 1,
-      isSubmap : false
-    }).then(function(listOfMaps){
-        console.log('Found ' + listOfMaps.length + ' without schema');
-        var mapPromises = [];
-
-        listOfMaps.forEach(function(map) {
-          map.name = "As " + map.user + ", I want to " + map.purpose + ".";
-          map.schemaVersion = 2;
-          mapPromises.push(map.save());
-        });
-
-        return q.allSettled(mapPromises);
-    }).then(function(){
-      // version 1 submaps - just bump as they already use name instead of user + purpose
-      return WardleyMap.find({
-        schemaVersion: 1,
-        isSubmap : true
-      }).then(function(listOfMaps){
-          console.log('Found ' + listOfMaps.length + ' submaps');
-          var mapPromises = [];
-
-          listOfMaps.forEach(function(map) {
-            map.schemaVersion = 2;
-            mapPromises.push(map.save());
-          });
-
-          return q.allSettled(mapPromises);
-      });
-    });
+    console.log('migration done');
   });
 };
