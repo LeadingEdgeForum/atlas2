@@ -70,22 +70,13 @@ var CreateNewMapDialog = React.createClass({
           </Modal.Header>
           <Modal.Body>
             <Form horizontal>
-              <FormGroup controlId="user">
+              <FormGroup controlId="name">
                 <Col sm={2}>
                   <ControlLabel>User</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                  <FormControl type="text" placeholder="Enter user name" onChange={this._handleDialogChange.bind(this, 'user')}/>
-                  <HelpBlock>Who is the main user that you are going to serve?</HelpBlock>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="purpose">
-                <Col sm={2}>
-                  <ControlLabel>Purpose</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="textarea" placeholder="Enter purpose" onChange={this._handleDialogChange.bind(this, 'purpose')}/>
-                  <HelpBlock>What is this user trying to accomplish?</HelpBlock>
+                  <FormControl type="text" placeholder="Enter map name" onChange={this._handleDialogChange.bind(this, 'user')}/>
+                  <HelpBlock>What name would reflect the goal of your map?</HelpBlock>
                 </Col>
               </FormGroup>
               <FormGroup controlId="responsiblePerson">
