@@ -247,8 +247,8 @@ export default class MapEditorPage extends React.Component {
           </Grid>
         </DocumentTitle>);
     }
-
-    const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
+    console.log(this.state.map);
+    const mapName = calculateMapName('wait...', this.state.map.name, this.state.map.isSubmap);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
     const variantId = singleMapStore.getMap().map.timesliceId;

@@ -67,8 +67,6 @@ module.exports = function(conn) {
      */
 
     var _MapSchema = new Schema({
-        user: Schema.Types.String,
-        purpose: Schema.Types.String,
         name: Schema.Types.String,
         isSubmap: Schema.Types.Boolean,
         archived: Schema.Types.Boolean,
@@ -105,7 +103,10 @@ module.exports = function(conn) {
             previous : Schema.Types.ObjectId,
         }],
         responsiblePerson: Schema.Types.String,
-        schemaVersion : Schema.Types.Number
+        schemaVersion : {
+          type: Schema.Types.Number,
+          default : 2
+        }
     });
 
 
@@ -553,7 +554,7 @@ module.exports = function(conn) {
               workspace: _this.workspace
             })
             .populate('nodes')
-            .select('name user purpose _id')
+            .select('name _id isSubmap')
             .exec();
         });
     };

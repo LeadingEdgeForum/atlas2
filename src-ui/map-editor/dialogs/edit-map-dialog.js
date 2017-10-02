@@ -54,8 +54,6 @@ var EditMapDialog = React.createClass({
     this.internalState.workspaceID = this.props.singleMapStore.getWorkspaceId();
 
     this.internalState.mapID = map._id;
-    this.internalState.user = map.user;
-    this.internalState.purpose = map.purpose;
     this.internalState.responsiblePerson = map.responsiblePerson;
     this.internalState.name = map.name;
     this.internalState.isSubmap = !!map.isSubmap;
@@ -78,7 +76,7 @@ var EditMapDialog = React.createClass({
     this.forceUpdate();
   },
   _summary: function(){
-    return calculateMapName("Edit your map", this.internalState.user, this.internalState.purpose, this.internalState.name);
+    return calculateMapName("Edit your map", this.internalState.name, this.internalState.isSubmap);
   },
 
   // catch enter and consider it to be 'submit'
@@ -87,38 +85,6 @@ var EditMapDialog = React.createClass({
         e.preventDefault();
         e.stopPropagation();
     }
-  },
-
-  _userPurposeEdit : function(currentUser,currentPurpose, currentResponsiblePerson){
-    return (<Form horizontal>
-      <FormGroup controlId="user">
-        <Col sm={2}>
-          <ControlLabel>User</ControlLabel>
-        </Col>
-        <Col sm={9}>
-          <FormControl type="text" placeholder="Enter user name" onChange={this._handleDialogChange.bind(this, 'user')} value={currentUser}/>
-          <HelpBlock>Who is the main user that you are going to serve?</HelpBlock>
-        </Col>
-      </FormGroup>
-      <FormGroup controlId="purpose">
-        <Col sm={2}>
-          <ControlLabel>Purpose</ControlLabel>
-        </Col>
-        <Col sm={9}>
-          <FormControl type="textarea" placeholder="Enter purpose" onChange={this._handleDialogChange.bind(this, 'purpose')} value={currentPurpose}/>
-          <HelpBlock>What is this user trying to accomplish?</HelpBlock>
-        </Col>
-      </FormGroup>
-      <FormGroup controlId="responsiblePerson">
-        <Col sm={2}>
-          <ControlLabel>Responsible Person</ControlLabel>
-        </Col>
-        <Col sm={9}>
-          <FormControl type="textarea" placeholder="Enter this person's email" onChange={this._handleDialogChange.bind(this, 'responsiblePerson')} value={currentResponsiblePerson}/>
-          <HelpBlock>Who will be held responsible for this map?</HelpBlock>
-        </Col>
-      </FormGroup>
-    </Form>);
   },
 
   _nameEdit : function(currentName, currentResponsiblePerson){
@@ -148,12 +114,10 @@ var EditMapDialog = React.createClass({
     if (!show) {
       return null;
     }
-    var currentUser = this.internalState.user;
-    var currentPurpose = this.internalState.purpose;
     var currentName = this.internalState.name;
     var currentResponsiblePerson = this.internalState.responsiblePerson;
     var summary = this._summary();
-    var form = this.internalState.isSubmap ? this._nameEdit(currentName, currentResponsiblePerson) : this._userPurposeEdit(currentUser, currentPurpose, currentResponsiblePerson);
+    var form = this._nameEdit(currentName, currentResponsiblePerson);
     return (
       <div>
         <Modal show={show} onHide={this._close}>

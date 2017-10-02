@@ -1,17 +1,12 @@
 /*jshint esversion: 6 */
 
-function calculateMapName(initialText, username, userpurpose, name){
+function calculateMapName(initialText, name, isSubmap){
   var initialSummary = initialText;
-  if(name){
+  if(isSubmap){
     return name + ' (submap)';
   }
-  if(username && username.length > 0){
-    initialSummary = "As " + username + ", I want to ";
-    if(userpurpose && userpurpose.length > 0){
-      initialSummary += userpurpose + ".";
-    } else {
-      initialSummary += "...";
-    }
+  if(name && name.length > 0){
+    return name;
   }
   return initialSummary;
 }

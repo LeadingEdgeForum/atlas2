@@ -130,8 +130,7 @@ describe('Workspaces & maps', function() {
             .set('Accept', 'application/json')
             .send({
                 workspaceID: workspaceID,
-                user: "Sample user",
-                purpose: "Sample purpose"
+                name: "sample name"
             })
             .expect(200)
             .expect(function(res) {
@@ -139,6 +138,8 @@ describe('Workspaces & maps', function() {
                     throw new Error('_id should be assigned during map creation');
                 }
                 mapID = res.body.map._id;
+                should.exist(res.body.map.name);
+                should(res.body.map.name).be.equal('sample name');
             })
             .end(function(err, res) {
                 done(err);

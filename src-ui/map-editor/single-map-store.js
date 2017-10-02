@@ -570,8 +570,6 @@ export default class SingleWorkspaceStore extends Store {
 
 
   submitEditMapDialog(data){
-    this.map.map.user = data.user;
-    this.map.map.purpose = data.purpose;
     this.map.map.name = data.name;
     this.map.map.responsiblePerson = data.responsiblePerson;
     $.ajax({
