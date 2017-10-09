@@ -55,8 +55,8 @@
     "react-router-dom": "4.2.2",
     "react-twitter-widgets": "^1.2.0",
     "sendgrid": "5.2.3",
-    "socket.io": "2.0.1",
-    "socket.io-client": "2.0.1",
+    "socket.io": "2.0.3",
+    "socket.io-client": "2.0.3",
     "underscore": "*",
     "woopra": "1.0.1"
   },
