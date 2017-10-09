@@ -126,7 +126,10 @@ module.exports = function(conn) {
             } ]
           }
         ],
-        schemaVersion : Number
+        schemaVersion : {
+          type: Number,
+          default : 2
+        }
     });
 
     // always update the schema to the latest possible version
@@ -191,23 +194,19 @@ module.exports = function(conn) {
       var WardleyMap = require('./map-schema')(conn);
       var Workspace = require('./workspace-schema')(conn);
 
-      if (!params.user) {
-        params.user = "your competitor";
-      }
-      if (!params.purpose) {
-        params.purpose = "be busy with nothing";
+      if (!params.name) {
+        params.user = "I am too lazy to set the map title. I prefer getting lost.";
       }
       var newId = new ObjectId();
       return this.insertMapIdAt(newId, timesliceId)
         .then(function(workspace) {
           return new WardleyMap({
-            user: params.user,
-            purpose: params.purpose,
+            name: params.name,
             workspace: workspace._id,
             archived: false,
             timesliceId : timesliceId ? new ObjectId(timesliceId) : workspace.nowId,
             responsiblePerson: params.responsiblePerson,
-            _id: newId
+            _id: newId,
           }).save();
         });
     };
@@ -226,7 +225,7 @@ module.exports = function(conn) {
               workspace: this._id,
               timesliceId : timesliceId
           })
-          .select('user purpose name')
+          .select('name isSubmap')
           .then(function(maps) {
               deduplicationLogger.debug('found maps' + maps);
               var loadPromises = [];
@@ -1161,8 +1160,6 @@ module.exports = function(conn) {
                 let oldMap = sourceTimeSlice.maps[i];
                 let newMap = new WardleyMap({
                   _id: new ObjectId(mappings.maps[oldMap._id]),
-                  user: oldMap.user,
-                  purpose: oldMap.purpose,
                   name: oldMap.name,
                   isSubmap: oldMap.isSubmap,
                   archived: oldMap.archived,
@@ -1173,7 +1170,8 @@ module.exports = function(conn) {
                   responsiblePerson: oldMap.responsiblePerson,
                   schemaVersion: oldMap.schemaVersion,
                   comments: [],
-                  nodes: []
+                  nodes: [],
+                  users: []
                 });
                 variantLogger.debug('setting next ' + newMap._id + ' in ' + oldMap._id);
                 // if(oldMap.next.indexOf(newMap._id) >= 0){
@@ -1195,6 +1193,26 @@ module.exports = function(conn) {
                     previous : oldMap.comments[j]._id
                   });
                   oldMap.comments[j].next.push(newCommentId);
+                }
+
+                // transfer users
+                for (let j = 0; j < oldMap.users.length; j++) {
+                  let newUserId = new ObjectId();
+                  let oldUser = oldMap.users[j];
+                  newMap.users.push({
+                    _id: newUserId,
+                    x: oldUser.x,
+                    y: oldUser.y,
+                    width: oldUser.width,
+                    name: oldUser.name,
+                    description: oldUser.description,
+                    next: [],
+                    previous: oldUser._id
+                  });
+                  for (let k = 0; k < oldUser.associatedNeeds.length; k++) {
+                    newMap.users[j].associatedNeeds.push(mappings.nodes[oldUser.associatedNeeds[k]]);
+                  }
+                  oldUser.next.push(newUserId);
                 }
 
                 // transfer nodes

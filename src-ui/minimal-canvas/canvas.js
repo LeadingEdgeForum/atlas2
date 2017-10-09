@@ -7,7 +7,8 @@ import ReactDOM from 'react-dom';
 var MapComponent = require('./map-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
-import {endpointOptions, actionEndpointOptions, moveEndpointOptions} from './component-styles';
+var User = require('./user');
+import {userEndpointOptions, endpointOptions, actionEndpointOptions, moveEndpointOptions} from './component-styles';
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 jsPlumb.registerConnectionType("constraint", {paintStyle : {stroke:'#EC7063'}});
@@ -178,6 +179,27 @@ export default class MapCanvas extends React.Component {
           }
         }
     }
+    for (let i = 0; i < this.props.users.length; i++) {
+        for(let j = 0; j < this.props.users[i].associatedNeeds.length; j++){
+          jsPlumb.connect({
+            source: this.props.users[i]._id,
+            target: this.props.users[i].associatedNeeds[j],
+            scope: "WM_User",
+            anchors: [
+              "BottomCenter", "TopCenter"
+            ],
+            paintStyle: userEndpointOptions.connectorStyle,
+            endpoint: userEndpointOptions.endpoint,
+            connector: userEndpointOptions.connector,
+            endpointStyles: [
+              userEndpointOptions.paintStyle, userEndpointOptions.paintStyle
+            ],
+            overlays: this.getOverlays(null, [],
+              ""
+            )
+        });
+      }
+    }
   }
 
 
@@ -220,11 +242,27 @@ export default class MapCanvas extends React.Component {
                   size = {size} otherFontSize={otherFontSize} />);
             }
         }
+    var users = [];
+    if (this.props.users) {
+            for (var iii = 0; iii < this.props.users.length; iii++) {
+              users.push(
+                <User
+                  user = {this.props.users[iii]}
+                  id = {this.props.users[iii]._id}
+                  key = {this.props.users[iii]._id}
+                  added = {this.props.users[iii].added}
+                  removed = {this.props.users[iii].removed}
+                  size = {size}
+                  otherFontSize={otherFontSize}
+                  />);
+            }
+        }
     return (
       <div style={mapCanvasStyle} ref={input => this.setContainer(input)}>
         {components}
         {arrowends}
         {comments}
+        {users}
       </div>
     );
   }

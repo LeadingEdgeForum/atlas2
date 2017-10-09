@@ -24,6 +24,7 @@ jsPlumb.init();
 we render a component. This is expected to be used server side. */
 jsPlumb.ready(function() {
     ReactDOM.render( <CWB
+          users       = {global.window.OPTS.users}
           nodes       = {global.window.OPTS.nodes}
           comments    = {global.window.OPTS.comments}
           mapID       = {global.window.OPTS.mapID}

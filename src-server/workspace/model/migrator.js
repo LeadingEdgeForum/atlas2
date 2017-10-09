@@ -88,6 +88,33 @@ module.exports = function(conn) {
 
       return q.allSettled(prom);
     });
-  });
+  }).then(function(){
+    // versionless maps (not submaps) +  user + purpose -> name
+    let mapsToMigrate =  WardleyMap.find().cursor();
+    mapsToMigrate.on('data', function(_map){
+      let _this = this;
+      // if(!_map.user || !_map.purpose){
+      //   console.warn(_map);
+      // }
+      if(!_map.isSubmap && _map.schemaVersion !== 3 && !_map.archived){
+        if(_map.user && _map.purpose){
+          console.log('updating map', _map.user, _map.purpose, _map.isSubmap);
+          _map.name = "As " + _map.user + ", I want to " + _map.purpose + ".";
+          _map.schemaVersion = 3;
+          _map.save();
+        } else {
+          console.error(_map.user, _map.name, _map.purpose, _map.isSubmap);
+        }
+      }
+    });
+    mapsToMigrate.on('error', function(e){
+      console.log(e);
+    });
+    mapsToMigrate.on('close', function(){
+      console.log('done done');
+    });
 
+  }).then(function(){
+    console.log('migration done');
+  });
 };

@@ -5,7 +5,6 @@ var Input = require('react-bootstrap').Input;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 import Actions from '../single-map-actions';
-import {calculateMapName} from '../../map-list/map-name-calculator';
 var UsageInfo = require('../../fixit/usage-info');
 
 var ReferencesDialog = React.createClass({

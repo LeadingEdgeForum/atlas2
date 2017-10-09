@@ -11,12 +11,16 @@ import {
   NavItem,
   Glyphicon,
   NavDropdown,
-  MenuItem
+  MenuItem,
+  Alert,
+  Button
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
 import CreateNewNodeDialog from './dialogs/create-new-node-dialog';
+import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
+import EditUserDialog from './dialogs/edit-user-dialog';
 import EditActionDialog from './dialogs/edit-action-dialog';
 import EditConnectionDialog from './dialogs/edit-connection-dialog';
 import NewGenericCommentDialog from './dialogs/create-new-comment-dialog';
@@ -226,14 +230,32 @@ export default class MapEditorPage extends React.Component {
     const nameAndPurpose = singleMapStore.getWorkspaceNameAndPurpose();
     const workspaceID = singleMapStore.getWorkspaceId();
     const workspaceName = nameAndPurpose ? nameAndPurpose.name + ' - ' + nameAndPurpose.purpose : workspaceID;
-
-    const mapName = calculateMapName('wait...', this.state.map.user, this.state.map.purpose, this.state.map.name);
+    if(singleMapStore.getErrorCode()){
+        let message = "";
+        if(singleMapStore.getErrorCode() === 404){
+          message = "You have no rights to access this map. Or maybe it does not exist. One way or another, I cannot display it for you.";
+        } else {
+          message = "I am terribly sorry, I have found errorCode : " + singleMapStore.getErrorCode() + " and I do not know what to do next.";
+        }
+        return (<DocumentTitle title="No access">
+          <Grid fluid={true}>
+            <Row >
+              <Col xs={16}>
+                <Alert bsStyle="warning"><p>{message}</p><br/><LinkContainer to="/"><Button bsStyle="warning">Go back to your workspaces</Button></LinkContainer></Alert>
+              </Col>
+            </Row>
+          </Grid>
+        </DocumentTitle>);
+    }
+    console.log(this.state.map);
+    const mapName = calculateMapName('wait...', this.state.map.name, this.state.map.isSubmap);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
     const variantId = singleMapStore.getMap().map.timesliceId;
     const diff = this.state.diff;
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
+    const users = singleMapStore.getMap().map.users;
 
     const canvasStore = this.canvasStore;
     const mapMenu = this.prepareMapMenu(this.state.map);
@@ -279,6 +301,7 @@ export default class MapEditorPage extends React.Component {
             </Col>
             <Col xs={9} sm={10} md={10} lg={11}>
                 <CanvasWithBackground
+                  users={users}
                   nodes={nodes}
                   comments={comments}
                   mapID={mapID}
@@ -299,6 +322,8 @@ export default class MapEditorPage extends React.Component {
           <SubmapReferencesDialog singleMapStore={singleMapStore}/>
           <ReferencesDialog singleMapStore={singleMapStore}/>
           <ChangeIntoSubmapDialog singleMapStore={singleMapStore}/>
+          <CreateNewUserDialog singleMapStore={singleMapStore}/>
+          <EditUserDialog singleMapStore={singleMapStore}/>
           {helpDialog}
         </Grid>
       </DocumentTitle>

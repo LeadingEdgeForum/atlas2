@@ -98,7 +98,6 @@ var EditNodeDialog = React.createClass({
     if(constraint === null || constraint === undefined){
       constraint = 0;
     }
-    console.log('cons', constraint);
     var typeGroup = type != Constants.SUBMAP ? (<FormGroup controlId="type">
       <Col sm={2}>
         <ControlLabel>Type</ControlLabel>

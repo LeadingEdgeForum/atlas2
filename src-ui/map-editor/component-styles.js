@@ -15,7 +15,14 @@ var mapComponentStyle = {
   backgroundColor: 'silver',
   float: 'left'
 };
-
+var userStyle = {
+  zIndex: 5,
+  width : 15,
+  height : 30,
+  backgroundImage: "url(\"/img/human-figure.svg\")",
+  backgroundSize: "100% 100%",
+  float: 'left'
+};
 var userNeedStyle = _.extend(_.clone(mapComponentStyle), {
   border: '3px solid #00789b',
   backgroundColor: '#00789b'
@@ -78,6 +85,9 @@ var genericCommentStyle = {
 var getStyleForType = function(type) {
   var style = null;
   switch (type) {
+    case Constants.USER:
+      style = userStyle;
+      break;
     case Constants.USERNEED:
       style = userNeedStyle;
       break;
@@ -116,6 +126,30 @@ var endpointOptions = {
     outlineStroke: "transparent",
     outlineWidth: 10
   },
+  endpoint: [
+    "Dot", {
+      radius: 1
+    }
+  ],
+  deleteEndpointsOnDetach: false,
+  uniqueEndpoints: true
+};
+
+var userEndpointOptions = {
+  paintStyle: {
+    fillStyle: "transparent",
+    outlineColor: 'transparent'
+  },
+  allowLoopback: false,
+  connector: "Straight",
+  connectorStyle: {
+    strokeWidth: 1,
+    stroke: 'silver',
+    outlineStroke: "transparent",
+    outlineWidth: 10,
+    dashstyle: '6 6'
+  },
+  scope: "WM_User",
   endpoint: [
     "Dot", {
       radius: 1
@@ -174,8 +208,6 @@ var moveEndpointOptions = {
       radius: 1
     }
   ],
-  deleteEndpointsOnDetach: true,
-  // uniqueEndpoints: true,
   scope: "WM_MOVED",
   connectorOverlays: [
     ["Arrow", {
@@ -187,6 +219,7 @@ var moveEndpointOptions = {
   ]
 };
 export {
+  userStyle,
   userNeedStyle,
   externalStyle,
   internalStyle,
@@ -194,6 +227,7 @@ export {
   genericCommentPalletteStyle,
   getStyleForType,
   endpointOptions,
+  userEndpointOptions,
   actionEndpointOptions,
   moveEndpointOptions
 };

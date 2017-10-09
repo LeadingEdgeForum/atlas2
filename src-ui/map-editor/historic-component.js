@@ -4,7 +4,7 @@ var React = require('react');
 var _ = require('underscore');
 import {getStyleForType} from './component-styles';
 import {Glyphicon} from 'react-bootstrap';
-
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 var itemCaptionStyle = {
   left: 10,
@@ -68,6 +68,16 @@ var HistoricComponent = React.createClass({
     }
   },
 
+  // very ugly workaround for https://github.com/cdaniel/atlas2/issues/170
+  // jsPlumb caches endpoint position, and only deleteEveryEndpoint can invalidate it.
+  // endpoint specific methods have no effect, and when the node gets rearranged by React
+  // all connections start from 0,0. jsPlumb fails to pick up changes.
+  componentWillUnmount : function(){
+    if (this.props.canvasStore.isDiffEnabled() && this.props.type === "MOVED") {
+      jsPlumb.deleteEveryEndpoint(this.props.id);
+    }
+  },
+
   render: function() {
 
     if (!this.props.canvasStore.isDiffEnabled()) {
@@ -97,10 +107,10 @@ var HistoricComponent = React.createClass({
     var canvasStore = this.props.canvasStore;
     itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
     itemCaptionStyle.top = - itemCaptionStyle.fontSize;
-    
+
     return (
       <div style={style} id={id} key={id}>
-        <div style={itemCaptionStyle}>{name}</div>
+        <div style={itemCaptionStyle} className="node-label">{name}</div>
         {inertia}
       </div>
     );

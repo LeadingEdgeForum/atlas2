@@ -54,7 +54,7 @@ var SubmapReferencesDialog = React.createClass({
         continue;
       } else {
         var href = '/map/' + this.state.referencingMaps[i]._id;
-        var name = calculateMapName('Unknown',this.state.referencingMaps[i].user, this.state.referencingMaps[i].purpose,this.state.referencingMaps[i].name );
+        var name = calculateMapName('Unknown',this.state.referencingMaps[i].name, this.state.referencingMaps[i].purpose,this.state.referencingMaps[i].isSubmap);
         otherMaps.push(<li><a href={href}>{name}</a></li>);
       }
     }

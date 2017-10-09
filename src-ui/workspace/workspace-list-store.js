@@ -55,6 +55,13 @@ export default class WorkspaceListStore extends Store {
     super.emitChange();
   }
 
+  reset(){
+    this.workspaces = null;
+    this.newWorkspaceDialog = {
+        open : false
+    };
+  }
+
   updateWorkspaces() {
     this.serverRequest = $.get('/api/workspaces', function(result) {
       this.workspaces = result;

@@ -45,6 +45,62 @@ var SingleMapActions = {
       });
     },
 
+    openAddNewUserDialog : function(coords, type){
+      if(!coords){
+        console.error('No new user data, aborting...');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_ADD_NEW_USER_DIALOG,
+          coords : coords,
+          type : type
+      });
+    },
+
+    closeAddNewUserDialog : function(coords, type){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_ADD_NEW_USER_DIALOG
+      });
+    },
+
+    submitAddNewUserDialog : function(data){
+      console.log(data);
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_ADD_NEW_USER_DIALOG,
+          data : data
+      });
+    },
+
+    deleteUser: function(workspaceID, mapID, id) {
+      if (!workspaceID || !mapID || !id) {
+        console.error('missing data', workspaceID, mapID, id);
+      }
+      Dispatcher.dispatch({
+        actionType: ACTION_TYPES.DELETE_USER,
+        workspaceID: workspaceID,
+        mapID: mapID,
+        id: id,
+      });
+    },
+
+    updateUser: function(workspaceID, mapID, id, name, description, pos /*{pos:[x,y]}*/, width){
+      if(!workspaceID || !mapID || !id || ! ((pos && pos.x && pos.y) || width)){
+        console.error('missing data', workspaceID, mapID, id, pos, width);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.UPDATE_USER,
+          data: {
+            workspaceID: workspaceID,
+            mapID: mapID,
+            id: id,
+            name : name,
+            description : description,
+            pos: pos,
+            width:width
+          }
+      });
+    },
+
     closeAddNodeDialog : function(){
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.CLOSE_NEW_NODE_DIALOG
@@ -191,6 +247,40 @@ var SingleMapActions = {
       }
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.SUBMIT_EDIT_COMMENT_DIALOG,
+          data : data
+      });
+    },
+
+    openEditUserDialog: function(workspaceID, mapID, id, name, description){
+      if(!workspaceID || !mapID || !id || !name || !description){
+        console.error('missing data', workspaceID, mapID, id, name, description);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.OPEN_EDIT_USER_DIALOG,
+          workspaceID : workspaceID,
+          mapID : mapID,
+          id : id,
+          name : name,
+          description : description
+      });
+    },
+
+    closeEditUserDialog: function(){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.CLOSE_EDIT_USER_DIALOG
+      });
+    },
+
+    submitEditUserDialog : function(data){
+      if(!data || !data.id){
+        console.error('missing id');
+        return;
+      }
+      if(!data.name || !data.description){
+        console.error('missing data', data);
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.SUBMIT_EDIT_USER_DIALOG,
           data : data
       });
     },
@@ -368,6 +458,38 @@ var SingleMapActions = {
       }
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.RECORD_CONNECTION,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
+      });
+    },
+
+    recordUserConnection : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.RECORD_USER_CONNECTION,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
+      });
+    },
+
+    deleteUserConnection : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.DELETE_USER_CONNECTION,
           data : {
             workspaceId : workspaceId,
             mapId : mapId,

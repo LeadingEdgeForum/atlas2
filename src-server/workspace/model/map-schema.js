@@ -67,9 +67,9 @@ module.exports = function(conn) {
      */
 
     var _MapSchema = new Schema({
-        user: Schema.Types.String,
-        purpose: Schema.Types.String,
         name: Schema.Types.String,
+        user: Schema.Types.String,//must be held until migration happens
+        purpose: Schema.Types.String, //must be held until migration happens
         isSubmap: Schema.Types.Boolean,
         archived: Schema.Types.Boolean,
         workspace: {
@@ -83,6 +83,19 @@ module.exports = function(conn) {
             type: Schema.Types.ObjectId,
             ref: 'Node'
         }],
+        users : [{
+            x: Schema.Types.Number,
+            y: Schema.Types.Number,
+            name : Schema.Types.String,
+            description : Schema.Types.String,
+            width : Schema.Types.Number,
+            next : [Schema.Types.ObjectId],
+            previous : Schema.Types.ObjectId,
+            associatedNeeds : [{
+                type: Schema.Types.ObjectId,
+                ref: 'Node'
+            }]
+        }],
         comments: [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
@@ -92,7 +105,10 @@ module.exports = function(conn) {
             previous : Schema.Types.ObjectId,
         }],
         responsiblePerson: Schema.Types.String,
-        schemaVersion : Schema.Types.Number
+        schemaVersion : {
+          type: Schema.Types.Number,
+          default : 2
+        }
     });
 
 
@@ -132,6 +148,87 @@ module.exports = function(conn) {
         }
         this.markModified('comments');
         return this.save();
+    };
+
+    _MapSchema.methods.addUser = function(data) {
+        this.users.push(data);
+        return this.save();
+    };
+
+    _MapSchema.methods.updateUser = function(id, dataPos) {
+        for (var i = 0; i < this.users.length; i++) {
+            if ('' + this.users[i]._id === id) {
+                if (dataPos.x && dataPos.y) {
+                    this.users[i].set('x', dataPos.x);
+                    this.users[i].set('y', dataPos.y);
+                }
+                if (dataPos.name) {
+                    this.users[i].set('name', dataPos.name);
+                }
+                if (dataPos.description) {
+                    this.users[i].set('description', dataPos.description);
+                }
+                if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
+                  this.users[i].set('width', dataPos.width);
+                }
+            }
+        }
+        return this.save();
+    };
+
+    _MapSchema.methods.deleteUser = function(seq) {
+        for (var i = 0; i < this.users.length; i++) {
+            if ('' + this.users[i]._id === seq) {
+                this.users.splice(i, 1);
+                break;
+            }
+        }
+        this.markModified('users');
+        return this.save();
+    };
+
+    _MapSchema.methods.makeUserDepTo = function(user, node) {
+      if (!user || !node) {
+        throw new Error('unspecified attributes');
+      }
+      for (let i = 0; i < this.users.length; i++) {
+        if ('' + this.users[i]._id === user) {
+          let selectedUser = this.users[i];
+          let found = false;
+          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+            if ('' + selectedUser.associatedNeeds[j] === node) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            selectedUser.associatedNeeds.push(new ObjectId(node));
+          }
+          break;
+        }
+      }
+      this.markModified('users');
+      return this.save();
+    };
+
+    _MapSchema.methods.deleteUserDepTo = function(user, node) {
+      if (!user || !node) {
+        throw new Error('unspecified attributes');
+      }
+      for (let i = 0; i < this.users.length; i++) {
+        if ('' + this.users[i]._id === user) {
+          let selectedUser = this.users[i];
+          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+            if ('' + selectedUser.associatedNeeds[j] === node) {
+              selectedUser.associatedNeeds.splice(j,1);
+              break;
+            }
+          }
+          break;
+        }
+      }
+      this.markModified('users');
+      return this.save();
     };
 
     _MapSchema.methods.verifyAccess = function(user) {
@@ -231,11 +328,35 @@ module.exports = function(conn) {
             }
           }
           // console.log('removed', removed);
-
+          let usersAdded = [];
+          for (let i = 0; i < map.users.length; i++) {
+            if (!map.users[i].previous) {
+              usersAdded.push({_id : map.users[i]._id});
+            }
+          }
+          let usersRemoved = [];
+          if (previousMap) {
+            for (let i = 0; i < previousMap.users.length; i++) {
+              let candidateUser = previousMap.users[i];
+              let foundCounterPart = false; // counter part means that an old map has a user that next is set to a user in a new map.
+              // simplest way to check.... go through a list of users in current map and check whether any references back
+              for (let j = 0; j < map.users.length; j++) {
+                if ('' + candidateUser._id === '' + map.users[j].previous) {
+                  foundCounterPart = true;
+                  break;
+                }
+              }
+              if (!foundCounterPart) {
+                usersRemoved.push(candidateUser); // add full removed user as we want to show where it was);
+              }
+            }
+          }
           return {
-            removed : removed,
-            added : added,
-            modified : modified
+            nodesRemoved : removed,
+            nodesAdded : added,
+            nodesModified : modified,
+            usersAdded : usersAdded,
+            usersRemoved: usersRemoved
           };
         });
     };
@@ -379,16 +500,25 @@ module.exports = function(conn) {
 
 
     _MapSchema.methods.removeNode = function(nodeID) {
-        var _this = this;
-        var Node = require('./node-schema')(conn);
-        return Node.findOne({
-                _id: nodeID
-            }).exec()
-            .then(function(node) {
-                return node.remove().then(function(){
-                  return _this.save();
-                });
-            });
+      var _this = this;
+      for (let i = 0; i < this.users.length; i++) {
+        let selectedUser = this.users[i];
+        for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
+          if ('' + selectedUser.associatedNeeds[j] === '' + nodeID) {
+            selectedUser.associatedNeeds.splice(j, 1);
+            this.markModified('users');
+          }
+        }
+      }
+      var Node = require('./node-schema')(conn);
+      return Node.findOne({
+          _id: nodeID
+        }).exec()
+        .then(function(node) {
+          return node.remove().then(function() {
+            return _this.save();
+          });
+        });
     };
 
     _MapSchema.methods.getAvailableSubmaps = function() {
@@ -426,7 +556,7 @@ module.exports = function(conn) {
               workspace: _this.workspace
             })
             .populate('nodes')
-            .select('name user purpose _id')
+            .select('name _id isSubmap')
             .exec();
         });
     };
@@ -522,7 +652,7 @@ module.exports = function(conn) {
             } else {
 
                 var transferredNode = _this.nodes.splice(i, 1)[0];
-                transferredNode.parentMap = submap; // transfer the node
+                transferredNode.parentMap = submap._id; // transfer the node
                 submap.nodes.push(transferredNode);
                 transferredNodes.push(transferredNode);
 

@@ -53,6 +53,17 @@ module.exports  = keyMirror({
 
       OPEN_TURN_INTO_SUBMAP : null,
       CLOSE_TURN_INTO_SUBMAP : null,
-      SUBMIT_TURN_INTO_SUBMAP : null
+      SUBMIT_TURN_INTO_SUBMAP : null,
+
+      OPEN_ADD_NEW_USER_DIALOG : null,
+      CLOSE_ADD_NEW_USER_DIALOG : null,
+      SUBMIT_ADD_NEW_USER_DIALOG : null,
+      OPEN_EDIT_USER_DIALOG : null,
+      CLOSE_EDIT_USER_DIALOG : null,
+      SUBMIT_EDIT_USER_DIALOG : null,
+      DELETE_USER : null,
+      UPDATE_USER : null,
+      RECORD_USER_CONNECTION : null,
+      DELETE_USER_CONNECTION : null
   }
 });

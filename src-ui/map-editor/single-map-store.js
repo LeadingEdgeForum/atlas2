@@ -59,18 +59,37 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.addNewUserDialog = {
+        open : false
+      };
+
+      this.editMapUserDialog = {
+        open : false
+      };
+
       this.io = require('socket.io-client')();
 
-      this.io.on('mapchange', function(msg) {
-          if(msg.id === this.mapID){
-            this.fetchMap();
-          }
-      }.bind(this));
+      this.io.on('mapchange', this.reloadOnSocketMessage);
 
       this.dispatchToken = null;
       this.redispatch();
 
   }
+
+  reloadOnSocketMessage(msg){
+    if(msg.id === this.mapID){
+      this.fetchMap();
+    }
+  }
+
+  cleanUp(){
+    this.io.removeListener('mapchange', this.reloadOnSocketMessage);
+  }
+
+  getErrorCode(){
+    return this.errorCode;
+  }
+
 
   redispatch(){
     if(this.dispatchToken){
@@ -331,6 +350,48 @@ export default class SingleWorkspaceStore extends Store {
               }.bind(this)
             });
           break;
+          case ActionTypes.OPEN_ADD_NEW_USER_DIALOG:
+            this.addNewUserDialog.open = true;
+            this.addNewUserDialog.coords = action.coords;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_ADD_NEW_USER_DIALOG:
+            this.addNewUserDialog.open = false;
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_ADD_NEW_USER_DIALOG:
+            this.submitAddNewUserDialog(action.data);
+            break;
+          case ActionTypes.DELETE_USER:
+            this.deleteUser(action.id);
+            break;
+          case ActionTypes.UPDATE_USER:
+            this.updateUser(action.data);
+            break;
+          case ActionTypes.RECORD_USER_CONNECTION:
+          this.recordUserConnection(action.data);
+            break;
+          case ActionTypes.DELETE_USER_CONNECTION:
+            this.deleteUserConnection(action.data);
+            break;
+          case ActionTypes.OPEN_EDIT_USER_DIALOG:
+            this.editMapUserDialog.open = true;
+            this.editMapUserDialog.id = action.id;
+            this.editMapUserDialog.name = action.name;
+            this.editMapUserDialog.description = action.description;
+            this.editMapUserDialog.workspaceID = action.workspaceID;
+            this.editMapUserDialog.mapID = action.mapID;
+            this.emitChange();
+            break;
+          case ActionTypes.CLOSE_EDIT_USER_DIALOG:
+            this.editMapUserDialog = {
+              open: false
+            };
+            this.emitChange();
+            break;
+          case ActionTypes.SUBMIT_EDIT_USER_DIALOG:
+            this.updateUser(action.data);
+            break;
         default:
           return;
       }
@@ -354,6 +415,14 @@ export default class SingleWorkspaceStore extends Store {
 
   getNewNodeDialogState(){
     return this.newNodeDialog;
+  }
+
+  getNewUserDialogState(){
+    return this.addNewUserDialog;
+  }
+
+  getEditUserDialogState(){
+    return this.editMapUserDialog;
   }
 
   getNewCommentDialogState(){
@@ -414,16 +483,22 @@ export default class SingleWorkspaceStore extends Store {
 
   fetchMap(){
     if(!this.serverRequest){
-      this.serverRequest = $.get('/api/map/' + this.mapID, function(result) {
+      this.serverRequest = $.get('/api/map/' + this.mapID)
+      .done(function(result) {
         this.map = result;
         this.serverRequest = null;
+        this.emitChange();
+      }.bind(this))
+      .fail(function(error) {
+        console.log('received', error);
+        this.errorCode = error.status;
         this.emitChange();
       }.bind(this));
     }
   }
 
   fetchMapDiff(){
-    if(!this.diffServerRequest){
+    if(!this.diffServerRequest && !this.errorCode){
       this.diffServerRequest = $.get('/api/map/' + this.mapID + '/diff', function(result) {
         this.diff = result;
         this.diffServerRequest = null;
@@ -433,7 +508,7 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   fetchMapVariants(){
-    if(!this.variantsServerRequest){
+    if(!this.variantsServerRequest && !this.errorCode){
       this.variantsServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
         this.variants = result;
         this.variantsServerRequest = null;
@@ -443,12 +518,22 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   getMap(){
-    if(!this.map){
+    if(!this.map && !this.errorCode){
       this.fetchMap();
       return {
         map: {
           name: 'Loading...',
           workspace : 'not yet set',
+          loading: true,
+          nodes: []
+        }
+      };
+    }
+    if(this.errorCode) {
+      return {
+        map: {
+          name: 'Error...',
+          workspace : 'Error',
           loading: true,
           nodes: []
         }
@@ -461,9 +546,11 @@ export default class SingleWorkspaceStore extends Store {
     if(!this.diff){
       this.fetchMapDiff();
       return {
-        removed : [],
-        added : [],
-        modified : []
+        nodesRemoved : [],
+        nodesAdded : [],
+        nodesModified : [],
+        usersAdded : [],
+        usersRemoved : []
       };
     }
     return this.diff;
@@ -483,8 +570,6 @@ export default class SingleWorkspaceStore extends Store {
 
 
   submitEditMapDialog(data){
-    this.map.map.user = data.user;
-    this.map.map.purpose = data.purpose;
     this.map.map.name = data.name;
     this.map.map.responsiblePerson = data.responsiblePerson;
     $.ajax({
@@ -633,6 +718,80 @@ export default class SingleWorkspaceStore extends Store {
                 type: 'change',
                 id: this.getMapId()
             });
+        }.bind(this)
+    });
+  }
+
+  submitAddNewUserDialog(data){
+    $.ajax({
+        type: 'POST',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/user/',
+        data: {
+          x : data.coords.x,
+          y : data.coords.y,
+          name : data.name,
+          description : data.description
+        },
+        success: function(data2) {
+            this.map = data2;
+            this.addNewUserDialog = {
+              open : false
+            };
+            this.diff = null;
+            this.emitChange();
+            this.io.emit('map', {
+                type: 'change',
+                id: this.getMapId()
+            });
+        }.bind(this)
+    });
+  }
+
+  deleteUser(id){
+    $.ajax({
+        type: 'DELETE',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/user/' + id,
+        success: function(data2) {
+          this.map = data2;
+          this.addNewUserDialog = {open:false};
+          this.diff = null;
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
+  }
+
+  updateUser(data){
+    var payload = {};
+    if(data.name){
+      payload.name = data.name;
+    }
+    if(data.description){
+      payload.description = data.description;
+    }
+    if(data.pos){
+      payload.x = data.pos.x;
+      payload.y = data.pos.y;
+    }
+    if(data.width){
+      payload.width = data.width;
+    }
+    $.ajax({
+        type: 'PUT',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/user/' + data.id,
+        data: payload,
+        success: function(data2) {
+          this.map = data2;
+          this.editMapUserDialog = {open:false};
+          this.diff = null;
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
         }.bind(this)
     });
   }
@@ -858,6 +1017,44 @@ export default class SingleWorkspaceStore extends Store {
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
             '/outgoingDependency/' + data.targetId,
+      success: function(data2) {
+        this.map = data2;
+        this.diff = null;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  recordUserConnection(data){
+    $.ajax({
+      type: 'POST',
+      url:  '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/user/' + data.sourceId +
+            '/dep/' + data.targetId,
+      success: function(data2) {
+        this.map = data2;
+        this.diff = null;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+  }
+
+  deleteUserConnection(data){
+    $.ajax({
+      type: 'DELETE',
+      url:  '/api/workspace/' + this.getWorkspaceId() +
+            '/map/' + this.getMapId() +
+            '/user/' + data.sourceId +
+            '/dep/' + data.targetId,
       success: function(data2) {
         this.map = data2;
         this.diff = null;
