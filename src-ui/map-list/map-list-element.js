@@ -16,6 +16,10 @@ var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import SingleWorkspaceActions from './single-workspace-actions';
 import {calculateMapName} from './map-name-calculator';
 import $ from 'jquery';
+var Blob = require('blob');
+let sanitize = require("sanitize-filename");
+/* globals document */
+/* globals window */
 
 export default class MapListElement extends React.Component {
 
@@ -25,10 +29,26 @@ export default class MapListElement extends React.Component {
     this.componentDidMount = this.componentDidMount.bind(this);
     this.computeSubmapReferencesMessage = this.computeSubmapReferencesMessage.bind(this);
     this.stopPropagation = this.stopPropagation.bind(this);
+    this.download = this.download.bind(this);
   }
 
   delete(id) {
     SingleWorkspaceActions.deleteMap({mapID : id});
+  }
+
+  download(id, mapName) {
+    $.ajax({
+      url: '/api/map/' + id + '/json',
+      type: 'GET',
+      dataType: 'json',
+      success: function(data, textStatus, jqxhr) {
+        var file = new Blob([JSON.stringify(data)], {"type": jqxhr.getResponseHeader("Content-Type")});
+        var link = document.createElement('a');
+        link.href = window.URL.createObjectURL(file);
+        link.download = sanitize(mapName) + ".json";
+        link.click();
+      }
+    });
   }
 
   componentDidMount() {
@@ -90,6 +110,9 @@ export default class MapListElement extends React.Component {
     var deleteButton = (
       <MenuItem eventKey="1" onClick={this.delete.bind(this, mapid)}><Glyphicon glyph="remove"></Glyphicon>Delete</MenuItem>
     );
+    let downloadButton = (
+      <MenuItem eventKey="1" onClick={this.download.bind(this, mapid, mapName)}><Glyphicon glyph="download"></Glyphicon>&nbsp;Download JSON</MenuItem>
+    );
     var mapsUsingThisSubmapInfo = null;
     if (this.props.isSubmap) {
       mapsUsingThisSubmapInfo = this.computeSubmapReferencesMessage();
@@ -107,6 +130,7 @@ export default class MapListElement extends React.Component {
               <Col xs={11}>{mapsUsingThisSubmapInfo}{responsible}</Col>
               <Col xs={1}>
                 <DropdownButton title={dropDownTitle} onClick={this.stopPropagation}>
+                  {downloadButton}
                   {deleteButton}
                 </DropdownButton>
               </Col>

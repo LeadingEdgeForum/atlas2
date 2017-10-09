@@ -246,6 +246,53 @@ module.exports = function(authGuardian, mongooseConnection) {
           }, defaultErrorHandler.bind(this, res));
   });
 
+  module.router.get('/map/:mapID/json', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
+      WardleyMap.findOne({
+              _id: req.params.mapID,
+              archived: false
+          })
+          .then(checkAccess.bind(this, req.params.mapID, owner))
+          .then(function(result){
+            return result.defaultPopulate();
+          })
+          .done(function(map) {
+              let newMap = {
+                title : '',
+                elements : [],
+                links : []
+              };
+              newMap.title = map.name;
+
+              // build look up table to avoid constant checking for id
+              let idLookupTable = {};
+              for(let i = 0; i < map.nodes.length; i ++){
+                idLookupTable['' + map.nodes[i]._id] = map.nodes[i];
+              }
+
+              for(let i = 0; i < map.nodes.length; i ++){
+                let node = map.nodes[i];
+                //translate nodes
+                newMap.elements.push({
+                  id : node._id,
+                  name : node.name,
+                  visibility : 1 - node.y, //atlas uses screen based positioning
+                  maturity : 1 - node.x
+                });
+
+                //translate links
+                for(let j = 0; j < node.outboundDependencies.length; j++){
+                  let targetId = node.outboundDependencies[j];
+                  newMap.links.push({
+                    start : node.name,
+                    end: idLookupTable['' + targetId].name
+                  });
+                }
+              }
+              res.type('json').json(newMap);
+          }, defaultErrorHandler.bind(this, res));
+  });
+
   module.router.get('/map/:mapID/diff', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
