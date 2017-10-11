@@ -264,17 +264,16 @@ module.exports = function(authGuardian, mongooseConnection) {
               };
               newMap.title = map.name;
 
-              // build look up table to avoid constant checking for id
-              let idLookupTable = {};
+              let foreignKeyMap = {};
               for(let i = 0; i < map.nodes.length; i ++){
-                idLookupTable['' + map.nodes[i]._id] = map.nodes[i];
+                foreignKeyMap['' + map.nodes[i]._id] = map.nodes[i].foreignKey;
               }
 
               for(let i = 0; i < map.nodes.length; i ++){
                 let node = map.nodes[i];
                 //translate nodes
                 newMap.elements.push({
-                  id : node._id,
+                  id : node.foreignKey || node._id,
                   name : node.name,
                   visibility : 1 - node.y, //atlas uses screen based positioning
                   maturity : 1 - node.x
@@ -284,11 +283,41 @@ module.exports = function(authGuardian, mongooseConnection) {
                 for(let j = 0; j < node.outboundDependencies.length; j++){
                   let targetId = node.outboundDependencies[j];
                   newMap.links.push({
-                    start : node.name,
-                    end: idLookupTable['' + targetId].name
+                    start : foreignKeyMap['' + node._id] || node._id,
+                    end: foreignKeyMap[targetId] || targetId
                   });
                 }
               }
+
+              // sort nodes to avoid unnecessary diffs
+              newMap.nodes.sort(function(a, b) {
+                let aName = a.id;
+                let bName = b.id;
+                if (aName < bName) {
+                  return -1;
+                }
+                if (aName > bName) {
+                  return 1;
+                }
+                return 0;
+              });
+
+              newMap.links.sort(function(a, b) {
+                if (a.start < b.start) {
+                  return -1;
+                }
+                if (a.start > b.start) {
+                  return 1;
+                }
+                if (a.end < b.end) {
+                  return -1;
+                }
+                if (a.end > b.end) {
+                  return 1;
+                }
+                return 0;
+              });
+
               res.type('json').json(newMap);
           }, defaultErrorHandler.bind(this, res));
   });
