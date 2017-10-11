@@ -72,13 +72,6 @@ module.exports = function(conn) {
         purpose: Schema.Types.String, //must be held until migration happens
         isSubmap: Schema.Types.Boolean,
         archived: Schema.Types.Boolean,
-        /*
-          EXPERIMENTAL - subject to change without notification.
-          this is a special field that stores the ID of an imported map.
-          Atlas2 nodes must have globally individual ids, and this will not be
-          the case if the map is exported and then imported.
-        */
-        foreignKey: Schema.Types.String,
         workspace: {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'

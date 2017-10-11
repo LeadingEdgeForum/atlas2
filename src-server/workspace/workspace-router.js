@@ -290,7 +290,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               }
 
               // sort nodes to avoid unnecessary diffs
-              newMap.nodes.sort(function(a, b) {
+              newMap.elements.sort(function(a, b) {
                 let aName = a.id;
                 let bName = b.id;
                 if (aName < bName) {
@@ -319,6 +319,10 @@ module.exports = function(authGuardian, mongooseConnection) {
               });
 
               res.type('json').json(newMap);
+              track(owner,'export_map',{
+                'id' : map._id,
+                'name' : map.name
+              });
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -620,6 +624,90 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'name' : req.body.name
               }, req.body);
           }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.post('/map/json', authGuardian.authenticationRequired, function(req, res) {
+    var editor = getUserIdFromReq(req);
+    let incomingMap = req.body.map;
+    if(!incomingMap.elements || !incomingMap.links || !incomingMap.title){
+      return res.status(400).send();
+    }
+    Workspace
+        .findOne({
+            _id: new ObjectId(req.body.workspaceID),
+            owner: editor
+        })
+        .exec()
+        .then(function(workspace) {
+            if (!workspace) {
+                throw new Error("Workspace not found");
+            }
+            return workspace.createAMap({
+              name : incomingMap.title
+            });
+        })
+        .then(function(emptyMap){
+          var promises = [];
+
+          for(let i = 0; i < incomingMap.elements.length; i++){
+            let currentNode = incomingMap.elements[i];
+            promises.push( new Node({
+                    name: currentNode.name,
+                    x: 1 - currentNode.maturity,
+                    y: 1 - currentNode.visibility,
+                    type: "INTERNAL",
+                    workspace: emptyMap.workspace,
+                    parentMap: emptyMap._id,
+                    description: "",
+                    inertia: 0,
+                    responsiblePerson: "",
+                    constraint : 0,
+                    foreignKey : currentNode.id
+                }).save());
+          }
+
+          return q.allSettled(promises).then(function(results){
+            for(let i = 0; i < results.length; i++){
+              emptyMap.nodes.push(results[i].value);
+            }
+            return emptyMap.save();
+          });
+        })
+        .then(function(fullMap){
+          let promises = [];
+          // iteration one, prepare unique ids
+          let foreignKeyMap = {};
+          for(let i = 0; i < fullMap.nodes.length; i++){
+            let foreignKey = fullMap.nodes[i].foreignKey;
+            foreignKeyMap[foreignKey] = fullMap.nodes[i]._id || fullMap.nodes[i];
+          }
+
+          for (let i = 0; i < incomingMap.links.length; i++) {
+            promises.push(
+              Node.findOne(foreignKeyMap[incomingMap.links[i].start]).exec()
+              .then(function(node) {
+                if(!node){
+                  console.error('Node not found', incomingMap.links[i]);
+                  return null;
+                }
+                return node.makeDependencyTo(foreignKeyMap[incomingMap.links[i].end]);
+              })
+            );
+          }
+
+          return q.allSettled(promises).then(function(){return fullMap;});
+        })
+        .done(function(result) {
+
+
+            res.json({
+                map: result
+            });
+            track(editor,'import_map',{
+              'id' : result._id,
+              'name' : req.body.name
+            }, req.body);
+        }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.post('/variant/:timesliceId/map', authGuardian.authenticationRequired, function(req, res) {
