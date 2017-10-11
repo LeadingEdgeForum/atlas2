@@ -6,7 +6,7 @@
     "start": "node app.js",
     "test": "npm run test-server && npm run test-e2e",
     "test-e2e": "wdio wdio.conf.js",
-    "test-server": "mocha tests/server/**"
+    "test-server": "mocha --exit tests/server/**"
   },
   "dependencies": {
     "async": "2.5.0",
