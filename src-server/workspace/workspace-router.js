@@ -579,16 +579,18 @@ module.exports = function(authGuardian, mongooseConnection) {
         })
         .exec()
         .then(function(workspace){
-          workspace.importJSON(incomingMap);
+          return workspace.importJSON(incomingMap);
         })
         .done(function(result) {
             res.json({
                 map: result
             });
-            track(editor,'import_map',{
-              'id' : result._id,
-              'name' : req.body.name
-            }, req.body);
+            if(result){
+              track(editor,'import_map',{
+                'id' : result._id,
+                'name' : req.body.name
+              }, req.body);
+            }
         }, defaultErrorHandler.bind(this, res));
   });
 
