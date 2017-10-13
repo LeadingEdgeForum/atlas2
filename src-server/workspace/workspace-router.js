@@ -247,83 +247,23 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.get('/map/:mapID/json', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      WardleyMap.findOne({
-              _id: req.params.mapID,
-              archived: false
-          })
-          .then(checkAccess.bind(this, req.params.mapID, owner))
-          .then(function(result){
-            return result.defaultPopulate();
-          })
-          .done(function(map) {
-              let newMap = {
-                title : '',
-                elements : [],
-                links : []
-              };
-              newMap.title = map.name;
-
-              let foreignKeyMap = {};
-              for(let i = 0; i < map.nodes.length; i ++){
-                foreignKeyMap['' + map.nodes[i]._id] = map.nodes[i].foreignKey;
-              }
-
-              for(let i = 0; i < map.nodes.length; i ++){
-                let node = map.nodes[i];
-                //translate nodes
-                newMap.elements.push({
-                  id : node.foreignKey || node._id,
-                  name : node.name,
-                  visibility : 1 - node.y, //atlas uses screen based positioning
-                  maturity : 1 - node.x
-                });
-
-                //translate links
-                for(let j = 0; j < node.outboundDependencies.length; j++){
-                  let targetId = node.outboundDependencies[j];
-                  newMap.links.push({
-                    start : foreignKeyMap['' + node._id] || node._id,
-                    end: foreignKeyMap[targetId] || targetId
-                  });
-                }
-              }
-
-              // sort nodes to avoid unnecessary diffs
-              newMap.elements.sort(function(a, b) {
-                let aName = a.id;
-                let bName = b.id;
-                if (aName < bName) {
-                  return -1;
-                }
-                if (aName > bName) {
-                  return 1;
-                }
-                return 0;
-              });
-
-              newMap.links.sort(function(a, b) {
-                if (a.start < b.start) {
-                  return -1;
-                }
-                if (a.start > b.start) {
-                  return 1;
-                }
-                if (a.end < b.end) {
-                  return -1;
-                }
-                if (a.end > b.end) {
-                  return 1;
-                }
-                return 0;
-              });
-
-              res.type('json').json(newMap);
-              track(owner,'export_map',{
-                'id' : map._id,
-                'name' : map.name
-              });
-          }, defaultErrorHandler.bind(this, res));
+    var owner = getUserIdFromReq(req);
+    WardleyMap.findOne({
+        _id: req.params.mapID,
+        archived: false
+      })
+      .then(checkAccess.bind(this, req.params.mapID, owner))
+      .then(function(result) {
+        return result.defaultPopulate();
+      })
+      .done(function(map) {
+        let json = map.exportJSON();
+        res.type('json').json(json);
+        track(owner, 'export_map', {
+          'id': map._id,
+          'name': map.name
+        });
+      }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.get('/map/:mapID/diff', authGuardian.authenticationRequired, function(req, res) {
@@ -638,68 +578,10 @@ module.exports = function(authGuardian, mongooseConnection) {
             owner: editor
         })
         .exec()
-        .then(function(workspace) {
-            if (!workspace) {
-                throw new Error("Workspace not found");
-            }
-            return workspace.createAMap({
-              name : incomingMap.title
-            });
-        })
-        .then(function(emptyMap){
-          var promises = [];
-
-          for(let i = 0; i < incomingMap.elements.length; i++){
-            let currentNode = incomingMap.elements[i];
-            promises.push( new Node({
-                    name: currentNode.name,
-                    x: 1 - currentNode.maturity,
-                    y: 1 - currentNode.visibility,
-                    type: "INTERNAL",
-                    workspace: emptyMap.workspace,
-                    parentMap: emptyMap._id,
-                    description: "",
-                    inertia: 0,
-                    responsiblePerson: "",
-                    constraint : 0,
-                    foreignKey : currentNode.id
-                }).save());
-          }
-
-          return q.allSettled(promises).then(function(results){
-            for(let i = 0; i < results.length; i++){
-              emptyMap.nodes.push(results[i].value);
-            }
-            return emptyMap.save();
-          });
-        })
-        .then(function(fullMap){
-          let promises = [];
-          // iteration one, prepare unique ids
-          let foreignKeyMap = {};
-          for(let i = 0; i < fullMap.nodes.length; i++){
-            let foreignKey = fullMap.nodes[i].foreignKey;
-            foreignKeyMap[foreignKey] = fullMap.nodes[i]._id || fullMap.nodes[i];
-          }
-
-          for (let i = 0; i < incomingMap.links.length; i++) {
-            promises.push(
-              Node.findOne(foreignKeyMap[incomingMap.links[i].start]).exec()
-              .then(function(node) {
-                if(!node){
-                  console.error('Node not found', incomingMap.links[i]);
-                  return null;
-                }
-                return node.makeDependencyTo(foreignKeyMap[incomingMap.links[i].end]);
-              })
-            );
-          }
-
-          return q.allSettled(promises).then(function(){return fullMap;});
+        .then(function(workspace){
+          workspace.importJSON(incomingMap);
         })
         .done(function(result) {
-
-
             res.json({
                 map: result
             });

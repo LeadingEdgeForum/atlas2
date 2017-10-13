@@ -19,6 +19,7 @@ var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
 var variantLogger = require('./../../log').getLogger('variants');
+let mapImport = require('./map-import-export').mapImport;
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work
@@ -1326,6 +1327,11 @@ module.exports = function(conn) {
                 });
             });
         });
+    };
+
+    workspaceSchema.methods.importJSON = function(json){
+      let Node = require('./node-schema')(conn);
+      return mapImport(Node, this, json);
     };
 
 

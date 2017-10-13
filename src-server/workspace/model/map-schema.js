@@ -17,6 +17,7 @@ var ObjectId = mongoose.Types.ObjectId;
 var modelLogger = require('./../../log').getLogger('MapSchema');
 var _ = require('underscore');
 var q = require('q');
+let mapExport = require('./map-import-export').mapExport;
 
 var wardleyMap = {};
 
@@ -702,6 +703,11 @@ module.exports = function(conn) {
         return q.allSettled(promises).then(function(results){
           return results[results.length-1].value;
         });
+    };
+
+
+    _MapSchema.methods.exportJSON = function(){
+      return mapExport(this);
     };
 
     /*
