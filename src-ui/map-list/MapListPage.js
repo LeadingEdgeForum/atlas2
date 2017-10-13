@@ -33,7 +33,7 @@ import EditWorkspaceDialog from '../workspace/edit-workspace-dialog';
 import CreateNewVariantDialog from './create-new-variant-dialog';
 import EditVariantDialog from './edit-variant-dialog';
 import EditorList from './editors-list';
-import $ from 'jquery';
+/* globals FileReader */
 
 export default class MapListPage extends React.Component {
   constructor(props) {
@@ -110,8 +110,8 @@ export default class MapListPage extends React.Component {
           <Glyphicon glyph="upload"></Glyphicon>
           &nbsp;Upload a map
       </NavItem>,
-      <LinkContainer to={{pathname: deduplicateHref}} key="2">
-          <NavItem eventKey={2} href={deduplicateHref} key="2">
+      <LinkContainer to={{pathname: deduplicateHref}} key="3">
+          <NavItem eventKey={3} href={deduplicateHref} key="3">
           <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
           &nbsp;Fix it!
           </NavItem>
@@ -238,22 +238,10 @@ export default class MapListPage extends React.Component {
 
   _uploadImport(event){
     event.preventDefault();
+
     let workspaceID = this.props.singleWorkspaceStore.getWorkspaceId();
-    $.ajax({
-      type: 'POST',
-      url: '/api/map/json',
-      data: {
-        workspaceID : workspaceID,
-        map : this.state.mapToUpload
-      },
-      success: function(data) {
-        this.workspace = data;
-        this.newVariantDialog = {
-          open: false
-        };
-        this.setState({importOpen:false, fileToUpload:null});
-      }.bind(this)
-    });
+    SingleWorkspaceActions.uploadAMap(workspaceID,this.state.mapToUpload);
+    this.setState({importOpen:false, fileToUpload:null});
   }
 
   _changeImport(event){

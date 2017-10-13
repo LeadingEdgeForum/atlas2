@@ -176,6 +176,19 @@ var SingleWorkspaceActions = {
       });
     },
 
+    uploadAMap : function (workspaceId, mapJSON){
+      if(!workspaceId || !mapJSON) {
+        console.log('ignoring because of empty',workspaceId, mapJSON);
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.UPLOAD_A_MAP,
+          data : {
+            workspaceId : workspaceId,
+            mapJSON : mapJSON
+          }
+      });
+    }
 };
 
 module.exports = SingleWorkspaceActions;

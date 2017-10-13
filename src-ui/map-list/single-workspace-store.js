@@ -156,6 +156,9 @@ export default class SingleWorkspaceStore extends Store {
             case ActionTypes.SET_VARIANT_AS_CURRENT:
               this.modifyVariant(action.data);
               break;
+            case ActionTypes.UPLOAD_A_MAP:
+              this.uploadAMap(action.data);
+              break;
             default:
                 return;
         }
@@ -368,6 +371,25 @@ export default class SingleWorkspaceStore extends Store {
           type: 'change',
           id: data.workspaceID
         });
+      }.bind(this)
+    });
+  }
+
+  uploadAMap(data){
+    $.ajax({
+      type: 'POST',
+      url: '/api/map/json',
+      data: {
+        workspaceID : data.workspaceId,
+        map : data.mapJSON
+      },
+      success: function(response) {
+        console.log('about to emit change', data);
+        this.io.emit('workspace', {
+          type: 'change',
+          id: data.workspaceId
+        });
+        this.fetchSingleWorkspaceInfo();
       }.bind(this)
     });
   }
