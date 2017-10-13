@@ -16,7 +16,14 @@ import {
   NavDropdown,
   MenuItem,
   Alert,
-  Button
+  Button,
+  Form,
+  FormGroup,
+  FormControl,
+  ControlLabel,
+  HelpBlock,
+  Input,
+  Modal
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import MapList from './map-list';
@@ -26,6 +33,7 @@ import EditWorkspaceDialog from '../workspace/edit-workspace-dialog';
 import CreateNewVariantDialog from './create-new-variant-dialog';
 import EditVariantDialog from './edit-variant-dialog';
 import EditorList from './editors-list';
+/* globals FileReader */
 
 export default class MapListPage extends React.Component {
   constructor(props) {
@@ -43,6 +51,12 @@ export default class MapListPage extends React.Component {
     this.editActiveVariant = this.editActiveVariant.bind(this);
     this.setCurrent = this.setCurrent.bind(this);
     this.findChildren = this.findChildren.bind(this);
+    this._openImport = this._openImport.bind(this);
+    this._closeImport = this._closeImport.bind(this);
+
+    this._changeImport = this._changeImport.bind(this);
+    this._uploadImport = this._uploadImport.bind(this);
+
   }
 
   componentDidMount() {
@@ -92,8 +106,12 @@ export default class MapListPage extends React.Component {
           <Glyphicon glyph="edit"></Glyphicon>
           &nbsp;Edit organization info
       </NavItem>,
-      <LinkContainer to={{pathname: deduplicateHref}} key="2">
-          <NavItem eventKey={2} href={deduplicateHref} key="2">
+      <NavItem eventKey={2} href="#" key="2" onClick={this._openImport}>
+          <Glyphicon glyph="upload"></Glyphicon>
+          &nbsp;Upload a map
+      </NavItem>,
+      <LinkContainer to={{pathname: deduplicateHref}} key="3">
+          <NavItem eventKey={3} href={deduplicateHref} key="3">
           <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
           &nbsp;Fix it!
           </NavItem>
@@ -210,6 +228,41 @@ export default class MapListPage extends React.Component {
     </Tab.Container>;
   }
 
+  _openImport(){
+    this.setState({importOpen:true});
+  }
+
+  _closeImport(){
+    this.setState({importOpen:false, fileToUpload:null, mapToUpload : null});
+  }
+
+  _uploadImport(event){
+    event.preventDefault();
+
+    let workspaceID = this.props.singleWorkspaceStore.getWorkspaceId();
+    SingleWorkspaceActions.uploadAMap(workspaceID,this.state.mapToUpload);
+    this.setState({importOpen:false, fileToUpload:null});
+  }
+
+  _changeImport(event){
+    // console.log(event.target.files[0]);
+    let _this = this;
+    // console.log(event.target.value);
+    let file = event.target.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file, 'UTF-8');
+    reader.onload = function(event){
+      try {
+        let jsonData = JSON.parse(event.target.result);
+        _this.setState({mapToUpload:jsonData});
+      } catch (e){
+        console.log(e);
+        _this.setState({fileToUpload: null});
+      }
+    };
+    this.setState({fileToUpload: event.target.value});
+  }
+
   render() {
     const auth = this.props.auth;
     const history = this.props.history;
@@ -231,6 +284,8 @@ export default class MapListPage extends React.Component {
     } else {
       tabs = (<Alert bsStyle="warning"><p>I am terribly sorry, I have found errorCode : {errorCode} and I do not know what to do next.</p><br/><LinkContainer to="/"><Button bsStyle="warning">Go back to your workspaces</Button></LinkContainer></Alert>);
     }
+
+    const state = this.state;
 
     return (
       <DocumentTitle title='Atlas2, the mapping Tool'>
@@ -264,6 +319,33 @@ export default class MapListPage extends React.Component {
           <EditWorkspaceDialog singleWorkspaceStore={singleWorkspaceStore}/>
           <CreateNewVariantDialog singleWorkspaceStore={singleWorkspaceStore}/>
           <EditVariantDialog singleWorkspaceStore={singleWorkspaceStore}/>
+          <Modal show={state.importOpen} onHide={this._closeImport}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                Import a map
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form horizontal>
+              <FormGroup controlId="name">
+                <Col sm={2}>
+                  <ControlLabel>File</ControlLabel>
+                </Col>
+                <Col sm={9}>
+                  <FormControl
+                    type="file"
+                    placeholder="Select a file to upload"
+                    onChange={this._changeImport}/>
+                    <HelpBlock>A file with a map</HelpBlock>
+                </Col>
+              </FormGroup>
+              </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button type="reset" onClick={this._closeImport}>Cancel</Button>
+              <Button type="submit" bsStyle="primary" value="Submit" onClick={this._uploadImport}>Upload</Button>
+            </Modal.Footer>
+          </Modal>
         </Grid>
       </DocumentTitle>
     );

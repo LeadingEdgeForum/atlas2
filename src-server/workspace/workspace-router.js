@@ -246,6 +246,26 @@ module.exports = function(authGuardian, mongooseConnection) {
           }, defaultErrorHandler.bind(this, res));
   });
 
+  module.router.get('/map/:mapID/json', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    WardleyMap.findOne({
+        _id: req.params.mapID,
+        archived: false
+      })
+      .then(checkAccess.bind(this, req.params.mapID, owner))
+      .then(function(result) {
+        return result.defaultPopulate();
+      })
+      .done(function(map) {
+        let json = map.exportJSON();
+        res.type('json').json(json);
+        track(owner, 'export_map', {
+          'id': map._id,
+          'name': map.name
+        });
+      }, defaultErrorHandler.bind(this, res));
+  });
+
   module.router.get('/map/:mapID/diff', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
@@ -544,6 +564,34 @@ module.exports = function(authGuardian, mongooseConnection) {
                 'name' : req.body.name
               }, req.body);
           }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.post('/map/json', authGuardian.authenticationRequired, function(req, res) {
+    var editor = getUserIdFromReq(req);
+    let incomingMap = req.body.map;
+    if(!incomingMap.elements || !incomingMap.links || !incomingMap.title){
+      return res.status(400).send();
+    }
+    Workspace
+        .findOne({
+            _id: new ObjectId(req.body.workspaceID),
+            owner: editor
+        })
+        .exec()
+        .then(function(workspace){
+          return workspace.importJSON(incomingMap);
+        })
+        .done(function(result) {
+            res.json({
+                map: result
+            });
+            if(result){
+              track(editor,'import_map',{
+                'id' : result._id,
+                'name' : req.body.name
+              }, req.body);
+            }
+        }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.post('/variant/:timesliceId/map', authGuardian.authenticationRequired, function(req, res) {
