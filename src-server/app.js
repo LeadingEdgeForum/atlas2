@@ -104,7 +104,7 @@ app.use(require('cookie-parser')());
 var cfenv = require('cfenv');
 
 const BUILD_UI_PATH = '../build-ui';
-const NODE_MODULES_PATH = '../nde_modules';
+const NODE_MODULES_PATH = '../node_modules';
 
 app.get('/css/bootstrap.min.css', function(req, res) {
     res.sendFile(path.join(__dirname, BUILD_UI_PATH + '/css/bootstrap.min.css'));
