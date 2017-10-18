@@ -44,7 +44,8 @@ var q = require('q');
 mongoose.Promise = q.Promise;
 var MongoDBConnection = require('./mongodb-helper');
 var conn = mongoose.createConnection(MongoDBConnection.atlas2.connectionURL, MongoDBConnection.atlas2.options);
-if (!(typeof global.it === 'function')) {
+
+if (typeof global.it !== 'function') {
   require('./workspace/model/migrator')(conn);
 }
 
@@ -187,11 +188,23 @@ app.use('/api', require('./workspace/workspace-router.js')(userProvider.getGuard
 
 var imageRendererModule = require('./workspace/image-renderer.js')(userProvider.getGuard(), conn, app.webpack_middleware);
 app.use('/img', imageRendererModule.router);
-process.on('SIGINT', function(){
-    console.log('shutting down');
-    imageRendererModule.shutdown();
-    process.exit();
-});
+
+
+let shutdownHandler = function(){
+    // console.log('shutting down');
+    return imageRendererModule
+      .shutdown()
+      .then(function(){
+        // console.log('closing connection');
+        conn.close(function(){
+            console.log('...exiting process');
+            process.exit();
+        });
+      });
+};
+
+process.on('SIGINT', shutdownHandler);
+process.on('exit', shutdownHandler);
 
 app.get('*', function(req, res) {
     res.sendFile(index);
