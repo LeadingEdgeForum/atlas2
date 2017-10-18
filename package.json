@@ -3,7 +3,7 @@
   "version": "2.0.3",
   "private": true,
   "scripts": {
-    "start": "node app.js",
+    "start": "node src-server/app.js",
     "test": "npm run test-server && npm run test-e2e",
     "test-e2e": "wdio wdio.conf.js",
     "test-server": "mocha --exit tests/server/**"

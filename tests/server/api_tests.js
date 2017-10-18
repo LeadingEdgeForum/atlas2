@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jslint node:true, mocha:true, expr: true */
 var should = require('should');
-var app = require('../../app');
+var app = require('../../src-server/app');
 var request = require('supertest');
 var userAgent1 = request.agent(app);
 
