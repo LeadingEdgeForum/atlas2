@@ -41,6 +41,9 @@ module.exports.mapImport = function(Node, workspace, incomingMapJSON) {
       .then(function(emptyMap) {
         var promises = [];
 
+        if(!incomingMapJSON.elements){ // null-proof - just in case
+          incomingMapJSON.elements = [];
+        }
         for (let i = 0; i < incomingMapJSON.elements.length; i++) {
           let currentNode = incomingMapJSON.elements[i];
           promises.push(new Node({
@@ -85,6 +88,9 @@ module.exports.mapImport = function(Node, workspace, incomingMapJSON) {
         // iterate over JSON links and establish appropriate connections
         // use foreignKey to locate real dependency _id
         let promises = [];
+        if(!incomingMapJSON.links){ // null-proof - links are not mandatory
+          incomingMapJSON.links = [];
+        }
         for (let i = 0; i < incomingMapJSON.links.length; i++) {
           promises.push(
             Node
