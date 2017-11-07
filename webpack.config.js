@@ -32,7 +32,7 @@ module.exports = {
     },
 
     plugins: [new webpack.DefinePlugin({
-        ___AUTH0_AUDIENCE___: JSON.stringify(config.userProvider.auth0.audience),
-        ___AUTH0_ISSUER___: JSON.stringify(config.userProvider.auth0.issuer)
+        ___AUTH0_AUDIENCE___: process.env.AUTH0_AUDIENCE ? JSON.stringify(process.env.AUTH0_AUDIENCE) : JSON.stringify(config.userProvider.auth0.audience),
+        ___AUTH0_ISSUER___: process.env.AUTH0_ISSUER ? JSON.stringify(process.env.AUTH0_ISSUER) : JSON.stringify(config.userProvider.auth0.issuer)
     })]
 };

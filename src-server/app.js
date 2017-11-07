@@ -149,22 +149,26 @@ app.get('/img/human-figure.svg', function(req, res) {
 
 var appJs = path.join(__dirname, BUILD_UI_PATH + '/js/app.js');
 var index = path.join(__dirname, BUILD_UI_PATH + '/index.html');
-if(config.userProvider.type === 'passport'){
-  console.log('using password');
-  if(config.userProvider.strategy === 'google'){
-    appJs = path.join(__dirname, BUILD_UI_PATH + '/js/google-app.js');
-    if(debug){ // for debug use local names
-      index = path.join(__dirname, BUILD_UI_PATH + '/google-index.html');
+if(process.env.AUTH0_FORCE !== 'true'){
+  if(config.userProvider.type === 'passport'){
+    console.log('using password');
+    if(config.userProvider.strategy === 'google'){
+      appJs = path.join(__dirname, BUILD_UI_PATH + '/js/google-app.js');
+      if(debug){ // for debug use local names
+        index = path.join(__dirname, BUILD_UI_PATH + '/google-index.html');
+      }
+    } else if(config.userProvider.strategy === 'ldap' || config.userProvider.strategy === 'anonymous'){
+      console.log('using l-p');
+      appJs = path.join(__dirname, BUILD_UI_PATH + '/js/l-p-app.js');
+      if(debug){
+        index = path.join(__dirname, BUILD_UI_PATH + '/l-p-index.html');
+      }
+    } else {
+      console.error('unrecognized auth strategy', config.userProvider.strategy);
     }
-  } else if(config.userProvider.strategy === 'ldap' || config.userProvider.strategy === 'anonymous'){
-    console.log('using l-p');
-    appJs = path.join(__dirname, BUILD_UI_PATH + '/js/l-p-app.js');
-    if(debug){
-      index = path.join(__dirname, BUILD_UI_PATH + '/l-p-index.html');
-    }
-  } else {
-    console.error('unrecognized auth strategy', config.userProvider.strategy);
   }
+} else {
+  console.log('forced auth0');
 }
 app.get('/app.js', function(req, res) {
     res.sendFile(appJs);
