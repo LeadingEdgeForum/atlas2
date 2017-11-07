@@ -64,8 +64,22 @@ var MapComponent = React.createClass({
   componentWillUnmount: function() {},
 
   shouldComponentUpdate(nextProps, nextState){
-    if(nextProps.focused === false){
+    if(nextProps.focused === false && this.props.focused === true){
       nextState.hover = null;
+      let n = this.props.node;
+      if(n.action && n.action.length > 0){
+        for(let i = 0; i < n.action.length; i++){
+            jsPlumb.removeFromDragSelection(n.action[i]._id);
+        }
+      }
+    }
+    if(nextProps.focused === true && this.props.focused === false){
+      let n = this.props.node;
+      if(n.action && n.action.length > 0){
+        for(let i = 0; i < n.action.length; i++){
+            jsPlumb.addToDragSelection(n.action[i]._id);
+        }
+      }
     }
     return true;
   },
@@ -145,37 +159,10 @@ var MapComponent = React.createClass({
     if(this.props.focused){
       this.setState({hover: target});
     }
-
-    var n = this.props.node;
-    // create and add everything to posse
-    if(target === 'move' && n.action && n.action.length > 0){
-      jsPlumb.addToPosse(n._id, n._id);
-      for(var i = 0; i < n.action.length; i++){
-          jsPlumb.addToPosse(n.action[i]._id, n._id);
-      }
-    }
-    this.setState({'posse': true});
-  },
-
-  cleanPosse : function(){
-    // clean posse
-    if(this.state.posse){
-      var n = this.props.node;
-      if(n.action && n.action.length > 0){
-        jsPlumb.removeFromPosse(n._id, n._id);
-        for(var i = 0; i < n.action.length; i++){
-            jsPlumb.removeFromPosse(n.action[i]._id, n._id);
-        }
-      }
-      this.setState({'posse': false});
-    }
   },
 
   mouseOut: function(target) {
     this.setState({hover: null});
-    if(target === 'move'){
-        this.cleanPosse();
-    }
   },
 
   renderMenu() {
@@ -414,7 +401,6 @@ var MapComponent = React.createClass({
     itemCaptionStyle.top = - itemCaptionStyle.fontSize;
     itemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
 
-    var cleanPosse = this.cleanPosse;
     return (
       <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
         if (input) {
@@ -434,7 +420,6 @@ var MapComponent = React.createClass({
             var y = offset.top;
             var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
             Actions.updateNode(workspaceID, mapID, id, {x : coords.x,y:coords.y});
-            cleanPosse();
           }
         });
       }}>

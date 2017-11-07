@@ -67,6 +67,9 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.updateNodeObjects = [];
+      this.updateUserObjects = [];
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', this.reloadOnSocketMessage);
@@ -662,6 +665,43 @@ export default class SingleWorkspaceStore extends Store {
     });
   }
 
+  executeNodeUpdate(){
+    if(this.nodeOrUserUpdateInProgress){
+      return;
+    }
+    let updateToExecute = this.updateNodeObjects.shift();
+    if(!updateToExecute){
+      return;
+    }
+    this.nodeOrUserUpdateInProgress = true;
+    $.ajax({
+      type: 'PUT',
+      url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + updateToExecute.data.nodeId,
+      data: updateToExecute.payload,
+      success: function(data2) {
+        this.nodeOrUserUpdateInProgress = false;
+        if(this.updateNodeObjects.length > 0){
+          this.executeNodeUpdate();
+        }
+        if(this.updateUserObjects.length > 0){
+          this.executeUserUpdate();
+        }
+        // all processed
+        this.map = data2;
+        this.editNodeDialog = {
+            open : false
+        };
+        this.diff = null;
+        this.emitChange();
+        this.io.emit('map', {
+          type: 'change',
+          id: this.getMapId()
+        });
+      }.bind(this)
+    });
+
+  }
+
   updateNode(data){
     var payload = {};
     if(data.pos){
@@ -679,23 +719,8 @@ export default class SingleWorkspaceStore extends Store {
       payload.description = data.description;
       payload.constraint = data.constraint;
     }
-    $.ajax({
-      type: 'PUT',
-      url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + data.nodeId,
-      data: payload,
-      success: function(data2) {
-        this.map = data2;
-        this.editNodeDialog = {
-            open : false
-        };
-        this.diff = null;
-        this.emitChange();
-        this.io.emit('map', {
-          type: 'change',
-          id: this.getMapId()
-        });
-      }.bind(this)
-    });
+    this.updateNodeObjects.push({data:data, payload:payload});
+    this.executeNodeUpdate();
   }
 
   submitAddCommentDialog(data){
@@ -764,6 +789,41 @@ export default class SingleWorkspaceStore extends Store {
     });
   }
 
+  executeUserUpdate(){
+    if(this.nodeOrUserUpdateInProgress){
+      return;
+    }
+    let updateToExecute = this.updateUserObjects.shift();
+    if(!updateToExecute){
+      return;
+    }
+    this.nodeOrUserUpdateInProgress = true;
+    $.ajax({
+        type: 'PUT',
+        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/user/' + updateToExecute.data.id,
+        data: updateToExecute.payload,
+        success: function(data2) {
+          this.nodeOrUserUpdateInProgress = false;
+          // console.log(this.updateNodeObjects);
+          if(this.updateNodeObjects.length > 0){
+            this.executeNodeUpdate();
+          }
+          if(this.updateUserObjects.length > 0){
+            this.executeUserUpdate();
+          }
+          this.map = data2;
+          this.editMapUserDialog = {open:false};
+          this.diff = null;
+          this.emitChange();
+          this.io.emit('map', {
+            type: 'change',
+            id: this.getMapId()
+          });
+        }.bind(this)
+    });
+
+  }
+
   updateUser(data){
     var payload = {};
     if(data.name){
@@ -779,21 +839,8 @@ export default class SingleWorkspaceStore extends Store {
     if(data.width){
       payload.width = data.width;
     }
-    $.ajax({
-        type: 'PUT',
-        url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/user/' + data.id,
-        data: payload,
-        success: function(data2) {
-          this.map = data2;
-          this.editMapUserDialog = {open:false};
-          this.diff = null;
-          this.emitChange();
-          this.io.emit('map', {
-            type: 'change',
-            id: this.getMapId()
-          });
-        }.bind(this)
-    });
+    this.updateUserObjects.push({data:data, payload:payload});
+    this.executeUserUpdate();
   }
 
   addReferenceToExistingSubmap(refID, coords){

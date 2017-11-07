@@ -4,9 +4,10 @@ import Store from '../store.js';
 import Dispatcher from '../dispatcher';
 import Constants from './canvas-constants';
 import $ from 'jquery';
-
+var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 const ActionTypes = Constants.ACTION_TYPES;
+const CANVAS_POSSE = "CANVAS_POSSE";
 /**
  * This class is responsible for handling current selection in the canvas.
  */
@@ -54,6 +55,7 @@ export default class CanvasStore extends Store {
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments = [];
           this.state.currentlySelectedUsers = [];
+          jsPlumb.clearDragSelection();
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_SINGLE_NODE:
@@ -62,20 +64,26 @@ export default class CanvasStore extends Store {
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments = [];
           this.state.currentlySelectedUsers = [];
+          jsPlumb.clearDragSelection();
+          jsPlumb.addToDragSelection(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS__ADD_FOCUS_SINGLE_NODE:
           this.state.currentlySelectedNodes.push(action.data);
           this.state.currentlySelectedConnections = [];
+          jsPlumb.addToDragSelection(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_REMOVE_FOCUS_SINGLE_NODE:
           let nodePosToRemove = this.state.currentlySelectedNodes.indexOf(action.data);
           this.state.currentlySelectedNodes.splice(nodePosToRemove, 1);
           this.state.currentlySelectedConnections = [];
+          jsPlumb.removeFromDragSelection(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_SINGLE_COMMENT:
+          jsPlumb.clearDragSelection();
+          jsPlumb.addToDragSelection(action.data);
           this.state.currentlySelectedNodes = [];
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments = [];
@@ -84,11 +92,13 @@ export default class CanvasStore extends Store {
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_ADD_COMMENT:
+          jsPlumb.addToDragSelection(action.data);
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments.push(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_REMOVE_COMMENT:
+          jsPlumb.removeFromDragSelection(action.data);
           let commentPosToRemove = this.state.currentlySelectedComments.indexOf(action.data);
           this.state.currentlySelectedComments.splice(commentPosToRemove, 1);
           this.emitChange();
@@ -99,16 +109,20 @@ export default class CanvasStore extends Store {
           this.state.currentlySelectedComments = [];
           this.state.currentlySelectedUsers = [];
           this.state.currentlySelectedUsers.push(action.data);
+          jsPlumb.clearDragSelection();
+          jsPlumb.addToDragSelection(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_ADD_USER:
           this.state.currentlySelectedConnections = [];
+          jsPlumb.addToDragSelection(action.data);
           this.state.currentlySelectedUsers.push(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_REMOVE_USER:
           let userPosToRemove = this.state.currentlySelectedUsers.indexOf(action.data);
           this.state.currentlySelectedUsers.splice(userPosToRemove, 1);
+          jsPlumb.removeFromDragSelection(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_INCREASE_NODE_FONT_SIZE:

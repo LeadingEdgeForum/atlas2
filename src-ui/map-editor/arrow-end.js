@@ -59,12 +59,24 @@ var ArrowEnd = React.createClass({
         jsPlumb.draggable(input, {
           containment: true,
           grid: [
-            30, 30
+            10, 10
           ],
           stop: function(event) {
               /* Gently skip update of this is source node is dragged together. This is a relative action, so it does not require manual update in this case, as the relative position does not change*/
-              if(event.drag.posses && event.drag.posses.length > 0 && event.drag.posses[0] === node_id){
-                return;
+              if(event.selection && event.selection.length > 0){
+                let foundAction = false;
+                let foundNode = false;
+                for(let i  = 0; i< event.selection.length; i++){
+                  if(event.selection[i][0].id === id){
+                    foundAction = true;
+                  }
+                  if(event.selection[i][0].id === node_id){
+                    foundNode = true;
+                  }
+                }
+                if(foundAction && foundNode){
+                  return;
+                }
               }
               var offset = getElementOffset(input);
               var x = offset.left;
