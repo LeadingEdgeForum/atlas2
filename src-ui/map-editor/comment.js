@@ -102,19 +102,16 @@ var Comment = React.createClass({
       if (!focused) {
         return null;
       }
-      if(this.props.multi){
-        var groupStyle = {
-          position: "absolute",
-          fontSize: "20px",
-          color: "silver",
-          top: "-25px",
-          left: "0px",
-          zIndex: "30"
-        };
-        if (this.state.hover === "group") {
-          groupStyle = _.extend(groupStyle, activeStyle);
-        }
-        return(<div><Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon></div>);
+      var groupStyle = {
+        position: "absolute",
+        fontSize: "20px",
+        color: "silver",
+        top: "-25px",
+        left: "0px",
+        zIndex: "30"
+      };
+      if (this.state.hover === "group") {
+        groupStyle = _.extend(groupStyle, activeStyle);
       }
       var pencilStyle = {
         position: "absolute",
@@ -159,9 +156,18 @@ var Comment = React.createClass({
         }
       }
       var menuItems = [];
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+      if(this.props.canvasStore.shouldShow("move")){
+        menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+      }
+      if(this.props.canvasStore.shouldShow("pencil")){
+        menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
+      }
+      if(this.props.canvasStore.shouldShow("remove")){
+        menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+      }
+      if(this.props.canvasStore.shouldShow("group")){
+        menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon>);
+      }
       return (
         <div>
           {menuItems}

@@ -609,7 +609,6 @@ export default class MapCanvas extends React.Component {
     var workspaceID = this.props.workspaceID;
     var state = this.state;
     var canvasStore = this.props.canvasStore;
-    var multiSelection = state ? state.multiNodeSelection : false;
     let diff = this.props.diff;
     let removed = diff.nodesRemoved;
     for(let i = 0; i < removed.length; i++){
@@ -695,7 +694,6 @@ export default class MapCanvas extends React.Component {
               id={component._id}
               focused={focused}
               inertia={component.inertia}
-              multi={multiSelection}
               diff={nodeDiff}/>);
       });
     }
@@ -720,7 +718,6 @@ export default class MapCanvas extends React.Component {
                   key = {this.props.comments[i]._id}
                   size = {size}
                   focused = {focused}
-                  multi={multiSelection}
                   />);
             }
         }

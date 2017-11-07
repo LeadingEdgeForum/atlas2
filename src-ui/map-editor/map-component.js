@@ -178,24 +178,21 @@ var MapComponent = React.createClass({
       }
       return null;
     }
-    if(this.props.multi){
-      var groupStyle = {
-        position: "absolute",
-        fontSize: "20px",
-        color: "silver",
-        top: "-25px",
-        left: "-25px",
-        zIndex: "30"
-      };
-      if (this.state.hover === "group") {
-        groupStyle = _.extend(groupStyle, activeStyle);
-        if (this.input) {
-          jsPlumb.setDraggable(this.input, false);
-          jsPlumb.unmakeTarget(this.input);
-          jsPlumb.unmakeSource(this.input);
-        }
+    var groupStyle = {
+      position: "absolute",
+      fontSize: "20px",
+      color: "silver",
+      top: "-25px",
+      left: "-25px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "group") {
+      groupStyle = _.extend(groupStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
       }
-      return(<div><Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon></div>);
     }
     var pencilStyle = {
       position: "absolute",
@@ -312,26 +309,47 @@ var MapComponent = React.createClass({
       }
     }
     var menuItems = [];
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
+    if(this.props.canvasStore.shouldShow("pencil")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("remove")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("link")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("move")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("action")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("group")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon>);
+    }
+    let href = "/map/" + this.props.node.submapID;
     if(this.props.node.type === Constants.SUBMAP){
-      var href = "/map/" + this.props.node.submapID;
-      var linkContainer = (
+      let linkContainer = (
         <LinkContainer to={href}><a href={href} key='zoom-in'><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} key='zoom-in'></Glyphicon></a></LinkContainer>
       );
-      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
-      menuItems.push(linkContainer);
-      menuItems.push(infoContainer);
+      let infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
+      if(this.props.canvasStore.shouldShow("submap")){
+        menuItems.push(linkContainer);
+      }
+      if(this.props.canvasStore.shouldShow("info")){
+        menuItems.push(infoContainer);
+      }
     } else {
-      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
-      var linkContainer = (
+      let infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
+      let linkContainer = (
         <Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} onClick={null} key='zoom-in'></Glyphicon>
       );
-      menuItems.push(linkContainer);
-      menuItems.push(infoContainer);
+      if(this.props.canvasStore.shouldShow("submap")){
+        menuItems.push(linkContainer);
+      }
+      if(this.props.canvasStore.shouldShow("info")){
+        menuItems.push(infoContainer);
+      }
     }
     return (
       <div>

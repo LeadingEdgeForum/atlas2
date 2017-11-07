@@ -19,7 +19,6 @@ export default class CanvasStore extends Store {
       currentlySelectedConnections: [],
       currentlySelectedComments: [],
       currentlySelectedUsers : [],
-      multiNodeSelection: false,
       dropTargetHighlight: false, // the canvas should highlight when pallette drag is initiated,
       initialized: false,
       coords: {
@@ -147,6 +146,26 @@ export default class CanvasStore extends Store {
     });
   }
 
+  /**
+    This method should be invoked only for focused nodes
+  */
+  shouldShow(menuType){
+    // only one is visible, so
+    if(menuType === 'move'){
+        /* move is visible always if anything is selected */
+        return this.state.currentlySelectedNodes.length + this.state.currentlySelectedComments.length + this.state.currentlySelectedUsers.length > 0;
+    }
+    if(menuType === 'group'){
+        /* group (form a submap from selection) is visible if at least two components are visible but none of them is user */
+        return (this.state.currentlySelectedNodes.length + this.state.currentlySelectedComments.length > 1) && (this.state.currentlySelectedUsers.length === 0);
+    }
+    if(menuType !== 'group'){
+        /* everything which is not a submap is visible if and only if one component is selected */
+        return this.state.currentlySelectedNodes.length + this.state.currentlySelectedComments.length + this.state.currentlySelectedUsers.length === 1;
+    }
+    return false;
+  }
+
   toggleDiff(){
     this.diffEnabled = !this.diffEnabled;
     this.emitChange();
@@ -233,7 +252,6 @@ export default class CanvasStore extends Store {
   }
 
   emitChange() {
-    this.state.multiNodeSelection = this.state.currentlySelectedNodes.length + this.state.currentlySelectedComments.length > 1;
     super.emitChange();
   }
 }
