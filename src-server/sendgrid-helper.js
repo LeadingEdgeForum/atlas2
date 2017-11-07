@@ -36,6 +36,8 @@ var sendInvitation = function(params) {
     personalization.addSubstitution(
         new helper.Substitution('%owner%', params.owner));
     personalization.addSubstitution(
+        new helper.Substitution('%receiver%', params.editor));
+    personalization.addSubstitution(
         new helper.Substitution('%url%', params.service));
     personalization.addSubstitution(
         new helper.Substitution('%wkspc%', params.service + '/workspace/' + params.workspaceID));

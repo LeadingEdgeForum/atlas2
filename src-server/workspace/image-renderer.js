@@ -334,8 +334,8 @@ module.exports = function(authGuardian, mongooseConnection, webpack_middleware) 
     });
 
     module.shutdown = function(){
-        pool.drain().then(function(){
-            pool.clear();
+        return pool.drain().then(function(){
+          return pool.clear();
         });
     };
 

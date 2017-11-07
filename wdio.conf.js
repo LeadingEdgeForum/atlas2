@@ -144,7 +144,7 @@ exports.config = {
      */
     onPrepare: function (config, capabilities) {
       if(process.env.TRAVIS_EVENT_TYPE !== 'cron'){
-          this.app = require('./app.js');
+          this.app = require('./src-server/app.js');
       }
       if(!process.env.TEST_USER1_LOGIN){
         console.error('No test user configured, set env variable TEST_USER1_LOGIN');

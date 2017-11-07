@@ -569,7 +569,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   module.router.post('/map/json', authGuardian.authenticationRequired, function(req, res) {
     var editor = getUserIdFromReq(req);
     let incomingMap = req.body.map;
-    if(!incomingMap.elements || !incomingMap.links || !incomingMap.title){
+    if(!incomingMap.elements || !incomingMap.title){
       return res.status(400).send();
     }
     Workspace

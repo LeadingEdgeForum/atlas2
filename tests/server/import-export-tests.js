@@ -185,4 +185,32 @@ describe('Import export tests', function() {
         exportedJSON2.links[i].end.should.equal(exportedJSON1.links[i].end);
       }
     });
+
+    it("regression test - https://github.com/cdaniel/atlas2/issues/107", function(){
+      const failingMap = JSON.parse('{"title":"SimpleMap","elements":[{"id":"59f306eeb0a74b00364af3b8","name":"NewNode1","visibility":0.7496598639455783,"maturity":0.8917469147344802}],"links":[]}');
+      return mapImport(Node, workspace2, failingMap)
+        .then(function(importedMap){
+          should.exist(importedMap.name);
+          importedMap.name.should.be.equal(failingMap.title);
+
+          importedMap.nodes.length.should.be.equal(1);
+          importedMap.nodes[0].name.should.be.equal(failingMap.elements[0].name);
+
+          importedMap.nodes[0].outboundDependencies.length.should.be.equal(0);
+        });
+    });
+
+    it("regression test 2 - https://github.com/cdaniel/atlas2/issues/107", function(){
+      const failingMap = JSON.parse('{"title":"SimpleMap","elements":[{"id":"59f306eeb0a74b00364af3b8","name":"NewNode1","visibility":0.7496598639455783,"maturity":0.8917469147344802}]}');
+      return mapImport(Node, workspace2, failingMap)
+        .then(function(importedMap){
+          should.exist(importedMap.name);
+          importedMap.name.should.be.equal(failingMap.title);
+
+          importedMap.nodes.length.should.be.equal(1);
+          importedMap.nodes[0].name.should.be.equal(failingMap.elements[0].name);
+
+          importedMap.nodes[0].outboundDependencies.length.should.be.equal(0);
+        });
+    });
 });
