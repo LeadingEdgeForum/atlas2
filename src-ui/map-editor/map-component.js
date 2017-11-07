@@ -64,8 +64,22 @@ var MapComponent = React.createClass({
   componentWillUnmount: function() {},
 
   shouldComponentUpdate(nextProps, nextState){
-    if(nextProps.focused === false){
+    if(nextProps.focused === false && this.props.focused === true){
       nextState.hover = null;
+      let n = this.props.node;
+      if(n.action && n.action.length > 0){
+        for(let i = 0; i < n.action.length; i++){
+            jsPlumb.removeFromDragSelection(n.action[i]._id);
+        }
+      }
+    }
+    if(nextProps.focused === true && this.props.focused === false){
+      let n = this.props.node;
+      if(n.action && n.action.length > 0){
+        for(let i = 0; i < n.action.length; i++){
+            jsPlumb.addToDragSelection(n.action[i]._id);
+        }
+      }
     }
     return true;
   },
@@ -145,37 +159,10 @@ var MapComponent = React.createClass({
     if(this.props.focused){
       this.setState({hover: target});
     }
-
-    var n = this.props.node;
-    // create and add everything to posse
-    if(target === 'move' && n.action && n.action.length > 0){
-      jsPlumb.addToPosse(n._id, n._id);
-      for(var i = 0; i < n.action.length; i++){
-          jsPlumb.addToPosse(n.action[i]._id, n._id);
-      }
-    }
-    this.setState({'posse': true});
-  },
-
-  cleanPosse : function(){
-    // clean posse
-    if(this.state.posse){
-      var n = this.props.node;
-      if(n.action && n.action.length > 0){
-        jsPlumb.removeFromPosse(n._id, n._id);
-        for(var i = 0; i < n.action.length; i++){
-            jsPlumb.removeFromPosse(n.action[i]._id, n._id);
-        }
-      }
-      this.setState({'posse': false});
-    }
   },
 
   mouseOut: function(target) {
     this.setState({hover: null});
-    if(target === 'move'){
-        this.cleanPosse();
-    }
   },
 
   renderMenu() {
@@ -191,24 +178,21 @@ var MapComponent = React.createClass({
       }
       return null;
     }
-    if(this.props.multi){
-      var groupStyle = {
-        position: "absolute",
-        fontSize: "20px",
-        color: "silver",
-        top: "-25px",
-        left: "-25px",
-        zIndex: "30"
-      };
-      if (this.state.hover === "group") {
-        groupStyle = _.extend(groupStyle, activeStyle);
-        if (this.input) {
-          jsPlumb.setDraggable(this.input, false);
-          jsPlumb.unmakeTarget(this.input);
-          jsPlumb.unmakeSource(this.input);
-        }
+    var groupStyle = {
+      position: "absolute",
+      fontSize: "20px",
+      color: "silver",
+      top: "-25px",
+      left: "-25px",
+      zIndex: "30"
+    };
+    if (this.state.hover === "group") {
+      groupStyle = _.extend(groupStyle, activeStyle);
+      if (this.input) {
+        jsPlumb.setDraggable(this.input, false);
+        jsPlumb.unmakeTarget(this.input);
+        jsPlumb.unmakeSource(this.input);
       }
-      return(<div><Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon></div>);
     }
     var pencilStyle = {
       position: "absolute",
@@ -325,26 +309,47 @@ var MapComponent = React.createClass({
       }
     }
     var menuItems = [];
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
-    menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
+    if(this.props.canvasStore.shouldShow("pencil")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("remove")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("link")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("move")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("action")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
+    }
+    if(this.props.canvasStore.shouldShow("group")){
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon>);
+    }
+    let href = "/map/" + this.props.node.submapID;
     if(this.props.node.type === Constants.SUBMAP){
-      var href = "/map/" + this.props.node.submapID;
-      var linkContainer = (
+      let linkContainer = (
         <LinkContainer to={href}><a href={href} key='zoom-in'><Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} key='zoom-in'></Glyphicon></a></LinkContainer>
       );
-      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
-      menuItems.push(linkContainer);
-      menuItems.push(infoContainer);
+      let infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
+      if(this.props.canvasStore.shouldShow("submap")){
+        menuItems.push(linkContainer);
+      }
+      if(this.props.canvasStore.shouldShow("info")){
+        menuItems.push(infoContainer);
+      }
     } else {
-      var infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
-      var linkContainer = (
+      let infoContainer = (<a href={href}><Glyphicon onMouseOver={this.mouseOver.bind(this, "info")} onMouseOut={this.mouseOut} glyph="info-sign" key='info-sign' style={infoStyle}></Glyphicon></a>);
+      let linkContainer = (
         <Glyphicon onMouseOver={this.mouseOver.bind(this, "submap")} onMouseOut={this.mouseOut} glyph="zoom-in" style={submapStyle} onClick={null} key='zoom-in'></Glyphicon>
       );
-      menuItems.push(linkContainer);
-      menuItems.push(infoContainer);
+      if(this.props.canvasStore.shouldShow("submap")){
+        menuItems.push(linkContainer);
+      }
+      if(this.props.canvasStore.shouldShow("info")){
+        menuItems.push(infoContainer);
+      }
     }
     return (
       <div>
@@ -414,7 +419,6 @@ var MapComponent = React.createClass({
     itemCaptionStyle.top = - itemCaptionStyle.fontSize;
     itemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
 
-    var cleanPosse = this.cleanPosse;
     return (
       <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
         if (input) {
@@ -426,7 +430,7 @@ var MapComponent = React.createClass({
         jsPlumb.draggable(input, {
           containment: true,
           grid: [
-            50, 50
+            10, 10
           ],
           stop: function(event) {
             var offset = getElementOffset(input);
@@ -434,7 +438,6 @@ var MapComponent = React.createClass({
             var y = offset.top;
             var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
             Actions.updateNode(workspaceID, mapID, id, {x : coords.x,y:coords.y});
-            cleanPosse();
           }
         });
       }}>

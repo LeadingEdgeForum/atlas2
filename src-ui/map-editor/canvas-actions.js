@@ -48,6 +48,18 @@ export default class CanvasActions {
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_REMOVE_COMMENT, data: commentID});
   }
 
+  static focusUser(userID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_SINGLE_USER, data: userID});
+  }
+
+  static focusAddUser(userID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_ADD_USER, data: userID});
+  }
+
+  static focusRemoveUser(userID){
+    Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_FOCUS_REMOVE_USER, data: userID});
+  }
+
   static increaseNodeFontSize(){
     Dispatcher.dispatch({actionType: Constants.ACTION_TYPES.CANVAS_INCREASE_NODE_FONT_SIZE});
   }
