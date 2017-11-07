@@ -17,6 +17,7 @@ export default class CanvasStore extends Store {
       currentlySelectedNodes: [],
       currentlySelectedConnections: [],
       currentlySelectedComments: [],
+      currentlySelectedUsers : [],
       multiNodeSelection: false,
       dropTargetHighlight: false, // the canvas should highlight when pallette drag is initiated,
       initialized: false,
@@ -52,6 +53,7 @@ export default class CanvasStore extends Store {
           this.state.currentlySelectedNodes = [];
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments = [];
+          this.state.currentlySelectedUsers = [];
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_SINGLE_NODE:
@@ -59,6 +61,7 @@ export default class CanvasStore extends Store {
           this.state.currentlySelectedNodes.push(action.data);
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments = [];
+          this.state.currentlySelectedUsers = [];
           this.emitChange();
           break;
         case ActionTypes.CANVAS__ADD_FOCUS_SINGLE_NODE:
@@ -67,8 +70,8 @@ export default class CanvasStore extends Store {
           this.emitChange();
           break;
         case ActionTypes.CANVAS_REMOVE_FOCUS_SINGLE_NODE:
-          var pos = this.state.currentlySelectedNodes.indexOf(action.data);
-          this.state.currentlySelectedNodes.splice(pos, 1);
+          let nodePosToRemove = this.state.currentlySelectedNodes.indexOf(action.data);
+          this.state.currentlySelectedNodes.splice(nodePosToRemove, 1);
           this.state.currentlySelectedConnections = [];
           this.emitChange();
           break;
@@ -77,6 +80,7 @@ export default class CanvasStore extends Store {
           this.state.currentlySelectedConnections = [];
           this.state.currentlySelectedComments = [];
           this.state.currentlySelectedComments.push(action.data);
+          this.state.currentlySelectedUsers = [];
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_ADD_COMMENT:
@@ -85,8 +89,26 @@ export default class CanvasStore extends Store {
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_REMOVE_COMMENT:
-          var pos = this.state.currentlySelectedComments.indexOf(action.data);
-          this.state.currentlySelectedComments.splice(pos, 1);
+          let commentPosToRemove = this.state.currentlySelectedComments.indexOf(action.data);
+          this.state.currentlySelectedComments.splice(commentPosToRemove, 1);
+          this.emitChange();
+          break;
+        case ActionTypes.CANVAS_FOCUS_SINGLE_USER:
+          this.state.currentlySelectedNodes = [];
+          this.state.currentlySelectedConnections = [];
+          this.state.currentlySelectedComments = [];
+          this.state.currentlySelectedUsers = [];
+          this.state.currentlySelectedUsers.push(action.data);
+          this.emitChange();
+          break;
+        case ActionTypes.CANVAS_FOCUS_ADD_USER:
+          this.state.currentlySelectedConnections = [];
+          this.state.currentlySelectedUsers.push(action.data);
+          this.emitChange();
+          break;
+        case ActionTypes.CANVAS_FOCUS_REMOVE_USER:
+          let userPosToRemove = this.state.currentlySelectedUsers.indexOf(action.data);
+          this.state.currentlySelectedUsers.splice(userPosToRemove, 1);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_INCREASE_NODE_FONT_SIZE:

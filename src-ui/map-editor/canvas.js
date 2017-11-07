@@ -733,6 +733,14 @@ export default class MapCanvas extends React.Component {
                   userDiff = "ADDED";
                 }
               }
+              let focused = false;
+              if (state && state.currentlySelectedUsers) {
+                  for (let ii = 0; ii < state.currentlySelectedUsers.length; ii++) {
+                      if (this.props.users[i]._id === state.currentlySelectedUsers[ii]) {
+                          focused = true;
+                      }
+                  }
+              }
               users.push(
                 <User workspaceID = {workspaceID}
                   canvasStore = {canvasStore}
@@ -740,6 +748,7 @@ export default class MapCanvas extends React.Component {
                   user = {this.props.users[i]}
                   id = {this.props.users[i]._id}
                   key = {this.props.users[i]._id}
+                  focused = {focused}
                   size = {size}
                   diff={userDiff}
                   />);

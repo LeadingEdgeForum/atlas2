@@ -426,7 +426,7 @@ var MapComponent = React.createClass({
         jsPlumb.draggable(input, {
           containment: true,
           grid: [
-            50, 50
+            10, 10
           ],
           stop: function(event) {
             var offset = getElementOffset(input);

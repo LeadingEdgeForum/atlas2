@@ -47,16 +47,6 @@ function getElementOffset(element)
 }
 
 var User = React.createClass({
-  getInitialState: function() {
-    return {focus: false};
-  },
-
-  shouldComponentUpdate(nextProps, nextState){
-    if(nextProps.focused === false){
-      nextState.hover = null;
-    }
-    return true;
-  },
 
   componentWillUnmount: function() {
     jsPlumb.select({
@@ -83,6 +73,15 @@ var User = React.createClass({
   onClickHandler: function(e) {
     e.preventDefault();
     e.stopPropagation();
+    if(!this.props.focused){
+      this.setState({hover:null});
+      if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
+          CanvasActions.focusAddUser(this.props.id);
+      } else {
+          CanvasActions.focusUser(this.props.id);
+      }
+      return;
+    }
     if (this.state.hover === "remove") {
       let id = this.props.id;
       let mapID = this.props.mapID;
@@ -97,11 +96,15 @@ var User = React.createClass({
       let description = this.props.user.description;
       Actions.openEditUserDialog(workspaceID, mapID, id, name, description);
     }
-    this.setState({focus:!this.state.focus, hover:null});
+    if(this.props.focused){
+      this.setState({hover:null});
+      CanvasActions.focusRemoveUser(this.props.id);
+      return;
+    }
   },
 
   mouseOver: function(target) {
-    if(this.state.focus){
+    if(this.props.focused){
       this.setState({hover: target});
     }
   },
@@ -111,7 +114,7 @@ var User = React.createClass({
   },
 
   renderMenu() {
-    if (!this.state.focus) {
+    if (!this.props.focused) {
       if (this.input) {
         jsPlumb.setDraggable(this.input, false);
         jsPlumb.unmakeSource(this.input);
@@ -242,7 +245,7 @@ var User = React.createClass({
         jsPlumb.draggable(input, {
           containment: true,
           grid: [
-            50, 50
+            10, 10
           ],
           stop: function(event) {
             var offset = getElementOffset(input);
