@@ -32,7 +32,7 @@ var makeDraggable = function(type, mapID, canvasStore, input) {
     clone: 'true',
     ignoreZoom: true,
     grid: [
-      '100', '100'
+      '10', '10'
     ],
     start: function(params) {
       CanvasActions.highlightCanvas(true);
