@@ -44,7 +44,7 @@
     "phantom-pool": "^1.2.2",
     "prop-types": "^15.5.10",
     "q": "*",
-    "react": "^15.5.4",
+    "react": "^16.1.1",
     "react-bootstrap": "^0.31.0",
     "react-bootstrap-slider": "^2.0.0",
     "react-document-title": "2.0.3",
