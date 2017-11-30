@@ -41,6 +41,8 @@ import {
   cleanUpStores
 } from './store-management';
 
+import TosPage from './tos/TosPage';
+
 
 import AuthService from './auth0/AuthService';
 //this is injected at build time
@@ -106,6 +108,9 @@ class MainApp extends React.Component {
                                 workspaceListStore={workspaceListStore}/>
                 : <SplashPage auth={auth}/>)
             }/>
+            <Route exact path="/tos">
+              <TosPage/>
+            </Route>
             <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
                   if(!loggedIn) {
 

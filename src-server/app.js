@@ -188,6 +188,7 @@ app.get('/js/freshdesk.js', freshdesk);
 
 userProvider.installUserProvider(app, config, conn);
 
+app.use('/api/tos', require('./tos/tos.js')(conn).router);
 app.use('/api', require('./workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
 
 var imageRendererModule = require('./workspace/image-renderer.js')(userProvider.getGuard(), conn, app.webpack_middleware);

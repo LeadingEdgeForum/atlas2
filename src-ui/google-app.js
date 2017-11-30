@@ -37,6 +37,8 @@ import {
   cleanUpStores
 } from './store-management';
 
+import TosPage from './tos/TosPage';
+
 import AuthStore from './passport/auth-store';
 var auth = new AuthStore();
 
@@ -88,6 +90,9 @@ class MainApp extends React.Component {
                                 workspaceListStore={workspaceListStore}/>
                 : <SplashPage auth={auth}/>)
             }/>
+            <Route exact path="/tos">
+              <TosPage/>
+            </Route>
             <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
                   if(!loggedIn) {
 

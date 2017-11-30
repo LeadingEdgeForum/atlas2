@@ -1,0 +1,25 @@
+{
+  "title" : "fill me",
+  "lastModified" : "30 Nov 2017",
+  "version" : "1",
+  "preface" : [
+    "First paragraph",
+    "Second paragraph"
+  ],
+  "chapters" : [
+    {
+      "title": "Title of the first chapter",
+      "content" : [
+        "First paragraph",
+        "Second paragraph"
+      ]
+    },
+    {
+      "title": "Title of the second chapter",
+      "content" : [
+        "First paragraph",
+        "Second paragraph"
+      ]
+    }
+  ]
+}
