@@ -1,7 +1,7 @@
 # Atlas2
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/cdaniel/atlas2.svg)](https://greenkeeper.io/)
-[![Build Status](https://travis-ci.org/cdaniel/atlas2.svg?branch=master)](https://travis-ci.org/cdaniel/atlas2) 
+[![Build Status](https://travis-ci.org/cdaniel/atlas2.svg?branch=master)](https://travis-ci.org/cdaniel/atlas2)
 [![Gitter](https://badges.gitter.im/Join_Chat.svg)](https://gitter.im/atlas2)
 
 A new mapping tool, this time sponsored by the [Leading Edge Forum](http://www.wardleymaps.com)
@@ -11,7 +11,7 @@ The tool is running live [here](https://atlas2.wardleymaps.com).
 To test it out locally, you may run `docker-compose up` and visit http://localhost:6001.
 
 # Licence
-The code is licenced under creative commons (CC-BY-SA), except the LEF logo (atlas2/build-ui/img/LEF_logo.png).
+The code is licenced under the [Apache Licence 2.0](https://github.com/cdaniel/atlas2/blob/master/LICENSE) , except the LEF logo (atlas2/build-ui/img/LEF_logo.png).
 
 
 # Contributing
@@ -21,4 +21,4 @@ This is a community based project. Any help is really appreciated. Read [here](h
 
 
 # Notice:
-Read [release info](https://github.com/cdaniel/atlas2/releases) before updating existing tool. Before upgrading to latest version, backup your data first! 
+Read [release info](https://github.com/cdaniel/atlas2/releases) before updating existing tool. Before upgrading to latest version, backup your data first!
