@@ -23,7 +23,7 @@ export default class AcceptTosPage extends React.Component {
 
   render() {
     /* globals ___AUTH0_ISSUER___ */
-    const URL = 'https:/' + ___AUTH0_ISSUER___ + '/continue?state=' + this.props.state;
+    const URL = 'https://' + ___AUTH0_ISSUER___ + '/continue?state=' + this.props.state;
     return (
       <DocumentTitle title='Atlas2 Terms of Service'>
       <Modal show={true}>
