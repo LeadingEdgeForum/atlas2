@@ -14,15 +14,12 @@ export default class AuthService extends Store {
 
     /* globals ___AUTH0_AUDIENCE___ */
     /* globals ___AUTH0_ISSUER___ */
-    /* globals ___AUTH0_TOS___ */
     let mustAcceptTerms = false;
     let languageDictionary = {
-      title : 'Welcome to Atlas'
+      title : 'Welcome to Atlas'/*,
+      signUpTerms : "I agree to <a href=\"/tos\" target=\"_new\">Terms of Service</a>."
+      */
     };
-    if(___AUTH0_TOS___ && ___AUTH0_TOS___ !== 'undefined'){
-      mustAcceptTerms = true;
-      languageDictionary.signUpTerms = ___AUTH0_TOS___;
-    }
     this.auth0 = new Auth0Lock(___AUTH0_AUDIENCE___, ___AUTH0_ISSUER___, {
       auth: {
           responseType: 'token id_token',

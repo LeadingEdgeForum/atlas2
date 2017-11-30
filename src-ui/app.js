@@ -42,7 +42,8 @@ import {
 } from './store-management';
 
 import TosPage from './tos/TosPage';
-
+import AcceptTosPage from './tos/AcceptTosPage';
+import qs from 'query-string';
 
 import AuthService from './auth0/AuthService';
 //this is injected at build time
@@ -111,6 +112,14 @@ class MainApp extends React.Component {
             <Route exact path="/tos">
               <TosPage/>
             </Route>
+            <Route path="/accept-tos" render={({location}) => {
+              const query = qs.parse(location.search);
+              const state = query.state;
+              if(!state){
+                return <Redirect to="/" />;
+              }
+              return <AcceptTosPage state={state}/>;
+            }}/>
             <Route path="/(workspace|fixit)/:workspaceID" render={(props) => {
                   if(!loggedIn) {
 

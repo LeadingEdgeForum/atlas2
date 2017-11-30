@@ -4,7 +4,7 @@
         "strategy": "anonymous",
         "auth0": {
           "audience" : "2AUDOUquJ-jTXCxT8d731Jtfrv_sBEj9",
-          "issuer" : "wardleymaps.eu.auth0.com"
+          "issuer" : "wardleymaps.eu.auth0.com",
         },
         "server": {
             "url": "ldap://ldap.forumsys.com:389",

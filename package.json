@@ -13,7 +13,7 @@
     "atob": "^2.0.3",
     "auth0": "^2.6.0",
     "auth0-js": "^8.5.0",
-    "auth0-lock": "^10.14.0",
+    "auth0-lock": "^10.21.1",
     "blob": "0.0.4",
     "body-parser": "^1.15.2",
     "bootstrap": "^3.3.7",
@@ -44,6 +44,7 @@
     "phantom-pool": "^1.2.2",
     "prop-types": "^15.5.10",
     "q": "*",
+    "query-string": "*",
     "react": "^15.5.4",
     "react-bootstrap": "^0.31.0",
     "react-bootstrap-slider": "^2.0.0",
@@ -88,7 +89,7 @@
   },
   "repository": {},
   "engines": {
-    "node": "6.x",
+    "node": "8.x",
     "npm": "3.x"
   }
 }
