@@ -4,7 +4,8 @@
         "strategy": "anonymous",
         "auth0": {
           "audience" : "from_auth0__change_me_config_json",
-          "issuer" : "from_auth0__change_me_config_json"
+          "issuer" : "from_auth0__change_me_config_json",
+          "tos" : "I agree to <a href=\"/tos\" target=\"_new\">Terms of Service</a>."
         },
         "server": {
             "url": "ldap://ldap.forumsys.com:389",
