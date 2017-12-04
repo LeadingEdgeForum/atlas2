@@ -1,7 +1,7 @@
 # Atlas2
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/LeadingEdgeForum/atlas2.svg)](https://greenkeeper.io/)
-[![Build Status](https://travis-ci.org/LeadingEdgeForum/atlas2.svg?branch=master)](https://travis-ci.org/cdaniel/atlas2)
+[![Build Status](https://travis-ci.org/LeadingEdgeForum/atlas2.svg?branch=master)](https://travis-ci.org/LeadingEdgeForum/atlas2)
 [![Gitter](https://badges.gitter.im/Join_Chat.svg)](https://gitter.im/atlas2)
 
 A new mapping tool, this time sponsored by the [Leading Edge Forum](http://www.wardleymaps.com)
