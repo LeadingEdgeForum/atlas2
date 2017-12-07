@@ -27,7 +27,7 @@
     "globals": "^11.0.1",
     "history": "^4.4.0",
     "jquery": "*",
-    "jsplumb": "2.5.7",
+    "jsplumb": "2.5.8",
     "jwks-rsa": "^1.1.1",
     "jwt-decode": "^2.2.0",
     "key-mirror-nested": "^1.2.4",
