@@ -9,7 +9,7 @@ import {endpointOptions} from './component-styles';
 import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
-
+var createReactClass = require('create-react-class');
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 /* globals document */
@@ -23,7 +23,7 @@ function getElementOffset(element)
     return { top: top, left: left };
 }
 
-var ArrowEnd = React.createClass({
+var ArrowEnd = createReactClass({
 
 
   render: function() {

@@ -15,9 +15,10 @@ import {
 var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./single-workspace-constants');
 import Actions from './single-workspace-actions';
+var createReactClass = require('create-react-class');
 //TODO: validation of the workspace dialog
 
-var InviteNewUserDialog = React.createClass({
+var InviteNewUserDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

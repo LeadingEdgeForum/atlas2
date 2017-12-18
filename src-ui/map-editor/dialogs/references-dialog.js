@@ -6,8 +6,9 @@ var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 import Actions from '../single-map-actions';
 var UsageInfo = require('../../fixit/usage-info');
+var createReactClass = require('create-react-class');
 
-var ReferencesDialog = React.createClass({
+var ReferencesDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

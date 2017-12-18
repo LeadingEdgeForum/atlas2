@@ -15,8 +15,9 @@ import {
 var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./single-workspace-constants');
 import Actions from './single-workspace-actions';
+var createReactClass = require('create-react-class');
 
-var EditVariantDialog = React.createClass({
+var EditVariantDialog = createReactClass({
   getInitialState: function() {
     return this.props.singleWorkspaceStore.getEditVariantDialogState();
   },

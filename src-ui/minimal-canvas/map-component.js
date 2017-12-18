@@ -3,6 +3,7 @@
 var React = require('react');
 var _ = require('underscore');
 import {getStyleForType} from './component-styles';
+var createReactClass = require('create-react-class');
 
 var nonInlinedStyle = {
   position: 'absolute'
@@ -29,7 +30,7 @@ var inertiaStyle = {
   height: 40
 };
 
-var MapComponent = React.createClass({
+var MapComponent = createReactClass({
   getInitialState: function() {
     return {focus: false};
   },
@@ -71,9 +72,10 @@ var MapComponent = React.createClass({
     var id = this.props.id;
     var inertia = this.renderInertia(this.props.inertia);
     var nodeFontSize = this.props.nodeFontSize;
-    itemCaptionStyle.fontSize = nodeFontSize;
-    itemCaptionStyle.top = - nodeFontSize;
-    itemCaptionStyle.width = node.width ? node.width + 'px' : '100px';
+    let localItemCaptionStyle = _.clone(itemCaptionStyle);
+    localItemCaptionStyle.fontSize = nodeFontSize;
+    localItemCaptionStyle.top = - nodeFontSize;
+    localItemCaptionStyle.width = node.width ? node.width + 'px' : '100px';
 
     var moved = this.props.moved;
     if(moved){
@@ -96,7 +98,7 @@ var MapComponent = React.createClass({
     }
     return (
       <div style={style}  id={id} >
-        <div style={itemCaptionStyle}>{name}</div>
+        <div style={localItemCaptionStyle}>{name}</div>
         {inertia}
       </div>
     );

@@ -17,9 +17,9 @@ import {
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
 var _ = require('underscore');
+var createReactClass = require('create-react-class');
 
-
-var NewGenericCommentDialog = React.createClass({
+var NewGenericCommentDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

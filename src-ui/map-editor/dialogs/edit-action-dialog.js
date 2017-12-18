@@ -15,9 +15,9 @@ import {
 } from 'react-bootstrap';
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
+var createReactClass = require('create-react-class');
 
-
-var EditActionDialog = React.createClass({
+var EditActionDialog = createReactClass({
   getInitialState: function() {
     return {open: false};
   },

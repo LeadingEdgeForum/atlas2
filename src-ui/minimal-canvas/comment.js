@@ -3,9 +3,9 @@
 var React = require('react');
 var _ = require('underscore');
 import {getStyleForType} from './component-styles';
+var createReactClass = require('create-react-class');
 
-
-var Comment = React.createClass({
+var Comment = createReactClass({
 
   getInitialState : function(){
     return {focused:false};

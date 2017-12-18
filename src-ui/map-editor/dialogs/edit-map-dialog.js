@@ -16,10 +16,10 @@ import {
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
 import {calculateMapName} from '../../map-list/map-name-calculator';
-
+var createReactClass = require('create-react-class');
 //TODO: validation of the workspace dialog
 
-var EditMapDialog = React.createClass({
+var EditMapDialog = createReactClass({
   getInitialState: function() {
     return {open: false};
   },

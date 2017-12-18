@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import {ListGroupItem} from 'react-bootstrap';
 import SingleWorkspaceActions from './single-workspace-actions';
 var CreateNewMapDialog = require('./create-new-map-dialog');

@@ -5,6 +5,7 @@ var _ = require('underscore');
 import {getStyleForType} from './component-styles';
 import {Glyphicon} from 'react-bootstrap';
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+var createReactClass = require('create-react-class');
 
 var itemCaptionStyle = {
   left: 10,
@@ -28,7 +29,7 @@ var inertiaStyle = {
   height: 40
 };
 
-var HistoricComponent = React.createClass({
+var HistoricComponent = createReactClass({
 
   getInitialState: function() {
     return {focus: false};
@@ -105,12 +106,13 @@ var HistoricComponent = React.createClass({
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);
     var canvasStore = this.props.canvasStore;
-    itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
-    itemCaptionStyle.top = - itemCaptionStyle.fontSize;
+    let localItemCaptionStyle = _.clone(itemCaptionStyle);
+    localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+    localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
 
     return (
       <div style={style} id={id} key={id}>
-        <div style={itemCaptionStyle} className="node-label">{name}</div>
+        <div style={localItemCaptionStyle} className="node-label">{name}</div>
         {inertia}
       </div>
     );

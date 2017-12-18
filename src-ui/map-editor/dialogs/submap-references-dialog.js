@@ -7,8 +7,9 @@ var Button = require('react-bootstrap').Button;
 import Actions from '../single-map-actions';
 import {calculateMapName} from '../../map-list/map-name-calculator';
 var UsageInfo = require('../../fixit/usage-info');
+var createReactClass = require('create-react-class');
 
-var SubmapReferencesDialog = React.createClass({
+var SubmapReferencesDialog = createReactClass({
   getInitialState: function() {
     return {open: false};
   },

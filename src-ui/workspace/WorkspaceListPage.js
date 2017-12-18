@@ -1,7 +1,8 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
+import PropTypes from 'prop-types';
 import DocumentTitle from 'react-document-title';
 import {
   Grid,
@@ -40,7 +41,7 @@ export default class WorkspaceListPage extends React.Component {
   }
 }
 WorkspaceListPage.propTypes = {
-  workspaceListStore: React.PropTypes.object.isRequired,
-  auth : React.PropTypes.object.isRequired,
-  history : React.PropTypes.object.isRequired
+  workspaceListStore: PropTypes.object.isRequired,
+  auth : PropTypes.object.isRequired,
+  history : PropTypes.object.isRequired
 };

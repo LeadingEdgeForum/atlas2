@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import $ from 'jquery';
 import {
   Grid,
@@ -15,8 +16,9 @@ import {
   Glyphicon
 } from 'react-bootstrap';
 import MapLink from './maplink.js';
+var createReactClass = require('create-react-class');
 
-var UsageInfo = React.createClass({
+var UsageInfo = createReactClass({
 
   calculateSingleReference(marketreference){
     var nodeEvolutionLevel = this.props.node.x;

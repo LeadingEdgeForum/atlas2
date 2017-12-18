@@ -10,6 +10,7 @@ import {userEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import ReactResizeDetector from 'react-resize-detector';
+var createReactClass = require('create-react-class');
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
@@ -46,7 +47,7 @@ function getElementOffset(element)
     return { top: top, left: left };
 }
 
-var User = React.createClass({
+var User = createReactClass({
 
   componentWillUnmount: function() {
     jsPlumb.select({
@@ -238,9 +239,10 @@ var User = React.createClass({
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
     var canvasStore = this.props.canvasStore;
-    itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
-    itemCaptionStyle.top = - itemCaptionStyle.fontSize;
-    itemCaptionStyle.width = this.props.user.width ? this.props.user.width + 'px' : 'auto';
+    let localItemCaptionStyle = _.clone(itemCaptionStyle);
+    localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+    localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
+    localItemCaptionStyle.width = this.props.user.width ? this.props.user.width + 'px' : 'auto';
 
     return (
       <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
@@ -264,7 +266,7 @@ var User = React.createClass({
           }
         });
       }}>
-        <div style={itemCaptionStyle} className="user-label">{name}
+        <div style={localItemCaptionStyle} className="user-label">{name}
           <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
         </div>
         {menu}

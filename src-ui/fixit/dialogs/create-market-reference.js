@@ -18,9 +18,10 @@ var Constants = require('../deduplicator-constants');
 import Actions from '../deduplicator-actions';
 var _ = require('underscore');
 import ReactBootstrapSlider from 'react-bootstrap-slider';
+var createReactClass = require('create-react-class');
 
 
-var CreateMarketReferenceDialog = React.createClass({
+var CreateMarketReferenceDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

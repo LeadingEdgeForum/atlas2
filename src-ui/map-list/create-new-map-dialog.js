@@ -16,9 +16,10 @@ var Glyphicon = require('react-bootstrap').Glyphicon;
 var Constants = require('./single-workspace-constants');
 import Actions from './single-workspace-actions';
 import {calculateMapName} from './map-name-calculator';
+var createReactClass = require('create-react-class');
 //TODO: validation of the workspace dialog
 
-var CreateNewMapDialog = React.createClass({
+var CreateNewMapDialog = createReactClass({
   getInitialState: function() {
     return this.props.singleWorkspaceStore.getNewMapDialogState();
   },

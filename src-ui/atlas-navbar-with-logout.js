@@ -2,7 +2,8 @@
 
 import {Link} from 'react-router-dom';
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {
   Navbar,
@@ -58,8 +59,8 @@ export default class AtlasNavbarWithLogout extends React.Component {
   }
 }
 AtlasNavbarWithLogout.propTypes = {
-  mainMenu: React.PropTypes.array,
-  rightMenu: React.PropTypes.array,
-  auth : React.PropTypes.object.isRequired,
-  history : React.PropTypes.object.isRequired
+  mainMenu: PropTypes.array,
+  rightMenu: PropTypes.array,
+  auth : PropTypes.object.isRequired,
+  history : PropTypes.object.isRequired
 };

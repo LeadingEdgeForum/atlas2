@@ -170,15 +170,15 @@ describe('Atlas 2 E2E tests', function() {
       browser.moveNode('testNode2',-100,-100);
       browser.connectNodes('testNode1','testNode2');
 
-      browser.waitForVisible('div=testNode2');
+      browser.waitForVisible('//div[text()=\'testNode2\']');
 
       browser.newNode(1, 'user1-1');
       browser.moveNode('user1-1', 0, -200);
-      browser.waitForVisible('div=user1-1');
+      browser.waitForVisible('//div[text()=\'user1-1\']');
 
       browser.newNode(1, 'user2-1');
       browser.moveNode('user2-1', -50, -150);
-      browser.waitForVisible('div=user2-1');
+      browser.waitForVisible('//div[text()=\'user2-1\']');
 
       browser.connectNodes('user1-1','testNode1');
       browser.connectNodes('user2-1','testNode1');
