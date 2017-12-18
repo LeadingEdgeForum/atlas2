@@ -4,6 +4,7 @@ import {Link} from 'react-router';
 import {LinkContainer} from 'react-router-bootstrap';
 
 import React  from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import DocumentTitle from 'react-document-title';
 import {
@@ -76,5 +77,5 @@ export default class SplashPage extends React.Component {
   }
 }
 SplashPage.propTypes = {
-  auth : React.PropTypes.object.isRequired
+  auth : PropTypes.object.isRequired
 };

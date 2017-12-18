@@ -14,10 +14,11 @@ import {
   Glyphicon
 } from 'react-bootstrap';
 import Actions from '../map-list/single-workspace-actions';
+var createReactClass = require('create-react-class');
 
 //TODO: validation of the workspace dialog
 
-var EditWorkspaceDialog = React.createClass({
+var EditWorkspaceDialog = createReactClass({
 
   getInitialState: function() {
     return this.props.singleWorkspaceStore.getWorkspaceEditDialogState();

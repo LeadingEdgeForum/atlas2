@@ -10,7 +10,7 @@ import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import ReactResizeDetector from 'react-resize-detector';
-
+var createReactClass = require('create-react-class');
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 var activeStyle = {
@@ -28,7 +28,7 @@ function getElementOffset(element)
     return { top: top, left: left };
 }
 
-var Comment = React.createClass({
+var Comment = createReactClass({
 
   getInitialState : function(){
     return {focused:false};

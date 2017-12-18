@@ -2,7 +2,7 @@
 /* globals document */
 /* globals window */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import ReactDOM from 'react-dom';
 var MapComponent = require('./map-component');
 var ArrowEnd = require('./arrow-end');

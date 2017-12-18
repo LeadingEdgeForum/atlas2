@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import DocumentTitle from 'react-document-title';
 import {
@@ -16,8 +17,9 @@ import {
 import {calculateMapName} from '../map-list/map-name-calculator';
 import $ from 'jquery';
 import {LinkContainer} from 'react-router-bootstrap';
+var createReactClass = require('create-react-class');
 
-var ToParentMap = React.createClass({
+var ToParentMap = createReactClass({
 
   getInitialState : function(){
     var mapID = this.props.map._id;

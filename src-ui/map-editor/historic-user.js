@@ -10,6 +10,7 @@ import {userEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import ReactResizeDetector from 'react-resize-detector';
+var createReactClass = require('create-react-class');
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
@@ -35,7 +36,7 @@ var itemCaptionStyle = {
   resize :'horizontal'
 };
 
-var HistoricUser = React.createClass({
+var HistoricUser = createReactClass({
 
   decorateDiffStyle(user, style, type) {
     if(type === "DELETED"){
@@ -66,13 +67,14 @@ var HistoricUser = React.createClass({
     var mapID = this.props.mapID;
     var workspaceID = this.props.workspaceID;
     var canvasStore = this.props.canvasStore;
-    itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
-    itemCaptionStyle.top = - itemCaptionStyle.fontSize;
-    itemCaptionStyle.width = this.props.user.width ? this.props.user.width + 'px' : 'auto';
+    let localItemCaptionStyle = _.clone(itemCaptionStyle);
+    localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+    localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
+    localItemCaptionStyle.width = this.props.user.width ? this.props.user.width + 'px' : 'auto';
 
     return (
       <div style={style} id={id} key={id}>
-        <div style={itemCaptionStyle} className="user-label">{name}</div>
+        <div style={localItemCaptionStyle} className="user-label">{name}</div>
       </div>
     );
   }

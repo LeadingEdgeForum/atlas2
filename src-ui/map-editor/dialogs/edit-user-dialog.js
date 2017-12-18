@@ -17,8 +17,9 @@ import {
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
 var _ = require('underscore');
+var createReactClass = require('create-react-class');
 
-var EditUserDialog = React.createClass({
+var EditUserDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

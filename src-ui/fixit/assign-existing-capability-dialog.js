@@ -16,8 +16,9 @@ import {
   Button
 } from 'react-bootstrap';
 import MapLink from './maplink.js';
+var createReactClass = require('create-react-class');
 
-var AssignExistingCapabilityDialog = React.createClass({
+var AssignExistingCapabilityDialog = createReactClass({
 
   internalState: {},
 
@@ -48,7 +49,7 @@ var AssignExistingCapabilityDialog = React.createClass({
     });
     return result;
   },
-  
+
   render: function() {
     var show = this.props.open;
     var nodeBeingAssigned = this.props.nodeBeingAssigned;

@@ -2,7 +2,8 @@
 
 import {Link} from 'react-router-dom';
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {
   Navbar,
@@ -48,6 +49,6 @@ export default class AtlasNavbar extends React.Component {
   }
 }
 AtlasNavbar.propTypes = {
-  mainMenu: React.PropTypes.array,
-  rightMenu: React.PropTypes.array
+  mainMenu: PropTypes.array,
+  rightMenu: PropTypes.array
 };

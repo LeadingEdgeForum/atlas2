@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
 import {ListGroupItem} from 'react-bootstrap';
 import Actions from './workspace-actions.js';
 var CreateNewWorkspaceDialog = require('./create-new-workspace-dialog');

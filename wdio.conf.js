@@ -188,15 +188,15 @@ exports.config = {
 
         browser.click('button=Create');
         browser.waitForVisible('button=Create',5000, true);
-        browser.waitForVisible('div=' + nodeText);
+        browser.waitForVisible('//div[text()=\'' + nodeText + '\']');
       });
 
       browser.addCommand("moveNode", function (nodeText, x, y) {
         if(!browser.isExisting('.glyphicon-move')){
-            browser.click('div=' + nodeText);
+            browser.click('//div[text()=\'' + nodeText + '\']');
         } else {
-          browser.click('div=' + nodeText);
-          browser.click('div=' + nodeText);
+          browser.click('//div[text()=\'' + nodeText + '\']');
+          browser.click('//div[text()=\'' + nodeText + '\']');
         }
         browser.waitForVisible('.glyphicon-move');
         browser.moveToObject('.glyphicon-move',0,0);
@@ -204,28 +204,28 @@ exports.config = {
         browser.moveToObject('.glyphicon-move',x,y);
         browser.buttonUp(0);
         if(browser.isExisting('.glyphicon-move')){
-            browser.click('div=' + nodeText);
+            browser.click('//div[text()=\'' + nodeText + '\']');
         }
       });
 
       browser.addCommand("deleteNode", function (nodeText) {
         browser.pause(1000);
-        browser.click('div=' + nodeText);
+        browser.click('//div[text()=\'' + nodeText + '\']');
         browser.waitForVisible('div.jtk-draggable div .glyphicon-remove');
         browser.click('div.jtk-draggable div .glyphicon-remove');
       });
 
       browser.addCommand("connectNodes", function (nodeText1, nodeText2) {
         if(!browser.isExisting('.glyphicon-link')){
-            browser.click('div=' + nodeText1);
+            browser.click('//div[text()=\'' + nodeText1 + '\']');
         } else {
-          browser.click('div=' + nodeText1);
-          browser.click('div=' + nodeText1);
+          browser.click('//div[text()=\'' + nodeText1 + '\']');
+          browser.click('//div[text()=\'' + nodeText1 + '\']');
         }
         browser.waitForVisible('.glyphicon-link');
-        browser.dragAndDrop('.glyphicon-link','div='+nodeText2);
+        browser.dragAndDrop('.glyphicon-link','//div[text()=\'' + nodeText2 + '\']/..');
         if(browser.isExisting('.glyphicon-link')){
-            browser.click('div=' + nodeText1);
+            browser.click('//div[text()=\'' + nodeText1 + '\']');
         }
       });
     },

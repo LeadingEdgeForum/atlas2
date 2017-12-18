@@ -2,7 +2,8 @@
 /* globals document */
 /* globals window */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
 import {Glyphicon} from 'react-bootstrap';
 var _ = require('underscore');
@@ -216,11 +217,11 @@ export default class MapCanvas extends React.Component {
     }
     var menu = <div style={{color:'silver'}}>{menuItems}</div>;
     var root = document.createElement('div');
-    var pre2 = ReactDOM.render(menu, root);
+    ReactDOM.render(menu, root);
     fromStyle.push([
       "Custom", {
         create: function(component) {
-          return pre2;
+          return root;
         },
         location: 0.5,
         id: "menuOverlay"
@@ -566,7 +567,7 @@ export default class MapCanvas extends React.Component {
               endpointStyles: [
                   moveEndpointOptions.paintStyle, moveEndpointOptions.paintStyle
               ],
-              overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [  ])
+              // overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [  ])
           });
           if(createdHistoricConnection){
             if(createdHistoricConnection.source.offsetLeft < createdHistoricConnection.target.offsetLeft){

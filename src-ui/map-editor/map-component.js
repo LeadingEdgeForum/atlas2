@@ -11,6 +11,7 @@ import {actionEndpointOptions} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import ReactResizeDetector from 'react-resize-detector';
+var createReactClass = require('create-react-class');
 
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
@@ -56,7 +57,7 @@ var inertiaStyle = {
   height: 40
 };
 
-var MapComponent = React.createClass({
+var MapComponent = createReactClass({
   getInitialState: function() {
     return {focus: false};
   },
@@ -415,9 +416,10 @@ var MapComponent = React.createClass({
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);
     var canvasStore = this.props.canvasStore;
-    itemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
-    itemCaptionStyle.top = - itemCaptionStyle.fontSize;
-    itemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
+    let localItemCaptionStyle = _.clone(itemCaptionStyle);
+    localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+    localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
+    localItemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
 
     return (
       <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
@@ -441,7 +443,7 @@ var MapComponent = React.createClass({
           }
         });
       }}>
-        <div style={itemCaptionStyle} className="node-label">{name}
+        <div style={localItemCaptionStyle} className="node-label">{name}
           <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
         </div>
         {inertia}

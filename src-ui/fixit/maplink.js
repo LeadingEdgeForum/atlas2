@@ -1,6 +1,7 @@
 /*jshint esversion: 6 */
 
-import React, {PropTypes} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
 import $ from 'jquery';
 import {LinkContainer} from 'react-router-bootstrap';
 

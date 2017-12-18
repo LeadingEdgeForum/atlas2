@@ -16,9 +16,9 @@ import {
 } from 'react-bootstrap';
 var Constants = require('../single-map-constants');
 import SingleMapActions from '../single-map-actions';
+var createReactClass = require('create-react-class');
 
-
-var ChangeIntoSubmapDialog = React.createClass({
+var ChangeIntoSubmapDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

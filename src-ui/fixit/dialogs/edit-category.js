@@ -17,8 +17,9 @@ import {
 var Constants = require('../deduplicator-constants');
 import Actions from '../deduplicator-actions';
 var _ = require('underscore');
+var createReactClass = require('create-react-class');
 
-var EditCategoryDialog = React.createClass({
+var EditCategoryDialog = createReactClass({
 
   getInitialState: function() {
     return {open: false};

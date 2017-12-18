@@ -17,8 +17,9 @@ import {
   ListGroupItem
 } from 'react-bootstrap';
 import ReactDOM from 'react-dom';
+var createReactClass = require('create-react-class');
 
-var GetHelpDialog = React.createClass({
+var GetHelpDialog = createReactClass({
 
   render: function() {
     var show = this.props.open;

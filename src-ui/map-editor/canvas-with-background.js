@@ -1,7 +1,7 @@
 /*jshint esversion: 6 */
 // import React 'react');
 var React = require('react');
-var PropTypes = React.PropTypes;
+var PropTypes = require('prop-types');
 var MapCanvas  = require('./canvas').default;
 var _ = require('underscore');
 
