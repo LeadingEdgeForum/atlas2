@@ -1288,6 +1288,40 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }, defaultErrorHandler.bind(this, res));
           });
 
+      module.router.get(
+            '/workspace/:workspaceID/variant/:variantId/map/:mapId/suggestions/:text',
+            authGuardian.authenticationRequired,
+            function(req, res) {
+              var owner = getUserIdFromReq(req);
+              var workspaceID = req.params.workspaceID;
+              let variantId = req.params.variantId;
+              var mapId = new ObjectId(req.params.mapId);
+              var suggestionText = new ObjectId(req.params.text);
+              Workspace
+                .findOne({
+                  _id: workspaceID,
+                  owner: owner,
+                  archived: false,
+                })
+                .exec()
+                .then(function(workspace) {
+                  if (!workspace) {
+                    res.status(404).json("workspace not found");
+                    return null;
+                  }
+                  return workspace.findSuggestions(variantId, mapId, suggestionText);
+                })
+                .done(function(wk) {
+                  capabilityLogger.trace('responding ...', wk);
+                  res.json({
+                    workspace: wk
+                  });
+                }, function(e) {
+                  capabilityLogger.error('responding...', e);
+                  res.status(500).json(e);
+                });
+            });
+
 
   module.router.get(
       '/workspace/:workspaceID/components/:variantId/unprocessed',

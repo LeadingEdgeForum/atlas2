@@ -1363,6 +1363,11 @@ module.exports = function(conn) {
       });
     };
 
+    workspaceSchema.methods.findSuggestions = function(sourceTimeSliceId, mapId, suggestionText) {
+      let Node = require('./node-schema')(conn);
+      return require('./workspace/workspacemethods.js').findSuggestions(this, Node, this.getTimeSlice(sourceTimeSliceId), mapId, suggestionText);
+    };
+
     workspace[conn] = conn.model('Workspace', workspaceSchema);
     return workspace[conn];
 };
