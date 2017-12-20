@@ -20,9 +20,12 @@ var logger = require('./../log');
 var workspaceLogger = require('./../log').getLogger('workspace');
 var submapLogger = require('./../log').getLogger('submap');
 var capabilityLogger = require('./../log').getLogger('capability');
-var accessLogger = require('./../log').getLogger('access');
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
+var getUserIdFromReq = require('./../util/util').getUserIdFromReq;
+var AccessError = require('./../util/util').AccessError;
+var checkAccess = require('./../util/util').checkAccess;
+
 var q = require('q');
 q.longStackSupport = true;
 
@@ -32,39 +35,7 @@ var log4js = require('log4js');
 
 var track = require('../tracker-helper');
 
-var getUserIdFromReq = function(req) {
-  if (req && req.user && req.user.email) {
-    accessLogger.trace('user identified ' + req.user.email);
-    return req.user.email;
-  }
-  //should never happen as indicates lack of authentication
-  return null;
-};
 
-function AccessError(status, message){
-  this.status = status;
-  this.message = message;
-}
-AccessError.prototype = Object.create(Error.prototype);
-AccessError.prototype.constructor = AccessError;
-
-var checkAccess = function(id, user, map) {
-  if (!user) {
-    accessLogger.error('user.email not present');
-    throw new AccessError(401, 'user.email not present');
-  }
-  if (!map) {
-    accessLogger.warn('map ' + id + ' does not exist');
-    throw new AccessError(404, 'map ' + id + ' does not exist');
-  }
-  return map.verifyAccess(user).then(function(verifiedMap) {
-    if (!verifiedMap) {
-      accessLogger.warn(user + ' has no access to map ' + id + '.');
-      throw new AccessError(403, user + ' has no access to map ' + id + '.');
-    }
-    return verifiedMap;
-  });
-};
 
 module.exports = function(authGuardian, mongooseConnection) {
   var WardleyMap = require('./model/map-schema')(mongooseConnection);
