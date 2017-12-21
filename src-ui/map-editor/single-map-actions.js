@@ -33,18 +33,6 @@ var SingleMapActions = {
       });
     },
 
-    openAddNodeDialog : function(coords, type){
-      if(!coords || !type){
-        console.error('No new node data, aborting...');
-        return;
-      }
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.OPEN_NEW_NODE_DIALOG,
-          coords : coords,
-          type : type
-      });
-    },
-
     openAddNewUserDialog : function(coords, type){
       if(!coords){
         console.error('No new user data, aborting...');
@@ -98,30 +86,6 @@ var SingleMapActions = {
             pos: pos,
             width:width
           }
-      });
-    },
-
-    closeAddNodeDialog : function(){
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.CLOSE_NEW_NODE_DIALOG
-      });
-    },
-
-    submitAddNodeDialog : function(data){
-      if(!data){
-        console.error('missing data, aborting...');
-        return;
-      }
-      if(!data.coords || !data.type){
-        console.error('incomplete data, aborting', data);
-        return;
-      }
-      if(!data.name || !data.responsiblePerson || !data.inertia || !data.description){
-        console.error('incomplete data', data);
-      }
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.SUBMIT_NEW_NODE_DIALOG,
-          data : data
       });
     },
 

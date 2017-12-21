@@ -1296,7 +1296,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               var workspaceID = req.params.workspaceID;
               let variantId = req.params.variantId;
               var mapId = new ObjectId(req.params.mapId);
-              var suggestionText = new ObjectId(req.params.text);
+              var suggestionText = req.params.text;
               Workspace
                 .findOne({
                   _id: workspaceID,
@@ -1311,10 +1311,9 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }
                   return workspace.findSuggestions(variantId, mapId, suggestionText);
                 })
-                .done(function(wk) {
-                  capabilityLogger.trace('responding ...', wk);
+                .done(function(suggestions) {
                   res.json({
-                    workspace: wk
+                    suggestions: suggestions
                   });
                 }, function(e) {
                   capabilityLogger.error('responding...', e);

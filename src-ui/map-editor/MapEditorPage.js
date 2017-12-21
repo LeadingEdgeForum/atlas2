@@ -18,7 +18,8 @@ import {
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
-import CreateNewNodeDialog from './dialogs/create-new-node-dialog';
+import NewNodeDialog from './dialogs/create-new-node';
+import NewNodeStore from './dialogs/create-new-node-store';
 import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
 import EditUserDialog from './dialogs/edit-user-dialog';
@@ -64,6 +65,19 @@ export default class MapEditorPage extends React.Component {
     this.prepareVariantsSwitch = this.prepareVariantsSwitch.bind(this);
     this.state.diff = this.props.singleMapStore.getDiff();
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
+    this.getNewNodeStore = this.getNewNodeStore.bind(this);
+  }
+
+  getNewNodeStore(workspaceId, variantId, mapId) {
+    if (!this.newNodeStores) {
+      this.newNodeStores = {};
+    }
+    if (!this.newNodeStores[mapId]) {
+      this.newNodeStores[mapId] = new NewNodeStore(workspaceId, variantId, mapId);
+    }
+    this.newNodeStores[mapId].workspaceId = workspaceId;
+    this.newNodeStores[mapId].variantId = variantId;
+    return this.newNodeStores[mapId];
   }
 
   componentDidMount() {
@@ -248,11 +262,11 @@ export default class MapEditorPage extends React.Component {
           </Grid>
         </DocumentTitle>);
     }
-    console.log(this.state.map);
     const mapName = calculateMapName('wait...', this.state.map.name, this.state.map.isSubmap);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
     const variantId = singleMapStore.getMap().map.timesliceId;
+    const newNodeStore = this.getNewNodeStore(workspaceID, variantId, mapID);
     const diff = this.state.diff;
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
@@ -313,7 +327,7 @@ export default class MapEditorPage extends React.Component {
             </Col>
           </Row>
           <EditMapDialog singleMapStore={singleMapStore}/>
-          <CreateNewNodeDialog singleMapStore={singleMapStore}/>
+          <NewNodeDialog store={newNodeStore}/>
           <NewGenericCommentDialog singleMapStore={singleMapStore}/>
           <CreateNewSubmapDialog singleMapStore={singleMapStore}/>
           <EditGenericCommentDialog singleMapStore={singleMapStore}/>

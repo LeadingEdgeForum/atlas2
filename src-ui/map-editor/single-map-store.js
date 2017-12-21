@@ -19,10 +19,6 @@ export default class SingleWorkspaceStore extends Store {
           open : false,
       };
 
-      this.newNodeDialog = {
-        open : false
-      };
-
       this.addCommentDialog = {
         open : false
       };
@@ -110,21 +106,6 @@ export default class SingleWorkspaceStore extends Store {
           break;
         case ActionTypes.SUBMIT_EDIT_MAP_DIALOG:
           this.submitEditMapDialog(action.data);
-          break;
-        case ActionTypes.OPEN_NEW_NODE_DIALOG:
-          this.newNodeDialog.open = true;
-          this.newNodeDialog.coords = action.coords;
-          this.newNodeDialog.type = action.type;
-          this.emitChange();
-          break;
-        case ActionTypes.CLOSE_NEW_NODE_DIALOG:
-          this.newNodeDialog = {
-            open: false
-          };
-          this.emitChange();
-          break;
-        case ActionTypes.SUBMIT_NEW_NODE_DIALOG:
-          this.submitNewNodeDialog(action.data);
           break;
         case ActionTypes.OPEN_EDIT_NODE_DIALOG:
           this.openEditNodeDialog(action.data);
@@ -594,34 +575,6 @@ export default class SingleWorkspaceStore extends Store {
         this.io.emit('workspace', {
           type: 'change',
           id: data.workspaceID
-        });
-      }.bind(this)
-    });
-  }
-
-  submitNewNodeDialog(data){
-    $.ajax({
-      type: 'POST',
-      url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/node/',
-      data: {
-        name:  data.name,
-        responsiblePerson : data.responsiblePerson,
-        inertia: data.inertia,
-        description : data.description,
-        type: data.type,
-        x: data.coords.x,
-        y: data.coords.y
-      },
-      success: function(data2) {
-        this.map = data2;
-        this.newNodeDialog = {
-          open: false
-        };
-        this.diff = null;
-        this.emitChange();
-        this.io.emit('map', {
-          type: 'change',
-          id: this.getMapId()
         });
       }.bind(this)
     });
