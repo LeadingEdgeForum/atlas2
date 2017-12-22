@@ -1066,4 +1066,16 @@ export default class SingleWorkspaceStore extends Store {
       }.bind(this)
     });
   }
+
+  updateMap(mapId, data){
+    if(this.mapID === mapId){
+      this.map = data;
+      this.diff = null;
+      this.emitChange();
+      this.io.emit('map', {
+        type: 'change',
+        id: this.getMapId()
+      });
+    }
+  }
 }

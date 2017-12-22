@@ -19,7 +19,7 @@ const ActionTypes = Constants.ACTION_TYPES;
 
 export default class NewNodeStore extends Store {
 
-  constructor(workspaceId, variantId, mapId) {
+  constructor(workspaceId, variantId, mapId, singleMapStore) {
       super();
 
       this.openNewNodeDialog = this.openNewNodeDialog.bind(this);
@@ -45,6 +45,7 @@ export default class NewNodeStore extends Store {
       this.workspaceId = workspaceId;
       this.variantId = variantId;
       this.mapId = mapId;
+      this.singleMapStore = singleMapStore;
       this.redispatch();
   }
 
@@ -192,11 +193,8 @@ export default class NewNodeStore extends Store {
       },
       success: function(data) {
         this.internalState.open = false;
+        this.singleMapStore.updateMap(mapId, data);
         this.emitChange();
-        this.io.emit('map', {
-          type: 'change',
-          id: this.mapId
-        });
       }.bind(this)
     });
   }

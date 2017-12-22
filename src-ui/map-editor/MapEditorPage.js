@@ -73,7 +73,7 @@ export default class MapEditorPage extends React.Component {
       this.newNodeStores = {};
     }
     if (!this.newNodeStores[mapId]) {
-      this.newNodeStores[mapId] = new NewNodeStore(workspaceId, variantId, mapId);
+      this.newNodeStores[mapId] = new NewNodeStore(workspaceId, variantId, mapId, this.props.singleMapStore);
     }
     this.newNodeStores[mapId].workspaceId = workspaceId;
     this.newNodeStores[mapId].variantId = variantId;
