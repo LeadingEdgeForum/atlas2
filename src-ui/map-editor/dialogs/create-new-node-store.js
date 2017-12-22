@@ -192,7 +192,7 @@ export default class NewNodeStore extends Store {
         y: this.internalState.coords.y
       },
       success: function(data) {
-        this.internalState.open = false;
+        this.closeNewNodeDialog(mapId);
         this.singleMapStore.updateMap(mapId, data);
         this.emitChange();
       }.bind(this)
