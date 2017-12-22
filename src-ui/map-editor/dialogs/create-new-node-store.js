@@ -153,7 +153,7 @@ export default class NewNodeStore extends Store {
       type: 'GET',
       url: '/api/workspace/' + this.workspaceId + '/variant/' + this.variantId + '/map/' + this.mapId + '/suggestions/' + query,
       success: function(data) {
-        this.suggestions = data.suggestions;
+        this.internalState.suggestions = data.suggestions;
         this.internalState.suggestionRequest.abort();
         delete this.internalState.suggestionRequest;
         this.emitChange();

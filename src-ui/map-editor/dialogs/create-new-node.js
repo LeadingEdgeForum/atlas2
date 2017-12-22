@@ -70,18 +70,18 @@ class ComponentName extends React.Component{
 
   renderSuggestion(suggestion, params){
     if(suggestion.type === 'info'){
-      return <ListGroupItem>{suggestion.name}</ListGroupItem>;
+      return <div>{suggestion.name}</div>;
     }
     let bsStyle = params.isHighlighted ? 'info' : null;
     if(suggestion.type === 'createnew'){
-      return (<ListGroupItem onClick={this.jump.bind(this,1)} bsStyle={bsStyle}>
+      return (<Button onClick={this.jump.bind(this,1)} bsStyle={bsStyle}>
         Create a new component <b>{suggestion.name}</b>.
-      </ListGroupItem>);
+      </Button>);
     }
     return (
-      <ListGroupItem onClick={this.jump.bind(this,2)} bsStyle={bsStyle}>
+      <Button onClick={this.jump.bind(this,2)} bsStyle={bsStyle}>
         Reference existing component {suggestion.name}
-      </ListGroupItem>
+      </Button>
     );
   }
 
@@ -100,9 +100,9 @@ class ComponentName extends React.Component{
 
   renderSuggestionsContainer({ containerProps , children, query }){
       return (
-        <ListGroup {... containerProps}>
+        <div {... containerProps}>
           {children}
-        </ListGroup>
+        </div>
       );
   }
 
@@ -116,16 +116,22 @@ class ComponentName extends React.Component{
         value : this.props.name,
         onChange: this.onSearchChange
     };
+    const theme = {
+      container: 'autosuggest',
+      input: 'form-control',
+      suggestionsList: 'list-group',
+      suggestion: 'list-group-item',
+      suggestionFocused: 'active',
+    };
     const processedSuggestions = this.enhanceSuggestions(this.props.suggestions);
     return (<Autosuggest
-                theme={{container : {width: '100%'}, input : {width: '100%'}}}
+                theme={theme}
                 suggestions={processedSuggestions}
                 onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
                 onSuggestionsClearRequested={this.onSuggestionsClearRequested}
                 getSuggestionValue={this.getSuggestionValue}
                 renderSuggestion={this.renderSuggestion}
                 renderSuggestionsContainer={this.renderSuggestionsContainer}
-                highlightFirstSuggestion={true}
                 inputProps={inputProps}
           />);
   }
