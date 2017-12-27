@@ -73,8 +73,7 @@ var removeIncomingDependency = function(promises, nodeId, dependencyToRemove, No
 
 
 var cleanupDependencies = function(promises, node, Node) {
-  nodeRemovalLogger.trace('cleaning dependencies for ' + node._id + ' , ' + node.inboundDependencies.length +
-    ' incoming, and ' + node.outboundDependencies.length + ' outgoing.');
+  nodeRemovalLogger.trace('cleaning dependencies for ' + node._id + ' ,' + node.outboundDependencies.length + ' outgoing.');
 
   var dependencyToRemove = node._id;
 
@@ -153,7 +152,6 @@ module.exports = function(conn){
             ref: 'Node'
         }],
         dependencyData : {
-          inbound : Schema.Types.Mixed, // _id : {} pairs
           outbound: Schema.Types.Mixed
         },
         action: [{

@@ -436,23 +436,68 @@ module.exports = function(conn) {
         return this.save();
     };
 
-    _MapSchema.methods.addNode = function(name, x, y, type, workspace, description, inertia, responsiblePerson, constraint) {
-        var Node = require('./node-schema')(conn);
+    _MapSchema.methods.addNode = function(name, x, y, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+        const Node = require('./node-schema')(conn);
+        const Workspace = require('./workspace-schema')(conn);
 
-        var _this = this;
+        const _this = this;
+        const timeSliceId = _this.timesliceId;
 
         return new Node({
                 name: name,
                 x: x,
                 y: y,
                 type: type,
-                workspace: workspace,
-                parentMap: _this._id,
+                workspace: workspaceId,
+                parentMap: [_this._id],
                 description: description,
                 inertia: inertia,
                 responsiblePerson: responsiblePerson,
                 constraint : constraint
-            }).save()
+            })
+            .save()
+            // .then(function(node) {
+            //   return Workspace
+            //     .findOne({
+            //       _id : workspaceId,
+            //       'timeline._id' : timeSliceId
+            //     }).exec()
+            //     .then(function(workspace){
+            //       for(let i = 0; i < workspace.timeline.length; i++){
+            //         if(workspace.timeline[i]._id.equals(timeSliceId)){
+            //           workspace.timeline[i].nodes.push(node);
+            //           break;
+            //         }
+            //       }
+            //       return workspace.save();
+            //     })
+            //     .then(function(res){
+            //       return node;
+            //     });
+            // })
+            .then(function(node) {
+              return Workspace
+                .findOneAndUpdate({
+                  _id: workspaceId,
+                  'timeline._id': timeSliceId
+                }, {
+                  $push: {
+                    'timeline.$.nodes': node._id
+                  }
+                }, {
+                  select: {
+                    'timeline': {
+                      $elemMatch: {
+                        _id: timeSliceId
+                      }
+                    }
+                  }
+                })
+                .exec()
+                .then(function(res) {
+                  return node;
+                });
+            })
             .then(function(node) {
                 _this.nodes.push(node._id);
                 return _this.save();

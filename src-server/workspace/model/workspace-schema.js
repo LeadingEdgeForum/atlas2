@@ -79,6 +79,10 @@ module.exports = function(conn) {
               type: Schema.Types.ObjectId,
               ref: 'WardleyMap'
             }],
+            nodes : [{
+                type: Schema.Types.ObjectId,
+                ref: 'Node'
+            }],
             next : [{
               type: Schema.Types.ObjectId
             }],
@@ -166,6 +170,7 @@ module.exports = function(conn) {
               description : 'Representation of current reality',
               current : true,
               maps : [],
+              nodes : [],
               capabilityCategories : defaultCapabilityCategories
             }],
             schemaVersion : 1
