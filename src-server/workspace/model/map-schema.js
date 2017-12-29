@@ -18,6 +18,7 @@ var modelLogger = require('./../../log').getLogger('MapSchema');
 var _ = require('underscore');
 var q = require('q');
 let mapExport = require('./map-import-export').mapExport;
+let getId = require('../../util/util.js').getId;
 
 var wardleyMap = {};
 
@@ -52,7 +53,6 @@ var removeDuplicatesDependenciesFromList = function(dependencies) {
 var removeDuplicatesDependencies = function(nodes) {
     for (var i = 0; i < nodes.length; i++) {
         removeDuplicatesDependenciesFromList(nodes[i].outboundDependencies);
-        removeDuplicatesDependenciesFromList(nodes[i].inboundDependencies);
     }
 };
 
@@ -72,7 +72,6 @@ module.exports = function(conn) {
         user: Schema.Types.String,//must be held until migration happens
         purpose: Schema.Types.String, //must be held until migration happens
         isSubmap: Schema.Types.Boolean,
-        archived: Schema.Types.Boolean,
         workspace: {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'
@@ -436,7 +435,7 @@ module.exports = function(conn) {
         return this.save();
     };
 
-    _MapSchema.methods.addNode = function(name, x, y, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+    _MapSchema.methods.addNode = function(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
         const Node = require('./node-schema')(conn);
         const Workspace = require('./workspace-schema')(conn);
 
@@ -445,8 +444,11 @@ module.exports = function(conn) {
 
         return new Node({
                 name: name,
-                x: x,
-                y: y,
+                evolution: evolution,
+                visibility: [{
+                  value : visibility,
+                  map: [_this._id]
+                }],
                 type: type,
                 workspace: workspaceId,
                 parentMap: [_this._id],
@@ -456,25 +458,6 @@ module.exports = function(conn) {
                 constraint : constraint
             })
             .save()
-            // .then(function(node) {
-            //   return Workspace
-            //     .findOne({
-            //       _id : workspaceId,
-            //       'timeline._id' : timeSliceId
-            //     }).exec()
-            //     .then(function(workspace){
-            //       for(let i = 0; i < workspace.timeline.length; i++){
-            //         if(workspace.timeline[i]._id.equals(timeSliceId)){
-            //           workspace.timeline[i].nodes.push(node);
-            //           break;
-            //         }
-            //       }
-            //       return workspace.save();
-            //     })
-            //     .then(function(res){
-            //       return node;
-            //     });
-            // })
             .then(function(node) {
               return Workspace
                 .findOneAndUpdate({
@@ -504,66 +487,200 @@ module.exports = function(conn) {
             });
     };
 
-    _MapSchema.methods.changeNode = function(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
-        var _this = this;
-        var Node = require('./node-schema')(conn);
-        return Node.findOne({
-                _id: desiredNodeId
-            }).exec()
-            .then(function(node) {
-                if (name) {
-                    node.name = name;
-                }
-                if (x) {
-                    node.x = x;
-                }
-                if (y) {
-                    node.y = y;
-                }
-                if (type) {
-                    node.type = type;
-                }
-                if (description) {
-                    node.description = description;
-                }
-                if (inertia) {
-                    node.inertia = inertia;
-                }
-                if (responsiblePerson) {
-                    node.responsiblePerson = responsiblePerson;
-                }
-                if (constraint !== null && constraint !== undefined) {
-                    node.constraint = constraint;
-                }
-                if(width && Number.isInteger(Number.parseInt(width))){
-                  node.width = width;
-                }
-                return node.save().then(function(){
-                  return _this.save();
-                });
-            });
+    _MapSchema.methods.referenceNode = function(nodeId, visibility, dependencies) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+
+      const _this = this;
+      const timeSliceId = _this.timesliceId;
+
+      nodeId = getId(nodeId);
+
+      return Node.findOneAndUpdate({
+          _id: nodeId
+        }, {
+          $addToSet: {
+            visibility: {
+              value: visibility,
+              map: _this._id
+            },
+            parentMap: _this._id
+          }
+        }).exec()
+        .then(function(node) {
+          _this.nodes.push(node._id);
+          return _this.save();
+        });
     };
 
-
-    _MapSchema.methods.removeNode = function(nodeID) {
+    _MapSchema.methods.changeNode = function(name, evolution, visibility, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
       var _this = this;
+      var Node = require('./node-schema')(conn);
+
+      desiredNodeId = getId(desiredNodeId);
+      let query = {
+        _id: desiredNodeId
+      };
+      let updateOrder = {
+        $set: {
+
+        }
+      };
+      let select = {};
+
+      if (name) {
+        updateOrder.$set.name = name;
+      }
+      if (evolution) {
+        updateOrder.$set.evolution = evolution;
+      }
+      if (width) {
+        updateOrder.$set.width = width;
+      }
+      if (type) {
+        updateOrder.$set.type = type;
+      }
+      if (description) {
+        updateOrder.$set.description = description;
+      }
+      if (inertia) {
+        updateOrder.$set.inertia = inertia;
+      }
+      if (responsiblePerson) {
+        updateOrder.$set.responsiblePerson = responsiblePerson;
+      }
+      if (constraint) {
+        updateOrder.$set.constraint = constraint;
+      }
+      if (visibility) {
+        /**
+         * First of all, we are updating a single entry in the array,
+         * so we must do the search for the array object, otherwise the $
+         * operator will not work.
+         */
+        query['visibility.map'] = _this._id;
+
+        /**
+         * Now, let's set the value for all visibility parameters. It's a very
+         * broad operator, so in the next step we will narrow it down.
+         */
+        updateOrder.$set['visibility.$.value'] = visibility;
+        /**
+         * Ensure that only one visibility entry is selected for the change.
+         */
+        select = {
+          select: {
+            'visibility': {
+              $elemMatch: {
+                map: _this._id //visiblity should be changed only for current map
+              }
+            }
+          }
+        };
+      }
+
+      return Node.findOneAndUpdate(query,
+        updateOrder,
+        select
+      ).exec();
+    };
+
+    /**
+     * Removes the node from the current map. If it was a last reference,
+     * it removes the node from the workspace.
+     */
+    _MapSchema.methods.removeNode = function(nodeId) {
+      var _this = this;
+      nodeId = getId(nodeId);
+      let mapId = getId(_this);
+      const Workspace = require('./workspace-schema')(conn);
+      const Node = require('./node-schema')(conn);
+
+
+      // first, clean up users depending on a removed node (within map only)
       for (let i = 0; i < this.users.length; i++) {
         let selectedUser = this.users[i];
         for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
-          if ('' + selectedUser.associatedNeeds[j] === '' + nodeID) {
+          if ('' + selectedUser.associatedNeeds[j] === '' + nodeId) {
             selectedUser.associatedNeeds.splice(j, 1);
             this.markModified('users');
           }
         }
       }
-      var Node = require('./node-schema')(conn);
-      return Node.findOne({
-          _id: nodeID
+
+      // secondly, remove the node from the list of nodes of the current map
+      for (let i = 0; i < this.nodes.length; i++) {
+        if (getId(this.nodes[i]).equals(nodeId)) {
+          this.nodes.splice(i, 1);
+          break;
+        }
+      }
+
+      // fourthly, node prev & next TODO: think about how it should be handled
+
+      // thirdly, handle other nodes depending on this one (if there are any)
+      return Node.update({
+          parentMap: mapId,
+          'dependencies.target': nodeId,
+          'dependencies.visibleOn': mapId
+        }, {
+          $pull: {
+            dependencies: {
+              target: nodeId,
+              visibleOn: mapId
+            }
+          }
+        }, {
+          safe: true
         }).exec()
-        .then(function(node) {
-          return node.remove().then(function() {
-            return _this.save();
-          });
+        .then(function() {
+          //fifthly, remove parent map (node has been removed from it, so reference is no longer mandatory)
+          return Node.findOneAndUpdate({
+            _id: nodeId
+          }, {
+            $pull: {
+              parentMap: _this._id,
+              visibility: {
+                map: _this._id
+              }
+            }
+          }, {
+            safe: true,
+            new: true //return modified doc
+          }).exec();
+        }).then(function(node) {
+          // here, the node has been updated and no longer points to the parent map
+          // or the workspace
+
+          // it is, however, necessary, to remove the node if it has no parent map
+          // as it is no longer referenced by any of those
+          return Node.findOneAndRemove({
+            _id: nodeId,
+            parentMap: {
+              $size: 0
+            }
+          }).exec();
+        }).then(function(removedNode) {
+          if (!removedNode) {
+            // node has not been removed, meaning something else is using it,
+            // so it has to stay in the workspace
+            return null;
+          }
+          //otherwise, remove it from the workspace
+          return Workspace.findOneAndUpdate({
+            _id: _this.workspace,
+            'timeline.nodes': nodeId
+          }, {
+            $pull: {
+              'timeline.$.nodes': nodeId
+            }
+          }, {
+            safe: true,
+            new: true //return modified doc
+          }).exec();
+        }).then(function(modifiedWorkspace) {
+          //save the map
+          return _this.save();
         });
     };
 
@@ -677,7 +794,7 @@ module.exports = function(conn) {
                         notTransferredNode.outboundDependencies.set(j, submapNode);
                         // transfer the info about the connection
 
-                        notTransferredNode.transferDependencyData(notTransferredNode.outboundDependencies[j], submapNodeID);
+                        notTransferredNode.moveDependencyData(notTransferredNode.outboundDependencies[j], submapNodeID);
 
                         nodesToSave.push(notTransferredNode);
                     }
@@ -690,7 +807,7 @@ module.exports = function(conn) {
                         notTransferredNode.inboundDependencies.set(jjj, submapNode);
 
                         // transfer the info about the connection
-                        notTransferredNode.transferDependencyData(notTransferredNode.inboundDependencies[jjj], submapNodeID);
+                        notTransferredNode.moveDependencyData(notTransferredNode.inboundDependencies[jjj], submapNodeID);
 
                         nodesToSave.push(notTransferredNode);
                     }
@@ -754,80 +871,6 @@ module.exports = function(conn) {
     _MapSchema.methods.exportJSON = function(){
       return mapExport(this);
     };
-
-    /*
-    * This method is to clean up the state after removing a map, that is:
-    *  - remove nodes belonging to the map
-    *  - remove all references if removing a map that is a submap
-    * TODO: if map is being saved, ensure the workspace has the timeslice existing
-    */
-    _MapSchema.pre('save', function(next) {
-      modelLogger.trace('pre save on', this._id, this.archived, this.nodes.length);
-      var beingArchived = this.archived;
-      if (!beingArchived) {
-        modelLogger.trace('not being archived', this._id, this.isSubmap);
-        // not being removed, so we are not processing anything any further
-        return next();
-      }
-      var promises = [];
-      var Node = require('./node-schema')(conn);
-      // remove all nodes (we may have components pointing out to other submaps)
-      for (var i = 0; i < this.nodes.length; i++) {
-        promises.push(
-          Node.findById(this.nodes[i]._id || this.nodes[i]).exec().then(function(node) {
-            if(node){
-                return node.remove();
-            }
-          }));
-      }
-
-      var WardleyMap = require('./map-schema')(conn);
-      var _this = this;
-      if (this.previous) {
-        promises.push(WardleyMap.findOne({
-            _id: _this.previous
-          }).exec()
-          .then(function(map) {
-            map.next.pull(_this._id);
-            return map.save();
-          }));
-      }
-      if (this.next && this.next.length > 0) {
-        for (let i = 0; i < this.next.length; i++) {
-          promises.push(WardleyMap.findOne({
-              _id: _this.next[i]
-            }).exec()
-            .then(function(map) {
-              map.previous = null;
-              return map.save();
-            }));
-        }
-      }
-
-      // if we are not a submap, then this is the end
-      if (!this.isSubmap) {
-        return q.allSettled(promises).then(function(r) {
-          next();
-        });
-      }
-      // otherwise it is necessary to find every Node that uses this map and delete it.
-      Node.find({
-        submapID: new ObjectId(this._id),
-        type: 'SUBMAP'
-      }).exec(function(err, results) {
-        for (var j = 0; j < results.length; j++) {
-          modelLogger.trace('removing submap node', results[j]._id, results[j].name);
-          promises.push(results[j].remove());
-        }
-        q.all(promises)
-          .then(function(results) {
-            next();
-          }, function(err) {
-            modelLogger.error(err);
-            next(err);
-          });
-      });
-    });
 
     wardleyMap[conn.name] = conn.model('WardleyMap', _MapSchema);
     return wardleyMap[conn.name];

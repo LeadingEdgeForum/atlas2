@@ -133,7 +133,7 @@ module.exports = function(conn) {
         ],
         schemaVersion : {
           type: Number,
-          default : 2
+          default : 3
         }
     });
 
@@ -158,6 +158,7 @@ module.exports = function(conn) {
         if (!purpose) {
             purpose = "Just playing around.";
         }
+
         var Workspace = require('./workspace-schema')(conn);
         var wkspc = new Workspace({
             name: name,
@@ -173,7 +174,6 @@ module.exports = function(conn) {
               nodes : [],
               capabilityCategories : defaultCapabilityCategories
             }],
-            schemaVersion : 1
         });
         return wkspc.save();
     };

@@ -24,6 +24,7 @@ var mongoose = require('mongoose');
 mongoose.Promise = q.Promise;
 
 var getTestDB = require('../../src-server/mongodb-helper').getTestDB;
+var getId = require('../../src-server/util/util.js').getId;
 var mongooseConnection = null;
 
 var WardleyMap = null;
@@ -33,13 +34,12 @@ var Node = null;
 
 var currentWorkspace = null;
 var maps = [];
-var currentNodeId;
+var nodes = [];
 
 describe('Verify connections work as expected', function() {
 
 
   before(function(done) {
-    this.timeout(5000);
     mongooseConnection = mongoose.createConnection(getTestDB('walkthrough2_tests'));
     mongooseConnection.on('error', console.error.bind(console, 'connection error:'));
     mongooseConnection.once('open', function callback() {
@@ -62,227 +62,154 @@ describe('Verify connections work as expected', function() {
                 owner: owner
               })]);
             })
-            .done(function(result, e) {
+            .then(function(result) {
               maps.push(result[0].value);
               maps.push(result[1].value);
+              return q.allSettled(
+                [
+                  maps[0].addNode("am-1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner),
+                  maps[0].addNode("am-2", 0.6, 0.6, "INTERNAL", currentWorkspace._id, "description", 0, owner),
+                ]
+              );
+            })
+            .done(function(r,e){
               done(e);
             });
     });
   });
 
-  it("assert timeslice consistency", function() {
-    should(currentWorkspace.timeline.length).be.equal(1);
-    should(currentWorkspace.timeline[0]._id).be.equal(maps[0].timesliceId);
+  it("assert the first map has nodes", function() {
+    should(maps[0].nodes.length).be.equal(2);
   });
 
-  // it("create a node", function(done) {
-  //   currentMap.addNode("am-1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner)
-  //     .then(function(map){
-  //       return map.populate('workspace nodes').execPopulate();
-  //     })
-  //     .then(function(map) {
-  //       currentMap = map;
-  //       should(map.nodes.length).be.equal(1);
-  //       should(map.nodes[0].parentMap.length).be.equal(1);
-  //       should(map.nodes[0].visibility[0].map.equals(map._id)).be.true;
-  //       should(map.workspace.timeline.length).be.equal(1);
-  //       should(map.workspace.timeline[0]._id.equals(map.timesliceId)).be.true;
-  //       should(map.workspace.timeline[0].maps.length).be.equal(1);
-  //       should(map.workspace.timeline[0].nodes.length).be.equal(1);
-  //
-  //       currentNodeId = map.nodes[0]._id;
-  //     })
-  //     .done(function(v, e) {
-  //       done(e);
-  //     });
-  // });
-  //
-  // it("reference a node", function(done) {
-  //   currentWorkspace.createAMap({
-  //     name: 'map name ' + 1,
-  //     description: 'description' + 1,
-  //     purpose: 'purpose' + 1,
-  //     owner: owner
-  //   }).then(function(secondMap) {
-  //     return secondMap.referenceNode(currentMap.nodes[0], 0.2, 0);
-  //   }).then(function(secondMap) {
-  //     secondCurrentMap = secondMap;
-  //     // one node referenced twice
-  //     should(secondMap.nodes[0].equals(currentMap.nodes[0]));
-  //     return Node.findById(currentMap.nodes[0]._id).exec();
-  //   }).then(function(node) {
-  //     should(node.parentMap.length).be.equal(2); //the node is used twice
-  //     should(node.parentMap).containEql(currentMap._id);
-  //     should(node.parentMap).containEql(secondCurrentMap._id);
-  //     should(node.visibility.length).be.equal(2);
-  //     should(node.visibility).containDeepOrdered([{
-  //       value: 0.5,
-  //       map: currentMap._id
-  //     }]);
-  //     should(node.visibility).containDeepOrdered([{
-  //       value: 0.2,
-  //       map: secondCurrentMap._id
-  //     }]);
-  //   }).done(function(v, e) {
-  //     done(e);
-  //   });
-  // });
-  //
-  // it("change a node", function(done) {
-  //   const newName = "am-2";
-  //   currentMap.changeNode(newName, 0.3, null, 200, "EXTERNAL", currentMap.nodes[0]._id, "description1", 1, owner)
-  //     .then(function() {
-  //
-  //       return Node.findById(currentMap.nodes[0]._id).then(function(node) {
-  //
-  //         should(node.name).be.equal(newName);
-  //
-  //
-  //         should(node.parentMap.length).be.equal(2); //the node is used twice
-  //         should(node.parentMap).containEql(currentMap._id);
-  //         should(node.parentMap).containEql(secondCurrentMap._id);
-  //         should(node.evolution).be.equal(0.3); //evolution changes for every involved party
-  //         should(node.visibility.length).be.equal(2);
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.5,
-  //           map: currentMap._id
-  //         }]);
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.2,
-  //           map: secondCurrentMap._id
-  //         }]);
-  //       });
-  //     })
-  //     .done(function(v, e) {
-  //       done(e);
-  //     });
-  // });
-  //
-  // it("change a node visibility", function(done) {
-  //   currentMap.changeNode(null,null, 0.3, null, null, currentNodeId, null, null, null)
-  //     .then(function() {
-  //
-  //       return Node.findById(currentMap.nodes[0]._id).then(function(node) {
-  //
-  //         should(node.parentMap.length).be.equal(2); //the node is used twice
-  //         should(node.parentMap).containEql(currentMap._id);
-  //         should(node.parentMap).containEql(secondCurrentMap._id);
-  //
-  //         should(node.evolution).be.equal(0.3); //evolution changes for every involved party
-  //
-  //         should(node.visibility.length).be.equal(2);
-  //
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.3,
-  //           map: currentMap._id
-  //         }]);
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.2,
-  //           map: secondCurrentMap._id
-  //         }]);
-  //       });
-  //     })
-  //     .done(function(v, e) {
-  //       done(e);
-  //     });
-  // });
-  //
-  // it("change a node visibility and name", function(done) {
-  //   const newName = "am-3";
-  //   currentMap.changeNode(newName,null, 0.4, null, null, currentNodeId, null, null, null)
-  //     .then(function() {
-  //
-  //       return Node.findById(currentMap.nodes[0]._id).then(function(node) {
-  //
-  //         should(node.name).be.equal(newName);
-  //
-  //         should(node.parentMap.length).be.equal(2); //the node is used twice
-  //         should(node.parentMap).containEql(currentMap._id);
-  //         should(node.parentMap).containEql(secondCurrentMap._id);
-  //
-  //         should(node.evolution).be.equal(0.3); //evolution changes for every involved party
-  //
-  //         should(node.visibility.length).be.equal(2);
-  //
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.4,
-  //           map: currentMap._id
-  //         }]);
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.2,
-  //           map: secondCurrentMap._id
-  //         }]);
-  //       });
-  //     })
-  //     .done(function(v, e) {
-  //       done(e);
-  //     });
-  // });
-  //
-  // it("remove node from the first map", function(done) {
-  //   currentMap.removeNode(currentNodeId)
-  //     .then(function() { // check the node
-  //       return Node.findById(currentNodeId).then(function(node) {
-  //
-  //         should(node.parentMap.length).be.equal(1); //the node is used twice
-  //         should(node.parentMap).containEql(secondCurrentMap._id);
-  //
-  //         should(node.visibility.length).be.equal(1);
-  //
-  //         should(node.visibility).containDeepOrdered([{
-  //           value: 0.2,
-  //           map: secondCurrentMap._id
-  //         }]);
-  //       });
-  //     })
-  //     .then(function() { // check the map
-  //       return WardleyMap.findById(currentMap._id).then(function(currentMap) {
-  //         should(currentMap.nodes.length).be.equal(0); //the node is used twice
-  //       });
-  //     })
-  //     .then(function() { // check the other map
-  //       return WardleyMap.findById(secondCurrentMap._id).then(function(secondCurrentMap) {
-  //         should(secondCurrentMap.nodes.length).be.equal(1); //the node is used twice
-  //         should(secondCurrentMap.nodes).containEql(currentNodeId);
-  //       });
-  //     })
-  //     .then(function() { // check workspace
-  //       return Workspace.findById(secondCurrentMap.workspace).then(function(workspace) {
-  //         should(workspace.timeline[0].nodes.length).be.equal(1); //the node is used twice
-  //         should(workspace.timeline[0].nodes).containEql(currentNodeId);
-  //       });
-  //     })
-  //     .done(function(v, e) {
-  //       done(e);
-  //     });
-  // });
-  //
-  // it("remove node from the second map (and workspace)", function(done) {
-  //   secondCurrentMap.removeNode(currentNodeId)
-  //     .then(function() { // check the node
-  //       return Node.findById(currentNodeId).then(function(node) {
-  //         should(node).be.null; //the node has been just deleted (kabong!)
-  //       });
-  //     })
-  //     .then(function() { // check the map
-  //       return WardleyMap.findById(currentMap._id).then(function(currentMap) {
-  //         should(currentMap.nodes.length).be.equal(0); //no nodes
-  //       });
-  //     })
-  //     .then(function() { // check the other map
-  //       return WardleyMap.findById(secondCurrentMap._id).then(function(secondCurrentMap) {
-  //         should(secondCurrentMap.nodes.length).be.equal(0); //no nodes
-  //       });
-  //     })
-  //     .then(function() { // check workspace
-  //       return Workspace.findById(secondCurrentMap.workspace).then(function(workspace) {
-  //         should(workspace.timeline[0].nodes.length).be.equal(0); //no nodes
-  //       });
-  //     })
-  //     .done(function(v, e) {
-  //       done(e);
-  //     });
-  // });
+  it("establish connection", function() {
+    nodes.push(getId(maps[0].nodes[0]));
+    nodes.push(getId(maps[0].nodes[1]));
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.makeDependencyTo(getId(maps[0]), getId(nodes[1]));
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(1);
+        let dep = node.dependencies[0];
+        should(dep.visibleOn.length).be.equal(1);
+        should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+      });
+  });
+
+  it("reestablish connection, it should not be duplicated", function() {
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.makeDependencyTo(getId(maps[0]), getId(nodes[1]));
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(1);
+        let dep = node.dependencies[0];
+        should(dep.visibleOn.length).be.equal(1);
+        should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+      });
+  });
+
+  it("reference both nodes on a second map, the connection should not become visible on the second map", function() {
+    return maps[1].referenceNode(nodes[0], 0.3, 0)
+      .then(function() {
+        return maps[1].referenceNode(nodes[1], 0.9, 0);
+      })
+      .then(function() {
+        return Node
+          .findById(nodes[0])
+          .then(function(node) {
+            should(node.dependencies.length).be.equal(1);
+            let dep = node.dependencies[0];
+            should(dep.visibleOn.length).be.equal(1);
+            should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+          });
+      });
+  });
+
+  it("establish a connection on a second map", function() {
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.makeDependencyTo(getId(maps[1]), getId(nodes[1]));
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(1);
+        let dep = node.dependencies[0];
+        should(dep.visibleOn.length).be.equal(2);
+        should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+        should(dep.visibleOn[1].equals(getId(maps[1]))).be.true;
+      });
+  });
+
+  it("delete a connection on the second map", function() {
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.removeDependencyTo(getId(maps[1]), getId(nodes[1]));
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(1);
+        let dep = node.dependencies[0];
+        should(dep.visibleOn.length).be.equal(1);
+        should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+      });
+  });
+
+  it("reestablish a connection on a second map", function() {
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.makeDependencyTo(getId(maps[1]), getId(nodes[1]));
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(1);
+        let dep = node.dependencies[0];
+        should(dep.visibleOn.length).be.equal(2);
+        should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+        should(dep.visibleOn[1].equals(getId(maps[1]))).be.true;
+      });
+  });
+
+  it("delete a connection on all maps", function() {
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.removeDependencyTo(getId(maps[1]), getId(nodes[1]), true);
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(0);
+      });
+  });
+
+  it("reestablish a connection", function() {
+    return Node
+      .findById(nodes[0])
+      .then(function(node) {
+        return node.makeDependencyTo(getId(maps[0]), getId(nodes[1]));
+      })
+      .then(function(node) {
+        should(node.dependencies.length).be.equal(1);
+        let dep = node.dependencies[0];
+        should(dep.visibleOn.length).be.equal(1);
+        should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
+      });
+  });
+
+  it("delete the node", function() {
+    return WardleyMap.findById(getId(maps[0]))
+      .exec().then(function(map) {
+        return map.removeNode(nodes[1])
+          .then(function() {
+            return Node.findById(nodes[0]).then(function(node) {
+              should(node.dependencies.length).be.equal(0);
+            });
+          });
+      });
+  });
+
 
   after(function(done) {
     mongooseConnection.db.dropDatabase(
