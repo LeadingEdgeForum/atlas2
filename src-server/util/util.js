@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 var accessLogger = require('./../log').getLogger('access');
-
+var mongoose = require('mongoose');
+var ObjectId = mongoose.Types.ObjectId;
 
 
 let AccessError = function(status, message){
@@ -52,6 +53,21 @@ var checkAccess = function(id, user, map) {
   });
 };
 
+var getId = function(obj){
+  if (!obj) {
+    return obj;
+  }
+  if(obj instanceof ObjectId){
+    return obj;
+  }
+  if(obj._id) {
+   return obj._id;
+  }
+  // last resort, let's try to make it ObjectId
+  return new ObjectId(obj);
+};
+
 module.exports.AccessError = AccessError;
 module.exports.getUserIdFromReq = getUserIdFromReq;
 module.exports.checkAccess = checkAccess;
+module.exports.getId = getId;
