@@ -117,8 +117,8 @@ var cleanupDependencies = function(promises, node, Node) {
 };
 
 module.exports = function(conn){
-    if(node[conn]){
-        return node[conn];
+    if(node[conn.name]){
+        return node[conn.name];
     }
 
     var NodeSchema = new Schema({
@@ -424,51 +424,8 @@ module.exports = function(conn){
     };
 
 
-    NodeSchema.pre('remove', function(next) {
-        nodeRemovalLogger.trace('pre remove on node ' + this);
+    node[conn.name] = conn.model('Node', NodeSchema);
 
-        var Node = require('./node-schema')(conn);
-        var _this = this;
-        var promises = [];
-        var workspaceID = this.workspace;
-
-        cleanupDependencies(promises, _this, Node);
-
-        nodeRemovalLogger.trace('removing node from a map ' + _this._id);
-
-        var WardleyMap = require('./map-schema')(conn);
-        promises.push(WardleyMap.update({
-            _id: _this.parentMap
-        }, {
-            $pull: {
-                nodes: _this._id
-            }
-        }, {
-            safe: true
-        }));
-
-        nodeRemovalLogger.trace('map updated ' + _this.parentMap);
-
-
-        q.all(promises)
-            .then(function(results) {
-                var Workspace = require('./workspace-schema')(conn);
-                return Workspace.findById(workspaceID).exec()
-                .then(function(workspace){
-                  nodeRemovalLogger.trace('removing node usage info ' + _this.id);
-                  return workspace.removeNodeUsageInfo(_this);
-                });
-            })
-            .then(function(savedWorkspace){
-                next();
-            }, function(err) {
-                nodeRemovalLogger.error(err);
-                next(err);
-            });
-    });
-
-    node[conn] = conn.model('Node', NodeSchema);
-
-    return node[conn];
+    return node[conn.name];
 
 };

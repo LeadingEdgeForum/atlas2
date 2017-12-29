@@ -60,8 +60,8 @@ var removeDuplicatesDependencies = function(nodes) {
 
 module.exports = function(conn) {
 
-    if (wardleyMap[conn]) {
-        return wardleyMap[conn];
+    if (wardleyMap[conn.name]) {
+        return wardleyMap[conn.name];
     }
     /**
      * see capability-category-schema for explanations.
@@ -829,6 +829,6 @@ module.exports = function(conn) {
       });
     });
 
-    wardleyMap[conn] = conn.model('WardleyMap', _MapSchema);
-    return wardleyMap[conn];
+    wardleyMap[conn.name] = conn.model('WardleyMap', _MapSchema);
+    return wardleyMap[conn.name];
 };

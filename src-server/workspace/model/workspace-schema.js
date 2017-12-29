@@ -59,8 +59,8 @@ function migrator(doc, fn){
 
 module.exports = function(conn) {
 
-    if (workspace[conn]) {
-        return workspace[conn];
+    if (workspace[conn.name]) {
+        return workspace[conn.name];
     }
 
     var workspaceSchema = new Schema({
@@ -1373,7 +1373,7 @@ module.exports = function(conn) {
       return require('./workspace/workspacemethods.js').findSuggestions(this, Node, this.getTimeSlice(sourceTimeSliceId), mapId, suggestionText);
     };
 
-    workspace[conn] = conn.model('Workspace', workspaceSchema);
-    return workspace[conn];
+    workspace[conn.name] = conn.model('Workspace', workspaceSchema);
+    return workspace[conn.name];
 };
 module.exports.migrator = migrator;
