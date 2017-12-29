@@ -13,6 +13,8 @@ module.exports  = keyMirror({
       NEW_NODE_CANCEL_FETCHING_SUGGESTIONS : null,
 
       NEW_NODE_HANDLE_DIALOG_CHANGE : null,
-      NEW_NODE_RECORD_STEP_CHANGE : null
+      NEW_NODE_RECORD_STEP_CHANGE : null,
+
+      NEW_NODE_REFERENCE_EXISTING_NODE : null
   }
 });

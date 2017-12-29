@@ -66,6 +66,15 @@ export default {
           mapId : mapId,
           step:step
       });
+    },
+
+    referenceExistingNode(mapId, nodeId, dependenciesMode){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.NEW_NODE_REFERENCE_EXISTING_NODE,
+          mapId : mapId,
+          nodeId : nodeId,
+          dependenciesMode : dependenciesMode
+      });
     }
 
 };

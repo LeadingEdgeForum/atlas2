@@ -141,9 +141,23 @@ class ReusedComponentProperties extends React.Component{
   constructor(props) {
     super(props);
     this.render = this.render.bind(this);
+    this._place = this._place.bind(this);
+  }
+
+  _place(dependenciesMode){
+    Actions.referenceExistingNode(this.props.mapId, this.props.nodeId, dependenciesMode);
   }
   render(){
-    return (<div>Used properties</div>);
+    const place0 = this._place.bind(this,0);
+    const place1 = this._place.bind(this,1);
+    const place2 = this._place.bind(this,2);
+    return (
+      <ListGroup>
+        <ListGroupItem onClick={place0}>Reference the component, do not include dependencies</ListGroupItem>
+        <ListGroupItem onClick={place1}>Reference the component and first level dependencies</ListGroupItem>
+        <ListGroupItem onClick={place2}>Reference the component and all dependencies (careful!)</ListGroupItem>
+      </ListGroup>
+    );
   }
 }
 
@@ -254,6 +268,8 @@ export default class NewNodeDialog extends React.Component {
     const constraint = this.state.constraint;
     const description = this.state.description;
 
+    const nodeId = this.state.nodeId;
+
     var steps = [
         {name:'name', component: <ComponentName
                                     name={name}
@@ -265,7 +281,9 @@ export default class NewNodeDialog extends React.Component {
                                     constraint={constraint}
                                     description={description}
                                     mapId={mapId}/>},
-        {name:'name', component: <ReusedComponentProperties/>}
+        {name:'name', component: <ReusedComponentProperties
+                                    mapId={mapId}
+                                    nodeId={nodeId}/>}
     ];
     let dialogName = 'Add a new, internal component';
     let footer = null;
@@ -274,6 +292,9 @@ export default class NewNodeDialog extends React.Component {
       footer = (<Modal.Footer>
         <Button type="submit" bsStyle="primary" value="Create" onClick={Actions.submitAddNewNodeDialog.bind(Actions, mapId)}>Create!</Button>
         </Modal.Footer>);
+    }
+    if(this.state.currentStep === 2){
+      dialogName = 'Reference existing, internal component named \'' +  this.state.name + '\'.';
     }
 
     return (<Modal show={show} onHide={this._close}>
