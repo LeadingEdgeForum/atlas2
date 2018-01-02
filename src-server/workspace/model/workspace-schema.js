@@ -20,6 +20,8 @@ var Number = Schema.Types.Number;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
 var variantLogger = require('./../../log').getLogger('variants');
 let mapImport = require('./map-import-export').mapImport;
+let getId = require('../../util/util.js').getId;
+
 /**
  * Workspace, referred also as an organization, is a group of maps that all
  * refer to the same subject, for example to the company. Many people can work
@@ -214,6 +216,98 @@ module.exports = function(conn) {
             responsiblePerson: params.responsiblePerson,
             _id: newId,
           }).save();
+        });
+    };
+
+    workspaceSchema.methods.deleteAMap = function(mapId) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      mapId = getId(mapId);
+      let workspaceId = getId(this._id);
+      let _this = this;
+      // Remove (in a soft way, dereference) nodes belonging to this map
+      // this includes
+      //  - parentMap
+      //  - all dependencies belonging to the map
+      //  - remove the map itself
+      //  - remove unreferenced nodes
+      //  - reload the workspace
+      // This is very similar to how the map-schema#removeNode method works,
+      // except we are dealing with multiple nodes
+      // TODO: one day - make this *one* method
+
+
+      // step one - clean up
+      return Node.update({
+          parentMap: mapId
+        }, {
+          $pull: {
+            parentMap: mapId,
+            visibility: {
+              map: mapId
+            },
+            // commented lines delete all dependencies if one of them is visible
+            // on a mapId map. We have to use the $ operator to iterate over
+            // the visibleOn array and remove dependencies that were on that map
+            // dependencies : {
+            //   visibleOn : mapId
+            // }
+            // this step ensures that dependency is not just hidden, but entirely removed
+            'dependencies.$': {
+              visibleOn: mapId
+            }
+          }
+        }, {
+          safe: true,
+          multi: true
+        }).exec()
+        .then(function(irrelevant) {
+          // console.log('irrelevant', irrelevant);
+          // at this point some nodes might not have a parent map, let's find them
+          return Node.find({
+            parentMap: {
+              $size: 0
+            }
+          }).exec();
+        })
+        .then(function(listOfNodesToRemove) {
+          // console.log('Nodes without parents', listOfNodesToRemove);
+          // nothing to remove, quit
+          if (listOfNodesToRemove.length === 0) {
+            return;
+          }
+          // drop them from the workspace
+          return Workspace.findOneAndUpdate({
+              _id: workspaceId
+            }, {
+              $pull: {
+                'timeline.$[a].maps.$[b].nodes': {
+                  $in: listOfNodesToRemove
+                }
+              }
+            }, {
+              safe: true,
+              multi: true
+            }).exec()
+            .then(function(workspace) {
+              // console.log('cleaned workspace', workspace, workspace.timeline[0].nodes);
+              return Node.remove({
+                _id: {
+                  $in: listOfNodesToRemove
+                }
+              }).exec();
+            });
+        })
+        .then(function(irrelevant) {
+          // console.log('nodes removed', irrelevant);
+          return Workspace.findOneAndUpdate({
+            _id: workspaceId,
+            'timeline.maps': mapId
+          }, {
+            $pull: {
+              'timeline.$.maps': mapId
+            }
+          }).exec();
         });
     };
 
