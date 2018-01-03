@@ -978,7 +978,6 @@ module.exports = function(authGuardian, mongooseConnection) {
 
       WardleyMap.findOne({
               _id: mapID,
-              archived: false,
               workspace: workspaceID,
               nodes: desiredNodeId
           })
