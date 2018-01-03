@@ -339,8 +339,6 @@ export default class MapCanvas extends React.Component {
       existingConnection.removeOverlay("menuOverlay");
       existingConnection.removeOverlay("label");
 
-      console.log('is label', existingConnection.getOverlay("label"));
-
       if(!shouldExist){
         //delete connection, that was easy
         jsPlumb.deleteConnection(existingConnection);
