@@ -428,9 +428,9 @@ module.exports = function(conn) {
         });
     };
 
+    //TODO : refactor this into something changing map explicitly (name, purpose, etc);
     _MapSchema.methods.newBody = function(body) {
         _.extend(this, body);
-        _.extend(this.archived, false);
 
         return this.save();
     };
@@ -516,6 +516,7 @@ module.exports = function(conn) {
     _MapSchema.methods.changeNode = function(name, evolution, visibility, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
       var _this = this;
       var Node = require('./node-schema')(conn);
+      const WardleyMap = require('./map-schema')(conn);
 
       desiredNodeId = getId(desiredNodeId);
       let query = {
@@ -582,7 +583,9 @@ module.exports = function(conn) {
       return Node.findOneAndUpdate(query,
         updateOrder,
         select
-      ).exec();
+      ).exec().then(function(){
+        return WardleyMap.findById(_this._id);
+      });
     };
 
     /**

@@ -85,13 +85,17 @@ var MapComponent = createReactClass({
     return true;
   },
 
-  resizeHandler : function(newWidth){
+  resizeHandler : function(newWidth,x,y,z){
     if(this.resizeHandlerTimeout){
       clearTimeout(this.resizeHandlerTimeout);
     }
     var id = this.props.id;
     var mapID = this.props.mapID;
     var workspaceID = this.props.workspaceID;
+    if(newWidth === this.props.node.width){
+      clearTimeout(this.resizeHandlerTimeout);
+      return;
+    }
     var updateCall = function(){
       Actions.updateNode(workspaceID, mapID, id, null, newWidth);
     };
@@ -393,12 +397,26 @@ var MapComponent = createReactClass({
     style.boxShadow = "0 0 3px 3px orange";
   },
 
+  getVisibility(mapId, node){
+    let visibilityArray = node.visibility;
+    for(let i = 0; i < visibilityArray.length; i++){
+      if(visibilityArray[i].map === mapId){
+        return visibilityArray[i].value;
+      }
+    }
+    return null;
+  },
+
   render: function() {
     var node = this.props.node;
     var diff = this.props.diff;
     var style = getStyleForType(node.type);
-    var left = node.x * this.props.size.width;
-    var top = node.y * this.props.size.height;
+    var left = node.evolution * this.props.size.width;
+    var mapID = this.props.mapID;
+    var top = this.getVisibility(mapID, node) * this.props.size.height;
+    if(!top){
+      console.log('error, component without visiblity');
+    }
     style = _.extend(style, {
       left: left,
       top: top,
@@ -411,7 +429,6 @@ var MapComponent = createReactClass({
     var shouldBeDraggable = this.props.focused;
     var _this = this;
     var id = this.props.id;
-    var mapID = this.props.mapID;
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);

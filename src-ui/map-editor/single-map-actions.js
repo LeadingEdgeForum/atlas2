@@ -463,7 +463,7 @@ var SingleMapActions = {
       });
     },
 
-    openEditConnectionDialog: function(workspaceId, mapId, sourceId, targetId, label, description, type){
+    openEditConnectionDialog: function(workspaceId, mapId, sourceId, targetId, label, description, connectionType){
       if(!sourceId || !targetId){
         console.error('no data to open the dialog');
         return;
@@ -477,7 +477,7 @@ var SingleMapActions = {
             targetId: targetId,
             label:label,
             description:description,
-            type:type
+            connectionType:connectionType
           }
       });
     },
@@ -488,13 +488,13 @@ var SingleMapActions = {
       });
     },
 
-    updateConnection: function(workspaceId, mapId, sourceId, targetId, label, description, type) {
+    updateConnection: function(workspaceId, mapId, sourceId, targetId, label, description, connectionType) {
       if(!sourceId || !targetId){
         console.error('no data to open the dialog');
         return;
       }
-      if(!(type !== undefined || label || description)){
-        console.warn('missing connection data', type, label, description);
+      if(!(connectionType !== undefined || label || description)){
+        console.warn('missing connection data', connectionType, label, description);
         return;
       }
       Dispatcher.dispatch({
@@ -506,7 +506,7 @@ var SingleMapActions = {
             targetId: targetId,
             label:label,
             description:description,
-            type:type
+            connectionType:connectionType
           }
       });
     },

@@ -77,10 +77,10 @@ module.exports = function(conn){
               type: Schema.Types.ObjectId,
               ref: 'WardleyMap'
             }],
-            data : {
+            displayData : {
               label : Schema.Types.String,
               description : Schema.Types.String,
-              type : Schema.Types.String
+              connectionType : Schema.Types.Number
             }
         }],
         action: [{
@@ -183,7 +183,12 @@ module.exports = function(conn){
             // the dependency was not found at all, let's create it
             _this.dependencies.push({
               target : _targetId,
-              visibleOn : [_mapId]
+              visibleOn : [_mapId],
+              displayData : {
+                connectionType : 0,
+                description : "",
+                label : ""
+              }
             });
           }
           return _this.save();
@@ -213,21 +218,32 @@ module.exports = function(conn){
     };
 
     NodeSchema.methods.updateDependencyTo = function(_targetId, data) {
-        // var targetId = new ObjectId(_targetId);
-        // var promises = [];
-        //
-        // // otherwise, check who is on the top
-        // var _this = this;
-        // ensureDepedencyData(_this);
-        // if(!_this.dependencyData.outbound['' +_targetId]){
-        //   _this.dependencyData.outbound['' +_targetId] = {};
-        // }
-        // _this.dependencyData.outbound['' +_targetId].label = data.label;
-        // _this.dependencyData.outbound['' +_targetId].description = data.description;
-        // _this.dependencyData.outbound['' +_targetId].type = data.type;
-        // _this.markModified('dependencyData');
-        //
-        // return _this.save();
+        let _this = this;
+        _targetId = getId(_targetId);
+        for (let i = 0; i < _this.dependencies.length; i++) {
+          if (_this.dependencies[i].target.equals(_targetId)) {
+            if(data.type || data.label || data.description){
+              if(!_this.dependencies[i].displayData){
+                _this.dependencies[i].displayData = {
+                  connectionType : 0,
+                  description : "",
+                  label : ""
+                };
+              }
+            }
+            if(data.connectionType !== undefined){
+              _this.dependencies[i].displayData.connectionType = data.connectionType;
+            }
+            if(data.label){
+              _this.dependencies[i].displayData.label = data.label;
+            }
+            if(data.description){
+              _this.dependencies[i].displayData.description = data.description;
+            }
+            break;
+          }
+        }
+        return _this.save();
     };
 
     NodeSchema.methods.makeAction = function(dataPos) {

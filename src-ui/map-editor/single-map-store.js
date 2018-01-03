@@ -234,7 +234,7 @@ export default class SingleWorkspaceStore extends Store {
           this.connectionDialog.targetId = action.data.targetId;
           this.connectionDialog.label = action.data.label;
           this.connectionDialog.description = action.data.description;
-          this.connectionDialog.type = action.data.type;
+          this.connectionDialog.connectionType = action.data.connectionType;
           this.emitChange();
           break;
         case ActionTypes.CLOSE_EDIT_CONNECTION_DIALOG:
@@ -975,7 +975,7 @@ export default class SingleWorkspaceStore extends Store {
       url:  '/api/workspace/' + this.getWorkspaceId() +
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
-            '/outgoingDependency/' + data.targetId,
+            '/dependency/' + data.targetId,
       success: function(data2) {
         this.map = data2;
         this.diff = null;
@@ -995,7 +995,7 @@ export default class SingleWorkspaceStore extends Store {
         url:  '/api/workspace/' + this.getWorkspaceId() +
               '/map/' + this.getMapId() +
               '/node/' + data.sourceId +
-              '/outgoingDependency/' + data.targetId,
+              '/dependency/' + data.targetId,
         data: data,
         success: function(data2) {
           this.map = data2;
@@ -1016,7 +1016,7 @@ export default class SingleWorkspaceStore extends Store {
       url:  '/api/workspace/' + this.getWorkspaceId() +
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
-            '/outgoingDependency/' + data.targetId,
+            '/dependency/' + data.targetId,
       success: function(data2) {
         this.map = data2;
         this.diff = null;

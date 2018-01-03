@@ -49,7 +49,7 @@ var EditConnectionDialog = createReactClass({
     this.internalState.description = newState.description;
     this.internalState.sourceId = newState.sourceId;
     this.internalState.targetId = newState.targetId;
-    this.internalState.type = newState.type;
+    this.internalState.connectionType = newState.connectionType;
     this.internalState.mapId = newState.mapID;
     this.internalState.workspaceId = newState.workspaceID;
     this.setState(newState);
@@ -66,7 +66,7 @@ var EditConnectionDialog = createReactClass({
           this.internalState.targetId,
           this.internalState.label,
           this.internalState.description,
-          this.internalState.type);
+          this.internalState.connectionType);
   },
 
   _handleDialogChange: function(parameterName, event) {
@@ -78,7 +78,7 @@ var EditConnectionDialog = createReactClass({
     var show = this.state.open;
     var label = this.internalState.label;
     var description = this.internalState.description;
-    var type = this.internalState.type;
+    var type = this.internalState.connectionType;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -105,14 +105,14 @@ var EditConnectionDialog = createReactClass({
                   <FormControl type="textarea" value={description} componentClass="textarea" placeholder="Describe this action" onChange={this._handleDialogChange.bind(this, 'description')} onKeyDown={this._enterInterceptor} style={{ height: 100 }}/>
                 </Col>
               </FormGroup>
-              <FormGroup controlId="type">
+              <FormGroup controlId="connectionType">
                 <Col sm={2}>
                   <ControlLabel>Type</ControlLabel>
                 </Col>
                 <Col sm={9}>
-                    <Radio inline checked={ type==0 || !type} value={0} onChange={this._handleDialogChange.bind(this, 'type')}>None</Radio>{' '}
-                    <Radio inline value={10} checked={type==10} onChange={this._handleDialogChange.bind(this, 'type')}>Constraint</Radio>{' '}
-                    <Radio inline value={20} checked={type==20} onChange={this._handleDialogChange.bind(this, 'type')}>Flow</Radio>{' '}
+                    <Radio inline checked={ type==0 || !type} value={0} onChange={this._handleDialogChange.bind(this, 'connectionType')}>None</Radio>{' '}
+                    <Radio inline value={10} checked={type==10} onChange={this._handleDialogChange.bind(this, 'connectionType')}>Constraint</Radio>{' '}
+                    <Radio inline value={20} checked={type==20} onChange={this._handleDialogChange.bind(this, 'connectionType')}>Flow</Radio>{' '}
                 </Col>
               </FormGroup>
             </Form>

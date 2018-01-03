@@ -25,6 +25,7 @@ var ObjectId = mongoose.Types.ObjectId;
 var getUserIdFromReq = require('./../util/util').getUserIdFromReq;
 var AccessError = require('./../util/util').AccessError;
 var checkAccess = require('./../util/util').checkAccess;
+var getId = require('./../util/util').getId;
 
 var q = require('q');
 q.longStackSupport = true;
@@ -62,10 +63,9 @@ module.exports = function(authGuardian, mongooseConnection) {
       var owner = getUserIdFromReq(req);
       WardleyMap
           .findOne({
-              _id: req.params.mapID,
-              archived: false
+              _id: req.params.mapID
           })
-          .select('name isSubmap workspace responsiblePerson')
+          .select('name')
           .exec()
           .then(checkAccess.bind(this,req.params.mapID,owner))
           .done(function(result) {
@@ -203,8 +203,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   module.router.get('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       WardleyMap.findOne({
-              _id: req.params.mapID,
-              archived: false
+              _id: req.params.mapID
           })
           .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(result){
@@ -465,20 +464,11 @@ module.exports = function(authGuardian, mongooseConnection) {
           .exec()
           .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
-              map.workspace.getTimeSlice(map.timesliceId).maps.pull(map._id);
-              var workspacePromise = map.workspace.save()
-              .then(function(workspace){
-                  return workspace.populate('timeline timeline.maps timeline.capabilityCategories').execPopulate();
-              });
-
-              map.archived = true;
-              var mapPromise = map.save();
-
-              return q.all([workspacePromise, mapPromise]);
+              return map.workspace.deleteAMap(map._id);
           })
-          .done(function(args) {
+          .done(function(workspace) {
               res.json({
-                  workspace: args[0]
+                  workspace: workspace
               });
               track(owner,'delete_map',{
                 'id' : req.params.mapID,
@@ -494,6 +484,7 @@ module.exports = function(authGuardian, mongooseConnection) {
         return;
       }
       if (result) {
+        //TODO: refactor this into deleting the workspace
         result.archived = true;
         result.save(function(err2, result2) {
           if (err2) {
@@ -606,16 +597,15 @@ module.exports = function(authGuardian, mongooseConnection) {
       var y = req.body.y;
       var type = req.body.type;
       var constraint = req.body.constraint;
-      var parentMap = new ObjectId(mapID);
+      var parentMap = getId(mapID);
 
       WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
               _id: mapID,
-              archived: false,
               workspace: workspaceID
           }).exec()
           .then(checkAccess.bind(this, req.params.mapID, owner))
           .then(function(map) {
-              return map.addNode(name, x, y, type, new ObjectId(workspaceID), description, inertia, responsiblePerson, constraint);
+              return map.addNode(name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
           })
           .then(function(map){
               return map.defaultPopulate();
@@ -944,14 +934,14 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var mapID = req.params.mapID;
+      var workspaceID = getId(req.params.workspaceID);
+      var mapID = getId(req.params.mapID);
       var name = req.body.name;
       var x = req.body.x;
       var y = req.body.y;
       var width = req.body.width;
       var type = req.body.type;
-      var desiredNodeId = new ObjectId(req.params.nodeID);
+      var desiredNodeId = getId(req.params.nodeID);
       var description = req.body.description;
       var inertia = req.body.inertia;
       var constraint = req.body.constraint;
@@ -960,7 +950,6 @@ module.exports = function(authGuardian, mongooseConnection) {
       // find a map with a node
       WardleyMap.findOne({
               _id: mapID,
-              archived: false,
               workspace: workspaceID,
               nodes: desiredNodeId
           })
@@ -1009,21 +998,20 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.post(
-      '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+      '/workspace/:workspaceID/map/:mapID/node/:nodeID1/dependency/:nodeID2',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
           var workspaceID = req.params.workspaceID;
-          var mapID = req.params.mapID;
-          var nodeID1 = new ObjectId(req.params.nodeID1);
-          var nodeID2 = new ObjectId(req.params.nodeID2);
-          var parentMap = new ObjectId(mapID);
+          var mapID = getId(req.params.mapID);
+          var nodeID1 = getId(req.params.nodeID1);
+          var nodeID2 = getId(req.params.nodeID2);
+          var parentMap = getId(mapID);
 
           WardleyMap.findOne({
                   _id: mapID,
-                  archived: false,
                   workspace: workspaceID,
-                  nodes: nodeID1 // maybe, one day, check the second node, too
+                  nodes: nodeID1
               })
               .exec()
               .then(checkAccess.bind(this, req.params.mapID, owner))
@@ -1031,7 +1019,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 return Node
                     .findById(nodeID1) //two ids we are looking for
                     .exec().then(function(node) {
-                        return node.makeDependencyTo(nodeID2);
+                        return node.makeDependencyTo(mapID, nodeID2);
                     }).then(function(){
                         return map.defaultPopulate();
                     });
@@ -1044,22 +1032,21 @@ module.exports = function(authGuardian, mongooseConnection) {
       });
 
   module.router.put(
-    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+    '/workspace/:workspaceID/map/:mapID/node/:nodeID1/dependency/:nodeID2',
     authGuardian.authenticationRequired,
     function(req, res) {
       var owner = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var mapID = req.params.mapID;
-      var nodeID1 = new ObjectId(req.params.nodeID1);
-      var nodeID2 = new ObjectId(req.params.nodeID2);
-      var parentMap = new ObjectId(mapID);
-      var type = req.body.type; // none, constraint, flow
+      var workspaceID = getId(req.params.workspaceID);
+      var mapID = getId(req.params.mapID);
+      var nodeID1 = getId(req.params.nodeID1);
+      var nodeID2 = getId(req.params.nodeID2);
+      var parentMap = getId(mapID);
+      var connectionType = req.body.connectionType; // none, constraint, flow
       var label = req.body.label;
       var description = req.body.description;
 
       WardleyMap.findOne({
           _id: mapID,
-          archived: false,
           workspace: workspaceID,
           nodes: nodeID1 // maybe, one day, check the second node, too
         })
@@ -1069,7 +1056,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           return Node
             .findById(nodeID1) //two ids we are looking for
             .exec().then(function(node) {
-              return node.updateDependencyTo(nodeID2, {type:type, label:label, description:description});
+              return node.updateDependencyTo(nodeID2, {connectionType:connectionType, label:label, description:description});
             }).then(function(tr){
                 return map.defaultPopulate();
             });
@@ -1082,19 +1069,18 @@ module.exports = function(authGuardian, mongooseConnection) {
     });
 
   module.router.delete(
-      '/workspace/:workspaceID/map/:mapID/node/:nodeID1/outgoingDependency/:nodeID2',
+      '/workspace/:workspaceID/map/:mapID/node/:nodeID1/dependency/:nodeID2',
       authGuardian.authenticationRequired,
       function(req, res) {
           var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          var mapID = req.params.mapID;
-          var nodeID1 = new ObjectId(req.params.nodeID1);
-          var nodeID2 = new ObjectId(req.params.nodeID2);
-          var parentMap = new ObjectId(mapID);
+          var workspaceID = getId(req.params.workspaceID);
+          var mapID = getId(req.params.mapID);
+          var nodeID1 = getId(req.params.nodeID1);
+          var nodeID2 = getId(req.params.nodeID2);
+          var parentMap = getId(mapID);
 
           WardleyMap.findOne({
                   _id: mapID,
-                  archived: false,
                   workspace: workspaceID,
                   nodes: nodeID1 // maybe, one day, check the second node, too
               })
@@ -1104,7 +1090,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                   return Node
                     .findById(nodeID1) //two ids we are looking for
                     .exec().then(function(node) {
-                      return node.removeDependencyTo(nodeID2);
+                      return node.removeDependencyTo(mapID, nodeID2, false);
                     }).then(function(tr){
                         return map.defaultPopulate();
                     });

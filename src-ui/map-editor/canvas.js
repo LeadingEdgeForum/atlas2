@@ -75,6 +75,9 @@ export default class MapCanvas extends React.Component {
     this.componentWillUnmount = this.componentWillUnmount.bind(this);
     this._onChange = this._onChange.bind(this);
     this.overlayClickHandler = this.overlayClickHandler.bind(this);
+    this.reconcileComponentDependencies = this.reconcileComponentDependencies.bind(this);
+    this.updateOverlaysVisiblityAndType = this.updateOverlaysVisiblityAndType.bind(this);
+    this.getOverlays = this.getOverlays.bind(this);
   }
 
   beforeDropListener(connection) {
@@ -257,126 +260,149 @@ export default class MapCanvas extends React.Component {
     conn.getOverlay("label").setVisible(!conn.___overlayVisible);
   }
 
+  updateOverlaysVisiblityAndType(existingConnection, modelConnection){
+    // update type
+    existingConnection.clearTypes();
+    if(modelConnection.displayData.connectionType === 20){
+      existingConnection.addType('flow');
+    } else if (modelConnection.displayData.connectionType === 10) {
+      existingConnection.addType('constraint');
+    }
+
+    // ensure their visibility
+    if(existingConnection.___overlayVisible){
+      existingConnection.getOverlay("label").hide(); //overlay visible means menu, not label
+      existingConnection.getOverlay("menuOverlay").show();
+    } else {
+      existingConnection.getOverlay("label").show();
+      existingConnection.getOverlay("menuOverlay").hide();
+    }
+
+    existingConnection.getOverlay("label").setLabel(modelConnection.displayData.label);
+  }
+
+  reconcileComponentDependencies(nodes) {
+    let mapId = this.props.mapID;
+    let existingConnections = jsPlumb.getConnections({
+      scope: jsPlumb.Defaults.Scope
+    });
+    if (!(nodes && nodes.length)) {
+      // remove all component dependencies
+      for (let i = 0; i < existingConnections.length; i++) {
+        jsPlumb.deleteConnection(existingConnections[i]);
+      }
+      return;
+    }
+    //otherwise, build a list of connections we should have
+    let connectionsWeShouldHave = [];
+    for(let i = 0; i < nodes.length ;i++){
+      let affectedNode = nodes[i];
+      for(let j = 0 ; j < affectedNode.dependencies.length; j++){
+        let affectedDependency = affectedNode.dependencies[j];
+        //we are interested in the dep if and only if it is visible on a given map
+        let visible = false;
+        for(let k = 0; k < affectedDependency.visibleOn.length; k++){
+          if(affectedDependency.visibleOn[k] === mapId){
+            visible = true;
+          }
+        }
+        if (visible) {
+          connectionsWeShouldHave.push({
+            sourceId: affectedNode._id,
+            targetId: affectedDependency.target,
+            displayData: affectedDependency.displayData || {}
+          });
+        }
+      }
+    }
+
+    // and now, for every existing connection
+    for(let i = 0; i < existingConnections.length ; i++){
+      let existingConnection = existingConnections[i];
+      let modelConnection = null;
+      let shouldExist = false;
+      for (let k = connectionsWeShouldHave.length - 1; k >= 0 ; k--) {
+        if ((connectionsWeShouldHave[k].sourceId === existingConnection.sourceId) &&
+            (connectionsWeShouldHave[k].targetId === existingConnection.targetId)) {
+              //since the connection has a canvas counterpart, we will only update it
+              // but we do not have to recreate it
+              modelConnection = connectionsWeShouldHave.splice(k,1)[0];
+              shouldExist = true;
+              break;
+        }
+      }
+      // the code below may look like an overkill, but jsplumb loves leaving
+      // artifacts, and we need to reatach changed overlays
+      existingConnection.getOverlay("label").hide();
+      existingConnection.getOverlay("menuOverlay").hide();
+      //delete them
+      existingConnection.removeOverlay("menuOverlay");
+      existingConnection.removeOverlay("label");
+
+      console.log('is label', existingConnection.getOverlay("label"));
+
+      if(!shouldExist){
+        //delete connection, that was easy
+        jsPlumb.deleteConnection(existingConnection);
+      } else {
+        // update overlays
+        var overlaysToReadd = this.getOverlays(null, [
+                ["pencil", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
+                                  this.props.workspaceID,
+                                  this.props.mapID,
+                                  existingConnection.sourceId,
+                                  existingConnection.targetId,
+                                  modelConnection.displayData.label,
+                                  modelConnection.displayData.description,
+                                  modelConnection.displayData.connectionType)],
+                ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, existingConnection.sourceId, existingConnection.targetId)],
+            ], modelConnection.displayData.label
+        );
+        for (var zz = 0; zz < overlaysToReadd.length; zz++) {
+            existingConnection.addOverlay(overlaysToReadd[zz]);
+        }
+        this.updateOverlaysVisiblityAndType(existingConnection, modelConnection);
+      }
+    }
+
+    // and, at this point, we have only connections that should exist but do not
+    for(let i = 0; i < connectionsWeShouldHave.length; i++){
+      let connectionToCreate = connectionsWeShouldHave[0];
+      let createdConnection = jsPlumb.connect({
+          source: connectionToCreate.sourceId,
+          target: connectionToCreate.targetId,
+          scope: jsPlumb.Defaults.Scope,
+          anchors: [
+              "BottomCenter", "TopCenter"
+          ],
+          paintStyle: endpointOptions.connectorStyle,
+          endpoint: endpointOptions.endpoint,
+          connector: endpointOptions.connector,
+          endpointStyles: [
+              endpointOptions.paintStyle, endpointOptions.paintStyle
+          ],
+          overlays: this.getOverlays(null, [
+            ["pencil", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
+                              this.props.workspaceID,
+                              this.props.mapID,
+                              connectionToCreate.sourceId,
+                              connectionToCreate.targetId,
+                              connectionToCreate.displayData.label,
+                              connectionToCreate.displayData.description,
+                              connectionToCreate.displayData.connectionType)],
+              ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, connectionToCreate.sourceId, connectionToCreate.targetId)]
+          ], connectionToCreate.displayData.label)
+      });
+      createdConnection.___overlayVisible = false;
+      this.updateOverlaysVisiblityAndType(createdConnection, connectionToCreate);
+      createdConnection.bind('click', this.overlayClickHandler);
+    }
+  }
+
   reconcileDependencies() {
-      var modelConnections = [];
+      this.reconcileComponentDependencies(this.props.nodes);
       if (!this.props.nodes) {
           return;
-      }
-
-      for (var i = 0; i < this.props.nodes.length; i++) {
-          var _node = this.props.nodes[i];
-          var iterator_length = _node.outboundDependencies ?
-              _node.outboundDependencies.length :
-              0;
-          for (var j = 0; j < iterator_length; j++) {
-              var dependencyData = _node.dependencyData ?  _node.dependencyData.outbound : null;
-              if(!dependencyData) {
-                dependencyData = {};
-              }
-              modelConnections.push({
-                  source: _node._id,
-                  target: _node.outboundDependencies[j],
-                  scope: jsPlumb.Defaults.Scope,
-                  dependencyData : dependencyData[_node.outboundDependencies[j]] ? dependencyData[_node.outboundDependencies[j]] : {}
-              });
-          }
-      }
-
-      var canvasConnections = jsPlumb.getConnections();
-      var modelIterator = modelConnections.length;
-      while (modelIterator--) {
-          var isCurrentModelConnectionInTheCanvas = false;
-          var canvasIterator = canvasConnections.length;
-          var currentModel = modelConnections[modelIterator];
-          while (canvasIterator--) {
-              var currentCanvas = canvasConnections[canvasIterator];
-              if ((currentModel.source === currentCanvas.sourceId) && (currentModel.target === currentCanvas.targetId)) {
-                  isCurrentModelConnectionInTheCanvas = true;
-                  //we found graphic equivalent, so we ignore further processing of this element
-                  var existing = canvasConnections.splice(canvasIterator, 1)[0];
-                  existing.removeOverlay("menuOverlay");
-                  existing.removeOverlay("label");
-                  var overlaysToReadd = this.getOverlays(null, [
-                          ["pencil", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
-                                            this.props.workspaceID,
-                                            this.props.mapID,
-                                            currentModel.source,
-                                            currentModel.target,
-                                            currentModel.dependencyData.label,
-                                            currentModel.dependencyData.description,
-                                            currentModel.dependencyData.type)],
-                          ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)],
-                      ], currentModel.dependencyData.label
-                  );
-                  for (var zz = 0; zz < overlaysToReadd.length; zz++) {
-                      existing.addOverlay(overlaysToReadd[zz]);
-                  }
-                  if(existing.___overlayVisible){
-                      existing.getOverlay("label").hide();
-                      existing.getOverlay("menuOverlay").show();
-                  } else {
-                      existing.getOverlay("menuOverlay").hide();
-                      existing.getOverlay("label").show();
-                  }
-
-                  if(currentModel.dependencyData.type === '20'){
-                    existing.clearTypes();
-                    existing.addType('flow');
-                  } else if (currentModel.dependencyData.type === '10') {
-                    existing.clearTypes();
-                    existing.addType('constraint');
-                  } else {
-                    existing.clearTypes();
-                  }
-              }
-          }
-          // model connection not found on canvas, create it
-          if (!isCurrentModelConnectionInTheCanvas) {
-              var connection = jsPlumb.connect({
-                  source: currentModel.source,
-                  target: currentModel.target,
-                  scope: jsPlumb.Defaults.Scope,
-                  anchors: [
-                      "BottomCenter", "TopCenter"
-                  ],
-                  paintStyle: endpointOptions.connectorStyle,
-                  endpoint: endpointOptions.endpoint,
-                  connector: endpointOptions.connector,
-                  endpointStyles: [
-                      endpointOptions.paintStyle, endpointOptions.paintStyle
-                  ],
-                  overlays: this.getOverlays(null, [
-                    ["pencil", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
-                                      this.props.workspaceID,
-                                      this.props.mapID,
-                                      currentModel.source,
-                                      currentModel.target,
-                                      currentModel.dependencyData.label,
-                                      currentModel.dependencyData.description,
-                                      currentModel.dependencyData.type)],
-                      ["remove", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, currentModel.source, currentModel.target)]
-                  ], currentModel.dependencyData.label)
-              });
-              connection.___overlayVisible = false;
-              connection.getOverlay("menuOverlay").hide();
-              connection.getOverlay("label").show();
-              connection.bind('click', this.overlayClickHandler);
-              if(currentModel.dependencyData.type === '20'){
-                connection.clearTypes();
-                connection.addType('flow');
-              } else if (currentModel.dependencyData.type === '10') {
-                connection.clearTypes();
-                connection.addType('constraint');
-              } else {
-                connection.clearTypes();
-              }
-          }
-      }
-      //clean up unnecessary canvas connection (no counterpart in model)
-      for (var z = 0; z < canvasConnections.length; z++) {
-          canvasConnections[z].removeOverlay("menuOverlay");
-          canvasConnections[z].removeOverlay("label");
-          jsPlumb.deleteConnection(canvasConnections[z]);
       }
 
       // iterate over all nodes
