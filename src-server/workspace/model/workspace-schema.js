@@ -237,33 +237,37 @@ module.exports = function(conn) {
       // TODO: one day - make this *one* method
 
 
-      // step one - clean up
       return Node.update({
-          parentMap: mapId
-        }, {
-          $pull: {
-            parentMap: mapId,
-            visibility: {
-              map: mapId
-            },
-            // commented lines delete all dependencies if one of them is visible
-            // on a mapId map. We have to use the $ operator to iterate over
-            // the visibleOn array and remove dependencies that were on that map
-            // dependencies : {
-            //   visibleOn : mapId
-            // }
-            // this step ensures that dependency is not just hidden, but entirely removed
-            'dependencies.$': {
-              visibleOn: mapId
-            }
-          }
-        }, {
-          safe: true,
-          multi: true
-        }).exec()
+        // parentMap: mapId,
+        'dependencies.visibleOn': mapId
+      }, {
+        $pull : {
+          'dependencies.$.visibleOn' : ''+mapId
+        }
+      }, {
+        safe: true,
+        multi: true
+      }).exec()
+        /*after a map will have been deleted, NO node can be visible on that map*/
+        .then(function(irrelevant){
+          return Node.update({
+              parentMap: mapId
+            }, {
+              $pull: {
+                parentMap: mapId,
+                visibility: {
+                  map: mapId
+                }
+              }
+            }, {
+              safe: true,
+              multi: true
+            }).exec();
+        })
         .then(function(irrelevant) {
           // console.log('irrelevant', irrelevant);
-          // at this point some nodes might not have a parent map, let's find them
+          // at this point some nodes might not have a parent map, and they should be removed.
+          // let's find them
           return Node.find({
             parentMap: {
               $size: 0
@@ -278,10 +282,13 @@ module.exports = function(conn) {
           }
           // drop them from the workspace
           return Workspace.findOneAndUpdate({
-              _id: workspaceId
+              _id: workspaceId,
+              'timeline.nodes' : {
+                $in: listOfNodesToRemove
+              }
             }, {
               $pull: {
-                'timeline.$[a].maps.$[b].nodes': {
+                'timeline.$.nodes': {
                   $in: listOfNodesToRemove
                 }
               }
@@ -296,17 +303,35 @@ module.exports = function(conn) {
                   $in: listOfNodesToRemove
                 }
               }).exec();
+            }).then(function(){
+              // remove dependencies pointing to  removed nodes
+              return Node.update({
+                'dependencies.target': {
+                  $in: listOfNodesToRemove
+                }
+              },
+              {
+                $pull : {
+                  'dependencies.$.target' : {
+                    $in: listOfNodesToRemove
+                  }
+                }
+              }
+            ).exec();
             });
         })
         .then(function(irrelevant) {
           // console.log('nodes removed', irrelevant);
           return Workspace.findOneAndUpdate({
-            _id: workspaceId,
-            'timeline.maps': mapId
+              'timeline.maps': mapId
           }, {
             $pull: {
               'timeline.$.maps': mapId
             }
+          }, {
+            safe:true,
+            multi:true,
+            new : true
           }).exec();
         });
     };

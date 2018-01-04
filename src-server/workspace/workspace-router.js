@@ -457,8 +457,7 @@ module.exports = function(authGuardian, mongooseConnection) {
       var owner = getUserIdFromReq(req);
       WardleyMap
           .findOne({
-              _id: req.params.mapID,
-              archived: false
+              _id: req.params.mapID
           })
           .populate('workspace')
           .exec()

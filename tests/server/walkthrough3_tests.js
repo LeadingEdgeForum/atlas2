@@ -125,7 +125,10 @@ describe('Verify deleting a map', function() {
       .then(function(node) {
         should(node.dependencies.length).be.equal(1);
         let dep = node.dependencies[0];
+
+        should(dep.target.equals(getId(nodes[1]))).be.true;
         should(dep.visibleOn.length).be.equal(2);
+        //the connection is visible on both maps
         should(dep.visibleOn[0].equals(getId(maps[0]))).be.true;
         should(dep.visibleOn[1].equals(getId(maps[1]))).be.true;
       });
@@ -141,10 +144,13 @@ describe('Verify deleting a map', function() {
         return workspace.populate('timeline.nodes').execPopulate();
       })
       .then(function(workspace) {
+        should(workspace.timeline[0].maps.length).be.equal(1);
+
         let workspaceNodes = workspace.timeline[0].nodes;
+        //two nodes should be still visible
         should(workspaceNodes.length).be.equal(2);
 
-        // nodes no longer point to the second map
+        // they both point to the first map
         should(workspaceNodes[0].parentMap.length).be.equal(1);
         should(workspaceNodes[0].parentMap[0].equals(maps[0])).be.true;
 
@@ -152,19 +158,39 @@ describe('Verify deleting a map', function() {
         should(workspaceNodes[1].parentMap[0].equals(maps[0])).be.true;
 
 
-        // nor has the visibility associated with that map
+        // are visible only on the first map
         should(workspaceNodes[0].visibility.length).be.equal(1);
         should(workspaceNodes[0].visibility[0].map.equals(maps[0])).be.true;
 
         should(workspaceNodes[1].visibility.length).be.equal(1);
         should(workspaceNodes[1].visibility[0].map.equals(maps[0])).be.true;
 
-        // nor has dependencies associated with that map
+        // there should be only one dependency, as the other one was to a deleted node
         should(workspaceNodes[0].dependencies.length).be.equal(1);
+
+        should(workspaceNodes[0].dependencies[0].visibleOn.length).be.equal(1);
         should(workspaceNodes[0].dependencies[0].visibleOn[0].equals(maps[0])).be.true;
         should(workspaceNodes[0].dependencies[0].target.equals(workspaceNodes[1])).be.true;
+
         // second node does not depend on anything, empty list
         should(workspaceNodes[1].dependencies.length).be.equal(0);
+      });
+  });
+
+  it("delete the first map", function() {
+    let workspaceId = getId(currentWorkspace);
+    return Workspace.findById(workspaceId).exec()
+      .then(function(workspace) {
+        should(workspace.timeline[0].nodes.length).be.equal(2);
+        return workspace.deleteAMap(getId(maps[0]));
+      })
+      .then(function(workspace) {
+        return workspace.populate('timeline.nodes').execPopulate();
+      })
+      .then(function(workspace) {
+        let workspaceNodes = workspace.timeline[0].nodes;
+        should(workspaceNodes.length).be.equal(0);
+        should(workspace.timeline[0].maps.length).be.equal(0);
       });
   });
 
