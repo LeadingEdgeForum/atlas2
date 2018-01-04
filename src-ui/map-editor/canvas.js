@@ -278,7 +278,7 @@ export default class MapCanvas extends React.Component {
       existingConnection.getOverlay("menuOverlay").hide();
     }
 
-    existingConnection.getOverlay("label").setLabel(modelConnection.displayData.label);
+    existingConnection.getOverlay("label").setLabel(modelConnection.displayData.label || "");
   }
 
   reconcileComponentDependencies(nodes) {
