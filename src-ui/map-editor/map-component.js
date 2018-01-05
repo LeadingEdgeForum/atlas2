@@ -62,7 +62,51 @@ var MapComponent = createReactClass({
     return {focus: false};
   },
 
-  componentWillUnmount: function() {},
+  componentDidMount: function() {
+    this.componentDidUpdate();
+  },
+
+  componentDidUpdate: function() {
+    if (!this.input) {
+      return;
+    }
+    if (!this.props.focused) {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeSource(this.input);
+      jsPlumb.makeTarget(this.input,
+        endpointOptions, {
+          anchor: "TopCenter",
+          scope: jsPlumb.Defaults.Scope + " WM_User"
+        });
+    } else if (this.state.hover === "link") {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+      jsPlumb.makeSource(this.input, endpointOptions, {
+        anchor: "BottomCenter"
+      });
+    } else if (this.state.hover === "move") {
+      jsPlumb.setDraggable(this.input, true);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+    } else if (this.state.hover === "action") {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+      jsPlumb.makeSource(this.input, actionEndpointOptions, {
+        anchor: "Right"
+      });
+    } else {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+    }
+    let mapID = this.props.mapID;
+    let node = this.props.node;
+    let left = node.evolution * this.props.size.width;
+    let top = this.getVisibility(mapID, node) * this.props.size.height;
+    jsPlumb.repaint(this.input, {left:left,top:top});
+  },
 
   shouldComponentUpdate(nextProps, nextState){
     if(nextProps.focused === false && this.props.focused === true){
@@ -172,15 +216,6 @@ var MapComponent = createReactClass({
 
   renderMenu() {
     if (!this.props.focused) {
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeTarget(this.input,
-          endpointOptions,
-          {anchor: "TopCenter",
-            scope: jsPlumb.Defaults.Scope + " WM_User"
-          });
-      }
       return null;
     }
     var groupStyle = {
@@ -193,11 +228,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "group") {
       groupStyle = _.extend(groupStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var pencilStyle = {
       position: "absolute",
@@ -209,11 +239,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "pencil") {
       pencilStyle = _.extend(pencilStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var removeStyle = {
       position: "absolute",
@@ -225,11 +250,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "remove") {
       removeStyle = _.extend(removeStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var linkStyle = {
       position: "absolute",
@@ -241,12 +261,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "link") {
       linkStyle = _.extend(linkStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeSource(this.input, endpointOptions, {anchor: "BottomCenter"});
-      }
     }
     var moveStyle = {
       position: "absolute",
@@ -258,11 +272,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "move") {
       moveStyle = _.extend(moveStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, true);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var submapStyle = {
       position: "absolute",
@@ -274,11 +283,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "submap") {
       submapStyle = _.extend(submapStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var infoStyle = {
       position: "absolute",
@@ -290,11 +294,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "info") {
       infoStyle = _.extend(infoStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var actionStyle = {
       position: "absolute",
@@ -306,12 +305,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "action") {
       actionStyle = _.extend(actionStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeSource(this.input, actionEndpointOptions, {anchor: "Right"});
-      }
     }
     var menuItems = [];
     if(this.props.canvasStore.shouldShow("pencil")){
