@@ -300,7 +300,7 @@ export default class NewNodeDialog extends React.Component {
         </Modal.Footer>);
     }
     if(this.state.currentStep === 2){
-      dialogName = 'Reference existing, ' + componentType + ' component named \'' +  this.state.name + '\'.';
+      dialogName = 'Reference existing component named \'' +  this.state.name + '\'.';
     }
 
     return (<Modal show={show} onHide={this._close}>
