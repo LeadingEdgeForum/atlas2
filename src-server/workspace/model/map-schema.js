@@ -508,6 +508,7 @@ module.exports = function(conn) {
           }
         }).exec()
         .then(function(node) {
+          _this.nodes.push(nodeId);
           return _this.save();
         });
     };
@@ -635,6 +636,26 @@ module.exports = function(conn) {
         }, {
           safe: true
         }).exec()
+        // and handle this node depending on others
+        .then(function() {
+          return Node.findById(nodeId).exec()
+            .then(function(node) {
+              for (let i = node.dependencies.length - 1; i >= 0; i--) {
+                for (let j = node.dependencies[i].visibleOn.length; j >= 0; j--) {
+                  if (mapId.equals(node.dependencies[i].visibleOn[j])) {
+                    node.dependencies[i].visibleOn.splice(j, 1);
+                    break;
+                  }
+                }
+                if (node.dependencies[i].visibleOn.length === 0) {
+                  //remove dependency that is nowhere visible
+                  node.dependencies.splice(i, 1);
+                  break;
+                }
+              }
+              return node.save();
+            });
+        })
         .then(function() {
           //fifthly, remove parent map (node has been removed from it, so reference is no longer mandatory)
           return Node.findOneAndUpdate({
