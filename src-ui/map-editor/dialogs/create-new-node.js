@@ -285,16 +285,22 @@ export default class NewNodeDialog extends React.Component {
                                     mapId={mapId}
                                     nodeId={nodeId}/>}
     ];
-    let dialogName = 'Add a new, internal component';
+    let componentType = null;
+    if(this.state.type === "INTERNAL"){
+      componentType = "internal";
+    } else if (this.state.type === "EXTERNAL"){
+      componentType = "external";
+    }
+    let dialogName = 'Add a new, ' + componentType + ' component';
     let footer = null;
     if(this.state.currentStep === 1){
-      dialogName = 'Add a new, internal component named \'' +  this.state.name + '\'.';
+      dialogName = 'Add a new, ' + componentType + ' component named \'' +  this.state.name + '\'.';
       footer = (<Modal.Footer>
         <Button type="submit" bsStyle="primary" value="Create" onClick={Actions.submitAddNewNodeDialog.bind(Actions, mapId)}>Create!</Button>
         </Modal.Footer>);
     }
     if(this.state.currentStep === 2){
-      dialogName = 'Reference existing, internal component named \'' +  this.state.name + '\'.';
+      dialogName = 'Reference existing, ' + componentType + ' component named \'' +  this.state.name + '\'.';
     }
 
     return (<Modal show={show} onHide={this._close}>
