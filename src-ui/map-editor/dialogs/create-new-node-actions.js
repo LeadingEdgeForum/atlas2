@@ -60,20 +60,22 @@ export default {
       });
     },
 
-    recordStepChange(mapId, step){
+    recordStepChange(mapId, step, selectedNodeId){
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.NEW_NODE_RECORD_STEP_CHANGE,
           mapId : mapId,
-          step:step
+          step:step,
+          selectedNodeId:selectedNodeId
       });
     },
 
-    referenceExistingNode(mapId, nodeId, dependenciesMode){
+    referenceExistingNode(mapId, nodeId, visibility, dependenciesMode) {
       Dispatcher.dispatch({
-          actionType: ACTION_TYPES.NEW_NODE_REFERENCE_EXISTING_NODE,
-          mapId : mapId,
-          nodeId : nodeId,
-          dependenciesMode : dependenciesMode
+        actionType: ACTION_TYPES.NEW_NODE_REFERENCE_EXISTING_NODE,
+        mapId: mapId,
+        nodeId: nodeId,
+        dependenciesMode: dependenciesMode,
+        visibility: visibility
       });
     }
 

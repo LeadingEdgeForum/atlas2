@@ -63,8 +63,8 @@ class ComponentName extends React.Component{
     return suggestion.name;
   }
 
-  jump(step){
-    Actions.recordStepChange(this.props.mapId, step);
+  jump(step, selectedNodeId){
+    Actions.recordStepChange(this.props.mapId, step, selectedNodeId);
     this.props.jumpToStep(step);
   }
 
@@ -79,7 +79,7 @@ class ComponentName extends React.Component{
       </Button>);
     }
     return (
-      <Button onClick={this.jump.bind(this,2)} bsStyle={bsStyle}>
+      <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle}>
         Reference existing component {suggestion.name}
       </Button>
     );
@@ -145,7 +145,7 @@ class ReusedComponentProperties extends React.Component{
   }
 
   _place(dependenciesMode){
-    Actions.referenceExistingNode(this.props.mapId, this.props.nodeId, dependenciesMode);
+    Actions.referenceExistingNode(this.props.mapId, this.props.nodeId, this.props.visibility, dependenciesMode);
   }
   render(){
     const place0 = this._place.bind(this,0);
@@ -270,6 +270,8 @@ export default class NewNodeDialog extends React.Component {
 
     const nodeId = this.state.nodeId;
 
+    const visibility = (this.state.coords || {}).y;
+
     var steps = [
         {name:'name', component: <ComponentName
                                     name={name}
@@ -283,7 +285,8 @@ export default class NewNodeDialog extends React.Component {
                                     mapId={mapId}/>},
         {name:'name', component: <ReusedComponentProperties
                                     mapId={mapId}
-                                    nodeId={nodeId}/>}
+                                    nodeId={nodeId}
+                                    visibility={visibility}/>}
     ];
     let componentType = null;
     if(this.state.type === "INTERNAL"){

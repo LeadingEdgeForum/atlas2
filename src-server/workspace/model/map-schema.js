@@ -508,7 +508,6 @@ module.exports = function(conn) {
           }
         }).exec()
         .then(function(node) {
-          _this.nodes.push(node._id);
           return _this.save();
         });
     };

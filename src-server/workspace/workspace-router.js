@@ -619,6 +619,36 @@ module.exports = function(authGuardian, mongooseConnection) {
           }, defaultErrorHandler.bind(this, res));
   });
 
+
+  module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/reference', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceId = getId(req.params.workspaceID);
+    var mapId = getId(req.params.mapID);
+    var nodeId = getId(req.params.nodeID);
+    let y = req.body.y;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapId,
+        workspace: workspaceId
+      }).exec()
+      .then(checkAccess.bind(this, req.params.mapID, owner))
+      .then(function(map) {
+        return map.referenceNode(nodeId, /*visibility*/ y, null);
+      })
+      .then(function(map) {
+        return map.defaultPopulate();
+      })
+      .done(function(map) {
+        res.json({
+          map: map
+        });
+        track(owner, 'reference_node', {
+          'map_id': req.params.mapID,
+          'node_id': nodeId,
+        }, req.body);
+      }, defaultErrorHandler.bind(this, res));
+  });
+
   module.router.put('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;

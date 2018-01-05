@@ -74,10 +74,13 @@ export default class NewNodeStore extends Store {
           this.updateParam(action.mapId, action.param, action.value);
           break;
         case ActionTypes.NEW_NODE_RECORD_STEP_CHANGE:
-          this.recordStepChange(action.mapId, action.step);
+          this.recordStepChange(action.mapId, action.step, action.selectedNodeId);
           break;
         case ActionTypes.SUBMIT_ADD_NEW_NODE_DIALOG:
           this.submitAddNewNodeDialog(action.mapId);
+          break;
+        case ActionTypes.NEW_NODE_REFERENCE_EXISTING_NODE:
+          this.submitAddNewNodeDialogEstablishReference(action.mapId, action.nodeId, action.visibility, action.dependenciesMode);
           break;
         default:
           return;
@@ -133,11 +136,12 @@ export default class NewNodeStore extends Store {
     this.emitChange();
   }
 
-  recordStepChange(mapId, step){
+  recordStepChange(mapId, step, selectedNodeId){
     if (mapId !== this.mapId) {
       return;
     }
     this.internalState.currentStep = step;
+    this.internalState.nodeId = selectedNodeId;
     this.emitChange();
   }
 
@@ -199,4 +203,22 @@ export default class NewNodeStore extends Store {
     });
   }
 
+  submitAddNewNodeDialogEstablishReference(mapId, nodeId, visibility, dependenciesMode) {
+    if (mapId !== this.mapId) {
+      return;
+    }
+    console.log(mapId, nodeId, visibility, dependenciesMode);
+    $.ajax({
+      type: 'POST',
+      url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/node/' + nodeId + '/reference',
+      data: {
+        y: visibility
+      },
+      success: function(data) {
+        this.closeNewNodeDialog(mapId);
+        this.singleMapStore.updateMap(mapId, data);
+        this.emitChange();
+      }.bind(this)
+    });
+  }
 }
