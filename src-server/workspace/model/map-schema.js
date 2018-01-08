@@ -490,6 +490,7 @@ module.exports = function(conn) {
     _MapSchema.methods.referenceNode = function(nodeId, visibility, dependencies) {
       const Node = require('./node-schema')(conn);
       const Workspace = require('./workspace-schema')(conn);
+      const WardleyMap = require('./map-schema')(conn);
 
       const _this = this;
       const timeSliceId = _this.timesliceId;
@@ -508,8 +509,16 @@ module.exports = function(conn) {
           }
         }).exec()
         .then(function(node) {
-          _this.nodes.push(nodeId);
-          return _this.save();
+          return WardleyMap.findOneAndUpdate({
+            _id: _this.id
+          }, {
+            $addToSet : {
+              nodes : nodeId
+            }
+          }, {
+            safe: true,
+            new: true
+          }).exec();
         });
     };
 

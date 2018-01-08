@@ -46,6 +46,14 @@ export default class NewNodeStore extends Store {
       this.variantId = variantId;
       this.mapId = mapId;
       this.singleMapStore = singleMapStore;
+
+      /*
+       * For some reason, sometimes, we can get multiple requests to the db
+       * to establish a reference to existing node. Since it causes plenty of issues,
+       * as it is really difficult to enforce on a db level, we want to be sure
+       * that each request is send only once.
+       */
+      this.referenceRequestInProgress = {};
       this.redispatch();
   }
 
@@ -207,7 +215,14 @@ export default class NewNodeStore extends Store {
     if (mapId !== this.mapId) {
       return;
     }
-    console.log(mapId, nodeId, visibility, dependenciesMode);
+    if(!this.referenceRequestInProgress[mapId]){
+      this.referenceRequestInProgress[mapId] = {};
+    }
+    if(this.referenceRequestInProgress[mapId][nodeId] === true){
+      console.log('ignoring reference request as one is in progress');
+    } else {
+      this.referenceRequestInProgress[mapId][nodeId] = true;
+    }
     $.ajax({
       type: 'POST',
       url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/node/' + nodeId + '/reference',
@@ -215,6 +230,7 @@ export default class NewNodeStore extends Store {
         y: visibility
       },
       success: function(data) {
+        this.referenceRequestInProgress[mapId][nodeId] = false;
         this.closeNewNodeDialog(mapId);
         this.singleMapStore.updateMap(mapId, data);
         this.emitChange();
