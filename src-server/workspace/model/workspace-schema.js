@@ -1492,6 +1492,312 @@ module.exports = function(conn) {
       return require('./workspace/workspacemethods.js').findSuggestions(this, Node, this.getTimeSlice(sourceTimeSliceId), mapId, suggestionText);
     };
 
+    /* Tried as I might, I was not able to write this using only db queries */
+    workspaceSchema.methods.assessSubmapImpact = function(nodeIdsToSubmap) {
+      let Node = require('./node-schema')(conn);
+
+      // find out everything that depends on said nodes
+      let nodesThatDependOnFutureSubmap = Node.distinct('_id', {
+          'dependencies.target': {
+            $in: nodeIdsToSubmap
+          },
+          '_id': {
+            $not: {
+              $in: nodeIdsToSubmap
+            }
+          }
+        }).exec()
+        .then(function(idnodes) {
+          return Node.find({
+            _id: {
+              $in: idnodes
+            }
+          }).exec();
+        });
+
+
+
+
+      let nodesThatFutureSubmapDependsOn = Node.distinct('_id', {
+          _id: {
+            $in: nodeIdsToSubmap
+          }
+        }).exec()
+        .then(function(idnodes) {
+          return Node.find({
+            _id: {
+              $in: idnodes
+            }
+          }).exec();
+        })
+        .then(function(nodes) {
+
+          
+        /*
+         * Internal dependencies means situation where a node is not a leaf of the submap,
+         * but it has an external dependency that will not be covered by a map.
+         * In such a case, the dependency will be removed from that node, and added
+         * as a submap dependency. This is, however, a massive ingeretion in
+         * the structure of nodes, so we have to at least identify this upfront,
+         * and show the user.
+         */
+        let outgoingDanglingDependencies = [];
+
+        /*
+         * Leaves dependencies that are naturally transformed into a submap
+         * dependencies. This, however, will have impact on maps containing them,
+         * especially IF those dependencies are not visible on every map.
+         */
+        let outgoingDependencies = [];
+
+        let inSubmapDependencies = [];
+
+        for(let i = 0; i < nodes.length; i++){
+          let analysedNode = nodes[i];
+          let analysedNodeDependencies = analysedNode.dependencies;
+          let tempDanglingDep = {
+            node : analysedNode,
+            deps : []
+          };
+          let tempDep = {
+            node : analysedNode,
+            deps : []
+          };
+          let inSubmapDep = {
+            node : analysedNode,
+            deps: []
+          };
+
+
+          /* first pass - look for internal dependencies.
+           * and store them, they will not be processed anymore,
+           * and we will identify nodes with inmap dependencies */
+          let hasInternalDependencies = false;
+          for(let j = 0; j < analysedNodeDependencies.length; j++){
+            let singleDep = analysedNodeDependencies[j];
+            if(nodeIdsToSubmap.find(getId(singleDep.target).equals.bind(getId(singleDep.target)))){
+              // we have found dependency that will be inside the submap
+              hasInternalDependencies = true;
+              inSubmapDep.deps.push(singleDep);
+            }
+          }
+
+
+          /* second pass - look for dependencies to other nodes,
+           * some of those will be from leaves, some will be originating
+           * from the middle of the chain */
+           for(let j = 0; j < analysedNodeDependencies.length; j++){
+             let singleDep = analysedNodeDependencies[j];
+             // so, the dependency has to be to outside of submap
+             if(!nodeIdsToSubmap.find(getId(singleDep.target).equals.bind(getId(singleDep.target)))){
+               if(hasInternalDependencies){
+                 // has internal depencies (in submap) and external (out submap)
+                 tempDanglingDep.deps.push(singleDep);
+               } else {
+                 // has only out submap dependencies
+                 tempDep.deps.push(singleDep);
+               }
+             }
+           }
+
+           //finally, determine what needs to be shown to the world
+           if(tempDep.deps.length > 0){
+             outgoingDependencies.push(tempDep);
+           }
+           if(tempDanglingDep.deps.length > 0){
+             outgoingDanglingDependencies.push(tempDanglingDep);
+           }
+           if(inSubmapDep.deps.length > 0){
+             inSubmapDependencies.push(inSubmapDep);
+           }
+        }
+        let finalResponse =  {
+          outgoingDependencies : outgoingDependencies,
+          outgoingDanglingDependencies : outgoingDanglingDependencies,
+          inSubmapDependencies : inSubmapDependencies
+        };
+        return finalResponse;
+      });
+
+      return q.allSettled([nodesThatDependOnFutureSubmap, nodesThatFutureSubmapDependsOn]).then(function(result) {
+        let finalAnalysis = result[1].value;
+        finalAnalysis.nodesThatDependOnFutureSubmap = result[0].value;
+        return finalAnalysis;
+      });
+    };
+
+//     workspaceSchema.methods.formASubmap = function(timeSliceId, mapId, params, /*array*/nodeIds, /*array*/ commentsIds) {
+//         var WardleyMap = require('./map-schema')(conn);
+//         var Node = require('./node-schema')(conn);
+//         mapId = getId(mapId);
+//         const newSubmapName = params.submapName;
+//         if(!newSubmapName){
+//           throw new Error('Submap name cannot be empty');
+//         }
+//         const responsiblePerson = params.responsiblePerson;
+//         //iterate and check ids
+//
+//         const _this = this;
+//
+//         // Operate on all maps at once
+//         // Step 1. Form a submap
+//         //   - add nodes to it (easy)
+//         //   - add included deps (easy) (connection, source and target are on the submap)
+//
+//         // replace removed nodes with the submap
+//         // reestablish dependencies in existing maps (!)
+//
+//         //create the submap
+//         let submap = new WardleyMap({
+//             name: newSubmapName,
+//             isSubmap: true,
+//             workspace: getId(_this),
+//             timesliceId: timeSliceId,
+//             archived: false,
+//             responsiblePerson: params.responsiblePerson,
+//             previous : null,
+//             next : []
+//         });
+//
+//         return submap.save()
+//           .then(function(submap) {
+//             return _this.insertMapIdAt(getId(submap)).then(function(workspace) {
+//               return submap;
+//             });
+//           })
+//           .then(function(submap){
+//             let submapNode = new Node({
+//                 name: newSubmapName,
+//                 workspace: getId(_this),
+//                 parentMap: _this,
+//                 type: 'SUBMAP',
+//                 submapID: getId(submap),
+//                 next : [],
+//                 previous : null
+//             });
+//             return submapNode.save().then(function(savedSubmapNode){
+//               return [submap, savedSubmapNode];
+//             });
+//           })
+//           .then(function(/* map and node*/ submapStubs){
+//             return Node.find({
+//               _id : { $in: nodeIds}
+//             }).exec().then(function(arrayOfNodes){
+//
+//             });
+//           });
+//
+// //subnode formation should be done at the end
+//
+//
+//         var promises = [];
+//         promises.push(_this.workspace.insertMapIdAt(submap, _this.timesliceId));
+//         _this.nodes.push(submapNode);
+//
+//         // at this point we have placeholders for the submap and the new node
+//         // all properly plugged in  into the workspace and parent map
+//
+//
+//         // move comments
+//         // iterate over existing comments, and if on the list to transfer, do the transfer
+//         // position is not affected
+//         for (var ii = _this.comments.length - 1; ii > -1; ii--) {
+//             for (var jj = 0; jj < params.listOfCommentsToSubmap.length; jj++) {
+//                 if (params.listOfCommentsToSubmap[jj] === '' + _this.comments[ii]._id) {
+//                     submap.comments.push(_this.comments.splice(ii, 1)[0]);
+//                 }
+//             }
+//         }
+//
+//         // the most wicked part of code
+//         // move nodes and fix connections
+//         var nodesToSave = [];
+//         var transferredNodes = [];
+//
+//         for (var i = _this.nodes.length - 1; i >= 0; i--) {
+//             var index = params.listOfNodesToSubmap.indexOf('' + _this.nodes[i]._id);
+//             if (index === -1) { // node not on the list to transfer
+//                 var notTransferredNode = _this.nodes[i];
+//                 // if a node from the parent map depends on a node just transfered to the submap
+//                 // it is necessary to replace that dependency
+//                 for (var j = notTransferredNode.outboundDependencies.length - 1; j >= 0; j--) {
+//                     if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.outboundDependencies[j]) > -1) {
+//                         notTransferredNode.outboundDependencies.set(j, submapNode);
+//                         // transfer the info about the connection
+//
+//                         notTransferredNode.moveDependencyData(notTransferredNode.outboundDependencies[j], submapNodeID);
+//
+//                         nodesToSave.push(notTransferredNode);
+//                     }
+//                 }
+//
+//                 // if a transferred node depends on non-transfered
+//                 // make the submap node depend on non-transfered
+//                 for (var jjj = notTransferredNode.inboundDependencies.length - 1; jjj >= 0; jjj--) {
+//                     if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.inboundDependencies[jjj]) > -1) {
+//                         notTransferredNode.inboundDependencies.set(jjj, submapNode);
+//
+//                         // transfer the info about the connection
+//                         notTransferredNode.moveDependencyData(notTransferredNode.inboundDependencies[jjj], submapNodeID);
+//
+//                         nodesToSave.push(notTransferredNode);
+//                     }
+//                 }
+//             } else {
+//
+//                 var transferredNode = _this.nodes.splice(i, 1)[0];
+//                 transferredNode.parentMap = submap._id; // transfer the node
+//                 submap.nodes.push(transferredNode);
+//                 transferredNodes.push(transferredNode);
+//
+//                 // if a transfered node depends on a non-transferred node
+//                 for (var k = transferredNode.outboundDependencies.length - 1; k >= 0; k--) {
+//                     if (params.listOfNodesToSubmap.indexOf('' + transferredNode.outboundDependencies[k]) === -1) {
+//                         var dependencyAlreadyEstablished = false;
+//                         submapNode.outboundDependencies.push(transferredNode.outboundDependencies[k]); // the submap node will replace the transfered node
+//
+//                         // transfer the info about the connection, both must be saved later
+//                         submapNode.stealDependencyData(transferredNode, transferredNode.outboundDependencies[k]);
+//
+//                         transferredNode.outboundDependencies.splice(k, 1); // and the node will loose that connection
+//                     }
+//                 }
+//
+//                 // if a transfered node is required by non-transfered node
+//                 for (var kk = transferredNode.inboundDependencies.length - 1; kk >= 0; kk--) {
+//                     if (params.listOfNodesToSubmap.indexOf('' + transferredNode.inboundDependencies[kk]) === -1) {
+//                         submapNode.inboundDependencies.push(transferredNode.inboundDependencies[kk]);
+//
+//                         // steal the info about the connection, both must be saved later
+//                         submapNode.stealDependencyData(transferredNode, transferredNode.inboundDependencies[kk]);
+//
+//                         transferredNode.inboundDependencies.splice(kk, 1);
+//                     }
+//                 }
+//             }
+//         }
+//
+//         // calculate position of the submap node
+//         submapNode.x = params.coords ? params.coords.x : calculateMean(transferredNodes, 'x');
+//         submapNode.y = params.coords ? params.coords.y : calculateMean(transferredNodes, 'y');
+//
+//         removeDuplicatesDependencies(nodesToSave);
+//
+//         var totalNodesToSave = nodesToSave.concat(transferredNodes);
+//
+//         for (var z = 0; z < totalNodesToSave.length; z++) {
+//             promises.push(totalNodesToSave[z].save());
+//         }
+//
+//         removeDuplicatesDependencies([submapNode]);
+//         promises.push(submapNode.save());
+//         promises.push(submap.save());
+//         promises.push(_this.save());
+//         return q.allSettled(promises).then(function(results){
+//           return results[results.length-1].value;
+//         });
+//     };
+
     workspace[conn.name] = conn.model('Workspace', workspaceSchema);
     return workspace[conn.name];
 };
