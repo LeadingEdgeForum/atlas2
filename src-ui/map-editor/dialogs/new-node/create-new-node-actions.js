@@ -1,6 +1,6 @@
 /*jshint esversion: 6 */
 
-import Dispatcher from '../../dispatcher';
+import Dispatcher from '../../../dispatcher';
 import Constants from './create-new-node-constants';
 
 const ACTION_TYPES = Constants.ACTION_TYPES;

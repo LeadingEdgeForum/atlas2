@@ -18,8 +18,8 @@ import {
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
-import NewNodeDialog from './dialogs/create-new-node';
-import NewNodeStore from './dialogs/create-new-node-store';
+import NewNodeDialog from './dialogs/new-node/create-new-node';
+import NewNodeStore from './dialogs/new-node/create-new-node-store';
 import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
 import EditUserDialog from './dialogs/edit-user-dialog';

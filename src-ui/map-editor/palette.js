@@ -9,7 +9,7 @@ import {
   Button
 } from 'react-bootstrap';
 import SingleMapActions from './single-map-actions';
-import NewNodeActions from './dialogs/create-new-node-actions';
+import NewNodeActions from './dialogs/new-node/create-new-node-actions';
 import CanvasActions from './canvas-actions';
 import Constants from '../constants';
 import {

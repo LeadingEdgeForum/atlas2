@@ -10,8 +10,8 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 
-import Store from '../../store.js';
-import Dispatcher from '../../dispatcher';
+import Store from '../../../store.js';
+import Dispatcher from '../../../dispatcher';
 import Constants from './create-new-node-constants';
 import $ from 'jquery';
 
