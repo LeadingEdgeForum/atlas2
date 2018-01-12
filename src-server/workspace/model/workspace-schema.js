@@ -1531,8 +1531,7 @@ module.exports = function(conn) {
           }).exec();
         })
         .then(function(nodes) {
-
-          
+        // console.log(nodes);
         /*
          * Internal dependencies means situation where a node is not a leaf of the submap,
          * but it has an external dependency that will not be covered by a map.
@@ -1554,6 +1553,7 @@ module.exports = function(conn) {
 
         for(let i = 0; i < nodes.length; i++){
           let analysedNode = nodes[i];
+          // console.log(analysedNode.name);
           let analysedNodeDependencies = analysedNode.dependencies;
           let tempDanglingDep = {
             node : analysedNode,
@@ -1575,6 +1575,7 @@ module.exports = function(conn) {
           let hasInternalDependencies = false;
           for(let j = 0; j < analysedNodeDependencies.length; j++){
             let singleDep = analysedNodeDependencies[j];
+            // console.log(singleDep);
             if(nodeIdsToSubmap.find(getId(singleDep.target).equals.bind(getId(singleDep.target)))){
               // we have found dependency that will be inside the submap
               hasInternalDependencies = true;
