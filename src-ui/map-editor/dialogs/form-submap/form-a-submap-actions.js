@@ -46,4 +46,11 @@ export default {
       });
     },
 
+    nextDialogStep(mapId){
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.FORM_A_SUBMAP_DIALOG_NEXT_STEP,
+          mapId : mapId
+      });
+    }
+
 };

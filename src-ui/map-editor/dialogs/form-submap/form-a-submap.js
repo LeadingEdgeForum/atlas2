@@ -205,7 +205,7 @@ export default class FormASubmapDialog extends React.Component {
   }
 
   _continue(){
-    this.setState({currentStep:1});
+    Actions.nextDialogStep(this.state.mapId);
   }
 
   render(){
@@ -230,7 +230,7 @@ export default class FormASubmapDialog extends React.Component {
 
     let impact = this.state.impact;
     let nodes = this.state.nodes;
-    let currentStep = this.state.currentStep ? this.state.currentStep : 0;
+    let currentStep = this.state.currentStep;
     let currentComponent = currentStep === 0 ?
             (<ImpactAnalysis impact={impact} nodes={nodes} mapId={this.state.mapId}/>) :
             (<NameInput mapId={this.state.mapId} name={this.state.name} responsiblePerson={this.state.responsiblePerson}/>);

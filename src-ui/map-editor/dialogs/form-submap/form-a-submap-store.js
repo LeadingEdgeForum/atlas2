@@ -35,6 +35,7 @@ export default class FormASubmapStore extends Store {
         loading :false,
         nodes : [],
         comments : [],
+        currentStep : 0
       };
       this.workspaceId = workspaceId;
       this.variantId = variantId;
@@ -51,8 +52,8 @@ export default class FormASubmapStore extends Store {
       this.redispatch();
   }
 
-  redispatch(){
-    if(this.dispatchToken){
+  redispatch() {
+    if (this.dispatchToken) {
       return;
     }
     this.dispatchToken = Dispatcher.register(action => {
@@ -68,6 +69,12 @@ export default class FormASubmapStore extends Store {
           break;
         case ActionTypes.FORM_A_SUBMAP_HANDLE_DIALOG_CHANGE:
           this.updateParam(action.mapId, action.param, action.value);
+          break;
+        case ActionTypes.FORM_A_SUBMAP_DIALOG_NEXT_STEP:
+          if (action.mapId === this.mapId) {
+            this.internalState.currentStep++;
+            this.emitChange();
+          }
           break;
         default:
           return;
