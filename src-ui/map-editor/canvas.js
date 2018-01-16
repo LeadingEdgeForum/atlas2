@@ -365,7 +365,7 @@ export default class MapCanvas extends React.Component {
 
     // and, at this point, we have only connections that should exist but do not
     for(let i = 0; i < connectionsWeShouldHave.length; i++){
-      let connectionToCreate = connectionsWeShouldHave[0];
+      let connectionToCreate = connectionsWeShouldHave[i];
       let createdConnection = jsPlumb.connect({
           source: connectionToCreate.sourceId,
           target: connectionToCreate.targetId,
