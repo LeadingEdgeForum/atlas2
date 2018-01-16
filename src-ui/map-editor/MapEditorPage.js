@@ -69,6 +69,7 @@ export default class MapEditorPage extends React.Component {
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
     this.getNewNodeStore = this.getNewNodeStore.bind(this);
     this.getFormASubmapStore = this.getFormASubmapStore.bind(this);
+    this.storesToUndispatch = [];
   }
 
   getNewNodeStore(workspaceId, variantId, mapId) {
@@ -80,6 +81,7 @@ export default class MapEditorPage extends React.Component {
     }
     this.newNodeStores[mapId].workspaceId = workspaceId;
     this.newNodeStores[mapId].variantId = variantId;
+    this.storesToUndispatch.push(this.newNodeStores[mapId]);
     return this.newNodeStores[mapId];
   }
 
@@ -92,6 +94,7 @@ export default class MapEditorPage extends React.Component {
     }
     this.formASubmapStores[mapId].workspaceId = workspaceId;
     this.formASubmapStores[mapId].variantId = variantId;
+    this.storesToUndispatch.push(this.formASubmapStores[mapId]);
     return this.formASubmapStores[mapId];
   }
 
@@ -104,6 +107,9 @@ export default class MapEditorPage extends React.Component {
   }
 
   componentWillUnmount() {
+    for(let i = 0; i < this.storesToUndispatch.length; i++){
+      this.storesToUndispatch[i].undispatch();
+    }
     this.props.singleMapStore.removeChangeListener(this._onChange);
     this.props.singleMapStore.io.emit('map', {
       type: 'unsub',
