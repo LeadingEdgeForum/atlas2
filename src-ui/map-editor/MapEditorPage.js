@@ -20,6 +20,8 @@ import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import EditMapDialog from './dialogs/edit-map-dialog';
 import NewNodeDialog from './dialogs/new-node/create-new-node';
 import NewNodeStore from './dialogs/new-node/create-new-node-store';
+import FormASubmapDialog from './dialogs/form-submap/form-a-submap';
+import FormASubmapStore from './dialogs/form-submap/form-a-submap-store';
 import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
 import EditUserDialog from './dialogs/edit-user-dialog';
@@ -66,6 +68,7 @@ export default class MapEditorPage extends React.Component {
     this.state.diff = this.props.singleMapStore.getDiff();
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
     this.getNewNodeStore = this.getNewNodeStore.bind(this);
+    this.getFormASubmapStore = this.getFormASubmapStore.bind(this);
   }
 
   getNewNodeStore(workspaceId, variantId, mapId) {
@@ -78,6 +81,18 @@ export default class MapEditorPage extends React.Component {
     this.newNodeStores[mapId].workspaceId = workspaceId;
     this.newNodeStores[mapId].variantId = variantId;
     return this.newNodeStores[mapId];
+  }
+
+  getFormASubmapStore(workspaceId, variantId, mapId){
+    if (!this.formASubmapStores) {
+      this.formASubmapStores = {};
+    }
+    if (!this.formASubmapStores[mapId]) {
+      this.formASubmapStores[mapId] = new FormASubmapStore(workspaceId, variantId, mapId, this.props.singleMapStore);
+    }
+    this.formASubmapStores[mapId].workspaceId = workspaceId;
+    this.formASubmapStores[mapId].variantId = variantId;
+    return this.formASubmapStores[mapId];
   }
 
   componentDidMount() {
@@ -267,6 +282,7 @@ export default class MapEditorPage extends React.Component {
     const nodes = singleMapStore.getMap().map.nodes;
     const variantId = singleMapStore.getMap().map.timesliceId;
     const newNodeStore = this.getNewNodeStore(workspaceID, variantId, mapID);
+    const formASubmapStore = this.getFormASubmapStore(workspaceID, variantId, mapID);
     const diff = this.state.diff;
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
@@ -328,6 +344,7 @@ export default class MapEditorPage extends React.Component {
           </Row>
           <EditMapDialog singleMapStore={singleMapStore}/>
           <NewNodeDialog store={newNodeStore}/>
+          <FormASubmapDialog store={formASubmapStore}/>
           <NewGenericCommentDialog singleMapStore={singleMapStore}/>
           <CreateNewSubmapDialog singleMapStore={singleMapStore}/>
           <EditGenericCommentDialog singleMapStore={singleMapStore}/>

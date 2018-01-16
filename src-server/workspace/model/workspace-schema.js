@@ -1492,6 +1492,10 @@ module.exports = function(conn) {
       return require('./workspace/workspacemethods.js').findSuggestions(this, Node, this.getTimeSlice(sourceTimeSliceId), mapId, suggestionText);
     };
 
+
+
+
+
     /* Tried as I might, I was not able to write this using only db queries */
     workspaceSchema.methods.assessSubmapImpact = function(nodeIdsToSubmap) {
       let Node = require('./node-schema')(conn);

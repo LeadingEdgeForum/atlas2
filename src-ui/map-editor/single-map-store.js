@@ -152,21 +152,21 @@ export default class SingleWorkspaceStore extends Store {
             }.bind(this)
           });
           break;
-        case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
-          this.addSubmapDialog.open = true;
-          this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
-          this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
-          this.emitChange();
-          break;
-        case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
-          this.addSubmapDialog = {
-            open: false
-          };
-          this.emitChange();
-          break;
-        case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
-          this.createSubmap(action.data);
-          break;
+        // case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
+        //   this.addSubmapDialog.open = true;
+        //   this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
+        //   this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
+        //   this.emitChange();
+        //   break;
+        // case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
+        //   this.addSubmapDialog = {
+        //     open: false
+        //   };
+        //   this.emitChange();
+        //   break;
+        // case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
+        //   this.createSubmap(action.data);
+        //   break;
         case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
           this.addReferenceToExistingSubmap(action.refID, action.coords);
           break;
@@ -821,34 +821,34 @@ export default class SingleWorkspaceStore extends Store {
     });
   }
 
-  createSubmap(data){
-    $.ajax({
-          type: 'PUT',
-          url: '/api/map/' + this.getMapId() + '/submap',
-          dataType: 'json',
-          data : {
-            name : data.name,
-            responsiblePerson : data.responsiblePerson,
-            listOfNodesToSubmap : data.listOfNodesToSubmap,
-            listOfCommentsToSubmap : data.listOfCommentsToSubmap,
-            coords: data.coords
-          },
-          success: function(data2) {
-            this.map = data2;
-            this.addSubmapDialog = {open:false};
-            this.diff = null;
-            this.emitChange();
-            this.io.emit('map', {
-              type: 'change',
-              id: this.getMapId()
-            });
-            this.io.emit('workspace', {
-              type: 'change',
-              id: this.getWorkspaceId()
-            });
-          }.bind(this)
-        });
-  }
+  // createSubmap(data){
+  //   $.ajax({
+  //         type: 'PUT',
+  //         url: '/api/map/' + this.getMapId() + '/submap',
+  //         dataType: 'json',
+  //         data : {
+  //           name : data.name,
+  //           responsiblePerson : data.responsiblePerson,
+  //           listOfNodesToSubmap : data.listOfNodesToSubmap,
+  //           listOfCommentsToSubmap : data.listOfCommentsToSubmap,
+  //           coords: data.coords
+  //         },
+  //         success: function(data2) {
+  //           this.map = data2;
+  //           this.addSubmapDialog = {open:false};
+  //           this.diff = null;
+  //           this.emitChange();
+  //           this.io.emit('map', {
+  //             type: 'change',
+  //             id: this.getMapId()
+  //           });
+  //           this.io.emit('workspace', {
+  //             type: 'change',
+  //             id: this.getWorkspaceId()
+  //           });
+  //         }.bind(this)
+  //       });
+  // }
 
   updateComment(data){
     var payload = {};

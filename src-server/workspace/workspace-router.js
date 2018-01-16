@@ -404,6 +404,30 @@ module.exports = function(authGuardian, mongooseConnection) {
           }, defaultErrorHandler.bind(this, res));
   });
 
+  module.router.get('/workspace/:workspaceID/submapImpact', authGuardian.authenticationRequired, function(req, res) {
+      let listOfNodesToSubmap = req.query.nodes ? req.query.nodes : [];
+
+      let owner = getUserIdFromReq(req);
+
+      Workspace
+        .findOne({
+          owner: owner,
+          _id: req.params.workspaceID,
+        }).exec()
+        .then(function(workspace){
+          return workspace.assessSubmapImpact(listOfNodesToSubmap);
+        }).done(function(impact) {
+            res.json({
+                impact: impact
+            });
+            // track(owner,'submap_formed',{
+            //   'id' : req.params.mapID,
+            // }, {
+            //   'components' : listOfNodesToSubmap.length,
+            // });
+        }, defaultErrorHandler.bind(this, res));
+  });
+
   module.router.put('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       WardleyMap.findOne({

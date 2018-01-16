@@ -4,6 +4,7 @@ var React = require('react');
 var _ = require('underscore');
 var Constants = require('../constants');
 import Actions from './single-map-actions';
+import SubmapActions from './dialogs/form-submap/form-a-submap-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
@@ -168,11 +169,11 @@ var MapComponent = createReactClass({
       Actions.openEditNodeDialog(mapID, nodeID);
     }
     if (this.state.hover === "group") {
-      var mapID = this.props.mapID; //jshint ignore:line
-      Actions.openCreateSubmapDialog({
-        mapID:mapID,
-        nodes:this.props.canvasStore.getCanvasState().currentlySelectedNodes,
-        comments: this.props.canvasStore.getCanvasState().currentlySelectedComments});
+      SubmapActions.openFormASubmapDialog(
+        this.props.workspaceID,
+        this.props.mapID,
+        this.props.canvasStore.getCanvasState().currentlySelectedNodes,
+        this.props.canvasStore.getCanvasState().currentlySelectedComments);
     }
     if (this.state.hover === "info") {
       var mapID = this.props.mapID; //jshint ignore:line

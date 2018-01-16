@@ -3,6 +3,7 @@
 var React = require('react');
 var _ = require('underscore');
 import Actions from './single-map-actions';
+import SubmapActions from './dialogs/form-submap/form-a-submap-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
@@ -60,16 +61,16 @@ var Comment = createReactClass({
     if (this.state.hover === "pencil") {
       var id = this.props.id; //jshint ignore:line
       var mapID = this.props.mapID; //jshint ignore:line
-      var workspaceID = this.props.workspaceID;
+      var workspaceID = this.props.workspaceID;//jshint ignore:line
       Actions.openEditCommentDialog(workspaceID, mapID, id, this.props.comment.text);
       return;
     }
     if (this.state.hover === "group") {
-      var mapID = this.props.mapID; //jshint ignore:line
-      Actions.openCreateSubmapDialog({
-        mapID:mapID,
-        nodes:this.props.canvasStore.getCanvasState().currentlySelectedNodes,
-        comments: this.props.canvasStore.getCanvasState().currentlySelectedComments});
+      SubmapActions.openFormASubmapDialog(
+        this.props.workspaceID,
+        this.props.mapID,
+        this.props.canvasStore.getCanvasState().currentlySelectedNodes,
+        this.props.canvasStore.getCanvasState().currentlySelectedComments);
     }
 
     if((event.nativeEvent.ctrlKey || event.nativeEvent.altKey)){
