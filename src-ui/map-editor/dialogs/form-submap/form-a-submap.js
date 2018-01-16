@@ -30,7 +30,7 @@ import {
 import Autosuggest from 'react-autosuggest';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import Actions from './form-a-submap-actions';
-
+import MapLink from '../../../fixit/maplink';
 
 class ImpactAnalysis extends React.Component {
   constructor(props) {
@@ -44,25 +44,54 @@ class ImpactAnalysis extends React.Component {
     Actions.referenceExistingNode(this.props.mapId, this.props.nodeId, this.props.visibility, dependenciesMode);
   }
   _calculateResultMessage(impact){
-    /* Analyse what will require that submap */
+
     let messages = [];
+
+    /* Analyse what will require that submap */
     if(impact.nodesThatDependOnFutureSubmap.length === 0){
+
+      // nothing requires, hurray.
       messages.push(<ListGroupItem>Nothing will depend on this submap.</ListGroupItem>);
+
     } else {
+
+      // let's iterate over all nodes that will depend on a newly formed submap
+      // and get their parent maps. The list of unique maps is the list of affected
+      // maps, and the user should inspect them all.
       let affectedMaps = [];
       for(let i = 0; i < impact.nodesThatDependOnFutureSubmap.length; i++){
         for(let j = 0; j < impact.nodesThatDependOnFutureSubmap[i].parentMap.length;  j++) {
-          if(!affectedMaps.includes[impact.nodesThatDependOnFutureSubmap[i].parentMap[j]]){
-            affectedMaps.push(impact.nodesThatDependOnFutureSubmap[i].parentMap[j]);
+
+          // we are interested in maps that were not previously included and are not current map
+          let analysedMap = impact.nodesThatDependOnFutureSubmap[i].parentMap[j];
+          if(!(affectedMaps.includes(analysedMap) || (analysedMap  === this.props.mapId))){
+            affectedMaps.push(analysedMap);
           }
         }
       }
-      let message = "";
-      for(let i = 0; i < affectedMaps.length - 1; i++){
-        message += ' ' + affectedMaps[i] + ',';
+
+      if(!affectedMaps.length){
+
+        // this means only current map is affected.
+        messages.push(<ListGroupItem>Only this map will depend on a submap.</ListGroupItem>);
+
+
+      } else {
+
+        // once we have the list of maps, let's construct a message
+        let message = [];
+        for(let i = 0; i < affectedMaps.length - 1; i++){
+          message.push(" ");
+          message.push(<MapLink mapID={affectedMaps[i]}/>);
+          message.push(", ");
+        }
+
+        message.push(<MapLink mapID={affectedMaps[affectedMaps.length - 1]}/>);
+
+
+        messages.push(<ListGroupItem>This submap will also appear on following map(s) {message}.</ListGroupItem>);
       }
-      message += affectedMaps[affectedMaps.length - 1];
-      messages.push(<ListGroupItem>Map(s) {message} will depend on this submap.</ListGroupItem>);
+
     }
 
     /* What will be sumbap clean dependencies */
@@ -85,7 +114,7 @@ class ImpactAnalysis extends React.Component {
       messages.push(<ListGroupItem>The submap will depends on following nodes: {message}.</ListGroupItem>);
     }
 
-
+    // display messages
     return (<ListGroup>{messages}</ListGroup>);
   }
   render() {
@@ -203,7 +232,7 @@ export default class FormASubmapDialog extends React.Component {
     let nodes = this.state.nodes;
     let currentStep = this.state.currentStep ? this.state.currentStep : 0;
     let currentComponent = currentStep === 0 ?
-            (<ImpactAnalysis impact={impact} nodes={nodes}/>) :
+            (<ImpactAnalysis impact={impact} nodes={nodes} mapId={this.state.mapId}/>) :
             (<NameInput mapId={this.state.mapId} name={this.state.name} responsiblePerson={this.state.responsiblePerson}/>);
     let footerButton = currentStep ? (<Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create</Button>)
     : (<Button type="submit" bsStyle="primary" value="Continue" onClick={this._continue}>Continue...</Button>);
