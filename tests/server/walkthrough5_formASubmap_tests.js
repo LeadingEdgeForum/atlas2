@@ -161,11 +161,6 @@ describe('Verify forming a submap - impact analysis', function() {
     // but prepare a second map with some nodes used
     return WardleyMap.findById(getId(maps[1])).exec()
       .then(function(map){
-        return map.addNode("map-1-node-9", 0.7, 0.1, "INTERNAL", getId(currentWorkspace), "description", 0, owner).then(function(res){
-          return WardleyMap.findById(getId(map)).exec();
-        });
-      })
-      .then(function(map){
         return map.referenceNode(getId(maps[0].nodes[1]), 0.3, null).then(function(res){
           return WardleyMap.findById(getId(map)).exec();
         });
@@ -176,22 +171,28 @@ describe('Verify forming a submap - impact analysis', function() {
         });
       })
       .then(function(map){
+        return map.addNode("map-1-node-9", 0.7, 0.1, "INTERNAL", getId(currentWorkspace), "description", 0, owner).then(function(res){
+          return WardleyMap.findById(getId(map)).populate('nodes').exec();
+        });
+      })
+      .then(function(map){
         return map.referenceNode(getId(maps[0].nodes[4]), 0.3, null).then(function(res){
           return WardleyMap.findById(getId(map)).populate('nodes').exec();
         });
       })
       .then(function(map){
-        return map.nodes[0].makeDependencyTo(getId(map), getId(map.nodes[1])).then(function(res){
+        // at this moment, populated elements are 1-4-7-9
+        return map.nodes[0].makeDependencyTo(getId(map), getId(map.nodes[2 /*this is actually node-7*/])).then(function(res){
           return WardleyMap.findById(getId(map)).populate('nodes').exec();
         });
       })
       .then(function(map){
-        return map.nodes[1].makeDependencyTo(getId(map), getId(map.nodes[2])).then(function(res){
+        return map.nodes[2].makeDependencyTo(getId(map), getId(map.nodes[3]/*this is actually node-9*/)).then(function(res){
           return WardleyMap.findById(getId(map)).populate('nodes').exec();
         });
       })
       .then(function(map){
-        return map.nodes[2].makeDependencyTo(getId(map), getId(map.nodes[3])).then(function(res){
+        return map.nodes[3].makeDependencyTo(getId(map), getId(map.nodes[1])).then(function(res){
           return WardleyMap.findById(getId(map)).populate('nodes').exec();
         });
       })

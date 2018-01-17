@@ -71,10 +71,20 @@ describe('Verify deleting a map', function() {
               return maps[0]
                 .addNode("am-1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner)
                 .then(function() {
-                  return maps[0].addNode("am-2", 0.6, 0.6, "INTERNAL", currentWorkspace._id, "description", 0, owner);
+                  return maps[0].addNode("am-2", 0.6, 0.6, "INTERNAL", currentWorkspace._id, "description", 0, owner)
+                  .then(function(map) {
+                      return map.withNodes().then(function() {
+                            maps[0] = map;
+                      });
+                  });
                 })
                 .then(function() {
-                  return maps[1].addNode("am-3", 0.7, 0.7, "INTERNAL", currentWorkspace._id, "description", 0, owner);
+                  return maps[1].addNode("am-3", 0.7, 0.7, "INTERNAL", currentWorkspace._id, "description", 0, owner)
+                  .then(function(map) {
+                      return map.withNodes().then(function() {
+                            maps[1] = map;
+                      });
+                  });
                 });
             })
             .done(function(r,e){

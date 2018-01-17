@@ -68,7 +68,9 @@ describe('Verify connections work as expected', function() {
               return q.allSettled(
                 [
                   maps[0].addNode("am-1", 0.5, 0.5, "INTERNAL", currentWorkspace._id, "description", 0, owner),
-                  maps[0].addNode("am-2", 0.6, 0.6, "INTERNAL", currentWorkspace._id, "description", 0, owner),
+                  maps[0].addNode("am-2", 0.6, 0.6, "INTERNAL", currentWorkspace._id, "description", 0, owner).then(function(map){
+                    return map.withNodes();
+                  })
                 ]
               );
             })

@@ -23,6 +23,7 @@ var owner = "testy@mactest.test";
 var mongoose = require('mongoose');
 mongoose.Promise = q.Promise;
 var getTestDB = require('../../src-server/mongodb-helper').getTestDB;
+var getId = require('../../src-server/util/util.js').getId;
 var mongooseConnection = null;
 
 var WardleyMap = null;
@@ -101,7 +102,7 @@ describe('Create a node, store it on workspace and map level', function() {
     }).then(function(secondMap) {
       secondCurrentMap = secondMap;
       // one node referenced twice
-      should(secondMap.nodes[0].equals(currentMap.nodes[0]));
+      should(getId(secondMap.nodes[0]).equals(getId(currentMap.nodes[0])));
       return Node.findById(currentMap.nodes[0]._id).exec();
     }).then(function(node) {
       should(node.parentMap.length).be.equal(2); //the node is used twice
@@ -126,8 +127,7 @@ describe('Create a node, store it on workspace and map level', function() {
     currentMap.changeNode(newName, 0.3, null, 200, "EXTERNAL", currentMap.nodes[0]._id, "description1", 1, owner)
       .then(function() {
 
-        return Node.findById(currentMap.nodes[0]._id).then(function(node) {
-
+        return Node.findById(getId(currentMap.nodes[0])).then(function(node) {
           should(node.name).be.equal(newName);
 
 
@@ -229,20 +229,20 @@ describe('Create a node, store it on workspace and map level', function() {
         });
       })
       .then(function() { // check the map
-        return WardleyMap.findById(currentMap._id).then(function(currentMap) {
+        return WardleyMap.findById(currentMap._id).populate('nodes').then(function(currentMap) {
           should(currentMap.nodes.length).be.equal(0); //the node is used twice
         });
       })
       .then(function() { // check the other map
-        return WardleyMap.findById(secondCurrentMap._id).then(function(secondCurrentMap) {
+        return WardleyMap.findById(secondCurrentMap._id).populate('nodes').then(function(secondCurrentMap) {
           should(secondCurrentMap.nodes.length).be.equal(1); //the node is used twice
-          should(secondCurrentMap.nodes).containEql(currentNodeId);
+          should(secondCurrentMap.nodes.map(item=>getId(item))).containEql(currentNodeId);
         });
       })
       .then(function() { // check workspace
         return Workspace.findById(secondCurrentMap.workspace).then(function(workspace) {
           should(workspace.timeline[0].nodes.length).be.equal(1); //the node is used twice
-          should(workspace.timeline[0].nodes).containEql(currentNodeId);
+          should(workspace.timeline[0].nodes.map(item=>getId(item))).containEql(currentNodeId);
         });
       })
       .done(function(v, e) {
@@ -258,17 +258,17 @@ describe('Create a node, store it on workspace and map level', function() {
         });
       })
       .then(function() { // check the map
-        return WardleyMap.findById(currentMap._id).then(function(currentMap) {
+        return WardleyMap.findById(currentMap._id).populate('nodes').then(function(currentMap) {
           should(currentMap.nodes.length).be.equal(0); //no nodes
         });
       })
       .then(function() { // check the other map
-        return WardleyMap.findById(secondCurrentMap._id).then(function(secondCurrentMap) {
+        return WardleyMap.findById(secondCurrentMap._id).populate('nodes').then(function(secondCurrentMap) {
           should(secondCurrentMap.nodes.length).be.equal(0); //no nodes
         });
       })
       .then(function() { // check workspace
-        return Workspace.findById(secondCurrentMap.workspace).then(function(workspace) {
+        return Workspace.findById(secondCurrentMap.workspace).populate('nodes').then(function(workspace) {
           should(workspace.timeline[0].nodes.length).be.equal(0); //no nodes
         });
       })

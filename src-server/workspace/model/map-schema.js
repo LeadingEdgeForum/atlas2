@@ -79,10 +79,10 @@ module.exports = function(conn) {
         next : [Schema.Types.ObjectId],
         previous : Schema.Types.ObjectId,
         timesliceId : Schema.Types.ObjectId,
-        nodes: [{
-            type: Schema.Types.ObjectId,
-            ref: 'Node'
-        }],
+        // nodes: [{
+        //     type: Schema.Types.ObjectId,
+        //     ref: 'Node'
+        // }],
         users : [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
@@ -109,7 +109,24 @@ module.exports = function(conn) {
           type: Schema.Types.Number,
           default : 2
         }
+    }, {
+      toObject: {
+        virtuals: true
+      },
+      toJSON: {
+        virtuals: true
+      }
     });
+
+    _MapSchema.virtual('nodes', {
+      ref : 'Node',
+      localField : '_id',
+      foreignField : 'parentMap'
+    });
+
+    _MapSchema.methods.withNodes = function() {
+        return this.populate('nodes').execPopulate();
+    };
 
 
     _MapSchema.methods.makeComment = function(data) {
@@ -480,10 +497,6 @@ module.exports = function(conn) {
                 .then(function(res) {
                   return node;
                 });
-            })
-            .then(function(node) {
-                _this.nodes.push(node._id);
-                return _this.save();
             });
     };
 
@@ -507,18 +520,12 @@ module.exports = function(conn) {
             },
             parentMap: _this._id
           }
-        }).exec()
-        .then(function(node) {
-          return WardleyMap.findOneAndUpdate({
-            _id: _this.id
-          }, {
-            $addToSet : {
-              nodes : nodeId
-            }
-          }, {
+        }, {
             safe: true,
             new: true
-          }).exec();
+          }).exec()
+        .then(function(node) {
+            return WardleyMap.findById(getId(_this)).populate('nodes').exec();
         });
     };
 
@@ -620,14 +627,6 @@ module.exports = function(conn) {
         }
       }
 
-      // secondly, remove the node from the list of nodes of the current map
-      for (let i = 0; i < this.nodes.length; i++) {
-        if (getId(this.nodes[i]).equals(nodeId)) {
-          this.nodes.splice(i, 1);
-          break;
-        }
-      }
-
       // fourthly, node prev & next TODO: think about how it should be handled
 
       // thirdly, handle other nodes depending on this one (if there are any)
@@ -712,7 +711,9 @@ module.exports = function(conn) {
           }).exec();
         }).then(function(modifiedWorkspace) {
           //save the map
-          return _this.save();
+          return _this.save().then(function(map){
+            return map.populate('nodes').execPopulate();
+          });
         });
     };
 
