@@ -66,6 +66,8 @@ export default class SingleWorkspaceStore extends Store {
       this.updateNodeObjects = [];
       this.updateUserObjects = [];
 
+      this.setMaxListeners(15);
+
       this.io = require('socket.io-client')();
 
       this.io.on('mapchange', this.reloadOnSocketMessage);

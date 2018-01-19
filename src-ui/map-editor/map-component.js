@@ -309,22 +309,22 @@ var MapComponent = createReactClass({
     }
     var menuItems = [];
     if(this.props.canvasStore.shouldShow("pencil")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" key="pencil" style={pencilStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("remove")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" key="remove" style={removeStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("link")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" key="link" style={linkStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("move")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" key="move" style={moveStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("action")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" key="arrow-right" style={actionStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("group")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" key="resize-small" style={groupStyle}></Glyphicon>);
     }
     let href = "/map/" + this.props.node.submapID;
     if(this.props.node.type === Constants.SUBMAP){

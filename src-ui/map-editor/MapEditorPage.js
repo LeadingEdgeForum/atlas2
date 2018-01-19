@@ -223,15 +223,15 @@ export default class MapEditorPage extends React.Component {
     const variantSwitch = this.prepareVariantsSwitch(variants);
 
     return [
-      <NavItem eventKey={1} href="#" key="1" onClick={this.openEditMapDialog.bind(this)}>
+      <NavItem eventKey={1} href="#" key="openEditMapDialog" onClick={this.openEditMapDialog.bind(this)}>
           <Glyphicon glyph="edit"></Glyphicon>
           &nbsp;Edit map info
       </NavItem>,
-      <NavItem eventKey={2} key="2" href="#" download={tempName} onClick={this.download.bind(this, downloadMapHref, tempName)}>
+      <NavItem eventKey={2} key="download" href="#" download={tempName} onClick={this.download.bind(this, downloadMapHref, tempName)}>
         <Glyphicon glyph="download"></Glyphicon>&nbsp; Download
       </NavItem>,
       goBack,
-      <LinkContainer to={{pathname: deduplicateHref}} key="3">
+      <LinkContainer to={{pathname: deduplicateHref}} key="deduplicateHref">
           <NavItem eventKey={2} href={deduplicateHref}>
               <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
               &nbsp;Fix it!
@@ -302,11 +302,11 @@ export default class MapEditorPage extends React.Component {
       <Glyphicon glyph="education"></Glyphicon>Get help!
     </NavItem>;
     const resizeTitle = <Glyphicon glyph="text-height"></Glyphicon>;
-    const fontResizeMenu = <NavDropdown eventKey={8} title={resizeTitle}>
-        <MenuItem onClick={CanvasActions.increaseNodeFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"/> Component</MenuItem>
-        <MenuItem onClick={CanvasActions.decreaseNodeFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"/> Component</MenuItem>
-        <MenuItem onClick={CanvasActions.increaseOtherFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"/> Other</MenuItem>
-        <MenuItem onClick={CanvasActions.decreaseOtherFontSize}><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"/> Other</MenuItem>
+    const fontResizeMenu = <NavDropdown eventKey={8} title={resizeTitle} key="resize" id="resize-dropdown">
+        <MenuItem onClick={CanvasActions.increaseNodeFontSize} key="in"><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"/> Component</MenuItem>
+        <MenuItem onClick={CanvasActions.decreaseNodeFontSize} key="dn"><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"/> Component</MenuItem>
+        <MenuItem onClick={CanvasActions.increaseOtherFontSize} key="io"><Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-up"/> Other</MenuItem>
+        <MenuItem onClick={CanvasActions.decreaseOtherFontSize}> key="do"<Glyphicon glyph="font"></Glyphicon><Glyphicon glyph="chevron-down"/> Other</MenuItem>
     </NavDropdown>;
 
     return (
