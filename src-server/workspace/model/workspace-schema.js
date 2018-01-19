@@ -198,12 +198,12 @@ module.exports = function(conn) {
     };
 
 
-    workspaceSchema.methods.createAMap = function(params, timesliceId) {
+    workspaceSchema.methods.createAMap = function(params, timesliceId, isSubmap) {
       var WardleyMap = require('./map-schema')(conn);
       var Workspace = require('./workspace-schema')(conn);
 
       if (!params.name) {
-        params.user = "I am too lazy to set the map title. I prefer getting lost.";
+        params.name = "I am too lazy to set the map title. I prefer getting lost.";
       }
       var newId = new ObjectId();
       return this.insertMapIdAt(newId, timesliceId)
@@ -211,9 +211,9 @@ module.exports = function(conn) {
           return new WardleyMap({
             name: params.name,
             workspace: workspace._id,
-            archived: false,
             timesliceId : timesliceId ? new ObjectId(timesliceId) : workspace.nowId,
             responsiblePerson: params.responsiblePerson,
+            isSubmap : isSubmap || false,
             _id: newId,
           }).save();
         });
@@ -1499,6 +1499,7 @@ module.exports = function(conn) {
     /* Tried as I might, I was not able to write this using only db queries */
     workspaceSchema.methods.assessSubmapImpact = function(nodeIdsToSubmap) {
       let Node = require('./node-schema')(conn);
+      nodeIdsToSubmap = nodeIdsToSubmap.map(node => getId(node));
 
       // find out everything that depends on said nodes
       let nodesThatDependOnFutureSubmap = Node.distinct('_id', {
@@ -1512,6 +1513,7 @@ module.exports = function(conn) {
           }
         }).exec()
         .then(function(idnodes) {
+          // console.log(nodeIdsToSubmap, idnodes);
           return Node.find({
             _id: {
               $in: idnodes
@@ -1625,10 +1627,25 @@ module.exports = function(conn) {
       });
 
       return q.allSettled([nodesThatDependOnFutureSubmap, nodesThatFutureSubmapDependsOn]).then(function(result) {
+        // console.log(nodesThatDependOnFutureSubmap);
         let finalAnalysis = result[1].value;
         finalAnalysis.nodesThatDependOnFutureSubmap = result[0].value;
         return finalAnalysis;
       });
+    };
+
+    workspaceSchema.methods.formASubmap = function(mapId, name, responsiblePerson, nodeIdsToSubmap) {
+      var WardleyMap = require('./map-schema')(conn);
+      var Node = require('./node-schema')(conn);
+      let _this = this;
+      nodeIdsToSubmap = nodeIdsToSubmap.map(id => getId(id));
+
+      let mainAffectedMap = getId(mapId);
+
+      return this.assessSubmapImpact(nodeIdsToSubmap)
+        .then(function(impact) {
+          // identify public
+        });
     };
 
 //     workspaceSchema.methods.formASubmap = function(timeSliceId, mapId, params, /*array*/nodeIds, /*array*/ commentsIds) {

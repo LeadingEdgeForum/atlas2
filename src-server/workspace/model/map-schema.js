@@ -453,6 +453,13 @@ module.exports = function(conn) {
     };
 
     _MapSchema.methods.addNode = function(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+      let _this = this;
+      return _this.__addNode(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null).then(function() {
+        return _this;
+      });
+    };
+
+    _MapSchema.methods.__addNode = function(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap) {
         const Node = require('./node-schema')(conn);
         const Workspace = require('./workspace-schema')(conn);
 
@@ -472,7 +479,8 @@ module.exports = function(conn) {
                 description: description,
                 inertia: inertia,
                 responsiblePerson: responsiblePerson,
-                constraint : constraint
+                constraint : constraint,
+                submapID : submap
             })
             .save()
             .then(function(node) {
