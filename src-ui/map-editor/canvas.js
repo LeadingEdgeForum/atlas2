@@ -212,10 +212,10 @@ export default class MapCanvas extends React.Component {
         fromStyle = [];
     }
     var menuItems = [];
-    for(var i = 0; i < menuDefinition.length; i++){
-      menuItems.push(<Glyphicon glyph={menuDefinition[i][0]} onClick={menuDefinition[i][1]} style={{zIndex: 50,  cursor: 'pointer'}}/>);
+    for(let i = 0; i < menuDefinition.length; i++){
+      menuItems.push(<Glyphicon glyph={menuDefinition[i][0]} onClick={menuDefinition[i][1]} style={{zIndex: 50,  cursor: 'pointer'}} key={'menu' + i}/>);
       if(i !== menuDefinition.length - 1){
-        menuItems.push(<span>&nbsp;</span>);
+        menuItems.push(<span key={'menu' + i + 'span'}>&nbsp;</span>);
       }
     }
     var menu = <div style={{color:'silver'}}>{menuItems}</div>;
@@ -227,7 +227,8 @@ export default class MapCanvas extends React.Component {
           return root;
         },
         location: 0.5,
-        id: "menuOverlay"
+        id: "menuOverlay",
+        key: "menuOverlay"
       }
     ]);
     let fontStyle = this.props.canvasStore.getOtherFontSize() + 'px Helvetica Neue,Helvetica,Arial,sans-serif';
