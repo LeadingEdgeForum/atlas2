@@ -47,10 +47,6 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
-      this.submapReferencesDialog = {
-        open : false
-      };
-
       this.turnIntoSubmapDialog = {
         open : false
       };
@@ -235,32 +231,6 @@ export default class SingleWorkspaceStore extends Store {
           break;
         case ActionTypes.DELETE_CONNECTION:
           this.deleteConnection(action.data);
-          break;
-
-
-        case ActionTypes.SHOW_SUBMAP_REFERENCES:
-          this.submapReferencesDialog.open = true;
-          this.submapReferencesDialog.currentName = action.data.currentName;
-          this.submapReferencesDialog.mapID = action.data.mapID;
-          this.submapReferencesDialog.submapID = action.data.submapID;
-          this.submapReferencesDialog.node = action.data.node;
-          this.submapReferencesDialog.workspaceID = action.data.workspaceID;
-          this.submapReferencesDialog.variantId = action.data.variantId;
-          $.ajax({
-            type: 'GET',
-            url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
-            success: function(data2) {
-              this.submapReferencesDialog.referencingMaps = data2;
-              this.emitChange();
-            }.bind(this)
-          });
-          this.emitChange();
-          break;
-        case ActionTypes.CLOSE_SUBMAP_REFERENCES:
-          this.submapReferencesDialog = {
-            open: false
-          };
-          this.emitChange();
           break;
         case ActionTypes.SHOW_REFERENCES:
           this.referencesDialog.open = true;

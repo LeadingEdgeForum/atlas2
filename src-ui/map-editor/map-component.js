@@ -177,20 +177,11 @@ var MapComponent = createReactClass({
     }
     if (this.state.hover === "info") {
       var mapID = this.props.mapID; //jshint ignore:line
-      var submapID = this.props.node.submapID;
       var currentName = this.props.node.name;
       var node = this.props.node; //jshint ignore:line
       let workspaceID = this.props.workspaceID;
       var variantId = this.props.variantId;
-      if(submapID){
-        Actions.openSubmapReferencesDialog(currentName, mapID, submapID, node, workspaceID, variantId);
-      } else {
-        Actions.openReferencesDialog(currentName, node, workspaceID, variantId);
-      }
-    }
-
-    if(this.state.hover === 'action'){
-      console.log('action!!!');
+      Actions.openReferencesDialog(currentName, node, workspaceID, variantId);
     }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {

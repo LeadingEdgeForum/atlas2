@@ -78,6 +78,29 @@ module.exports = function(authGuardian, mongooseConnection) {
           }, defaultErrorHandler.bind(this, res));
   });
 
+  module.router.get('/map/:mapID/node/:nodeID/name', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
+      let nodeID = getId(req.params.nodeID);
+      WardleyMap
+          .findOne({
+              _id: req.params.mapID
+          })
+          .select('name')
+          .exec()
+          .then(checkAccess.bind(this,req.params.mapID,owner))
+          .then(function(){
+            return Node.findById(nodeID).exec();
+          })
+          .done(function(result) {
+            res.json({
+              node: {
+                _id: result._id,
+                name: result.name
+              }
+            });
+          }, defaultErrorHandler.bind(this, res));
+  });
+
 
   module.router.get('/workspaces/', authGuardian.authenticationRequired, function(req, res) {
       Workspace.find({

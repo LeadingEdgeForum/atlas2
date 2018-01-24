@@ -31,6 +31,7 @@ import Autosuggest from 'react-autosuggest';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import Actions from './form-a-submap-actions';
 import MapLink from '../../../fixit/maplink';
+import Usage from '../usage';
 
 class ImpactAnalysis extends React.Component {
   constructor(props) {
