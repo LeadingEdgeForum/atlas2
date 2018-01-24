@@ -17,6 +17,7 @@ limitations under the License.*/
 
 var should = require('should');
 var q = require('q');
+q.longStackSupport = true;
 
 
 var owner = "testy@mactest.test";

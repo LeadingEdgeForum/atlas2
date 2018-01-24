@@ -1,5 +1,5 @@
 //#!/bin/env node
-/* Copyright 2017 Leading Edge Forum
+/* Copyright 2017,2018 Krzysztof Daniel
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,6 +27,9 @@ mongoose.Promise = q.Promise;
 
 var getTestDB = require('../../src-server/mongodb-helper').getTestDB;
 var getId = require('../../src-server/util/util.js').getId;
+var getSubmapPositions = require('../../src-server/workspace/model/workspace/submap-routines').getSubmapPositions;
+var createASubmap = require('../../src-server/workspace/model/workspace/submap-routines').createASubmap;
+var createSubmapNode = require('../../src-server/workspace/model/workspace/submap-routines').createSubmapNode;
 var mongooseConnection = null;
 
 var WardleyMap = null;
@@ -38,6 +41,10 @@ var currentWorkspace = null;
 var maps = [];
 var nodes = [];
 
+var submapMap = null;
+let mongooseObjects = null;
+let intialImpact = null;
+
 describe('Verify forming a submap - impact analysis', function() {
 
 
@@ -48,6 +55,11 @@ describe('Verify forming a submap - impact analysis', function() {
       WardleyMap = require('../../src-server/workspace/model/map-schema')(mongooseConnection);
       Workspace = require('../../src-server/workspace/model/workspace-schema')(mongooseConnection);
       Node = require('../../src-server/workspace/model/node-schema')(mongooseConnection);
+      mongooseObjects = {
+        WardleyMap : WardleyMap,
+        Workspace : Workspace,
+        Node:Node
+      };
       return Workspace
             .initWorkspace("name2", "description2", "purpose2", owner)
             .then(function(workspace) {
@@ -126,7 +138,7 @@ describe('Verify forming a submap - impact analysis', function() {
   it("test submap initial impact diagonosis", function() {
     let nodesToSubmap = [getId(maps[0].nodes[6]), getId(maps[0].nodes[7]), getId(maps[0].nodes[8])];
     return currentWorkspace.assessSubmapImpact(nodesToSubmap).then(function(impact) {
-
+      intialImpact = impact;
       /* what depends on a map, we should find three nodes */
       let theSubmapWillBeADependencyTo = impact.nodesThatDependOnFutureSubmap.sort();
       should(theSubmapWillBeADependencyTo.length).be.equal(3);
@@ -261,85 +273,56 @@ describe('Verify forming a submap - impact analysis', function() {
       });
   });
 
-// testing submapping with nodes from different maps is a bit too much for now.
-  // it("test submap third impact diagnosis", function() {
-  //   // includes one node from other map, maps[1].nodes[0] is the only note created (not referenced) on map 1
-  //   let nodesToSubmap = [getId(maps[0].nodes[6]), getId(maps[0].nodes[7]), getId(maps[0].nodes[8]), getId(maps[1].nodes[0])];
-  //
-  //   // but prepare a second map with some nodes used
-  //   return WardleyMap.findById(getId(maps[1])).populate('nodes').exec()
-  //     .then(function(map){
-  //       return currentWorkspace.assessSubmapImpact(nodesToSubmap);
-  //     })
-  //     .then(function(impact){
-  //
-  //       /* what depends on a map, we should find three nodes */
-  //       /* those are all nodes that will depend on a created submap */
-  //       let theSubmapWillBeADependencyTo = impact.nodesThatDependOnFutureSubmap.sort();
-  //       should(theSubmapWillBeADependencyTo.length).be.equal(3);
-  //       let expectedRequirers = [getId(maps[0].nodes[0]), getId(maps[0].nodes[1]), getId(maps[0].nodes[2])].sort();
-  //       for(let i = 0; i < expectedRequirers.length; i++){
-  //         should(expectedRequirers[i].equals(theSubmapWillBeADependencyTo[i])).be.true;
-  //       }
-  //
-  //       let inSubmapDependencies = impact.inSubmapDependencies;
-  //
-  //       console.log(inSubmapDependencies);
-  //       /* dependencies internal to a submap, contained by a submap, and identical across all the maps */
-  //       /* the easiest part to deal when creating a submap */
-  //       should(inSubmapDependencies.length).be.equal(2);
-  //
-  //       /* internal dependencies, node 6 depends on 7 & 8 */
-  //       should(inSubmapDependencies[0].node.name).be.equal('map-0-node-6');
-  //       should(getId(inSubmapDependencies[0].node).equals(getId(maps[0].nodes[6]))).be.true;
-  //       should(inSubmapDependencies[0].deps.length).be.equal(2);
-  //       should(getId(inSubmapDependencies[0].deps[0]).equals(getId(maps[0].nodes[6]))).be.true;
-  //       should(getId(inSubmapDependencies[0].deps[1]).equals(getId(maps[0].nodes[7]))).be.true;
-  //
-  //       /* internal dependencies, node 7 depends on 8 and 9*/
-  //       should(inSubmapDependencies[1].node.name).be.equal('map-0-node-7');
-  //       should(getId(inSubmapDependencies[1].node).equals(getId(maps[0].nodes[7]))).be.true;
-  //       should(getId(inSubmapDependencies[1].deps[0]).equals(getId(maps[0].nodes[8]))).be.true;
-  //       should(getId(inSubmapDependencies[1].deps[1]).equals(getId(maps[1].nodes[0]))).be.true;
-  //       should(inSubmapDependencies[1].deps.length).be.equal(2);
-  //
-  //       /* dirty dependencies - dependencies which are originating from the submap non-leaf nodes.
-  //                They may or may not be common to all maps, and if they are transformed into submap
-  //                 dependency - it will mean a significant ingerence in a map structure, and potential
-  //                 loss of information */
-  //
-  //       // just 7 depending on 5
-  //       let outgoingDanglingDependencies = impact.outgoingDanglingDependencies;
-  //       should(outgoingDanglingDependencies.length).be.equal(1);
-  //       should(outgoingDanglingDependencies[0].node.name).be.equal('map-0-node-7');
-  //       should(getId(outgoingDanglingDependencies[0].node).equals(getId(maps[0].nodes[7]))).be.true;
-  //       should(outgoingDanglingDependencies[0].deps.length).be.equal(1);
-  //
-  //       should(getId(outgoingDanglingDependencies[0].deps[0]).equals(getId(maps[0].nodes[5]))).be.true;
-  //
-  //
-  //       /* clean dependencies, 8 depending on 3 & 4 AND 9 depending on 4 */
-  //       let outgoingDependencies = impact.outgoingDependencies;
-  //       should(outgoingDependencies.length).be.equal(2);
-  //
-  //       should(outgoingDependencies[0].node.name).be.equal('map-0-node-8');
-  //       should(getId(outgoingDependencies[0].node).equals(getId(maps[0].nodes[7]))).be.true;
-  //       should(outgoingDependencies[0].deps.length).be.equal(2);
-  //
-  //       should(getId(outgoingDependencies[0].deps[0]).equals(getId(maps[0].nodes[3]))).be.true;
-  //       should(getId(outgoingDependencies[0].deps[1]).equals(getId(maps[1].nodes[4]))).be.true;
-  //
-  //
-  //
-  //       should(outgoingDependencies[1].node.name).be.equal('map-1-node-9');
-  //       should(getId(outgoingDependencies[1].node).equals(getId(maps[1].nodes[0]))).be.true;
-  //       should(outgoingDependencies[1].deps.length).be.equal(1);
-  //
-  //       should(getId(outgoingDependencies[1].deps[0]).equals(getId(maps[0].nodes[4]))).be.true;
-  //       return impact;
-  //     });
-  // });
 
+  it("test position calculation", function() {
+    let nodesToSubmap = [getId(maps[0].nodes[6]), getId(maps[0].nodes[7]), getId(maps[0].nodes[8])];
+
+     return currentWorkspace.assessSubmapImpact(nodesToSubmap).then(function(impact){
+       return getSubmapPositions(mongooseObjects, nodesToSubmap, impact);
+     })
+     .then(function(pos){
+       should(pos.evolution).be.approximately(0.8,0.001);
+       should(pos.visibility[''+getId(maps[0])]).be.approximately(0.9, 0.001);
+       should(pos.visibility[''+getId(maps[1])]).be.approximately(0.3, 0.001);
+     });
+  });
+
+  it("test submap formation", function() {
+    let nodesToSubmap = [getId(maps[0].nodes[6]), getId(maps[0].nodes[7]), getId(maps[0].nodes[8])];
+
+    return currentWorkspace.assessSubmapImpact(nodesToSubmap).then(function(impact) {
+        return createASubmap(mongooseObjects, currentWorkspace, currentWorkspace.nowId, getId(maps[0]), 'submap', 'responsiblePerson', nodesToSubmap, impact);
+      })
+      .then(function(submap) {
+        submapMap = submap;
+        should(submap.nodes.length).be.equal(nodesToSubmap.length);
+      });
+  });
+
+  it("test node introduction ", function() {
+    let nodesToSubmap = [getId(maps[0].nodes[6]), getId(maps[0].nodes[7]), getId(maps[0].nodes[8])];
+
+    return getSubmapPositions(mongooseObjects, nodesToSubmap, intialImpact).then(function(positions) {
+        return {
+          positions: positions,
+          submap: submapMap,
+          impact: intialImpact
+        };
+      })
+      .then(function(arg) {
+        return createSubmapNode(mongooseObjects, arg, arg.impact, currentWorkspace, 'name', 'responsiblePerson');
+      })
+      .then(function(node) {
+        should(node.parentMap.length).be.equal(1);
+        should(node.visibility.length).be.equal(1);
+        should(node.evolution).be.approximately(0.8, 0.001);
+        should(node.visibility[0].value).be.approximately(0.9, 0.001);
+        should(node.visibility[0].map.equals(getId(maps[0]))).be.true;
+
+        // we do not test for the second map because we don't handle dangling dependencies
+        // yet
+      });
+  });
 
 
 
