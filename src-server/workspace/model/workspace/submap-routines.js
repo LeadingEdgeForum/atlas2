@@ -125,7 +125,7 @@ function createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, respo
               bestVisibility = analysedVisibility;
             }
           }
-          bestVisibility.map = getId(mapId);
+          bestVisibility.map = getId(newlyCreatedMap);
           processedNode.visibility = [bestVisibility];
 
           //3. sort out dependencies, only those presented on a map will stay
@@ -139,7 +139,7 @@ function createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, respo
           }
           // 3.a ensure dependencies are visible when they should be
           for (let j = 0; j < processedNode.dependencies.length; j++) {
-            processedNode.dependencies[j].visibleOn = [getId(mapId)];
+            processedNode.dependencies[j].visibleOn = [getId(newlyCreatedMap)];
           }
           //4. save, piece of cake
           promises.push(processedNode.save());
@@ -176,7 +176,6 @@ function createSubmapNode(mongooseObjects, arg, impact, workspace, name, respons
     dependencies = dependencies.concat(impact.outgoingDependencies[i].deps);
   }
 
-  // console.log('dependencies afterwards', dependencies);
 
   // we ignore the tangling references for now
   console.warn('some dangling references might have been ignored');
@@ -192,7 +191,8 @@ function createSubmapNode(mongooseObjects, arg, impact, workspace, name, respons
       inertia: 0,
       responsiblePerson: responsiblePerson,
       constraint: 0,
-      submapID: getId(arg.submap)
+      submapID: getId(arg.submap),
+      dependencies:dependencies
     })
     .save()
     .then(function(node) {
@@ -232,6 +232,7 @@ function replaceIncomingDependencies(mongooseObjects, targetNodeId, nodesThatDep
   let results = [];
   for (let i = 0; i < nodesThatDependOnFutureSubmap.length; i++) {
     let analysedNode = nodesThatDependOnFutureSubmap[i];
+    console.log('what about here', analysedNode);
 
     let atLeastOneMigrated = false;
     for (let j = analysedNode.dependencies.length - 1; j >= 0; j--) {
@@ -239,7 +240,7 @@ function replaceIncomingDependencies(mongooseObjects, targetNodeId, nodesThatDep
 
       let isForSubmappedNode = false;
       for (let k = 0; k < nodesInSubmap.length; k++) {
-        if (nodesInSubmap[k].equals(analysedDependency.target)) {
+        if (getId(nodesInSubmap[k]).equals(getId(analysedDependency.target))) {
           isForSubmappedNode = true;
         }
       }
@@ -249,16 +250,18 @@ function replaceIncomingDependencies(mongooseObjects, targetNodeId, nodesThatDep
         if (atLeastOneMigrated) {
           // we have at least one dependency migrated earlier, we do not want to duplicate them,
           // so just discard it
-          analysedNode.dependencies.split(j, 1);
+          analysedNode.dependencies.splice(j, 1);
           j--; //index should be shifted after the number of dependencies is reduced
         } else {
           //blatantly switch the first dependency that can be switched
           analysedDependency.target = targetNodeId;
           atLeastOneMigrated = true;
+          // j--;
         }
       }
     }
     if (atLeastOneMigrated) {
+      console.log('being saved', analysedNode);
       results.push(analysedNode.save());
     }
   }
@@ -273,13 +276,13 @@ function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, respons
   let Node = mongooseObjects.Node;
   let Workspace = mongooseObjects.Workspace;
 
-  return createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact)
-    .then(function(submap) {
-      return getSubmapPositions(mongooseObjects, nodesInSubmap, impact).then(function(positions) {
-        return {
-          positions: positions,
-          submap: submap
-        };
+    return getSubmapPositions(mongooseObjects, nodesInSubmap, impact).then(function(positions){
+      return createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact)
+        .then(function(submap){
+          return {
+            positions: positions,
+            submap: submap
+          };
       });
     })
     .then(function(arg) {

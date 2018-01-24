@@ -154,6 +154,25 @@ export default class FormASubmapStore extends Store {
     if (mapId !== this.mapId) {
       return;
     }
-    //TODO : map submit code
+    let nodes = this.internalState.nodes;
+    let name = this.internalState.name;
+    let responsiblePerson = this.internalState.responsiblePerson;
+
+    this.internalState.suggestionRequest = $.ajax({
+      type: 'POST',
+      url: '/api/workspace/' + this.workspaceId + '/submap',
+      data: {
+        nodes : nodes,
+        name : name,
+        responsiblePerson : responsiblePerson,
+        mapId : mapId
+      },
+      success: function(data) {
+        this.internalState.loading = false;
+        this.internalState.impact = data.impact;
+        this.closeFormASubmapDialog(mapId); //emits change
+        // this.emitChange();
+      }.bind(this)
+    });
   }
 }
