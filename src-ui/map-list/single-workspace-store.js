@@ -311,9 +311,10 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   deleteMap(data){
+    let workspaceId = this.getWorkspaceId();
     $.ajax({
       type: 'DELETE',
-      url: '/api/map/' + data.mapID,
+      url: '/api/workspace/' + workspaceId + '/map/' + data.mapID,
       success: function(data) {
         this.workspace = data;
         this.emitChange();
