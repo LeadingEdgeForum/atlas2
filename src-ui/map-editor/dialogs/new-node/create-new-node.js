@@ -114,7 +114,8 @@ class ComponentName extends React.Component{
     const inputProps = {
         placeholder: 'Type a component name',
         value : this.props.name,
-        onChange: this.onSearchChange
+        onChange: this.onSearchChange,
+        autoFocus: true
     };
     const theme = {
       container: 'autosuggest',
