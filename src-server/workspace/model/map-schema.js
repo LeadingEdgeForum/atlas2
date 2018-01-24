@@ -445,11 +445,13 @@ module.exports = function(conn) {
         });
     };
 
-    //TODO : refactor this into something changing map explicitly (name, purpose, etc);
     _MapSchema.methods.newBody = function(body) {
-        _.extend(this, body);
-
-        return this.save();
+      _.extend(this, {
+        name: body.name,
+        responsiblePerson: body.responsiblePerson,
+        isSubmap: body.isSubmap
+      });
+      return this.save();
     };
 
     _MapSchema.methods.addNode = function(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {

@@ -154,21 +154,6 @@ export default class SingleWorkspaceStore extends Store {
             }.bind(this)
           });
           break;
-        // case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
-        //   this.addSubmapDialog.open = true;
-        //   this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
-        //   this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
-        //   this.emitChange();
-        //   break;
-        // case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
-        //   this.addSubmapDialog = {
-        //     open: false
-        //   };
-        //   this.emitChange();
-        //   break;
-        // case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
-        //   this.createSubmap(action.data);
-        //   break;
         case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
           this.addReferenceToExistingSubmap(action.refID, action.coords);
           break;
@@ -558,9 +543,10 @@ export default class SingleWorkspaceStore extends Store {
   submitEditMapDialog(data){
     this.map.map.name = data.name;
     this.map.map.responsiblePerson = data.responsiblePerson;
+    this.map.map.isSubmap = data.isSubmap;
     $.ajax({
       type: 'PUT',
-      url: '/api/map/' + this.mapID,
+      url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.mapID,
       dataType: 'json',
       data: this.map,
       success: function(data2) {
@@ -631,7 +617,7 @@ export default class SingleWorkspaceStore extends Store {
     this.nodeOrUserUpdateInProgress = true;
     $.ajax({
       type: 'PUT',
-      url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + updateToExecute.data.nodeId,
+      url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/node/' + updateToExecute.data.nodeId,
       data: updateToExecute.payload,
       success: function(data2) {
         this.nodeOrUserUpdateInProgress = false;

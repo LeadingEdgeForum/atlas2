@@ -72,7 +72,7 @@ var EditMapDialog = createReactClass({
   },
 
   _handleDialogChange: function(parameterName, event) {
-    this.internalState[parameterName] = event.target.value;
+    this.internalState[parameterName] = event.target.checked || event.target.value;
     this.forceUpdate();
   },
   _summary: function(){
@@ -87,7 +87,7 @@ var EditMapDialog = createReactClass({
     }
   },
 
-  _nameEdit : function(currentName, currentResponsiblePerson){
+  _nameEdit : function(currentName, currentResponsiblePerson, isSubmap){
     return (<Form horizontal>
       <FormGroup controlId="name">
         <Col sm={2}>
@@ -107,6 +107,15 @@ var EditMapDialog = createReactClass({
           <HelpBlock>Who will be held responsible for this map?</HelpBlock>
         </Col>
       </FormGroup>
+      <FormGroup controlId="submap">
+        <Col sm={2}>
+          <ControlLabel>Is this map a submap?</ControlLabel>
+        </Col>
+        <Col sm={9}>
+          <FormControl type="checkbox" placeholder="Is this a submap" onChange={this._handleDialogChange.bind(this, 'isSubmap')} value={isSubmap}/>
+          <HelpBlock>Submaps are used to make a more detailed map of a given component.</HelpBlock>
+        </Col>
+      </FormGroup>
     </Form>);
   },
   render: function() {
@@ -116,8 +125,9 @@ var EditMapDialog = createReactClass({
     }
     var currentName = this.internalState.name;
     var currentResponsiblePerson = this.internalState.responsiblePerson;
+    let isSubmap = this.internalState.isSubmap;
     var summary = this._summary();
-    var form = this._nameEdit(currentName, currentResponsiblePerson);
+    var form = this._nameEdit(currentName, currentResponsiblePerson, isSubmap); /* jshint ignore:line */ // == has to be here, as false is sometimes represented as "false"
     return (
       <div>
         <Modal show={show} onHide={this._close}>

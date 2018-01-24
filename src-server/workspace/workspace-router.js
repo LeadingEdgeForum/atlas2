@@ -451,24 +451,35 @@ module.exports = function(authGuardian, mongooseConnection) {
         }, defaultErrorHandler.bind(this, res));
   });
 
-  module.router.put('/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      WardleyMap.findOne({
-          _id: req.params.mapID,
-          archived: false
-      }).exec()
-      .then(checkAccess.bind(this, req.params.mapID, owner))
-      .then(function(map){
-        return map.newBody(req.body.map);
-      })
-      .then(function(map){
-        return map.defaultPopulate();
-      })
-      .done(function(json) {
-          res.json({
+  module.router.put('/workspace/:workspaceId/map/:mapId', authGuardian.authenticationRequired, function(req, res) {
+    let owner = getUserIdFromReq(req);
+    let workspaceId = getId(req.params.workspaceId);
+    let mapId = getId(req.params.mapId);
+    Workspace
+      .findOne({
+        owner: owner,
+        _id: req.params.workspaceId,
+        'timeline.maps': mapId
+      }).exec().then(function(irrelevantWorkspace) {
+        if (!irrelevantWorkspace) {
+          res.status(404).json('workspace not found');
+          return;
+        }
+        return WardleyMap
+          .findById(mapId)
+          .exec()
+          .then(function(map) {
+            return map.newBody(req.body.map);
+          })
+          .then(function(result) {
+            return result.defaultPopulate();
+          })
+          .done(function(json) {
+            res.json({
               map: json
-          });
-      }, defaultErrorHandler.bind(this, res));
+            });
+          }, defaultErrorHandler.bind(this, res));
+      });
   });
 
   module.router.put('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
