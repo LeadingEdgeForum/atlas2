@@ -13,7 +13,7 @@ limitations under the License.*/
 
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
-let q = require('Q');
+let q = require('q');
 let getId = require('../../../util/util.js').getId;
 
 /*
@@ -270,13 +270,16 @@ function replaceIncomingDependencies(mongooseObjects, targetNodeId, nodesThatDep
 
 
 /*
-Forms a submap but returns some irrelevant crap
+	Forms a submap and returns a list of modified maps
 */
 function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact) {
   let Node = mongooseObjects.Node;
   let Workspace = mongooseObjects.Workspace;
+  
+  let positionsAntipaternVariable = null;
 
     return getSubmapPositions(mongooseObjects, nodesInSubmap, impact).then(function(positions){
+      positionsAntipaternVariable = positions;
       return createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact)
         .then(function(submap){
           return {
@@ -291,7 +294,15 @@ function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, respons
     .then(function(node) {
       let nodeId = getId(node);
       // and the heavy part. get everyone depending on a submap to really depend on it
-      return replaceIncomingDependencies(mongooseObjects, nodeId, impact.nodesThatDependOnFutureSubmap, nodesInSubmap);
+      return replaceIncomingDependencies(mongooseObjects, nodeId, impact.nodesThatDependOnFutureSubmap, nodesInSubmap).then(function(irrelevantStuff){
+    	  let changedMaps = [];
+    	  for (let key in positionsAntipaternVariable) {
+    	        if (positionsAntipaternVariable.hasOwnProperty(key)) {
+    	        	changedMaps.push(key);
+    	        }
+    	      }
+    	  return changedMaps;
+      });
     });
 }
 module.exports.formASubmap = formASubmap;
