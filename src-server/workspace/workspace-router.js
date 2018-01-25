@@ -47,6 +47,29 @@ module.exports = function(authGuardian, mongooseConnection) {
   var module = {};
 
   module.router = require('express').Router();
+  
+  module.setSocket = function(socket){
+//	  console.log('setting socket', socket.id);
+	  module.socket = socket;
+  }.bind(module);
+  
+  module.emitWorkspaceChange = function(workspaceId){
+      module.socket.broadcast.to('' + workspaceId)
+      		.emit('workspacechange', 
+      				{
+      					id:'' + workspaceId, 
+      					type: 'change'
+      				});
+  }.bind(module);
+  
+  module.emitMapChange = function(mapId){
+      module.socket.broadcast.to('' + mapId)
+      		.emit('mapchange',
+      				{
+						id:'' + mapId, 
+						type: 'change'
+      				});
+  }.bind(module);
 
   var defaultErrorHandler = function(res, err){
       if(err){
@@ -129,6 +152,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             track(owner,'create_workspace',{
               'id' : workspace._id
             }, req.body);
+            //TODO: find a way to notify others about the new workspace that has been created. Other clients may need to fetch it.
         }, function(e){
             workspaceLogger.error(e);
             return res.status(500).send(e);
@@ -382,52 +406,6 @@ module.exports = function(authGuardian, mongooseConnection) {
         }, defaultErrorHandler.bind(this, res));
 });
 
-  module.router.put('/map/:mapID/submap', authGuardian.authenticationRequired, function(req, res) {
-      var listOfNodesToSubmap = req.body.listOfNodesToSubmap ? req.body.listOfNodesToSubmap : [];
-      var listOfCommentsToSubmap = req.body.listOfCommentsToSubmap ? req.body.listOfCommentsToSubmap : [];
-      var submapName = req.body.name;
-      var coords = req.body.coords;
-      var responsiblePerson = req.body.responsiblePerson;
-
-      var owner = getUserIdFromReq(req);
-
-      var params = {
-          submapName: submapName,
-          coords: coords,
-          owner: owner,
-          mapId : req.params.mapID,
-          listOfNodesToSubmap: listOfNodesToSubmap,
-          listOfCommentsToSubmap: listOfCommentsToSubmap
-      };
-
-      submapLogger.trace(params);
-
-      WardleyMap.findOne({
-              _id: req.params.mapID,
-              archived: false
-          })
-          .then(function(map) {
-              return map.defaultPopulate();
-          })
-          .then(checkAccess.bind(this, req.params.mapID, owner))
-          .then(function(map) {
-              return map.formASubmap(params);
-          })
-          .then(function(map) {
-              return map.defaultPopulate();
-          })
-          .done(function(json) {
-              res.json({
-                  map: json
-              });
-              track(owner,'submap_formed',{
-                'id' : req.params.mapID,
-              }, {
-                'components' : listOfNodesToSubmap.length,
-              });
-          }, defaultErrorHandler.bind(this, res));
-  });
-
   module.router.get('/workspace/:workspaceID/submapImpact', authGuardian.authenticationRequired, function(req, res) {
       let listOfNodesToSubmap = req.query.nodes ? req.query.nodes : [];
 
@@ -462,15 +440,17 @@ module.exports = function(authGuardian, mongooseConnection) {
         }).exec()
         .then(function(workspace){
           return workspace.formASubmap(mapId, name, responsiblePerson, listOfNodesToSubmap);
-        }).done(function(junk) {
-            res.json({
-                junk: junk
-            });
+        }).done(function(result) {
+            res.json({});
             track(owner,'submap_formed',{
               'id' : req.params.mapID,
             }, {
               'components' : listOfNodesToSubmap.length,
             });
+            module.emitWorkspaceChange(req.params.workspaceID);
+            for(let i = 0; i < result.length; i++){
+            	module.emitMapChange(result[i]);
+            }
         }, defaultErrorHandler.bind(this, res));
   });
 

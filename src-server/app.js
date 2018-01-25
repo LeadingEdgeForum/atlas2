@@ -22,8 +22,8 @@ var express = require('express');
 var userProvider = require('./user-provider.js');
 var freshdesk = require('./freshdesk-helper');
 
+
 var app = express();
-var io = null;
 
 var webpack_middleware = null;
 
@@ -189,7 +189,8 @@ app.get('/js/freshdesk.js', freshdesk);
 userProvider.installUserProvider(app, config, conn);
 
 app.use('/api/tos', require('./tos/tos.js')(conn).router);
-app.use('/api', require('./workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
+let routerModule = require('./workspace/workspace-router.js')(userProvider.getGuard(), conn);
+app.use('/api', routerModule.router);
 
 var imageRendererModule = require('./workspace/image-renderer.js')(userProvider.getGuard(), conn, app.webpack_middleware);
 app.use('/img', imageRendererModule.router);
@@ -224,12 +225,17 @@ var server = app.listen(appEnv.port, '0.0.0.0', function() {
 
 });
 
-io = require('socket.io').listen(server);
+let clientSocket = require('socket.io-client')(appEnv.url, { rejectUnauthorized: false });
 
-io.on('connection', function(socket) {
+ioServ = require('socket.io').listen(server);
 
-    socket.on('disconnect', function() {
-    });
+ioServ.on('connection', function(socket) {
+	
+	console.log('connected', socket.id);
+	
+	socket.on('disconnect', function(msg){
+		console.log('disconnected');
+	});
 
     socket.on('map', function(msg){
       if(msg.type === 'sub'){
@@ -237,9 +243,6 @@ io.on('connection', function(socket) {
       }
       if(msg.type === 'unsub'){
         socket.leave(msg.id);
-      }
-      if(msg.type === 'change'){
-        socket.broadcast.to(msg.id).emit('mapchange', msg);
       }
     });
 
@@ -250,13 +253,19 @@ io.on('connection', function(socket) {
       if(msg.type === 'unsub'){
         socket.leave(msg.id);
       }
-      if(msg.type === 'change'){
-        socket.broadcast.to(msg.id).emit('workspacechange', msg);
-      }
     });
+    
+    
 });
+
+clientSocket.on('connect', function (socket) {
+    console.log('Connected!');
+    console.log('socket', socket);
+    routerModule.setSocket(clientSocket);
+});
+
 
 server.___app = app;
 server.___conn = conn;
-server.___app.io = io;
+server.___app.io = ioServ;
 module.exports=server;
