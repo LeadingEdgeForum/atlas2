@@ -47,28 +47,33 @@ module.exports = function(authGuardian, mongooseConnection) {
   var module = {};
 
   module.router = require('express').Router();
-  
-  module.setSocket = function(socket){
-//	  console.log('setting socket', socket.id);
-	  module.socket = socket;
+
+  module.setSocket = function(socket) {
+    module.socket = socket;
+    if(!socket){
+      console.error('Socket.IO not initialised properly, server will not be able to notify clients about changes');
+    }
   }.bind(module);
-  
-  module.emitWorkspaceChange = function(workspaceId){
-      module.socket.broadcast.to('' + workspaceId)
-      		.emit('workspacechange', 
-      				{
-      					id:'' + workspaceId, 
-      					type: 'change'
-      				});
+
+  module.emitSocketChange = function(type, id){
+    if (!module.socket) {
+      console.warn('socket for changes not set, change ', type, id, ' will not be emmited');
+      return;
+    }
+    let _id = '' + id;
+    let msg = {
+      type: 'change',
+      id: _id
+    };
+    module.socket.emit(type, msg);
   }.bind(module);
-  
-  module.emitMapChange = function(mapId){
-      module.socket.broadcast.to('' + mapId)
-      		.emit('mapchange',
-      				{
-						id:'' + mapId, 
-						type: 'change'
-      				});
+
+  module.emitWorkspaceChange = function(workspaceId) {
+    module.emitSocketChange('workspace', workspaceId);
+  }.bind(module);
+
+  module.emitMapChange = function(mapId) {
+    module.emitSocketChange('map', mapId);
   }.bind(module);
 
   var defaultErrorHandler = function(res, err){
@@ -430,13 +435,14 @@ module.exports = function(authGuardian, mongooseConnection) {
       let name = req.body.name;
       let responsiblePerson = req.body.responsiblePerson;
       let mapId = req.body.mapId;
+      let workspaceId = req.params.workspaceID;
 
       let owner = getUserIdFromReq(req);
 
       Workspace
         .findOne({
           owner: owner,
-          _id: req.params.workspaceID,
+          _id: workspaceId,
         }).exec()
         .then(function(workspace){
           return workspace.formASubmap(mapId, name, responsiblePerson, listOfNodesToSubmap);
@@ -447,7 +453,7 @@ module.exports = function(authGuardian, mongooseConnection) {
             }, {
               'components' : listOfNodesToSubmap.length,
             });
-            module.emitWorkspaceChange(req.params.workspaceID);
+            module.emitWorkspaceChange(workspaceId);
             for(let i = 0; i < result.length; i++){
             	module.emitMapChange(result[i]);
             }

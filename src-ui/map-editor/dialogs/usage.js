@@ -105,7 +105,7 @@ export default class Usage extends React.Component{
       }
     });
     if(count > 0){
-        listOfMessages.push(<li>There are some inconsistencies with dependencies:<ul>{details}</ul></li>);
+        listOfMessages.push(<li>Dependencies are somewhat inconsistent:<ul>{details}</ul></li>);
     }
   }
 

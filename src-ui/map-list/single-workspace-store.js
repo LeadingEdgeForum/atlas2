@@ -4,7 +4,6 @@ import Store from '../store.js';
 import Dispatcher from '../dispatcher';
 import Constants from './single-workspace-constants';
 import $ from 'jquery';
-var io = require('socket.io-client')();
 
 const ActionTypes = Constants.ACTION_TYPES;
 

@@ -225,42 +225,46 @@ var server = app.listen(appEnv.port, '0.0.0.0', function() {
 
 });
 
-let clientSocket = require('socket.io-client')(appEnv.url, { rejectUnauthorized: false });
 
-ioServ = require('socket.io').listen(server);
 
+let ioServ = require('socket.io').listen(server);
 ioServ.on('connection', function(socket) {
-	
-	console.log('connected', socket.id);
-	
-	socket.on('disconnect', function(msg){
-		console.log('disconnected');
-	});
 
-    socket.on('map', function(msg){
-      if(msg.type === 'sub'){
-        socket.join(msg.id);
-      }
-      if(msg.type === 'unsub'){
-        socket.leave(msg.id);
-      }
-    });
+  socket.on('map', function(msg) {
+    if (msg.type === 'sub') {
+      socket.join(msg.id);
+    }
+    if (msg.type === 'unsub') {
+      socket.leave(msg.id);
+    }
+    if (msg.type === 'change') {
+      socket.broadcast.to(msg.id).emit('mapchange', msg);
+    }
+  });
 
-    socket.on('workspace', function(msg){
-      if(msg.type === 'sub'){
-        socket.join(msg.id);
-      }
-      if(msg.type === 'unsub'){
-        socket.leave(msg.id);
-      }
-    });
-    
-    
+  socket.on('workspace', function(msg) {
+    if (msg.type === 'sub') {
+      socket.join(msg.id);
+    }
+    if (msg.type === 'change') {
+      socket.broadcast.to(msg.id).emit('workspacechange', msg);
+    }
+    if (msg.type === 'unsub') {
+      socket.leave(msg.id);
+    }
+  });
 });
 
-clientSocket.on('connect', function (socket) {
-    console.log('Connected!');
-    console.log('socket', socket);
+let clientSocket = require('socket.io-client')(appEnv.url, { rejectUnauthorized: false });
+routerModule.setSocket(clientSocket);
+clientSocket.on('connect_error', function (socket) {
+    console.log('socket error', socket);
+});
+clientSocket.on('error', function (socket) {
+    console.log('socket error', socket);
+});
+clientSocket.on('connect', function () {
+    console.log('socket connected', clientSocket);
     routerModule.setSocket(clientSocket);
 });
 

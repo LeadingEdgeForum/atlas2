@@ -66,7 +66,7 @@ export default class SingleWorkspaceStore extends Store {
 
       this.io = require('socket.io-client')();
 
-      this.io.on('mapchange', this.reloadOnSocketMessage);
+      this.io.on('mapchange', this.reloadOnSocketMessage.bind(this));
 
       this.dispatchToken = null;
       this.redispatch();

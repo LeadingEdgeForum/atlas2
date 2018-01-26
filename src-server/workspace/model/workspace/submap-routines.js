@@ -275,7 +275,7 @@ function replaceIncomingDependencies(mongooseObjects, targetNodeId, nodesThatDep
 function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact) {
   let Node = mongooseObjects.Node;
   let Workspace = mongooseObjects.Workspace;
-  
+
   let positionsAntipaternVariable = null;
 
     return getSubmapPositions(mongooseObjects, nodesInSubmap, impact).then(function(positions){
@@ -296,8 +296,8 @@ function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, respons
       // and the heavy part. get everyone depending on a submap to really depend on it
       return replaceIncomingDependencies(mongooseObjects, nodeId, impact.nodesThatDependOnFutureSubmap, nodesInSubmap).then(function(irrelevantStuff){
     	  let changedMaps = [];
-    	  for (let key in positionsAntipaternVariable) {
-    	        if (positionsAntipaternVariable.hasOwnProperty(key)) {
+    	  for (let key in positionsAntipaternVariable.visibility) {
+    	        if (positionsAntipaternVariable.visibility.hasOwnProperty(key)) {
     	        	changedMaps.push(key);
     	        }
     	      }
