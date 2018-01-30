@@ -45,6 +45,7 @@ class ComponentName extends React.Component{
     this.renderSuggestionsContainer = this.renderSuggestionsContainer.bind(this);
     this.enhanceSuggestions = this.enhanceSuggestions.bind(this);
     this.jump = this.jump.bind(this);
+    this.referenceASubmapAndCloseDialog = this.referenceASubmapAndCloseDialog.bind(this);
   }
 
   onSuggestionsClearRequested(){
@@ -68,6 +69,10 @@ class ComponentName extends React.Component{
     this.props.jumpToStep(step);
   }
 
+  referenceASubmapAndCloseDialog(mapId, submapId, evolution, visibility){
+    Actions.referenceASubmapAndCloseDialog(mapId, submapId, evolution, visibility);
+  }
+
   renderSuggestion(suggestion, params){
     if(suggestion.type === 'info'){
       return <div>{suggestion.name}</div>;
@@ -87,7 +92,7 @@ class ComponentName extends React.Component{
     }
     if(suggestion.type === 'submap'){
       return (
-        <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle}>
+        <Button onClick={this.referenceASubmapAndCloseDialog.bind(this, this.props.mapId, suggestion._id, this.props.evolution, this.props.visibility)} bsStyle={bsStyle}>
           Reference existing submap {suggestion.name}
         </Button>
       );
@@ -284,12 +289,15 @@ export default class NewNodeDialog extends React.Component {
     const nodeId = this.state.nodeId;
 
     const visibility = (this.state.coords || {}).y;
+    const evolution = (this.state.coords || {}).x;
 
     var steps = [
         {name:'name', component: <ComponentName
                                     name={name}
                                     suggestions={suggestions}
-                                    mapId={mapId}/>},
+                                    mapId={mapId}
+                                    evolution={evolution}
+                                    visibility={visibility}/>},
         {name:'name', component: <NewComponentPropeties
                                     responsiblePerson={responsiblePerson}
                                     inertia={inertia}

@@ -57,6 +57,7 @@ export default class NewNodeStore extends Store {
        * that each request is send only once.
        */
       this.referenceRequestInProgress = {};
+      this.referenceSubmapRequestInProgress = {};
       this.redispatch();
   }
 
@@ -92,6 +93,9 @@ export default class NewNodeStore extends Store {
           break;
         case ActionTypes.NEW_NODE_REFERENCE_EXISTING_NODE:
           this.submitAddNewNodeDialogEstablishReference(action.mapId, action.nodeId, action.visibility, action.dependenciesMode);
+          break;
+        case ActionTypes.NEW_NODE_REFERENCE_EXISTING_MAP:
+          this.submitAddNewNodeDialogEstablishSubmapReference(action.mapId, action.submapId, action.evolution, action.visibility);
           break;
         default:
           return;
@@ -237,6 +241,34 @@ export default class NewNodeStore extends Store {
       },
       success: function(data) {
         this.referenceRequestInProgress[mapId][nodeId] = false;
+        this.closeNewNodeDialog(mapId);
+        this.singleMapStore.updateMap(mapId, data);
+        this.emitChange();
+      }.bind(this)
+    });
+  }
+
+  submitAddNewNodeDialogEstablishSubmapReference(mapId, submapId, evolution, visibility) {
+    if (mapId !== this.mapId) {
+      return;
+    }
+    if(!this.referenceSubmapRequestInProgress[mapId]){
+      this.referenceSubmapRequestInProgress[mapId] = {};
+    }
+    if(this.referenceSubmapRequestInProgress[mapId][submapId] === true){
+      console.log('ignoring reference request as one is in progress');
+    } else {
+      this.referenceSubmapRequestInProgress[mapId][submapId] = true;
+    }
+    $.ajax({
+      type: 'POST',
+      url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/submap/' + submapId + '/reference',
+      data: {
+        y: visibility,
+        x: evolution
+      },
+      success: function(data) {
+        this.referenceSubmapRequestInProgress[mapId][submapId] = false;
         this.closeNewNodeDialog(mapId);
         this.singleMapStore.updateMap(mapId, data);
         this.emitChange();

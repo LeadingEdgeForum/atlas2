@@ -1665,6 +1665,30 @@ module.exports = function(conn) {
         });
     };
 
+
+    workspaceSchema.methods.referenceASubmapReference = function(mapId, submapId, evolution, visibility) {
+      let WardleyMap = require('./map-schema')(conn);
+      let Node = require('./node-schema')(conn);
+      let Workspace = require('./workspace-schema')(conn);
+      let _this = this;
+      q.longStackSupport = true;
+
+      return Node.findOne({
+          submapID: submapId
+        }).exec()
+        .then(function(node) {
+          return WardleyMap.findById(mapId).exec().then(function(wmap) {
+            if (node) {
+              return wmap.referenceNode(getId(node), visibility, null);
+            }
+            return WardleyMap.findById(submapId).exec().then(function(submap) {
+              console.log(submap.name, evolution, visibility, 'SUBMAP', getId(_this), submap.description, /*inertia*/ 0, submap.responsiblePerson, /*constraint*/ 0, /*submap*/ getId(submapId));
+              return wmap.__addNode(submap.name, evolution, visibility, 'SUBMAP', getId(_this), submap.description, /*inertia*/ 0, submap.responsiblePerson, /*constraint*/ 0, /*submap*/ getId(submapId));
+            });
+          });
+        });
+    };
+
     workspace[conn.name] = conn.model('Workspace', workspaceSchema);
     return workspace[conn.name];
 };

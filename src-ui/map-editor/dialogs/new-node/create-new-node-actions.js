@@ -77,6 +77,16 @@ export default {
         dependenciesMode: dependenciesMode,
         visibility: visibility
       });
+    },
+
+    referenceASubmapAndCloseDialog(mapId,submapId, evolution, visibility){
+      Dispatcher.dispatch({
+        actionType: ACTION_TYPES.NEW_NODE_REFERENCE_EXISTING_MAP,
+        mapId: mapId,
+        submapId: submapId,
+        evolution: evolution,
+        visibility: visibility
+      });
     }
 
 };

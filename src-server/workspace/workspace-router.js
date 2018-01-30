@@ -676,6 +676,40 @@ module.exports = function(authGuardian, mongooseConnection) {
       }, defaultErrorHandler.bind(this, res));
   });
 
+  module.router.post('/workspace/:workspaceId/map/:mapId/submap/:submapId/reference', authGuardian.authenticationRequired, function(req, res) {
+    var owner = getUserIdFromReq(req);
+    var workspaceId = getId(req.params.workspaceId);
+    var mapId = getId(req.params.mapId);
+    var submapId = getId(req.params.submapId);
+    let y = req.body.y;
+    let evolution = req.body.x;
+
+    Workspace.findOne({
+        owner: getUserIdFromReq(req),
+        _id: req.params.workspaceId
+      }).exec()
+      .then(function(workspace) {
+        //TODO: calculate evolution
+        return workspace.referenceASubmapReference(mapId, submapId, evolution, /*visibility*/ y);
+      })
+      .then(function(map) {
+        return WardleyMap.findById(mapId);
+      })
+      .then(function(map) {
+        return map.defaultPopulate();
+      })
+      .done(function(map) {
+        res.json({
+          map: map
+        });
+        track(owner, 'reference_submap', {
+          'map_id': req.params.mapID,
+          'submap_id': submapId,
+        }, req.body);
+      }, defaultErrorHandler.bind(this, res));
+
+    });
+
   module.router.put('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
