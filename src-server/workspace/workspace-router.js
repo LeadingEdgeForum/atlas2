@@ -1255,71 +1255,52 @@ module.exports = function(authGuardian, mongooseConnection) {
                   }, defaultErrorHandler.bind(this, res));
           });
 
-          module.router.put(
-            '/workspace/:workspaceId/map/:mapId/node/:nodeId/submap/:refId',
-            authGuardian.authenticationRequired,
-            function(req, res) {
-              var owner = getUserIdFromReq(req);
-              var workspaceId = req.params.workspaceId;
-              var mapId = req.params.mapId;
-              var nodeId = new ObjectId(req.params.nodeId);
-              var refId = new ObjectId(req.params.refId);
-
-              WardleyMap.findOne({
-                  _id: mapId,
-                  archived: false,
-                  workspace: workspaceId,
-                  nodes: nodeId
-                })
-                .exec()
-                .then(checkAccess.bind(this, req.params.mapID, owner))
-                .then(function(map) {
-                  return Node
-                    .findById(nodeId)
-                    .exec().then(function(node) {
-                      return node.turnIntoSubmap(refId);
-                    }).then(function(){
-                      return map.defaultPopulate();
-                    });
-                })
-                .done(function(jsonResult) {
-                  res.json({
-                    map: jsonResult
-                  });
-                }, defaultErrorHandler.bind(this, res));
-            });
-
-            module.router.put(
-              '/workspace/:workspaceId/map/:mapId/node/:nodeId/submap/',
-              authGuardian.authenticationRequired,
-              function(req, res) {
-                var owner = getUserIdFromReq(req);
-                var workspaceId = new ObjectId(req.params.workspaceId);
-                var mapId = new ObjectId(req.params.mapId);
-                var nodeId = new ObjectId(req.params.nodeId);
-                WardleyMap.findOne({
-                    _id: mapId,
-                    archived: false,
-                    workspace: workspaceId,
-                    nodes: nodeId
-                  })
-                  .exec()
-                  .then(checkAccess.bind(this, req.params.mapID, owner))
-                  .then(function(map) {
-                    return Node
-                      .findById(nodeId)
-                      .exec().then(function(node) {
-                        return node.turnIntoSubmap();
-                      }).then(function(){
-                        return map.defaultPopulate();
-                      });
-                  })
-                  .done(function(jsonResult) {
-                    res.json({
-                      map: jsonResult
-                    });
-                  }, defaultErrorHandler.bind(this, res));
+      module.router.put(
+        '/workspace/:workspaceId/map/:mapId/node/:nodeId/submap/',
+        authGuardian.authenticationRequired,
+        function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceId = getId(req.params.workspaceId);
+          var mapId = getId(req.params.mapId);
+          var nodeId = getId(req.params.nodeId);
+          Workspace.findOne({
+              _id: workspaceId,
+              'timeline.maps': mapId,
+              'timeline.nodes': nodeId,
+              owner: owner
+            }).exec()
+            .then(function(workspace) {
+              if(!workspace){
+                //TODO: better ending
+                return;
+              }
+              // 0. find a node
+              return Node.findById(nodeId).exec().then(function(node){
+                // 1. create a submap
+                return workspace.createAMap({
+                  name: node.name,
+                  responsiblePerson : node.responsiblePerson
+                }, workspace.nowId, true).then(function(map){
+                    // 2. update the node
+                    node.type = "SUBMAP";
+                    node.submapID = getId(map);
+                    return node.save();
+                });
               });
+            })
+            .then(function() {
+              return WardleyMap.findById(mapId);
+            })
+            .then(function(map) {
+              return map.defaultPopulate();
+            })
+            .done(function(jsonResult) {
+              res.json({
+                map: jsonResult
+              });
+            }, defaultErrorHandler.bind(this, res));
+
+        });
 
       module.router.put(
           '/workspace/:workspaceID/map/:mapID/node/:nodeID1/action/:seq',

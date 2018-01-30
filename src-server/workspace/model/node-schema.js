@@ -105,41 +105,6 @@ module.exports = function(conn){
         previous : Schema.Types.ObjectId
     });
 
-    NodeSchema.methods.turnIntoSubmap = function(refId) {
-      this.type = 'SUBMAP';
-      var _this = this;
-      if (refId) {
-        // TODO: prevent connection from multiple time slices
-        // the map we should link to is specified
-        this.submapID = refId;
-        return this.save();
-      } else {
-        // no submap specified, create one
-        return this.populate('workspace parentMap').execPopulate()
-          .then(function(node) {
-            //create structures
-            var WardleyMap = require('./map-schema')(conn);
-            var submapID = new ObjectId();
-            var submap = new WardleyMap({
-              _id: submapID,
-              name: _this.name,
-              isSubmap: true,
-              workspace: _this.workspace,
-              timesliceId: _this.parentMap.timesliceId,
-              archived: false,
-              responsiblePerson: _this.responsiblePerson
-            });
-            return submap.save().then(function(submap) {
-              _this.workspace.timeline[_this.workspace.timeline.length - 1].maps.push(submap);
-              return _this.workspace.save().then(function(workspace) {
-                node.submapID = submapID;
-                return node.save();
-              });
-            });
-          });
-      }
-    };
-
     NodeSchema.methods.makeDependencyTo = function(_mapId, _targetId) {
       let Node = require('./node-schema')(conn);
 
