@@ -320,32 +320,39 @@ module.exports = function(authGuardian, mongooseConnection) {
           }, defaultErrorHandler.bind(this, res));
   });
 
-  module.router.get('/submaps/map/:mapID', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      WardleyMap.findOne({
-              _id: req.params.mapID,
-              archived: false
-          })
-          .exec()
-          .then(checkAccess.bind(this, req.params.mapID, owner))
-          .then(function(result) {
-              return result.getAvailableSubmaps();
-          })
-          .then(function(listOfSubmaps) {
-              var listOfAvailableSubmaps = [];
-              for (var i = 0; i < listOfSubmaps.length; i++) {
-                  listOfAvailableSubmaps.push({
-                      _id: listOfSubmaps[i]._id,
-                      name: listOfSubmaps[i].name
-                  });
-              }
-              return listOfAvailableSubmaps;
-          })
-          .done(function(listOfAvailableSubmaps) {
-              res.json({
-                  listOfAvailableSubmaps: listOfAvailableSubmaps
-              });
-          }, defaultErrorHandler.bind(this, res));
+  /*
+  * This method is used by the new node dialog and edit node dialog.
+  * It fetches submaps that can be then attached to a node.
+  */
+  module.router.get('/workspace/:workspaceId/map/:mapId/submaps', authGuardian.authenticationRequired, function(req, res) {
+      let owner = getUserIdFromReq(req);
+      let workspaceId = req.params.workspceId;
+      let currentMapId = req.params.mapId;
+
+      Workspace
+        .findOne({
+          owner: owner,
+          _id: workspaceId,
+        }).exec()
+        .then(function(workspace){
+          return workspace.getAvailableSubmaps(currentMapId);
+        })
+        .then(function(listOfSubmaps) {
+            var listOfAvailableSubmaps = [];
+            for (var i = 0; i < listOfSubmaps.length; i++) {
+                listOfAvailableSubmaps.push({
+                    _id: listOfSubmaps[i]._id,
+                    name: listOfSubmaps[i].name
+                });
+            }
+            return listOfAvailableSubmaps;
+        })
+        .done(function(listOfAvailableSubmaps) {
+            res.json({
+                listOfAvailableSubmaps: listOfAvailableSubmaps
+            });
+        }, defaultErrorHandler.bind(this, res));
+
   });
 
   module.router.get('/submap/:submapID/usage', authGuardian.authenticationRequired, function(req, res){
@@ -364,52 +371,6 @@ module.exports = function(authGuardian, mongooseConnection) {
     //         res.json(listOfMaps);
     //     }, defaultErrorHandler.bind(this, res));
   });
-
-  module.router.put('/map/:mapID/submap/:submapID', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-
-    var newNodeX = req.body.coords.x;
-    var newNodeY = req.body.coords.y;
-
-    var parentMapPromise = WardleyMap.findOne({
-        _id: req.params.mapID,
-        archived: false
-    }).exec().then(checkAccess.bind(this, req.params.mapID, owner));
-
-    var submapPromise = WardleyMap.findOne({
-        _id: req.params.submapID,
-        archived: false
-    }).exec().then(checkAccess.bind(this, req.params.submapID, owner));
-
-    q.allSettled([parentMapPromise, submapPromise])
-        .then(function(results) {
-            var parentMap = results[0].value;
-            var submap = results[1].value;
-            return new Node({
-                    name: submap.name,
-                    workspace: parentMap.workspace,
-                    parentMap: parentMap,
-                    type: 'SUBMAP',
-                    x: newNodeX,
-                    y: newNodeY,
-                    submapID: submap._id,
-                    responsiblePerson: submap.responsiblePerson
-                })
-                .save()
-                .then(function(savedNode) {
-                    parentMap.nodes.push(savedNode);
-                    return parentMap.save();
-                });
-        })
-        .then(function(map) {
-            return map.defaultPopulate();
-        })
-        .done(function(savedMap) {
-            res.json({
-                map: savedMap
-            });
-        }, defaultErrorHandler.bind(this, res));
-});
 
   module.router.get('/workspace/:workspaceID/submapImpact', authGuardian.authenticationRequired, function(req, res) {
       let listOfNodesToSubmap = req.query.nodes ? req.query.nodes : [];

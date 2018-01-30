@@ -78,11 +78,21 @@ class ComponentName extends React.Component{
         Create a new component <b>{suggestion.name}</b>.
       </Button>);
     }
-    return (
-      <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle}>
-        Reference existing component {suggestion.name}
-      </Button>
-    );
+    if(suggestion.type === 'node'){
+      return (
+        <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle}>
+          Reference existing component {suggestion.name}
+        </Button>
+      );
+    }
+    if(suggestion.type === 'submap'){
+      return (
+        <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle}>
+          Reference existing submap {suggestion.name}
+        </Button>
+      );
+    }
+
   }
 
   enhanceSuggestions(suggestions){
@@ -95,7 +105,9 @@ class ComponentName extends React.Component{
     return [{
       name: this.props.name,
       type: 'createnew'
-    }].concat(suggestions);
+    }]
+    .concat(suggestions.nodes.map(node => {return {type: 'node', _id : node._id, name: node.name, node:node};}))
+    .concat(suggestions.submaps.map(submap => {return {type: 'submap', _id : submap._id, name: submap.name, submap:submap};}));
   }
 
   renderSuggestionsContainer({ containerProps , children, query }){

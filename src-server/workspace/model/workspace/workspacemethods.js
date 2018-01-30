@@ -14,8 +14,7 @@ limitations under the License.*/
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
 
-
-module.exports.findSuggestions = function(workspace, Node, timeSlice, mapId, suggestionText) {
+let findNodeSuggestions = function(workspace, Node, timeSlice, mapId, suggestionText) {
 
   let regexp = new RegExp(suggestionText, 'i');
   let mapObjectId = new ObjectId(mapId);
@@ -43,6 +42,53 @@ module.exports.findSuggestions = function(workspace, Node, timeSlice, mapId, sug
       $match: {
         name: regexp
       }
+    },
+    {
+      $match: {
+        $or: [{
+          submapID: {
+            $exists: false
+          }
+        }, {
+          submapID: {
+            $eq: null
+          }
+        }]
+      }
     }
   ]).exec();
 };
+
+let findSubmapSuggestions = function(workspace, WardleyMap, timeSlice, suggestionText) {
+  let regexp = new RegExp(suggestionText, 'i');
+  let mapIds = [];
+  // we want to show suggestions from all the maps from the current timeline
+  // except the map we are working on right now (to avoid duplication)
+  for (let j = 0; j < timeSlice.maps.length; j++) {
+    let id = timeSlice.maps[j] || timeSlice.maps[j]._id;
+    mapIds.push(id);
+  }
+  return WardleyMap.aggregate([{
+      $match: { // step 1 - all maps from current timeline (!)
+        _id: {
+          $in: mapIds.map(function(id) {
+            return new mongoose.Types.ObjectId(id);
+          })
+        }
+      }
+    },
+    {
+      $match: {
+        isSubmap: true
+      }
+    },
+    {
+      $match: { // step 2 - name
+        name: regexp
+      }
+    }
+  ]).exec();
+};
+
+module.exports.findNodeSuggestions = findNodeSuggestions;
+module.exports.findSubmapSuggestions = findSubmapSuggestions;

@@ -38,7 +38,10 @@ export default class NewNodeStore extends Store {
         name : "",
         mapId : mapId,
         open : false,
-        suggestions : [],
+        suggestions : {
+          nodes : [],
+          submaps: []
+        },
         suggestionRequest : null,
         currentStep : 0
       };
@@ -182,7 +185,10 @@ export default class NewNodeStore extends Store {
       this.internalState.suggestionRequest.abort();
       delete this.internalState.suggestionRequest;
     }
-    this.internalState.suggestions = [];
+    this.internalState.suggestions = {
+      nodes: [],
+      submaps: []
+    };
     this.emitChange();
   }
 

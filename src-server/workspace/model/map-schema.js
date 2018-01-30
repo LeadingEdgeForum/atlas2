@@ -727,17 +727,6 @@ module.exports = function(conn) {
         });
     };
 
-    _MapSchema.methods.getAvailableSubmaps = function() {
-      var WardleyMap = require('./map-schema')(conn);
-      var _this = this;
-      return WardleyMap.find({
-        workspace: _this.workspace,
-        archived: false,
-        timesliceId: _this.timesliceId,
-        isSubmap: true
-      }).exec();
-    };
-
     _MapSchema.methods.getSubmapUsage = function() {
       var WardleyMap = require('./map-schema')(conn);
       var Node = require('./node-schema')(conn);
