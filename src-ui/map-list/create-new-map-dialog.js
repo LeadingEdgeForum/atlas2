@@ -47,12 +47,14 @@ var CreateNewMapDialog = createReactClass({
     this.setState(this.props.singleWorkspaceStore.getNewMapDialogState());
   },
 
-  _close: function() {
+  _close: function(event) {
+    event.stopPropagation();
     Actions.closeNewMapDialog();
     this.internalState = {};
   },
 
-  _submit: function() {
+  _submit: function(event) {
+    event.stopPropagation();
     this.internalState.workspaceID = this.props.workspaceID;
     Actions.submitNewMapDialog(this.internalState);
     this.internalState = {};
