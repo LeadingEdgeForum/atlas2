@@ -43,7 +43,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   var WardleyMap = require('./model/map-schema')(mongooseConnection);
   var Workspace = require('./model/workspace-schema')(mongooseConnection);
   var Node = require('./model/node-schema')(mongooseConnection);
-
+  var History = require('./model/history-schema')(mongooseConnection);
 
   var module = {};
 
@@ -160,11 +160,12 @@ module.exports = function(authGuardian, mongooseConnection) {
             })
             .exec()
             .then(function(workspace){
+              return History.find({workspace : getId(req.params.workspaceID)}).sort('-date').limit(20).exec();
+            })
+            .then(function(searchResult){
               let result = [];
-              let max = workspace.history.length - 1;
-              let min = (workspace.history.length - 1 - 10 > -1) ? workspace.history.length - 1 - 10 : 0;
-              for(let i = max; i > min - 1; i--){
-                result.push(workspaceHistoryEntryToString(workspace.history[i]));
+              for(let i = 0; i < searchResult.length; i++){
+                result.push(workspaceHistoryEntryToString(searchResult[i]));
               }
               return result;
             })

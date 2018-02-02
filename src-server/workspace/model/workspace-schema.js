@@ -17,7 +17,6 @@ var ObjectId = mongoose.Types.ObjectId;
 var String = Schema.Types.String;
 var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
-var SchemaDate = Schema.Types.Date;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
 var variantLogger = require('./../../log').getLogger('variants');
 let mapImport = require('./map-import-export').mapImport;
@@ -31,10 +30,6 @@ let formASubmap = require('./workspace/submap-routines').formASubmap;
  * on maps within a workspace, and they all have identical access rights.
  */
 var workspace = {};
-
-let nowTime = function(){
-  return new Date();
-};
 
 function migrator(doc){
   if (!doc.schemaVersion) {
@@ -58,7 +53,7 @@ module.exports = function(conn) {
     if (workspace[conn.name]) {
         return workspace[conn.name];
     }
-
+    var History = require('./history-schema')(conn);
     var workspaceSchema = new Schema({
         name : String,
         purpose : String,
@@ -72,26 +67,6 @@ module.exports = function(conn) {
           default: 'EXISTING',
           required: true
         },
-        history : [{
-            date : {
-              type: SchemaDate,
-              default: SchemaDate.now,
-              required: true
-            },
-            actor : String,
-            changes : [{
-              fieldName : String,
-              operationType : {
-                type : String,
-                enum:['SET', 'ADD', 'REMOVE'],
-                default: 'SET',
-                // required : true
-              },
-              newValue : String,
-              message : String
-            }],
-            message : String
-        }],
         nodes : [{
             type: Schema.Types.ObjectId,
             ref: 'Node'
@@ -126,88 +101,52 @@ module.exports = function(conn) {
           name: name,
           description: description,
           purpose: purpose,
-          owner: [owner],
-          history: [{
-            actor: owner,
-            date: nowTime(),
-            changes: [{
-              fieldName: 'status',
-              newValue: 'EXISTING'
-            }, {
-              fieldName: 'name',
-              newValue: name
-            }, {
-              fieldName: 'description',
-              newValue: description
-            }, {
-              fieldName: 'purpose',
-              newValue: purpose
-            }]
-          }]
+          owner: [owner]
         });
-        return wkspc.save();
+        return wkspc.save().then(function(workspace) {
+          History.log(getId(workspace), owner, null, null, [
+            ['status', 'SET', 'EXISTING', null],
+            ['name', 'SET', name, null],
+            ['description', 'SET', description, null],
+            ['purpose', 'SET', purpose, null]
+          ]);
+          return workspace;
+        });
     };
 
     workspaceSchema.methods.update = function(user, name, description, purpose){
-      let changeEntry = {
-        actor : user,
-        date: nowTime(),
-        changes : []
-      };
+      let entries = [];
       if(name){
         this.name = name;
-        changeEntry.changes.push({
-          fieldName : 'name',
-          newValue : name
-        });
+        entries.push(['name', 'SET', name, null]);
       }
       if(description){
         this.description = description;
-        changeEntry.changes.push({
-          fieldName : 'description',
-          newValue : description
-        });
+        entries.push(['description', 'SET', description, null]);
       }
       if(purpose){
         this.purpose = purpose;
-        changeEntry.changes.push({
-          fieldName : 'purpose',
-          newValue : purpose
-        });
+        entries.push(['purpose', 'SET', purpose, null]);
       }
-      if(changeEntry.changes.length > 0){
-        this.history.push(changeEntry);
+      if(entries.length > 0){
+        History.log(getId(this), user, null, null, entries);
       }
       return this.save();
     };
 
     workspaceSchema.methods.delete = function(user) {
-      let changeEntry = {
-        actor: user,
-        date: nowTime(),
-        changes: []
-      };
       this.status = 'DELETED';
-      changeEntry.changes.push({
-        fieldName: 'status',
-        newValue: 'DELETED'
-      });
-      this.history.push(changeEntry);
+      History.log(getId(this), user, null, null, [
+        ['status', 'SET', 'DELETED', null]
+      ]);
       return this.save();
     };
 
     workspaceSchema.methods.addEditor = function(user, editorEmail){
       this.owner.push(editorEmail);
-      let changeEntry = {
-        actor : user,
-        date: nowTime(),
-        changes : [{
-          fieldName : 'owner',
-          newValue : editorEmail,
-          operationType : 'ADD'
-        }]
-      };
-      this.history.push(changeEntry);
+      History.log(getId(this), user, null, null, [
+        ['owner', 'ADD', editorEmail, null]
+      ]);
       return this.save();
     };
 
@@ -216,16 +155,9 @@ module.exports = function(conn) {
           throw new Error('Cannot delete self');
       }
       this.owner.pull(editorEmail);
-      let changeEntry = {
-        actor : user,
-        date: nowTime(),
-        changes : [{
-          fieldName : 'owner',
-          newValue : editorEmail,
-          operationType : 'REMOVE'
-        }]
-      };
-      this.history.push(changeEntry);
+      History.log(getId(this), user, null, null, [
+        ['owner', 'REMOVE', editorEmail, null]
+      ]);
       return this.save();
     };
 
@@ -233,20 +165,10 @@ module.exports = function(conn) {
         var WardleyMap = require('./map-schema')(conn);
         var Workspace = require('./workspace-schema')(conn);
         this.maps.push(mapId);
-        let changeEntry = {
-          actor: actor,
-          date: nowTime(),
-          changes: [{
-            fieldName: 'maps',
-            newValue: mapId,
-            operationType: 'ADD'
-          }, {
-            fieldName: 'map.name',
-            newValue: name,
-            operationType: 'SET'
-          }, ]
-        };
-        this.history.push(changeEntry);
+        History.log(getId(this), actor, [getId(mapId)], null, [
+          ['maps', 'ADD', mapId, null],
+          ['map.name', 'SET', name, null]
+        ]);
         return this.save();
     };
 
@@ -379,23 +301,17 @@ module.exports = function(conn) {
           }, {
             $pull: {
               'maps': mapId
-            },
-            $push : {
-              'history' : {
-                actor : actor,
-                date: nowTime(),
-                changes : [{
-                  fieldName : 'maps',
-                  operationType : 'REMOVE',
-                  newValue : mapId
-                }]
-              }
             }
           }, {
             safe:true,
             multi:true,
             new : true
-          }).populate('maps').exec();
+          }).populate('maps').exec().then(function(result){
+            History.log(workspaceId, actor, [getId(mapId)], null, [
+              ['maps', 'REMOVE', mapId, null]
+            ]);
+            return result;
+          });
         });
     };
 
