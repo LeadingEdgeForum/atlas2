@@ -17,12 +17,13 @@ var ObjectId = mongoose.Types.ObjectId;
 var String = Schema.Types.String;
 var Boolean = Schema.Types.Boolean;
 var Number = Schema.Types.Number;
-var Date = Schema.Types.Date;
+var SchemaDate = Schema.Types.Date;
 var deduplicationLogger = require('./../../log').getLogger('deduplication');
 var variantLogger = require('./../../log').getLogger('variants');
 let mapImport = require('./map-import-export').mapImport;
 let getId = require('../../util/util.js').getId;
 let formASubmap = require('./workspace/submap-routines').formASubmap;
+
 
 /**
  * Workspace, referred also as an organization, is a group of maps that all
@@ -31,19 +32,11 @@ let formASubmap = require('./workspace/submap-routines').formASubmap;
  */
 var workspace = {};
 
+let nowTime = function(){
+  return new Date();
+};
 
-var defaultCapabilityCategories = [
-  { name:'Portfolio', capabilities : []},
-  { name:'Customer Service', capabilities : []},
-  { name:'Administrative', capabilities : []},
-  { name:'Quality', capabilities : []},
-  { name:'Operational', capabilities : []},
-  { name:'Sales and Marketing', capabilities : []},
-  { name:'Research', capabilities : []},
-  { name:'Finances', capabilities : []}
-];
-
-function migrator(doc, fn){
+function migrator(doc){
   if (!doc.schemaVersion) {
     doc.schemaVersion = 1;
     doc.timeline = [{
@@ -58,7 +51,6 @@ function migrator(doc, fn){
     delete doc._doc.capabilityCategories;
     delete doc.capabilityCategories;
   }
-  fn();
 }
 
 module.exports = function(conn) {
@@ -82,8 +74,9 @@ module.exports = function(conn) {
         },
         history : [{
             date : {
-              type: Date,
-              default: Date.now
+              type: SchemaDate,
+              default: SchemaDate.now,
+              required: true
             },
             actor : String,
             changes : [{
@@ -92,7 +85,7 @@ module.exports = function(conn) {
                 type : String,
                 enum:['SET', 'ADD', 'REMOVE'],
                 default: 'SET',
-                required : true
+                // required : true
               },
               newValue : String,
               message : String
@@ -134,16 +127,9 @@ module.exports = function(conn) {
           description: description,
           purpose: purpose,
           owner: [owner],
-          timeline: [{
-            name: 'Now',
-            description: 'Representation of current reality',
-            current: true,
-            maps: [],
-            nodes: [],
-            capabilityCategories: defaultCapabilityCategories
-          }],
           history: [{
             actor: owner,
+            date: nowTime(),
             changes: [{
               fieldName: 'status',
               newValue: 'EXISTING'
@@ -165,6 +151,7 @@ module.exports = function(conn) {
     workspaceSchema.methods.update = function(user, name, description, purpose){
       let changeEntry = {
         actor : user,
+        date: nowTime(),
         changes : []
       };
       if(name){
@@ -194,10 +181,26 @@ module.exports = function(conn) {
       return this.save();
     };
 
+    workspaceSchema.methods.delete = function(user) {
+      let changeEntry = {
+        actor: user,
+        date: nowTime(),
+        changes: []
+      };
+      this.status = 'DELETED';
+      changeEntry.changes.push({
+        fieldName: 'status',
+        newValue: 'DELETED'
+      });
+      this.history.push(changeEntry);
+      return this.save();
+    };
+
     workspaceSchema.methods.addEditor = function(user, editorEmail){
       this.owner.push(editorEmail);
       let changeEntry = {
         actor : user,
+        date: nowTime(),
         changes : [{
           fieldName : 'owner',
           newValue : editorEmail,
@@ -215,6 +218,7 @@ module.exports = function(conn) {
       this.owner.pull(editorEmail);
       let changeEntry = {
         actor : user,
+        date: nowTime(),
         changes : [{
           fieldName : 'owner',
           newValue : editorEmail,
@@ -225,10 +229,24 @@ module.exports = function(conn) {
       return this.save();
     };
 
-    workspaceSchema.methods.insertMapId = function(mapId) {
+    workspaceSchema.methods.insertMapId = function(mapId, actor, name) {
         var WardleyMap = require('./map-schema')(conn);
         var Workspace = require('./workspace-schema')(conn);
         this.maps.push(mapId);
+        let changeEntry = {
+          actor: actor,
+          date: nowTime(),
+          changes: [{
+            fieldName: 'maps',
+            newValue: mapId,
+            operationType: 'ADD'
+          }, {
+            fieldName: 'map.name',
+            newValue: name,
+            operationType: 'SET'
+          }, ]
+        };
+        this.history.push(changeEntry);
         return this.save();
     };
 
@@ -241,7 +259,7 @@ module.exports = function(conn) {
         params.name = "I am too lazy to set the map title. I prefer getting lost.";
       }
       var newId = new ObjectId();
-      return this.insertMapId(newId)
+      return this.insertMapId(newId, params.actor, params.name)
         .then(function(workspace) {
           return new WardleyMap({
             name: params.name,
@@ -253,7 +271,7 @@ module.exports = function(conn) {
         });
     };
 
-    workspaceSchema.methods.deleteAMap = function(mapId) {
+    workspaceSchema.methods.deleteAMap = function(mapId, actor) {
       const Node = require('./node-schema')(conn);
       const Workspace = require('./workspace-schema')(conn);
       mapId = getId(mapId);
@@ -361,6 +379,17 @@ module.exports = function(conn) {
           }, {
             $pull: {
               'maps': mapId
+            },
+            $push : {
+              'history' : {
+                actor : actor,
+                date: nowTime(),
+                changes : [{
+                  fieldName : 'maps',
+                  operationType : 'REMOVE',
+                  newValue : mapId
+                }]
+              }
             }
           }, {
             safe:true,

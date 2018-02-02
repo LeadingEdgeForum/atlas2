@@ -80,6 +80,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   var defaultErrorHandler = function(res, err){
       if(err){
+        console.log(err);
           if(err instanceof AccessError){
             return res.status(err.status).send(err.message);
           }
@@ -100,7 +101,8 @@ module.exports = function(authGuardian, mongooseConnection) {
             status: 'EXISTING'
         }, function(err, results) {
             if (err) {
-                return res.send(500);
+                console.log(err);
+                return res.status(500).send(err);
             }
             var responseObject = {
                 workspaces: []
@@ -200,7 +202,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           status: 'EXISTING'
         }).exec()
         .then(function(workspace) {
-          return workspace.delete();
+          return workspace.delete(getUserIdFromReq(req));
         })
         .done(function(result) {
           res.json({
@@ -314,7 +316,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           status: 'EXISTING'
         }).exec()
         .then(function(workspace) {
-          return workspace.deleteAMap(mapId);
+          return workspace.deleteAMap(mapId, owner);
         }).done(function(workspace) {
           res.json({
             workspace: workspace
@@ -337,6 +339,7 @@ module.exports = function(authGuardian, mongooseConnection) {
         }).exec()
         .then(function(workspace) {
           return workspace.createAMap({
+            actor : owner,
             name: req.body.name,
             responsiblePerson: req.body.responsiblePerson,
           });

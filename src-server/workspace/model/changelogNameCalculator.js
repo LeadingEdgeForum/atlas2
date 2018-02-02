@@ -16,29 +16,45 @@ let calculateTime = function(entryTime, clientTime){
   return moment(entryTime).format('MMMM Do YYYY, hh:mm:ss');
 };
 
-let workspaceHistoryEntryToString = function(historyEntry, /*Date*/ clientTime){
+let wrapInTime = function(time, msg){
+  return {
+    time: time,
+    msg: msg
+  };
+};
+
+let workspaceHistoryEntryToString = function(historyEntry, /*Date*/ clientTime) {
   let changes = historyEntry.changes;
   let actor = historyEntry.actor;
 
   let time = calculateTime(historyEntry.date, clientTime);
 
   // this means the workspace has been just created
-  if((changes[0].fieldName === 'status') && (changes[0].newValue === 'EXISTING')){
-    return '\'' + actor + '\' created this workspace on \'' + time + '\'.';
+  if ((changes[0].fieldName === 'status') && (changes[0].newValue === 'EXISTING')) {
+    return wrapInTime(time, '\'' + actor + '\' created this workspace.');
   }
 
-  if((changes[0].fieldName === 'owner')){
-    if(changes[0].operationType === 'ADD'){
-      return '\'' + actor + '\' invited \'' + changes[0].newValue + '\' to this workspace.';
+  if ((changes[0].fieldName === 'owner')) {
+    if (changes[0].operationType === 'ADD') {
+      return wrapInTime(time, '\'' + actor + '\' invited \'' + changes[0].newValue + '\' to this workspace.');
     }
-    if(changes[0].operationType === 'REMOVE'){
-      return '\'' + actor + '\' removed \'' + changes[0].newValue + '\'s access to this workspace.';
+    if (changes[0].operationType === 'REMOVE') {
+      return wrapInTime(time, '\'' + actor + '\' removed \'' + changes[0].newValue + '\'s access to this workspace.');
     }
   }
 
-  if((changes[0].fieldName === 'name')){
-    if(changes[0].operationType === 'SET'){
-      return '\'' + actor + '\' renamed workspace to \'' + changes[0].newValue + '\'.';
+  if ((changes[0].fieldName === 'name')) {
+    if (changes[0].operationType === 'SET') {
+      return wrapInTime(time, '\'' + actor + '\' renamed workspace to \'' + changes[0].newValue + '\'.');
+    }
+  }
+
+  if ((changes[0].fieldName === 'maps')) {
+    if (changes[0].operationType === 'ADD') {
+      return wrapInTime(time, '\'' + actor + '\' created a map  \'' + changes[1].newValue + '\' with id ' + changes[0].newValue + '.');
+    }
+    if (changes[0].operationType === 'REMOVE') {
+      return wrapInTime(time, '\'' + actor + '\' deleted a map  \'' + changes[0].newValue + '\'.');
     }
   }
   return historyEntry;
