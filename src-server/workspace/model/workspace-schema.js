@@ -233,7 +233,7 @@ module.exports = function(conn) {
     };
 
 
-    workspaceSchema.methods.createAMap = function(params, timesliceId, isSubmap) {
+    workspaceSchema.methods.createAMap = function(params, isSubmap) {
       var WardleyMap = require('./map-schema')(conn);
       var Workspace = require('./workspace-schema')(conn);
 
@@ -241,12 +241,11 @@ module.exports = function(conn) {
         params.name = "I am too lazy to set the map title. I prefer getting lost.";
       }
       var newId = new ObjectId();
-      return this.insertMapId(newId, timesliceId)
+      return this.insertMapId(newId)
         .then(function(workspace) {
           return new WardleyMap({
             name: params.name,
             workspace: workspace._id,
-            timesliceId : timesliceId ? new ObjectId(timesliceId) : workspace.nowId,
             responsiblePerson: params.responsiblePerson,
             isSubmap : isSubmap || false,
             _id: newId,
@@ -548,7 +547,7 @@ module.exports = function(conn) {
             Node: Node,
             Workspace: Workspace,
             WardleyMap: WardleyMap
-          }, _this, _this.nowId, mapId, name, responsiblePerson, nodeIdsToSubmap, impact);
+          }, _this, mapId, name, responsiblePerson, nodeIdsToSubmap, impact);
         });
     };
 

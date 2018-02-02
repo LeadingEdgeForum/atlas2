@@ -92,7 +92,7 @@ function getSubmapPositions(mongooseObjects, nodeIds, impact) {
 This methods form a submap by creating a new map, moving shifting there all the
 selected components, moving internal dependecies (got from impact).
 */
-function createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodes, impact) {
+function createASubmap(mongooseObjects, workspace, mapId, name, responsiblePerson, nodes, impact) {
   let Node = mongooseObjects.Node;
   let WardleyMap = mongooseObjects.WardleyMap;
   return workspace.createAMap({
@@ -272,7 +272,7 @@ function replaceIncomingDependencies(mongooseObjects, targetNodeId, nodesThatDep
 /*
 	Forms a submap and returns a list of modified maps
 */
-function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact) {
+function formASubmap(mongooseObjects, workspace, mapId, name, responsiblePerson, nodesInSubmap, impact) {
   let Node = mongooseObjects.Node;
   let Workspace = mongooseObjects.Workspace;
 
@@ -280,7 +280,7 @@ function formASubmap(mongooseObjects, workspace, timeSlice, mapId, name, respons
 
     return getSubmapPositions(mongooseObjects, nodesInSubmap, impact).then(function(positions){
       positionsAntipaternVariable = positions;
-      return createASubmap(mongooseObjects, workspace, timeSlice, mapId, name, responsiblePerson, nodesInSubmap, impact)
+      return createASubmap(mongooseObjects, workspace, mapId, name, responsiblePerson, nodesInSubmap, impact)
         .then(function(submap){
           return {
             positions: positions,
