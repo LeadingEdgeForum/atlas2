@@ -1,3 +1,13 @@
+/* Copyright 2017, 2018  Krzysztof Daniel.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 
 import Store from '../store.js';
@@ -24,14 +34,6 @@ export default class SingleWorkspaceStore extends Store {
       };
 
       this.newMapDialog = {
-          open : false
-      };
-
-      this.newVariantDialog = {
-          open : false
-      };
-
-      this.editVariantDialog = {
           open : false
       };
 
@@ -105,56 +107,6 @@ export default class SingleWorkspaceStore extends Store {
                 this.submitNewWorkspaceDialog(action.data);
                 //no change, because it will go only after the submission is successful
                 break;
-            case ActionTypes.CREATE_NEW_VARIANT:
-                this.createNewVariant(action.data);
-                break;
-            case ActionTypes.OPEN_NEW_VARIANT_DIALOG:
-                this.newVariantDialog = {
-                  open: true,
-                  sourceTimeSliceId: action.data.sourceTimeSliceId
-                };
-                this.emitChange();
-                break;
-            case ActionTypes.CLOSE_NEW_VARIANT_DIALOG:
-                this.newVariantDialog = {open: false};
-                this.emitChange();
-                break;
-            case ActionTypes.OPEN_EDIT_VARIANT_DIALOG:
-              let name = null;
-              let description = null;
-              let workspace = this.getWorkspaceInfo().workspace;
-              for (let i = 0; i < workspace.timeline.length; i++) {
-
-                // either we find indicated timeline
-                // or if it was indicated, we use current one
-                if (workspace.timeline[i]._id === action.data.sourceTimeSliceId ||
-                  (!action.data.sourceTimeSliceId && workspace.timeline[i].current)) {
-
-                    name = workspace.timeline[i].name;
-                    description = workspace.timeline[i].description;
-                  }
-
-              }
-              this.editVariantDialog = {
-                open: true,
-                sourceTimeSliceId: action.data.sourceTimeSliceId,
-                name : name,
-                description : description
-              };
-              this.emitChange();
-              break;
-            case ActionTypes.CLOSE_EDIT_VARIANT_DIALOG:
-              this.editVariantDialog = {
-                open: false
-              };
-              this.emitChange();
-              break;
-            case ActionTypes.MODIFY_VARIANT:
-              this.modifyVariant(action.data);
-              break;
-            case ActionTypes.SET_VARIANT_AS_CURRENT:
-              this.modifyVariant(action.data);
-              break;
             case ActionTypes.UPLOAD_A_MAP:
               this.uploadAMap(action.data);
               break;
@@ -185,14 +137,6 @@ export default class SingleWorkspaceStore extends Store {
 
   getInviteNewUserDialogState(){
     return this.inviteDialog;
-  }
-
-  getNewVariantDialogState(){
-    return this.newVariantDialog;
-  }
-
-  getEditVariantDialogState(){
-    return this.editVariantDialog;
   }
 
   getWorkspaceId(){
@@ -287,10 +231,7 @@ export default class SingleWorkspaceStore extends Store {
 
   submitNewMapDialog(data) {
     if(data.workspaceID === this.getWorkspaceId()){
-      let url = '/api/map';
-      if(data.timesliceId){
-        url = '/api/variant/' + data.timesliceId + '/map';
-      }
+      let url = '/api/workspace/' + this.getWorkspaceId() + '/map';
       $.ajax({
         type: 'POST',
         url: url,
@@ -325,51 +266,6 @@ export default class SingleWorkspaceStore extends Store {
         this.io.emit('map', {
           type: 'change',
           id: data.mapID
-        });
-      }.bind(this)
-    });
-  }
-
-  createNewVariant(data){
-    $.ajax({
-      type: 'POST',
-      url: '/api/workspace/' + this.getWorkspaceId() + '/variant/' + data.sourceTimeSliceId,
-      data: {
-        name : data.name,
-        description : data.description
-      },
-      success: function(data) {
-        this.workspace = data;
-        this.newVariantDialog = {
-          open: false
-        };
-        this.emitChange();
-        this.io.emit('workspace', {
-          type: 'change',
-          id: data.workspaceID
-        });
-      }.bind(this)
-    });
-  }
-
-  modifyVariant(data){
-    $.ajax({
-      type: 'PUT',
-      url: '/api/workspace/' + this.getWorkspaceId() + '/variant/' + data.sourceTimeSliceId,
-      data: {
-        name : data.name,
-        description : data.description,
-        current : data.current
-      },
-      success: function(data) {
-        this.workspace = data;
-        this.editVariantDialog = {
-          open: false
-        };
-        this.emitChange();
-        this.io.emit('workspace', {
-          type: 'change',
-          id: data.workspaceID
         });
       }.bind(this)
     });

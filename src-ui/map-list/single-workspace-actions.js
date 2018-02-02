@@ -1,3 +1,13 @@
+/* Copyright 2017, 2018  Krzysztof Daniel.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 
 import Dispatcher from '../dispatcher';
@@ -107,72 +117,6 @@ var SingleWorkspaceActions = {
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.MAP_DELETE,
           data : data
-      });
-    },
-
-    submitNewVariantDialog: function(sourceTimeSliceId, name, description) {
-        Dispatcher.dispatch({
-            actionType: ACTION_TYPES.CREATE_NEW_VARIANT,
-            data : {
-              sourceTimeSliceId : sourceTimeSliceId || null,
-              name : name,
-              description: description
-            }
-        });
-    },
-
-    openNewVariantDialog: function(sourceTimeSliceId) {
-        Dispatcher.dispatch({
-            actionType: ACTION_TYPES.OPEN_NEW_VARIANT_DIALOG,
-            data : {
-              sourceTimeSliceId : sourceTimeSliceId || null
-            }
-        });
-    },
-
-    closeNewVariantDialog: function() {
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.CLOSE_NEW_VARIANT_DIALOG
-      });
-    },
-
-    submitEditVariantDialog: function(sourceTimeSliceId, name, description) {
-        Dispatcher.dispatch({
-            actionType: ACTION_TYPES.MODIFY_VARIANT,
-            data : {
-              sourceTimeSliceId : sourceTimeSliceId || null,
-              name : name,
-              description: description
-            }
-        });
-    },
-
-    openEditVariantDialog: function(sourceTimeSliceId) {
-        Dispatcher.dispatch({
-            actionType: ACTION_TYPES.OPEN_EDIT_VARIANT_DIALOG,
-            data : {
-              sourceTimeSliceId : sourceTimeSliceId || null
-            }
-        });
-    },
-
-    closeEditVariantDialog: function() {
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.CLOSE_EDIT_VARIANT_DIALOG
-      });
-    },
-
-    setVariantAsCurrent: function(sourceTimeSliceId) {
-      if(!sourceTimeSliceId) {
-        console.log('ignoring because of empty sourceTimeSliceId');
-        return;
-      }
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.SET_VARIANT_AS_CURRENT,
-          data : {
-            sourceTimeSliceId : sourceTimeSliceId,
-            current : true
-          }
       });
     },
 
