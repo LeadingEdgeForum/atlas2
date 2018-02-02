@@ -89,6 +89,133 @@ module.exports = function(authGuardian, mongooseConnection) {
       res.status(500).send("No more details available");
   };
 
+  /*****************************************************************************
+      Workspace API
+  *****************************************************************************/
+
+
+    module.router.get('/workspaces/', authGuardian.authenticationRequired, function(req, res) {
+        Workspace.find({
+            owner: getUserIdFromReq(req),
+            status: 'EXISTING'
+        }, function(err, results) {
+            if (err) {
+                return res.send(500);
+            }
+            var responseObject = {
+                workspaces: []
+            };
+            results.forEach(workspace => responseObject.workspaces.push({
+                workspace: workspace
+            }));
+            res.json(responseObject);
+        });
+    });
+
+    module.router.post('/workspace/', authGuardian.authenticationRequired, function(req, res) {
+        var owner = getUserIdFromReq(req);
+        Workspace
+          .initWorkspace(req.body.name, req.body.description, req.body.purpose, owner)
+          .done(function(workspace){
+              res.json(workspace);
+              track(owner,'create_workspace',{
+                'id' : workspace._id
+              }, req.body);
+              //TODO: find a way to notify others about the new workspace that has been created. Other clients may need to fetch it.
+          }, function(e){
+              workspaceLogger.error(e);
+              return res.status(500).send(e);
+          });
+    });
+
+    module.router.get('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
+        Workspace
+            .findOne({
+                owner: getUserIdFromReq(req),
+                _id: req.params.workspaceID,
+                status: 'EXISTING'
+            })
+            .populate('maps')
+            .exec(function(err, result) {
+                if (err) {
+                    return res.send(500);
+                }
+                if(!result){
+                  return res.send(404);
+                }
+                res.json({
+                    workspace: result.toObject()
+                });
+            });
+    });
+
+    module.router.get('/workspace/:workspaceID/history', authGuardian.authenticationRequired, function(req, res) {
+        Workspace
+            .findOne({
+                owner: getUserIdFromReq(req),
+                _id: req.params.workspaceID,
+                status: 'EXISTING'
+            })
+            .exec()
+            .then(function(workspace){
+              let result = [];
+              let max = workspace.history.length - 1;
+              let min = (workspace.history.length - 1 - 10 > -1) ? workspace.history.length - 1 - 10 : 0;
+              for(let i = max; i > min - 1; i--){
+                result.push(workspaceHistoryEntryToString(workspace.history[i]));
+              }
+              return result;
+            })
+            .done(function(result){
+              res.json({history:result});
+            }, defaultErrorHandler.bind(this, res));
+    });
+
+
+    module.router.put('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
+      let user = getUserIdFromReq(req);
+      Workspace.findOne({
+        owner: user,
+        _id: req.params.workspaceID,
+        status: 'EXISTING'
+      }).exec()
+      .then(function(workspace){
+        return workspace.update(user, req.body.name, req.body.description, req.body.purpose);
+      })
+      .then(function(workspace){
+        console.log(workspace);
+        return workspace.populate('maps').execPopulate();
+      })
+      .done(function(updatedWorkspace){
+        res.json({
+          workspace: updatedWorkspace.toObject()
+        });
+      }, defaultErrorHandler.bind(this, res));
+    });
+
+    module.router.delete('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
+      Workspace.findOne({
+          owner: getUserIdFromReq(req),
+          _id: req.params.workspaceID,
+          status: 'EXISTING'
+        }).exec()
+        .then(function(workspace) {
+          return workspace.delete();
+        })
+        .done(function(result) {
+          res.json({
+            workspace: null
+          });
+          track(getUserIdFromReq(req), 'delete_workspace', {
+            'id': req.params.workspaceID,
+          });
+        }, defaultErrorHandler.bind(this, res));
+    });
+
+  /*****************************************************************************
+        Map API
+  *****************************************************************************/
+
   module.router.get('/map/:mapID/name', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       WardleyMap
@@ -105,107 +232,6 @@ module.exports = function(authGuardian, mongooseConnection) {
                 name: result.name
               }
             });
-          }, defaultErrorHandler.bind(this, res));
-  });
-
-  module.router.get('/map/:mapID/node/:nodeID/name', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      let nodeID = getId(req.params.nodeID);
-      WardleyMap
-          .findOne({
-              _id: req.params.mapID
-          })
-          .select('name')
-          .exec()
-          .then(checkAccess.bind(this,req.params.mapID,owner))
-          .then(function(){
-            return Node.findById(nodeID).exec();
-          })
-          .done(function(result) {
-            res.json({
-              node: {
-                _id: result._id,
-                name: result.name
-              }
-            });
-          }, defaultErrorHandler.bind(this, res));
-  });
-
-
-  module.router.get('/workspaces/', authGuardian.authenticationRequired, function(req, res) {
-      Workspace.find({
-          owner: getUserIdFromReq(req),
-          status: 'EXISTING'
-      }, function(err, results) {
-          if (err) {
-              return res.send(500);
-          }
-          var responseObject = {
-              workspaces: []
-          };
-          results.forEach(workspace => responseObject.workspaces.push({
-              workspace: workspace
-          }));
-          res.json(responseObject);
-      });
-  });
-
-  module.router.post('/workspace/', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      Workspace
-        .initWorkspace(req.body.name, req.body.description, req.body.purpose, owner)
-        .done(function(workspace){
-            res.json(workspace);
-            track(owner,'create_workspace',{
-              'id' : workspace._id
-            }, req.body);
-            //TODO: find a way to notify others about the new workspace that has been created. Other clients may need to fetch it.
-        }, function(e){
-            workspaceLogger.error(e);
-            return res.status(500).send(e);
-        });
-  });
-
-  module.router.get('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
-      Workspace
-          .findOne({
-              owner: getUserIdFromReq(req),
-              _id: req.params.workspaceID,
-              status: 'EXISTING'
-          })
-          .populate('maps')
-          .exec(function(err, result) {
-              if (err) {
-                  return res.send(500);
-              }
-              if(!result){
-                return res.send(404);
-              }
-              res.json({
-                  workspace: result.toObject()
-              });
-          });
-  });
-
-  module.router.get('/workspace/:workspaceID/history', authGuardian.authenticationRequired, function(req, res) {
-      Workspace
-          .findOne({
-              owner: getUserIdFromReq(req),
-              _id: req.params.workspaceID,
-              status: 'EXISTING'
-          })
-          .exec()
-          .then(function(workspace){
-            let result = [];
-            let max = workspace.history.length - 1;
-            let min = (workspace.history.length - 1 - 10 > -1) ? workspace.history.length - 1 - 10 : 0;
-            for(let i = max; i > min - 1; i--){
-              result.push(workspaceHistoryEntryToString(workspace.history[i]));
-            }
-            return result;
-          })
-          .done(function(result){
-            res.json({history:result});
           }, defaultErrorHandler.bind(this, res));
   });
 
@@ -243,6 +269,208 @@ module.exports = function(authGuardian, mongooseConnection) {
           'name': map.name
         });
       }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.put('/workspace/:workspaceId/map/:mapId', authGuardian.authenticationRequired, function(req, res) {
+    let owner = getUserIdFromReq(req);
+    let workspaceId = getId(req.params.workspaceId);
+    let mapId = getId(req.params.mapId);
+    Workspace
+      .findOne({
+        owner: owner,
+        _id: req.params.workspaceId,
+        'maps': mapId,
+        status: 'EXISTING'
+      }).exec().then(function(irrelevantWorkspace) {
+        if (!irrelevantWorkspace) {
+          res.status(404).json('workspace not found');
+          return;
+        }
+        return WardleyMap
+          .findById(mapId)
+          .exec()
+          .then(function(map) {
+            return map.newBody(req.body.map);
+          })
+          .then(function(result) {
+            return result.defaultPopulate();
+          })
+          .done(function(json) {
+            res.json({
+              map: json
+            });
+          }, defaultErrorHandler.bind(this, res));
+      });
+  });
+
+  module.router.delete('/workspace/:workspaceId/map/:mapId', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
+      let mapId = getId(req.params.mapId);
+      Workspace
+        .findOne({
+          owner: owner,
+          _id: req.params.workspaceId,
+          'maps': mapId,
+          status: 'EXISTING'
+        }).exec()
+        .then(function(workspace) {
+          return workspace.deleteAMap(mapId);
+        }).done(function(workspace) {
+          res.json({
+            workspace: workspace
+          });
+          track(owner, 'delete_map', {
+            'id': req.params.mapID,
+          });
+        }, defaultErrorHandler.bind(this, res));
+  });
+
+
+    module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
+        var editor = getUserIdFromReq(req);
+        Workspace
+            .findOne({
+                _id: new ObjectId(req.body.workspaceID),
+                owner: editor
+            })
+            .exec()
+            .then(function(workspace) {
+                if (!workspace) {
+                    throw new Error("Workspace not found");
+                }
+                return workspace.createAMap({
+                  name : req.body.name,
+                  responsiblePerson : req.body.responsiblePerson,
+                });
+            })
+            .done(function(result) {
+                res.json({
+                    map: result
+                });
+                track(editor,'create_map',{
+                  'id' : result._id,
+                  'name' : req.body.name
+                }, req.body);
+            }, defaultErrorHandler.bind(this, res));
+    });
+
+    module.router.post('/map/json', authGuardian.authenticationRequired, function(req, res) {
+      var editor = getUserIdFromReq(req);
+      let incomingMap = req.body.map;
+      if(!incomingMap.elements || !incomingMap.title){
+        return res.status(400).send();
+      }
+      Workspace
+          .findOne({
+              _id: new ObjectId(req.body.workspaceID),
+              owner: editor
+          })
+          .exec()
+          .then(function(workspace){
+            return workspace.importJSON(incomingMap);
+          })
+          .done(function(result) {
+              res.json({
+                  map: result
+              });
+              if(result){
+                track(editor,'import_map',{
+                  'id' : result._id,
+                  'name' : req.body.name
+                }, req.body);
+              }
+          }, defaultErrorHandler.bind(this, res));
+    });
+
+
+      module.router.put('/workspace/:workspaceId/editor/:email', authGuardian.authenticationRequired, function(req, res) {
+          var owner = getUserIdFromReq(req);
+          var workspaceId = req.params.workspaceId;
+          var email = req.params.email;
+
+
+          Workspace
+              .findOne({
+                  owner: getUserIdFromReq(req),
+                  _id: workspaceId,
+                  status: 'EXISTING'
+              }).then(function(workspace){
+                return workspace.addEditor(owner, email);
+              }).then(function(workspace){
+                return workspace.populate('maps').execPopulate();
+              }).done(function(workspace){
+                res.json({
+                    workspace: workspace
+                });
+                var helper = require('../sendgrid-helper');
+                helper.sendInvitation({
+                    owner: owner,
+                    editor: email,
+                    workspaceID: workspaceId,
+                    name: workspace.name,
+                    purpose: workspace.purpose,
+                    description: workspace.description
+                });
+                track(owner,'share_workspace',{
+                  'editor' : email,
+                  'workspace_id' : workspaceId
+                });
+              }, defaultErrorHandler.bind(this, res));
+      });
+
+
+      module.router.delete('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
+        var owner = getUserIdFromReq(req);
+        var workspaceId = getId(req.params.workspaceID);
+        var email = req.params.email;
+
+
+        Workspace
+            .findOne({
+                owner: getUserIdFromReq(req),
+                _id: workspaceId,
+                status: 'EXISTING'
+            }).then(function(workspace){
+              return workspace.removeEditor(owner, email);
+            }).then(function(workspace){
+              return workspace.populate('maps').execPopulate();
+            }).done(function(workspace){
+              res.json({
+                  workspace: workspace
+              });
+              track(owner,'unshare_workspace',{
+                'editor' : email,
+                'workspace_id' : workspaceId
+              });
+            }, defaultErrorHandler.bind(this, res));
+    });
+
+
+  /*****************************************************************************
+        Other API
+  *****************************************************************************/
+
+  module.router.get('/map/:mapID/node/:nodeID/name', authGuardian.authenticationRequired, function(req, res) {
+      var owner = getUserIdFromReq(req);
+      let nodeID = getId(req.params.nodeID);
+      WardleyMap
+          .findOne({
+              _id: req.params.mapID
+          })
+          .select('name')
+          .exec()
+          .then(checkAccess.bind(this,req.params.mapID,owner))
+          .then(function(){
+            return Node.findById(nodeID).exec();
+          })
+          .done(function(result) {
+            res.json({
+              node: {
+                _id: result._id,
+                name: result.name
+              }
+            });
+          }, defaultErrorHandler.bind(this, res));
   });
 
   /*
@@ -349,185 +577,6 @@ module.exports = function(authGuardian, mongooseConnection) {
         }, defaultErrorHandler.bind(this, res));
   });
 
-  module.router.put('/workspace/:workspaceId/map/:mapId', authGuardian.authenticationRequired, function(req, res) {
-    let owner = getUserIdFromReq(req);
-    let workspaceId = getId(req.params.workspaceId);
-    let mapId = getId(req.params.mapId);
-    Workspace
-      .findOne({
-        owner: owner,
-        _id: req.params.workspaceId,
-        'maps': mapId,
-        status: 'EXISTING'
-      }).exec().then(function(irrelevantWorkspace) {
-        if (!irrelevantWorkspace) {
-          res.status(404).json('workspace not found');
-          return;
-        }
-        return WardleyMap
-          .findById(mapId)
-          .exec()
-          .then(function(map) {
-            return map.newBody(req.body.map);
-          })
-          .then(function(result) {
-            return result.defaultPopulate();
-          })
-          .done(function(json) {
-            res.json({
-              map: json
-            });
-          }, defaultErrorHandler.bind(this, res));
-      });
-  });
-
-  module.router.put('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
-    let user = getUserIdFromReq(req);
-    Workspace.findOne({
-      owner: user,
-      _id: req.params.workspaceID,
-      status: 'EXISTING'
-    }).exec()
-    .then(function(workspace){
-      return workspace.update(user, req.body.name, req.body.description, req.body.purpose);
-    })
-    .then(function(workspace){
-      console.log(workspace);
-      return workspace.populate('maps').execPopulate();
-    })
-    .done(function(updatedWorkspace){
-      res.json({
-        workspace: updatedWorkspace.toObject()
-      });
-    }, defaultErrorHandler.bind(this, res));
-  });
-
-  module.router.delete('/workspace/:workspaceId/map/:mapId', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      let mapId = getId(req.params.mapId);
-      Workspace
-        .findOne({
-          owner: owner,
-          _id: req.params.workspaceId,
-          'maps': mapId,
-          status: 'EXISTING'
-        }).exec()
-        .then(function(workspace) {
-          return workspace.deleteAMap(mapId);
-        }).done(function(workspace) {
-          res.json({
-            workspace: workspace
-          });
-          track(owner, 'delete_map', {
-            'id': req.params.mapID,
-          });
-        }, defaultErrorHandler.bind(this, res));
-  });
-
-  module.router.delete('/workspace/:workspaceID', authGuardian.authenticationRequired, function(req, res) {
-    Workspace.findOne({
-        owner: getUserIdFromReq(req),
-        _id: req.params.workspaceID,
-        status: 'EXISTING'
-      }).exec()
-      .then(function(workspace) {
-        return workspace.delete();
-      })
-      .done(function(result) {
-        res.json({
-          workspace: null
-        });
-        track(getUserIdFromReq(req), 'delete_workspace', {
-          'id': req.params.workspaceID,
-        });
-      }, defaultErrorHandler.bind(this, res));
-  });
-
-  module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
-      var editor = getUserIdFromReq(req);
-      Workspace
-          .findOne({
-              _id: new ObjectId(req.body.workspaceID),
-              owner: editor
-          })
-          .exec()
-          .then(function(workspace) {
-              if (!workspace) {
-                  throw new Error("Workspace not found");
-              }
-              return workspace.createAMap({
-                name : req.body.name,
-                responsiblePerson : req.body.responsiblePerson,
-              });
-          })
-          .done(function(result) {
-              res.json({
-                  map: result
-              });
-              track(editor,'create_map',{
-                'id' : result._id,
-                'name' : req.body.name
-              }, req.body);
-          }, defaultErrorHandler.bind(this, res));
-  });
-
-  module.router.post('/map/json', authGuardian.authenticationRequired, function(req, res) {
-    var editor = getUserIdFromReq(req);
-    let incomingMap = req.body.map;
-    if(!incomingMap.elements || !incomingMap.title){
-      return res.status(400).send();
-    }
-    Workspace
-        .findOne({
-            _id: new ObjectId(req.body.workspaceID),
-            owner: editor
-        })
-        .exec()
-        .then(function(workspace){
-          return workspace.importJSON(incomingMap);
-        })
-        .done(function(result) {
-            res.json({
-                map: result
-            });
-            if(result){
-              track(editor,'import_map',{
-                'id' : result._id,
-                'name' : req.body.name
-              }, req.body);
-            }
-        }, defaultErrorHandler.bind(this, res));
-  });
-
-  module.router.post('/variant/:timesliceId/map', authGuardian.authenticationRequired, function(req, res) {
-      var editor = getUserIdFromReq(req);
-      Workspace
-          .findOne({
-              _id: new ObjectId(req.body.workspaceID),
-              owner: editor
-          })
-          .exec()
-          .then(function(workspace) {
-              if (!workspace) {
-                  throw new Error("Workspace not found");
-              }
-              return workspace.createAMap({
-                name : req.body.name,
-                responsiblePerson : req.body.responsiblePerson,
-              }, req.params.timesliceId);
-          })
-          .done(function(result) {
-              res.json({
-                  map: result
-              });
-              track(editor,'create_map',{
-                'id' : result._id,
-                'name' : req.body.name
-              }, req.body);
-          }, defaultErrorHandler.bind(this, res));
-  });
-
-
   module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
@@ -626,68 +675,6 @@ module.exports = function(authGuardian, mongooseConnection) {
       }, defaultErrorHandler.bind(this, res));
 
     });
-
-  module.router.put('/workspace/:workspaceId/editor/:email', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
-      var workspaceId = req.params.workspaceId;
-      var email = req.params.email;
-
-
-      Workspace
-          .findOne({
-              owner: getUserIdFromReq(req),
-              _id: workspaceId,
-              status: 'EXISTING'
-          }).then(function(workspace){
-            return workspace.addEditor(owner, email);
-          }).then(function(workspace){
-            return workspace.populate('maps').execPopulate();
-          }).done(function(workspace){
-            res.json({
-                workspace: workspace
-            });
-            var helper = require('../sendgrid-helper');
-            helper.sendInvitation({
-                owner: owner,
-                editor: email,
-                workspaceID: workspaceId,
-                name: workspace.name,
-                purpose: workspace.purpose,
-                description: workspace.description
-            });
-            track(owner,'share_workspace',{
-              'editor' : email,
-              'workspace_id' : workspaceId
-            });
-          }, defaultErrorHandler.bind(this, res));
-  });
-
-
-  module.router.delete('/workspace/:workspaceID/editor/:email', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
-    var workspaceId = getId(req.params.workspaceID);
-    var email = req.params.email;
-
-
-    Workspace
-        .findOne({
-            owner: getUserIdFromReq(req),
-            _id: workspaceId,
-            status: 'EXISTING'
-        }).then(function(workspace){
-          return workspace.removeEditor(owner, email);
-        }).then(function(workspace){
-          return workspace.populate('maps').execPopulate();
-        }).done(function(workspace){
-          res.json({
-              workspace: workspace
-          });
-          track(owner,'unshare_workspace',{
-            'editor' : email,
-            'workspace_id' : workspaceId
-          });
-        }, defaultErrorHandler.bind(this, res));
-});
 
   // module.router.post('/workspace/:workspaceID/map/:mapID/comment', authGuardian.authenticationRequired, function(req, res) {
   //     var owner = getUserIdFromReq(req);
@@ -1189,7 +1176,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                 return workspace.createAMap({
                   name: node.name,
                   responsiblePerson : node.responsiblePerson
-                }, workspace.nowId, true).then(function(map){
+                }, true).then(function(map){
                     // 2. update the node
                     node.type = "SUBMAP";
                     node.submapID = getId(map);
@@ -1314,475 +1301,6 @@ module.exports = function(authGuardian, mongooseConnection) {
                   res.status(500).json(e);
                 });
             });
-
-
-  module.router.get(
-      '/workspace/:workspaceID/components/:variantId/unprocessed',
-      authGuardian.authenticationRequired,
-      function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          Workspace.findOne({
-              archived: false,
-              owner: owner, //confirms owner & access
-              _id: new ObjectId(workspaceID)
-          }).exec(function(err, result) {
-              if (!result) {
-                  return res.send(403);
-              }
-              result.findUnprocessedNodes(req.params.variantId)
-                  .done(function(maps) {
-                      res.json({
-                          maps: maps
-                      });
-                  }, function(e) {
-                      return res.status(500).json(e);
-                  });
-          });
-      });
-
-
-  module.router.get(
-      '/workspace/:workspaceID/components/:variantId/processed',
-      authGuardian.authenticationRequired,
-      function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-
-          Workspace
-              .findOne({
-                  archived: false,
-                  owner: owner,
-                  _id: workspaceID
-              }).then(function(workspace) {
-                  if (!workspace) {
-                      return res.send(404);
-                  }
-                  return workspace.findProcessedNodes(req.params.variantId);
-              })
-              .done(function(wk) {
-                  res.json({
-                      workspace: wk
-                  });
-              },
-              function(e) {
-                capabilityLogger.error('responding...', e);
-                res.status(500).json(e);
-              });
-      });
-
-
-  module.router.post(
-      '/workspace/:workspaceID/variant/:variantId/capabilitycategory/:categoryID/node/:nodeID',
-      authGuardian.authenticationRequired,
-      function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var categoryID = new ObjectId(req.params.categoryID);
-          var nodeID = new ObjectId(req.params.nodeID);
-          capabilityLogger.trace(workspaceID, categoryID, nodeID);
-          Workspace
-              .findOne({
-                  _id: workspaceID,
-                  owner: owner,
-                  archived: false
-              })
-              .exec()
-              .then(function(workspace) {
-                  if (!workspace) {
-                      res.status(404).json("workspace not found");
-                      return null;
-                  }
-                  return workspace.createNewCapabilityAndAliasForNode(variantId, categoryID, nodeID);
-              })
-              .done(function(wk) {
-                  capabilityLogger.trace('responding ...', wk);
-                  res.json({
-                      workspace: wk
-                  });
-                  track(owner,'assign_node',{
-                    'id' : nodeID
-                  }, {
-                    'variantId' : variantId,
-                    'categoryID' : categoryID
-                  });
-              }, function(e) {
-                  capabilityLogger.error('responding with error', e);
-                  res.status(500).json(e);
-              });
-      });
-
-      module.router.delete(
-        '/workspace/:workspaceID/variant/:variantId/capabilitycategory/:categoryID',
-        authGuardian.authenticationRequired,
-        function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var categoryID = new ObjectId(req.params.categoryID);
-          capabilityLogger.trace(workspaceID, categoryID);
-          Workspace
-            .findOne({
-              _id: workspaceID,
-              owner: owner,
-              archived: false
-            })
-            .exec()
-            .then(function(workspace) {
-              if (!workspace) {
-                res.status(404).json("workspace not found");
-                return null;
-              }
-              return workspace.deleteCategory(variantId, categoryID);
-            })
-            .done(function(wk) {
-              capabilityLogger.trace('responding ...', wk);
-              res.json({
-                workspace: wk
-              });
-            }, function(e) {
-              capabilityLogger.error('responding with error', e);
-              res.status(500).json(e);
-            });
-        });
-
-      module.router.post(
-        '/workspace/:workspaceID/variant/:variantId/capabilitycategory/',
-        authGuardian.authenticationRequired,
-        function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var name = req.body.name;
-          capabilityLogger.trace(workspaceID, name);
-          Workspace
-            .findOne({
-              _id: workspaceID,
-              owner: owner,
-              archived: false
-            })
-            .exec()
-            .then(function(workspace) {
-              if (!workspace) {
-                res.status(404).json("workspace not found");
-                return null;
-              }
-              return workspace.createCategory(variantId, name);
-            })
-            .done(function(wk) {
-              capabilityLogger.trace('responding ...', wk);
-              res.json({
-                workspace: wk
-              });
-              track(owner,'create_category',{
-                'variantId' : variantId,
-                'workspaceID' : workspaceID
-              }, {
-                name:name
-              });
-            },function(e) {
-              capabilityLogger.error('responding with error', e);
-              res.status(500).json(e);
-            });
-        });
-
-      module.router.put(
-        '/workspace/:workspaceID/variant/:variantId/capabilitycategory/:categoryID',
-        authGuardian.authenticationRequired,
-        function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var categoryID = new ObjectId(req.params.categoryID);
-          var name = req.body.name;
-          capabilityLogger.trace(workspaceID, categoryID, name);
-          Workspace
-            .findOne({
-              _id: workspaceID,
-              owner: owner,
-              archived: false
-            })
-            .exec()
-            .then(function(workspace) {
-              if (!workspace) {
-                res.status(404).json("workspace not found");
-                return null;
-              }
-              return workspace.editCategory(variantId, categoryID, name);
-            })
-            .done(function(wk) {
-              capabilityLogger.trace('responding ...', wk);
-              res.json({
-                workspace: wk
-              });
-            }, function(e) {
-              capabilityLogger.error('responding with error', e);
-              res.status(500).json(e);
-            });
-        });
-
-  module.router.put(
-      '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/node/:nodeID',
-      authGuardian.authenticationRequired,
-      function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var capabilityID = new ObjectId(req.params.capabilityID);
-          var nodeID = new ObjectId(req.params.nodeID);
-          capabilityLogger.trace(workspaceID, capabilityID, nodeID);
-          Workspace
-              .findOne({
-                  _id: workspaceID,
-                  owner: owner,
-                  archived: false,
-              })
-              .exec()
-              .then(function(workspace) {
-                  if (!workspace) {
-                      res.status(404).json("workspace not found");
-                      return null;
-                  }
-                  return workspace.createNewAliasForNodeInACapability(variantId, capabilityID, nodeID);
-              })
-              .done(function(wk) {
-                  capabilityLogger.trace('responding ...', wk);
-                  res.json({
-                      workspace: wk
-                  });
-              }, function(e) {
-                  capabilityLogger.error('responding...', e);
-                  res.status(500).json(e);
-              });
-      });
-
-      module.router.post(
-        '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/marketreference/',
-        authGuardian.authenticationRequired,
-        function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = new ObjectId(req.params.variantId);
-          var capabilityID = new ObjectId(req.params.capabilityID);
-          var name = req.body.name;
-          var description = req.body.description;
-          var evolution = req.body.evolution;
-          capabilityLogger.trace(workspaceID, variantId, capabilityID, name, description, evolution);
-          Workspace
-            .findOne({
-              _id: workspaceID,
-              owner: owner,
-              archived: false,
-            })
-            .exec()
-            .then(function(workspace) {
-              if (!workspace) {
-                res.status(404).json("workspace not found");
-                return null;
-              }
-              return workspace.createNewMarketReferenceInCapability(variantId, capabilityID, name, description, evolution);
-            })
-            .done(function(wk) {
-              capabilityLogger.trace('responding ...', wk);
-              res.json({
-                workspace: wk
-              });
-              track(owner,'createmarketreference',{
-                'variantId' : variantId,
-                'capabilityID' : capabilityID
-              }, {
-                name:name,
-                evolution:evolution
-              });
-            }, function(e) {
-              capabilityLogger.error('responding...', e);
-              res.status(500).json(e);
-            });
-        });
-
-      module.router.delete(
-        '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/marketreference/:marketReferenceId',
-        authGuardian.authenticationRequired,
-        function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var capabilityID = new ObjectId(req.params.capabilityID);
-          var marketReferenceId = new ObjectId(req.params.marketReferenceId);
-          capabilityLogger.trace(workspaceID, capabilityID, marketReferenceId);
-          Workspace
-            .findOne({
-              _id: workspaceID,
-              owner: owner,
-              archived: false,
-            })
-            .exec()
-            .then(function(workspace) {
-              if (!workspace) {
-                res.status(404).json("workspace not found");
-                return null;
-              }
-              return workspace.deleteMarketReferenceInCapability(variantId, capabilityID, marketReferenceId);
-            })
-            .done(function(wk) {
-              capabilityLogger.trace('responding ...', wk);
-              res.json({
-                workspace: wk
-              });
-            }, function(e) {
-              capabilityLogger.error('responding...', e);
-              res.status(500).json(e);
-            });
-        });
-
-        module.router.put(
-          '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID/marketreference/:marketReferenceId',
-          authGuardian.authenticationRequired,
-          function(req, res) {
-            var owner = getUserIdFromReq(req);
-            var workspaceID = req.params.workspaceID;
-            let variantId = req.params.variantId;
-            var capabilityID = new ObjectId(req.params.capabilityID);
-            var marketReferenceId = new ObjectId(req.params.marketReferenceId);
-            var name = req.body.name;
-            var description = req.body.description;
-            var evolution = req.body.evolution;
-            capabilityLogger.trace(workspaceID, capabilityID, marketReferenceId, name, description, evolution);
-            Workspace
-              .findOne({
-                _id: workspaceID,
-                owner: owner,
-                archived: false,
-              })
-              .exec()
-              .then(function(workspace) {
-                if (!workspace) {
-                  res.status(404).json("workspace not found");
-                  return null;
-                }
-                return workspace.updateMarketReferenceInCapability(variantId, capabilityID, marketReferenceId, name, description, evolution);
-              })
-              .done(function(wk) {
-                capabilityLogger.trace('responding ...', wk);
-                res.json({
-                  workspace: wk
-                });
-              }, function(e) {
-                capabilityLogger.error('responding...', e);
-                res.status(500).json(e);
-              });
-          });
-
-  module.router.put(
-      '/workspace/:workspaceID/variant/:variantId/alias/:aliasID/node/:nodeID',
-      authGuardian.authenticationRequired,
-      function(req, res) {
-          var owner = getUserIdFromReq(req);
-          var workspaceID = req.params.workspaceID;
-          let variantId = req.params.variantId;
-          var aliasID = new ObjectId(req.params.aliasID);
-          var nodeID = new ObjectId(req.params.nodeID);
-          capabilityLogger.trace(workspaceID, aliasID, nodeID);
-
-          Workspace
-              .findOne({
-                  _id: workspaceID,
-                  owner: owner,
-                  archived: false,
-              })
-              .exec()
-              .then(function(workspace) {
-                  if (!workspace) {
-                      return res.status(404).json("workspace not found");
-                  }
-                  return workspace.addNodeToAlias(variantId, aliasID, nodeID);
-              })
-              .done(function(wk) {
-                  capabilityLogger.trace('responding ...', wk);
-                  res.json({
-                      workspace: wk
-                  });
-              }, function(e) {
-                capabilityLogger.error('responding...', e);
-                res.status(500).json(e);
-              });
-      });
-
-  module.router.get(
-    '/workspace/:workspaceID/variant/:variantId/node/:nodeID/usage',
-    authGuardian.authenticationRequired,
-    function(req, res) {
-      var owner = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var variantId = new ObjectId(req.params.variantId);
-      var nodeID = new ObjectId(req.params.nodeID);
-      Workspace
-          .findOne({
-              _id: workspaceID,
-              owner: owner,
-              archived: false
-          }) // this is not the best security check as we do not check relation between workspace & cap & node
-          .exec()
-        .then(function(workspace){
-          return workspace.getNodeUsageInfo(variantId, nodeID);
-        })
-        .done(function(capability){
-            res.json({capability: capability});
-        }, function(e) {
-          capabilityLogger.error('responding...', e);
-          res.status(500).json(e);
-        });
-  });
-
-
-  module.router.delete(
-    '/workspace/:workspaceID/variant/:variantId/capability/:capabilityID',
-    authGuardian.authenticationRequired,
-    function(req, res) {
-        var owner = getUserIdFromReq(req);
-        var workspaceID = req.params.workspaceID;
-        let variantId = req.params.variantId;
-        var capabilityID = new ObjectId(req.params.capabilityID);
-        capabilityLogger.trace(workspaceID, capabilityID);
-        Workspace
-            .findOne({
-                _id: workspaceID,
-                owner: owner,
-                archived: false
-            }) // this is not the best security check as we do not check relation between workspace & cap & node
-            .exec()
-            .then(function(workspace) {
-                if (!workspace) {
-                    res.status(404).json("workspace not found");
-                    return null;
-                }
-                return workspace.removeCapability(variantId, capabilityID);
-            })
-            .then(function(ur) {
-                capabilityLogger.trace('populating response...');
-                var wkPromise = Workspace
-                    .findOne({
-                        archived: false,
-                        owner: owner,
-                        _id: workspaceID
-                    })
-                    .populate({
-                        path: 'capabilityCategories.capabilities.aliases.nodes',
-                        model: 'Node',
-                    });
-                return wkPromise;
-            })
-            .done(function(wk) {
-                capabilityLogger.trace('responding ...');
-                res.json({
-                    workspace: wk
-                });
-            }, function(e) {
-              capabilityLogger.error('responding...', e);
-              res.status(500).json(e);
-            });
-    });
 
   return module;
 };
