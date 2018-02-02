@@ -326,32 +326,29 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
 
-    module.router.post('/map/', authGuardian.authenticationRequired, function(req, res) {
-        var editor = getUserIdFromReq(req);
-        Workspace
-            .findOne({
-                _id: new ObjectId(req.body.workspaceID),
-                owner: editor
-            })
-            .exec()
-            .then(function(workspace) {
-                if (!workspace) {
-                    throw new Error("Workspace not found");
-                }
-                return workspace.createAMap({
-                  name : req.body.name,
-                  responsiblePerson : req.body.responsiblePerson,
-                });
-            })
-            .done(function(result) {
-                res.json({
-                    map: result
-                });
-                track(editor,'create_map',{
-                  'id' : result._id,
-                  'name' : req.body.name
-                }, req.body);
-            }, defaultErrorHandler.bind(this, res));
+    module.router.post('/workspace/:workspaceId/map', authGuardian.authenticationRequired, function(req, res) {
+      let owner = getUserIdFromReq(req);
+      let workspaceId = getId(req.params.workspaceId);
+      Workspace
+        .findOne({
+          owner: owner,
+          _id: req.params.workspaceId,
+          status: 'EXISTING'
+        }).exec()
+        .then(function(workspace) {
+          return workspace.createAMap({
+            name: req.body.name,
+            responsiblePerson: req.body.responsiblePerson,
+          });
+        }).done(function(result) {
+          res.json({
+            map: result
+          });
+          track(owner, 'create_map', {
+            'id': result._id,
+            'name': req.body.name
+          }, req.body);
+        }, defaultErrorHandler.bind(this, res));
     });
 
     module.router.post('/map/json', authGuardian.authenticationRequired, function(req, res) {
