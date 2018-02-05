@@ -180,8 +180,7 @@ var MapComponent = createReactClass({
       var currentName = this.props.node.name;
       var node = this.props.node; //jshint ignore:line
       let workspaceID = this.props.workspaceID;
-      var variantId = this.props.variantId;
-      Actions.openReferencesDialog(currentName, node, workspaceID, variantId);
+      Actions.openReferencesDialog(currentName, node, workspaceID);
     }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {

@@ -631,27 +631,9 @@ export default class MapCanvas extends React.Component {
 
 
     var mapID = this.props.mapID;
-    let variantId = this.props.variantId;
     var workspaceID = this.props.workspaceID;
     var state = this.state;
     var canvasStore = this.props.canvasStore;
-    let diff = this.props.diff;
-    let removed = diff.nodesRemoved;
-    for(let i = 0; i < removed.length; i++){
-      var removedNode = removed[i];
-      oldComponents.push(
-        <HistoricComponent
-          canvasStore={canvasStore}
-          workspaceID={workspaceID}
-          mapID={removedNode.parentMap} node={removedNode}
-          size={size}
-          key={removedNode._id}
-          id={removedNode._id}
-          inertia={removedNode.inertia}
-          type="DELETED"
-          />
-      );
-    }
 
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
@@ -661,27 +643,6 @@ export default class MapCanvas extends React.Component {
                 if (component._id === state.currentlySelectedNodes[i]) {
                     focused = true;
                 }
-            }
-        }
-
-        if(canvasStore.isDiffEnabled()){
-            for(let z = 0; z < diff.nodesModified.length; z++){
-              if( (diff.nodesModified[z]._id === component._id) && diff.nodesModified[z].diff.x){
-                var ghost = JSON.parse(JSON.stringify(component));
-                ghost.x = diff.nodesModified[z].diff.x.old;
-                oldComponents.push(
-                  <HistoricComponent
-                    canvasStore={canvasStore}
-                    workspaceID={workspaceID}
-                    mapID={ghost.parentMap} node={ghost}
-                    size={size}
-                    key={ghost._id + '_history'}
-                    id={ghost._id + '_history'}
-                    inertia={ghost.inertia}
-                    type="MOVED"
-                    />
-                );
-              }
             }
         }
 
@@ -696,31 +657,17 @@ export default class MapCanvas extends React.Component {
               key = {component.action[j]._id}
               action = {component.action[j]}/>);
         }
-        let nodeDiff =  null;
-        for(let k = 0; k < diff.nodesModified.length; k++){
-          if(diff.nodesModified[k]._id === component._id){
-            nodeDiff = diff.nodesModified[k].diff;
-          }
-        }
-
-        for(let k = 0; k < diff.nodesAdded.length; k++){
-          if(diff.nodesAdded[k]._id === component._id){
-            nodeDiff = "ADDED";
-          }
-        }
 
         return (
             <MapComponent
               canvasStore={canvasStore}
               workspaceID={workspaceID}
-              variantId={variantId}
               mapID={mapID} node={component}
               size={size}
               key={component._id}
               id={component._id}
               focused={focused}
-              inertia={component.inertia}
-              diff={nodeDiff}/>);
+              inertia={component.inertia}/>);
       });
     }
 
@@ -750,12 +697,6 @@ export default class MapCanvas extends React.Component {
         var users = [];
         if (this.props.users) {
             for (let i = 0; i < this.props.users.length; i++) {
-              let userDiff = null;
-              for(let k = 0; k < diff.usersAdded.length; k++){
-                if(diff.usersAdded[k]._id === this.props.users[i]._id){
-                  userDiff = "ADDED";
-                }
-              }
               let focused = false;
               if (state && state.currentlySelectedUsers) {
                   for (let ii = 0; ii < state.currentlySelectedUsers.length; ii++) {
@@ -773,23 +714,6 @@ export default class MapCanvas extends React.Component {
                   key = {this.props.users[i]._id}
                   focused = {focused}
                   size = {size}
-                  diff={userDiff}
-                  />);
-            }
-        }
-        let historicUsers = [];
-        if(canvasStore.isDiffEnabled()){
-            for(let z = 0; z < diff.usersRemoved.length; z++){
-              let removedUser = diff.usersRemoved[z];
-              oldComponents.push(
-                <HistoricUser
-                  canvasStore={canvasStore}
-                  workspaceID={workspaceID}
-                  user={removedUser}
-                  size={size}
-                  key={removedUser._id}
-                  id={removedUser._id}
-                  type="DELETED"
                   />);
             }
         }
@@ -798,9 +722,7 @@ export default class MapCanvas extends React.Component {
         {components}
         {arrowends}
         {comments}
-        {oldComponents}
         {users}
-        {historicUsers}
       </div>
     );
   }

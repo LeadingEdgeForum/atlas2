@@ -128,9 +128,7 @@ export default class CanvasWithBackground extends React.Component {
     var comments = this.props.comments;
     var workspaceID = this.props.workspaceID;
     var mapID = this.props.mapID;
-    let variantId = this.props.variantId;
     var background = this.props.background;
-    let diff = this.props.diff;
     if(background){
       outerStyle.backgroundColor = 'white';
       outerStyle.marginTop= '-7px';
@@ -144,10 +142,8 @@ export default class CanvasWithBackground extends React.Component {
                   comments={comments}
                   mapID={mapID}
                   workspaceID={workspaceID}
-                  variantId={variantId}
                   background={background}
-                  canvasStore={canvasStore}
-                  diff={diff}>
+                  canvasStore={canvasStore}>
               </MapCanvas>
               <div>
                 <div style={axisX}>

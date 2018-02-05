@@ -19,7 +19,7 @@ const ActionTypes = Constants.ACTION_TYPES;
 
 export default class FormASubmapStore extends Store {
 
-  constructor(workspaceId, variantId, mapId, singleMapStore) {
+  constructor(workspaceId, mapId, singleMapStore) {
       super();
 
       this.openFormASubmapDialog = this.openFormASubmapDialog.bind(this);
@@ -38,7 +38,6 @@ export default class FormASubmapStore extends Store {
         currentStep : 0
       };
       this.workspaceId = workspaceId;
-      this.variantId = variantId;
       this.mapId = mapId;
       this.singleMapStore = singleMapStore;
 

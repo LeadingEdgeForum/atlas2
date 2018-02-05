@@ -502,7 +502,6 @@ module.exports = function(conn) {
       let Node = require('./node-schema')(conn);
       let Workspace = require('./workspace-schema')(conn);
       let _this = this;
-      q.longStackSupport = true;
 
       return Node.findOne({
           submapID: submapId

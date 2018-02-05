@@ -19,7 +19,7 @@ const ActionTypes = Constants.ACTION_TYPES;
 
 export default class NewNodeStore extends Store {
 
-  constructor(workspaceId, variantId, mapId, singleMapStore) {
+  constructor(workspaceId, mapId, singleMapStore) {
       super();
 
       this.openNewNodeDialog = this.openNewNodeDialog.bind(this);
@@ -46,7 +46,6 @@ export default class NewNodeStore extends Store {
         currentStep : 0
       };
       this.workspaceId = workspaceId;
-      this.variantId = variantId;
       this.mapId = mapId;
       this.singleMapStore = singleMapStore;
 
@@ -171,7 +170,7 @@ export default class NewNodeStore extends Store {
     }
     this.internalState.suggestionRequest = $.ajax({
       type: 'GET',
-      url: '/api/workspace/' + this.workspaceId + '/variant/' + this.variantId + '/map/' + this.mapId + '/suggestions/' + query,
+      url: '/api/workspace/' + this.workspaceId + '/map/' + this.mapId + '/suggestions/' + query,
       success: function(data) {
         this.internalState.suggestions = data.suggestions;
         this.internalState.suggestionRequest.abort();

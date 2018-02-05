@@ -237,7 +237,6 @@ export default class SingleWorkspaceStore extends Store {
           this.referencesDialog.currentName = action.data.currentName;
           this.referencesDialog.node = action.data.node;
           this.referencesDialog.workspaceID = action.data.workspaceID;
-          this.referencesDialog.variantId = action.data.variantId;
           this.emitChange();
           break;
         case ActionTypes.CLOSE_REFERENCES:
@@ -438,26 +437,6 @@ export default class SingleWorkspaceStore extends Store {
     }
   }
 
-  fetchMapDiff(){
-    if(!this.diffServerRequest && !this.errorCode){
-      this.diffServerRequest = $.get('/api/map/' + this.mapID + '/diff', function(result) {
-        this.diff = result;
-        this.diffServerRequest = null;
-        this.emitChange();
-      }.bind(this));
-    }
-  }
-
-  fetchMapVariants(){
-    if(!this.variantsServerRequest && !this.errorCode){
-      this.variantsServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
-        this.variants = result;
-        this.variantsServerRequest = null;
-        this.emitChange();
-      }.bind(this));
-    }
-  }
-
   getMap(){
     if(!this.map && !this.errorCode){
       this.fetchMap();
@@ -481,32 +460,6 @@ export default class SingleWorkspaceStore extends Store {
       };
     }
     return this.map;
-  }
-
-  getDiff(){
-    if(!this.diff){
-      this.fetchMapDiff();
-      return {
-        nodesRemoved : [],
-        nodesAdded : [],
-        nodesModified : [],
-        usersAdded : [],
-        usersRemoved : []
-      };
-    }
-    return this.diff;
-  }
-
-  getVariants(){
-    if(!this.variants){
-      this.fetchMapVariants();
-      return {
-        past : null,
-        alternatives : [],
-        futures : []
-      };
-    }
-    return this.variants;
   }
 
 
@@ -778,35 +731,6 @@ export default class SingleWorkspaceStore extends Store {
       }.bind(this)
     });
   }
-
-  // createSubmap(data){
-  //   $.ajax({
-  //         type: 'PUT',
-  //         url: '/api/map/' + this.getMapId() + '/submap',
-  //         dataType: 'json',
-  //         data : {
-  //           name : data.name,
-  //           responsiblePerson : data.responsiblePerson,
-  //           listOfNodesToSubmap : data.listOfNodesToSubmap,
-  //           listOfCommentsToSubmap : data.listOfCommentsToSubmap,
-  //           coords: data.coords
-  //         },
-  //         success: function(data2) {
-  //           this.map = data2;
-  //           this.addSubmapDialog = {open:false};
-  //           this.diff = null;
-  //           this.emitChange();
-  //           this.io.emit('map', {
-  //             type: 'change',
-  //             id: this.getMapId()
-  //           });
-  //           this.io.emit('workspace', {
-  //             type: 'change',
-  //             id: this.getWorkspaceId()
-  //           });
-  //         }.bind(this)
-  //       });
-  // }
 
   updateComment(data){
     var payload = {};

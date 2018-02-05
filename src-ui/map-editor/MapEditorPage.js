@@ -63,36 +63,33 @@ export default class MapEditorPage extends React.Component {
     this.closeHelpDialog = this.closeHelpDialog.bind(this);
     this.openHelpDialog = this.openHelpDialog.bind(this);
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
-    this.prepareVariantsSwitch = this.prepareVariantsSwitch.bind(this);
-    this.state.diff = this.props.singleMapStore.getDiff();
+    // this.state.diff = this.props.singleMapStore.getDiff();
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
     this.getNewNodeStore = this.getNewNodeStore.bind(this);
     this.getFormASubmapStore = this.getFormASubmapStore.bind(this);
     this.storesToUndispatch = [];
   }
 
-  getNewNodeStore(workspaceId, variantId, mapId) {
+  getNewNodeStore(workspaceId, mapId) {
     if (!this.newNodeStores) {
       this.newNodeStores = {};
     }
     if (!this.newNodeStores[mapId]) {
-      this.newNodeStores[mapId] = new NewNodeStore(workspaceId, variantId, mapId, this.props.singleMapStore);
+      this.newNodeStores[mapId] = new NewNodeStore(workspaceId, mapId, this.props.singleMapStore);
     }
     this.newNodeStores[mapId].workspaceId = workspaceId;
-    this.newNodeStores[mapId].variantId = variantId;
     this.storesToUndispatch.push(this.newNodeStores[mapId]);
     return this.newNodeStores[mapId];
   }
 
-  getFormASubmapStore(workspaceId, variantId, mapId){
+  getFormASubmapStore(workspaceId, mapId){
     if (!this.formASubmapStores) {
       this.formASubmapStores = {};
     }
     if (!this.formASubmapStores[mapId]) {
-      this.formASubmapStores[mapId] = new FormASubmapStore(workspaceId, variantId, mapId, this.props.singleMapStore);
+      this.formASubmapStores[mapId] = new FormASubmapStore(workspaceId, mapId, this.props.singleMapStore);
     }
     this.formASubmapStores[mapId].workspaceId = workspaceId;
-    this.formASubmapStores[mapId].variantId = variantId;
     this.storesToUndispatch.push(this.formASubmapStores[mapId]);
     return this.formASubmapStores[mapId];
   }
@@ -130,14 +127,14 @@ export default class MapEditorPage extends React.Component {
         id: this.props.singleMapStore.getMapId()
       });
       this.setState(this.props.singleMapStore.getMap());
-      this.setState({diff:this.props.singleMapStore.getDiff()});
+      // this.setState({diff:this.props.singleMapStore.getDiff()});
       jsPlumb.reset();
     }
   }
 
   _onChange() {
     this.setState(this.props.singleMapStore.getMap());
-    this.setState({diff:this.props.singleMapStore.getDiff()});
+    // this.setState({diff:this.props.singleMapStore.getDiff()});
   }
 
   openEditMapDialog() {
@@ -181,45 +178,15 @@ export default class MapEditorPage extends React.Component {
 
   }
 
-  prepareVariantsSwitch(variants){
-    if(!variants || !(variants.alternatives.length || variants.past || variants.futures.length )){
-      return null;
-    }
-    let variantItems = [];
-    if(variants.past){
-      let name = variants.past.name;
-      let href = '/map/' + variants.past.mapId;
-      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (ancestor)</MenuItem></LinkContainer>);
-      variantItems.push(<MenuItem divider />);
-    }
-    for(let i = 0; i < variants.alternatives.length; i++){
-      let name = variants.alternatives[i].name;
-      let href = '/map/' + variants.alternatives[i].mapId;
-      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (alternative)</MenuItem></LinkContainer>);
-    }
-    variantItems.push(<MenuItem divider />);
-    for(let i = 0; i < variants.futures.length; i++){
-      let name = variants.futures[i].name;
-      let href = '/map/' + variants.futures[i].mapId;
-      variantItems.push(<LinkContainer to={href}><MenuItem href={href}>{name} (future)</MenuItem></LinkContainer>);
-    }
-    return <NavDropdown eventKey="4" title="Related" id="nav-dropdown">
-        {variantItems}
-      </NavDropdown>;
-  }
-
   prepareMapMenu(currentMap){
     const workspaceID = this.props.singleMapStore.getWorkspaceId();
-    const variants = this.props.singleMapStore.getVariants();
 
-    const deduplicateHref = '/fixit/' + workspaceID + '/variant/' + (currentMap ? currentMap.timesliceId : null);
     var mapID = this.props.singleMapStore.getMapId();
 
     var tempName = mapID + '.png';
     var downloadMapHref = '/img/' + tempName;
 
     const goBack = this.prepareGoBackForSubmap();
-    const variantSwitch = this.prepareVariantsSwitch(variants);
 
     return [
       <NavItem eventKey={1} href="#" key="openEditMapDialog" onClick={this.openEditMapDialog.bind(this)}>
@@ -230,17 +197,10 @@ export default class MapEditorPage extends React.Component {
         <Glyphicon glyph="download"></Glyphicon>&nbsp; Download
       </NavItem>,
       goBack,
-      <LinkContainer to={{pathname: deduplicateHref}} key="deduplicateHref">
-          <NavItem eventKey={2} href={deduplicateHref}>
-              <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
-              &nbsp;Fix it!
-          </NavItem>
-      </LinkContainer>,
       <NavItem eventKey={5} href="#" key="5" onClick={this.toggleDiff.bind(this)}>
           <Glyphicon glyph="tags" style={{color: "basil"}}></Glyphicon>
           &nbsp;Diff
-      </NavItem>,
-      variantSwitch
+      </NavItem>
     ];
   }
 
@@ -285,10 +245,8 @@ export default class MapEditorPage extends React.Component {
     const mapName = calculateMapName('wait...', this.state.map.name, this.state.map.isSubmap);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
-    const variantId = singleMapStore.getMap().map.timesliceId;
-    const newNodeStore = this.getNewNodeStore(workspaceID, variantId, mapID);
-    const formASubmapStore = this.getFormASubmapStore(workspaceID, variantId, mapID);
-    const diff = this.state.diff;
+    const newNodeStore = this.getNewNodeStore(workspaceID, mapID);
+    const formASubmapStore = this.getFormASubmapStore(workspaceID, mapID);
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
     const users = singleMapStore.getMap().map.users;
@@ -342,9 +300,7 @@ export default class MapEditorPage extends React.Component {
                   comments={comments}
                   mapID={mapID}
                   workspaceID={workspaceID}
-                  variantId={variantId}
-                  canvasStore={canvasStore}
-                  diff={diff}/>
+                  canvasStore={canvasStore}/>
             </Col>
           </Row>
           <EditMapDialog singleMapStore={singleMapStore}/>

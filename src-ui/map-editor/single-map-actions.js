@@ -515,15 +515,14 @@ var SingleMapActions = {
       });
     },
 
-    openReferencesDialog: function(currentName, node, workspaceID, variantId){
+    openReferencesDialog: function(currentName, node, workspaceID) {
       Dispatcher.dispatch({
-          actionType: ACTION_TYPES.SHOW_REFERENCES,
-          data : {
-            currentName: currentName,
-            node:node,
-            workspaceID:workspaceID,
-            variantId : variantId
-          }
+        actionType: ACTION_TYPES.SHOW_REFERENCES,
+        data: {
+          currentName: currentName,
+          node: node,
+          workspaceID: workspaceID
+        }
       });
     },
 
