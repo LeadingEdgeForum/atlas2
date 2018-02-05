@@ -54,32 +54,44 @@ module.exports = function(conn) {
         return workspace[conn.name];
     }
     var History = require('./history-schema')(conn);
+
     var workspaceSchema = new Schema({
-        name : String,
-        purpose : String,
-        description : String,
-        owner : [ {
-            type : String
-        } ],
-        status : {
-          type: String,
-          enum: ['EXISTING', 'DELETED'],
-          default: 'EXISTING',
-          required: true
-        },
-        nodes : [{
-            type: Schema.Types.ObjectId,
-            ref: 'Node'
-        }],
-        maps: [{
-          type: Schema.Types.ObjectId,
-          ref: 'WardleyMap'
-        }],
-        schemaVersion : {
-          required: true,
-          type: Number,
-          default : 5
-        }
+      name: String,
+      purpose: String,
+      description: String,
+      owner: [{
+        type: String
+      }],
+      status: {
+        type: String,
+        enum: ['EXISTING', 'DELETED'],
+        default: 'EXISTING',
+        required: true
+      },
+      schemaVersion: {
+        required: true,
+        type: Number,
+        default: 5
+      }
+    }, {
+      toObject: {
+        virtuals: true
+      },
+      toJSON: {
+        virtuals: true
+      }
+    });
+
+    workspaceSchema.virtual('nodes', {
+      ref : 'Node',
+      localField : '_id',
+      foreignField : 'workspace'
+    });
+
+    workspaceSchema.virtual('maps', {
+      ref : 'WardleyMap',
+      localField : '_id',
+      foreignField : 'workspace'
     });
 
     // always update the schema to the latest possible version
@@ -161,41 +173,34 @@ module.exports = function(conn) {
       return this.save();
     };
 
-    workspaceSchema.methods.insertMapId = function(mapId, actor, name) {
-        var WardleyMap = require('./map-schema')(conn);
-        var Workspace = require('./workspace-schema')(conn);
-        this.maps.push(mapId);
-        History.log(getId(this), actor, [getId(mapId)], null, [
-          ['maps', 'ADD', mapId, null],
-          ['map.name', 'SET', name, null]
-        ]);
-        return this.save();
-    };
-
-
     workspaceSchema.methods.createAMap = function(params, isSubmap) {
       var WardleyMap = require('./map-schema')(conn);
       var Workspace = require('./workspace-schema')(conn);
+      let workspace = this;
 
       if (!params.name) {
         params.name = "I am too lazy to set the map title. I prefer getting lost.";
       }
-      var newId = new ObjectId();
-      return this.insertMapId(newId, params.actor, params.name)
-        .then(function(workspace) {
-          return new WardleyMap({
-            name: params.name,
-            workspace: workspace._id,
-            responsiblePerson: params.responsiblePerson,
-            isSubmap : isSubmap || false,
-            _id: newId,
-          }).save();
-        });
+      return new WardleyMap({
+        name: params.name,
+        workspace: workspace._id,
+        responsiblePerson: params.responsiblePerson,
+        isSubmap : isSubmap || false,
+        status : 'EXISTING'
+      }).save().then(function(map){
+        History.log(getId(workspace), params.actor, [getId(map)], null, [
+          ['maps', 'ADD', getId(map), null],
+          ['map.name', 'SET', params.name, null]
+        ]);
+        return map;
+      });
     };
 
     workspaceSchema.methods.deleteAMap = function(mapId, actor) {
       const Node = require('./node-schema')(conn);
       const Workspace = require('./workspace-schema')(conn);
+      const WardleyMap = require('./map-schema')(conn);
+
       mapId = getId(mapId);
       let workspaceId = getId(this._id);
       let _this = this;
@@ -296,24 +301,31 @@ module.exports = function(conn) {
         })
         .then(function(irrelevant) {
           // console.log('nodes removed', irrelevant);
-          return Workspace.findOneAndUpdate({
-              'maps': mapId
-          }, {
-            $pull: {
-              'maps': mapId
-            }
-          }, {
-            safe:true,
-            multi:true,
-            new : true
-          }).populate('maps').exec().then(function(result){
-            History.log(workspaceId, actor, [getId(mapId)], null, [
-              ['maps', 'REMOVE', mapId, null]
-            ]);
-            return result;
-          });
+          return WardleyMap.findOneAndUpdate({
+              _id: mapId,
+              workspace: workspaceId
+            }, {
+              $set: {
+                status: 'DELETED'
+              }
+            }).exec()
+            .then(function(map) {
+              return Workspace.findOne({
+                _id: workspaceId
+              }).populate({
+                path: 'maps',
+                match: {
+                  status: 'EXISTING'
+                }
+              }).exec().then(function(result) {
+                History.log(workspaceId, actor, [getId(mapId)], null, [
+                  ['maps', 'REMOVE', mapId, null]
+                ]);
+                return result;
+              });
+            });
         });
-    };
+        };
 
     workspaceSchema.methods.importJSON = function(json){
       let Node = require('./node-schema')(conn);

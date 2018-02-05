@@ -107,6 +107,7 @@ class ImpactAnalysis extends React.Component {
           }
         }
       }
+      //WTF is that?
       let message = "";
       for(let i = 0; i < affectedMaps.length - 1; i++){
         message += ' ' + affectedMaps[i] + ',';

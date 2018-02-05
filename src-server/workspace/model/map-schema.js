@@ -76,21 +76,12 @@ module.exports = function(conn) {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'
         },
-        next : [Schema.Types.ObjectId],
-        previous : Schema.Types.ObjectId,
-        timesliceId : Schema.Types.ObjectId,
-        // nodes: [{
-        //     type: Schema.Types.ObjectId,
-        //     ref: 'Node'
-        // }],
         users : [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
             name : Schema.Types.String,
             description : Schema.Types.String,
             width : Schema.Types.Number,
-            next : [Schema.Types.ObjectId],
-            previous : Schema.Types.ObjectId,
             associatedNeeds : [{
                 type: Schema.Types.ObjectId,
                 ref: 'Node'
@@ -101,10 +92,14 @@ module.exports = function(conn) {
             y: Schema.Types.Number,
             text: Schema.Types.String,
             width : Schema.Types.Number,
-            next : [Schema.Types.ObjectId],
-            previous : Schema.Types.ObjectId,
         }],
         responsiblePerson: Schema.Types.String,
+        status : {
+          type: String,
+          enum: ['EXISTING', 'DELETED'],
+          default: 'EXISTING',
+          required: true
+        },
         schemaVersion : {
           type: Schema.Types.Number,
           default : 2
@@ -117,6 +112,7 @@ module.exports = function(conn) {
         virtuals: true
       }
     });
+    var History = require('./history-schema')(conn);
 
     _MapSchema.virtual('nodes', {
       ref : 'Node',
@@ -135,7 +131,7 @@ module.exports = function(conn) {
     };
 
     _MapSchema.methods.defaultPopulate = function(){
-        return this.populate("workspace nodes nodes.previous").execPopulate();
+        return this.populate("workspace nodes").execPopulate();
     };
 
     _MapSchema.methods.updateComment = function(id, dataPos) {
@@ -254,7 +250,7 @@ module.exports = function(conn) {
         var _this = this;
         return Workspace.findOne({
             owner: user,
-            'timeline.maps': mapID
+            'maps': mapID
         }).exec().then(function(workspace) {
             if (workspace) {
                 return _this; // if we found workspace, then we have access to the map
@@ -264,193 +260,30 @@ module.exports = function(conn) {
         });
     };
 
-    _MapSchema.methods.calculateDiff = function() {
-        var Workspace = require('./workspace-schema')(conn);
-        var mapID = this._id;
-        var _this = this;
-        return _this.populate({
-            path: 'nodes',
-            model: 'Node',
-            populate : {
-              path: 'previous',
-              model: 'Node'
-            }
-        }).populate({
-            path: 'previous',
-            model: 'WardleyMap',
-            populate : {
-                path: 'nodes',
-                model: 'Node'
-            }
-        }).execPopulate()
-        .then(function(map){
-          let added = [];
-          for (let i = 0; i < map.nodes.length; i++) {
-            if (!map.nodes[i].previous) {
-              added.push({_id : map.nodes[i]._id});
-            }
-          }
-          // console.log('added', added);
-
-          let modified = [];
-          let hasCounterpart = {};
-          for (let i = 0; i < map.nodes.length; i++) {
-            let differs = false;
-            let diff = {};
-            let currentNode = map.nodes[i];
-            let previousNode = currentNode.previous;
-            if(!previousNode){
-              continue;
-            }
-            if (currentNode.name !== previousNode.name){
-              differs = true;
-              diff.name = {
-                old : previousNode.name,
-                new : currentNode.name
-              };
-            }
-            if (currentNode.type !== previousNode.type){
-              differs = true;
-              diff.type = {
-                old : previousNode.type,
-                new : currentNode.type
-              };
-            }
-            if (currentNode.x !== previousNode.x){
-              differs = true;
-              diff.x = {
-                old : previousNode.x,
-                new : currentNode.x
-              };
-            }
-            if(differs){
-              modified.push({
-                  _id : currentNode._id, diff: diff
-              });
-            }
-            hasCounterpart[previousNode._id] = true;
-          }
-
-          // console.log('modified', modified);
-
-          let removed = [];
-          let previousMap = map.previous;
-          // console.log(hasCounterpart);
-          if (previousMap) {
-            for (let i = 0; i < previousMap.nodes.length; i++) {
-              let candidateNode = previousMap.nodes[i];
-              if (!hasCounterpart[candidateNode._id]) {
-                removed.push(candidateNode); // add full removed node as we want to show where it was);
-              }
-            }
-          }
-          // console.log('removed', removed);
-          let usersAdded = [];
-          for (let i = 0; i < map.users.length; i++) {
-            if (!map.users[i].previous) {
-              usersAdded.push({_id : map.users[i]._id});
-            }
-          }
-          let usersRemoved = [];
-          if (previousMap) {
-            for (let i = 0; i < previousMap.users.length; i++) {
-              let candidateUser = previousMap.users[i];
-              let foundCounterPart = false; // counter part means that an old map has a user that next is set to a user in a new map.
-              // simplest way to check.... go through a list of users in current map and check whether any references back
-              for (let j = 0; j < map.users.length; j++) {
-                if ('' + candidateUser._id === '' + map.users[j].previous) {
-                  foundCounterPart = true;
-                  break;
-                }
-              }
-              if (!foundCounterPart) {
-                usersRemoved.push(candidateUser); // add full removed user as we want to show where it was);
-              }
-            }
-          }
-          return {
-            nodesRemoved : removed,
-            nodesAdded : added,
-            nodesModified : modified,
-            usersAdded : usersAdded,
-            usersRemoved: usersRemoved
-          };
-        });
-    };
 
 
-    _MapSchema.methods.getRelevantVariants = function() {
-      return this.populate({
-          path: 'previous',
-          model: 'WardleyMap',
-          populate: {
-            path: 'next',
-            model: 'WardleyMap'
-          }
-        }).populate({
-          path: 'workspace',
-          model: 'Workspace'
-        }).populate({
-            path: 'next',
-            model: 'WardleyMap'
-        }).execPopulate()
-        .then(function(populatedMap) {
-          let result = {
-              past : null,
-              alternatives : [],
-              futures : []
-          };
-
-          let previousMap = populatedMap.previous;
-          let alternativeMaps = [];
-          let futureMaps = populatedMap.next;
-
-          if (previousMap) {
-            for (let i = 0; i < previousMap.next.length; i++) {
-              if (!populatedMap._id.equals(previousMap.next[i]._id)) {
-                alternativeMaps.push(previousMap.next[i]);
-              }
-            }
-          }
-
-          for (let i = 0; i < populatedMap.workspace.timeline.length; i++) {
-            let timeSlice = populatedMap.workspace.timeline[i];
-            // find alternatives maps
-            for (let j = 0; j < alternativeMaps.length; j++) {
-              if (timeSlice._id.equals(alternativeMaps[j].timesliceId)) {
-                result.alternatives.push({
-                  name: timeSlice.name,
-                  mapId: alternativeMaps[j]._id
-                });
-              }
-            }
-            // find future maps
-            for (let j = 0; j < futureMaps.length; j++) {
-              if (timeSlice._id.equals(futureMaps[j].timesliceId)) {
-                result.futures.push({
-                  name: timeSlice.name,
-                  mapId: futureMaps[j]._id
-                });
-              }
-            }
-            // find ancestor
-            if (previousMap && timeSlice._id.equals(previousMap.timesliceId)) {
-              result.past = {
-                name: timeSlice.name,
-                mapId: previousMap._id
-              };
-            }
-          }
-          return result;
-        });
-    };
-
-    _MapSchema.methods.newBody = function(body) {
-      _.extend(this, {
-        name: body.name,
-        responsiblePerson: body.responsiblePerson,
-        isSubmap: body.isSubmap
-      });
+    _MapSchema.methods.update = function(user, body) {
+      //TODO: be a little bit more careful when isSubmap is switched to false.
+      // what about nodes referencing this one?
+      let entries = [];
+      let name = body.name;
+      if(name){
+        this.name = name;
+        entries.push(['name', 'SET', name, null]);
+      }
+      let responsiblePerson = body.responsiblePerson;
+      if(responsiblePerson){
+        this.responsiblePerson = responsiblePerson;
+        entries.push(['responsiblePerson', 'SET', responsiblePerson, null]);
+      }
+      let isSubmap = body.isSubmap;
+      if(isSubmap){
+        this.isSubmap = isSubmap;
+        entries.push(['isSubmap', 'SET', isSubmap, null]);
+      }
+      if(entries.length > 0){
+        History.log(getId(this.workspace), user, [getId(this)], null, entries);
+      }
       return this.save();
     };
 
@@ -466,7 +299,6 @@ module.exports = function(conn) {
         const Workspace = require('./workspace-schema')(conn);
 
         const _this = this;
-        const timeSliceId = _this.timesliceId;
 
         return new Node({
                 name: name,
@@ -488,19 +320,10 @@ module.exports = function(conn) {
             .then(function(node) {
               return Workspace
                 .findOneAndUpdate({
-                  _id: workspaceId,
-                  'timeline._id': timeSliceId
+                  _id: workspaceId
                 }, {
                   $push: {
-                    'timeline.$.nodes': node._id
-                  }
-                }, {
-                  select: {
-                    'timeline': {
-                      $elemMatch: {
-                        _id: timeSliceId
-                      }
-                    }
+                    'nodes': node._id
                   }
                 })
                 .exec()
@@ -710,10 +533,10 @@ module.exports = function(conn) {
           //otherwise, remove it from the workspace
           return Workspace.findOneAndUpdate({
             _id: _this.workspace,
-            'timeline.nodes': nodeId
+            'nodes': nodeId
           }, {
             $pull: {
-              'timeline.$.nodes': nodeId
+              'nodes': nodeId
             }
           }, {
             safe: true,
@@ -724,35 +547,6 @@ module.exports = function(conn) {
           return _this.save().then(function(map){
             return map.populate('nodes').execPopulate();
           });
-        });
-    };
-
-    _MapSchema.methods.getSubmapUsage = function() {
-      var WardleyMap = require('./map-schema')(conn);
-      var Node = require('./node-schema')(conn);
-      var _this = this;
-
-      return Node.find({
-          type: 'SUBMAP',
-          submapID: _this._id
-        }).select('parentMap').exec()
-        .then(function(listOfNodes) {
-          var ids = [];
-          listOfNodes.forEach(item => ids.push(item.parentMap));
-          return ids;
-        })
-        .then(function(listOfMapIds) {
-          return WardleyMap
-            .find({
-              archived: false,
-              _id: {
-                $in: listOfMapIds
-              },
-              workspace: _this.workspace
-            })
-            .populate('nodes')
-            .select('name _id isSubmap')
-            .exec();
         });
     };
 

@@ -99,19 +99,21 @@ module.exports = function(authGuardian, mongooseConnection) {
         Workspace.find({
             owner: getUserIdFromReq(req),
             status: 'EXISTING'
-        }, function(err, results) {
-            if (err) {
-                console.log(err);
-                return res.status(500).send(err);
-            }
-            var responseObject = {
-                workspaces: []
-            };
-            results.forEach(workspace => responseObject.workspaces.push({
-                workspace: workspace
-            }));
-            res.json(responseObject);
-        });
+        })
+        .populate({
+          path: 'maps',
+          match: {status:'EXISTING'}
+        })
+        .exec()
+        .done(function(results){
+          var responseObject = {
+              workspaces: []
+          };
+          results.forEach(workspace => responseObject.workspaces.push({
+              workspace: workspace
+          }));
+          res.json(responseObject);
+        }, defaultErrorHandler.bind(this, res));
     });
 
     module.router.post('/workspace/', authGuardian.authenticationRequired, function(req, res) {
@@ -137,7 +139,10 @@ module.exports = function(authGuardian, mongooseConnection) {
                 _id: req.params.workspaceID,
                 status: 'EXISTING'
             })
-            .populate('maps')
+            .populate({
+              path: 'maps',
+              match: {status:'EXISTING'}
+            })
             .exec(function(err, result) {
                 if (err) {
                     return res.send(500);
@@ -293,7 +298,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           .findById(mapId)
           .exec()
           .then(function(map) {
-            return map.newBody(req.body.map);
+            return map.update(owner, req.body.map);
           })
           .then(function(result) {
             return result.defaultPopulate();
@@ -313,7 +318,6 @@ module.exports = function(authGuardian, mongooseConnection) {
         .findOne({
           owner: owner,
           _id: req.params.workspaceId,
-          'maps': mapId,
           status: 'EXISTING'
         }).exec()
         .then(function(workspace) {
