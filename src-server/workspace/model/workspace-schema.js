@@ -332,13 +332,14 @@ module.exports = function(conn) {
       return mapImport(Node, this, json);
     };
 
-    workspaceSchema.methods.findSuggestions = function(sourceTimeSliceId, mapId, suggestionText) {
+    workspaceSchema.methods.findSuggestions = function(mapId, suggestionText) {
       let Node = require('./node-schema')(conn);
       let WardleyMap = require('./map-schema')(conn);
       let suggestionsEngine = require('./workspace/workspacemethods.js');
-      return q.allSettled([suggestionsEngine.findNodeSuggestions(this, Node, this.getTimeSlice(sourceTimeSliceId), mapId, suggestionText),
-        suggestionsEngine.findSubmapSuggestions(this, WardleyMap, this.getTimeSlice(sourceTimeSliceId), suggestionText)
+      return q.allSettled([suggestionsEngine.findNodeSuggestions(this, Node, mapId, suggestionText),
+        suggestionsEngine.findSubmapSuggestions(this, WardleyMap, suggestionText)
       ]).then(function(valueArray) {
+        console.log(valueArray);
         return {
           nodes: valueArray[0].value,
           submaps: valueArray[1].value

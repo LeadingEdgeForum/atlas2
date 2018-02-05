@@ -14,28 +14,29 @@ limitations under the License.*/
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
 
-let findNodeSuggestions = function(workspace, Node, timeSlice, mapId, suggestionText) {
+let findNodeSuggestions = function(workspace, Node, mapId, suggestionText) {
 
   let regexp = new RegExp(suggestionText, 'i');
   let mapObjectId = new ObjectId(mapId);
 
   let mapIds = [];
-  // we want to show suggestions from all the maps from the current timeline
-  // except the map we are working on right now (to avoid duplication)
-  for (let j = 0; j < timeSlice.maps.length; j++) {
-    let id = timeSlice.maps[j] || timeSlice.maps[j]._id;
-    if (!mapObjectId.equals(id)) {
-      mapIds.push(id);
-    }
-  }
   // here we have a list of maps, so let's use them to find appropriate nodes
-  return Node.aggregate([{
+  return Node.aggregate([
+    {
+        $match: {
+          workspace: workspace._id
+        }
+      },
+    {
       $match: {
         parentMap: {
-          $in: mapIds.map(function(id) {
-            return new mongoose.Types.ObjectId(id);
-          })
+          $nin: [mapObjectId]
         }
+      }
+    },
+    {
+      $match: {
+        status: 'EXISTING'
       }
     },
     {
@@ -59,22 +60,18 @@ let findNodeSuggestions = function(workspace, Node, timeSlice, mapId, suggestion
   ]).exec();
 };
 
-let findSubmapSuggestions = function(workspace, WardleyMap, timeSlice, suggestionText) {
+let findSubmapSuggestions = function(workspace, WardleyMap, suggestionText) {
   let regexp = new RegExp(suggestionText, 'i');
-  let mapIds = [];
-  // we want to show suggestions from all the maps from the current timeline
-  // except the map we are working on right now (to avoid duplication)
-  for (let j = 0; j < timeSlice.maps.length; j++) {
-    let id = timeSlice.maps[j] || timeSlice.maps[j]._id;
-    mapIds.push(id);
-  }
-  return WardleyMap.aggregate([{
-      $match: { // step 1 - all maps from current timeline (!)
-        _id: {
-          $in: mapIds.map(function(id) {
-            return new mongoose.Types.ObjectId(id);
-          })
+
+  return WardleyMap.aggregate([
+    {
+        $match: {
+          workspace: workspace._id
         }
+    },
+    {
+      $match: {
+        status: 'EXISTING'
       }
     },
     {

@@ -96,13 +96,12 @@ module.exports = function(conn){
         responsiblePerson : Schema.Types.String,
         inertia : Schema.Types.Number,
         description : Schema.Types.String,
-        /**holds a reference to a submap if there is one (type must be set to SUBMAP)*/
-        processedForDuplication: {
-            default: false,
-            type: Schema.Types.Boolean
-        },
-        next : [Schema.Types.ObjectId],
-        previous : Schema.Types.ObjectId
+        status : {
+          type: String,
+          enum: ['EXISTING', 'DELETED'],
+          default: 'EXISTING',
+          required: true
+        }
     });
 
     NodeSchema.methods.makeDependencyTo = function(_mapId, _targetId) {

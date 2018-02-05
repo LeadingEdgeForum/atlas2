@@ -191,8 +191,10 @@ module.exports = function(authGuardian, mongooseConnection) {
         return workspace.update(user, req.body.name, req.body.description, req.body.purpose);
       })
       .then(function(workspace){
-        console.log(workspace);
-        return workspace.populate('maps').execPopulate();
+        return workspace.populate({
+                  path: 'maps',
+                  match: {status:'EXISTING'}
+                }).execPopulate();
       })
       .done(function(updatedWorkspace){
         res.json({
@@ -287,7 +289,6 @@ module.exports = function(authGuardian, mongooseConnection) {
       .findOne({
         owner: owner,
         _id: req.params.workspaceId,
-        'maps': mapId,
         status: 'EXISTING'
       }).exec().then(function(irrelevantWorkspace) {
         if (!irrelevantWorkspace) {
@@ -295,7 +296,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           return;
         }
         return WardleyMap
-          .findById(mapId)
+          .findOne({_id:mapId, workspace : workspaceId})
           .exec()
           .then(function(map) {
             return map.update(owner, req.body.map);
@@ -402,7 +403,10 @@ module.exports = function(authGuardian, mongooseConnection) {
               }).then(function(workspace){
                 return workspace.addEditor(owner, email);
               }).then(function(workspace){
-                return workspace.populate('maps').execPopulate();
+                return workspace.populate({
+                          path: 'maps',
+                          match: {status:'EXISTING'}
+                        }).execPopulate();
               }).done(function(workspace){
                 res.json({
                     workspace: workspace
@@ -438,7 +442,10 @@ module.exports = function(authGuardian, mongooseConnection) {
             }).then(function(workspace){
               return workspace.removeEditor(owner, email);
             }).then(function(workspace){
-              return workspace.populate('maps').execPopulate();
+              return workspace.populate({
+                        path: 'maps',
+                        match: {status:'EXISTING'}
+                      }).execPopulate();
             }).done(function(workspace){
               res.json({
                   workspace: workspace
@@ -583,7 +590,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
-      var owner = getUserIdFromReq(req);
+      var actor = getUserIdFromReq(req);
       var workspaceID = req.params.workspaceID;
       var mapID = req.params.mapID;
       var name = req.body.name;
@@ -600,9 +607,9 @@ module.exports = function(authGuardian, mongooseConnection) {
               _id: mapID,
               workspace: workspaceID
           }).exec()
-          .then(checkAccess.bind(this, req.params.mapID, owner))
+          .then(checkAccess.bind(this, req.params.mapID, actor))
           .then(function(map) {
-              return map.addNode(name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
+              return map.addNode(actor, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
           })
           .then(function(map){
               return map.defaultPopulate();
@@ -611,7 +618,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               res.json({
                   map: map
               });
-              track(owner,'create_node',{
+              track(actor,'create_node',{
                 'map_id' : req.params.mapID,
               }, req.body);
           }, defaultErrorHandler.bind(this, res));
@@ -619,7 +626,7 @@ module.exports = function(authGuardian, mongooseConnection) {
 
 
   module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/reference', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
+    var actor = getUserIdFromReq(req);
     var workspaceId = getId(req.params.workspaceID);
     var mapId = getId(req.params.mapID);
     var nodeId = getId(req.params.nodeID);
@@ -629,18 +636,15 @@ module.exports = function(authGuardian, mongooseConnection) {
         _id: mapId,
         workspace: workspaceId
       }).exec()
-      .then(checkAccess.bind(this, req.params.mapID, owner))
+      .then(checkAccess.bind(this, req.params.mapID, actor))
       .then(function(map) {
-        return map.referenceNode(nodeId, /*visibility*/ y, null);
-      })
-      .then(function(map) {
-        return map.defaultPopulate();
+        return map.referenceNode(actor, nodeId, /*visibility*/ y, null);
       })
       .done(function(map) {
         res.json({
           map: map
         });
-        track(owner, 'reference_node', {
+        track(actor, 'reference_node', {
           'map_id': req.params.mapID,
           'node_id': nodeId,
         }, req.body);
@@ -924,7 +928,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   // });
 
   module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
+    var actor = getUserIdFromReq(req);
     var workspaceId = getId(req.params.workspaceID);
     var mapId = getId(req.params.mapID);
     var name = req.body.name;
@@ -940,22 +944,17 @@ module.exports = function(authGuardian, mongooseConnection) {
 
     Workspace.findOne({ //confirm we have access to everything what is important
       _id: workspaceId,
-      'timeline.maps': mapId,
-      'timeline.nodes': desiredNodeId,
-      owner: owner
+      owner: actor
     }).exec().then(function(workspace) {
       if (!workspace) {
         res.status(404).json('workspace not found');
         return;
       }
       return WardleyMap
-        .findById(mapId)
+        .findOne({_id: mapId, workspace : workspaceId})
         .exec()
         .then(function(map) {
-          return map.changeNode(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
-        })
-        .then(function(result) {
-          return result.defaultPopulate();
+          return map.changeNode(actor,workspaceId, name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint);
         })
         .done(function(jsonResult) {
           res.json({
@@ -966,29 +965,24 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.delete('/workspace/:workspaceId/map/:mapId/node/:nodeId', authGuardian.authenticationRequired, function(req, res) {
-    var owner = getUserIdFromReq(req);
+    var actor = getUserIdFromReq(req);
     var workspaceId = getId(req.params.workspaceId);
     var mapId = getId(req.params.mapId);
     var desiredNodeId = getId(req.params.nodeId);
 
     Workspace.findOne({ //confirm we have access to everything what is important
       _id: workspaceId,
-      'timeline.maps': mapId,
-      'timeline.nodes': desiredNodeId,
-      owner: owner
+      owner: actor
     }).exec().then(function(workspace) {
       if (!workspace) {
         res.status(404).json('workspace not found');
         return;
       }
       return WardleyMap
-        .findById(mapId)
+        .findOne({_id: mapId, workspace : workspaceId})
         .exec()
         .then(function(map) {
-          return map.removeNode(desiredNodeId);
-        })
-        .then(function(result) {
-          return result.defaultPopulate();
+          return map.removeNode(actor, desiredNodeId);
         })
         .done(function(jsonResult) {
           res.json({
@@ -1275,19 +1269,18 @@ module.exports = function(authGuardian, mongooseConnection) {
           });
 
       module.router.get(
-            '/workspace/:workspaceID/variant/:variantId/map/:mapId/suggestions/:text',
+            '/workspace/:workspaceID/map/:mapId/suggestions/:text',
             authGuardian.authenticationRequired,
             function(req, res) {
               var owner = getUserIdFromReq(req);
               var workspaceID = req.params.workspaceID;
-              let variantId = req.params.variantId;
               var mapId = new ObjectId(req.params.mapId);
               var suggestionText = req.params.text;
               Workspace
                 .findOne({
                   _id: workspaceID,
                   owner: owner,
-                  archived: false,
+                  status: 'EXISTING'
                 })
                 .exec()
                 .then(function(workspace) {
@@ -1295,9 +1288,15 @@ module.exports = function(authGuardian, mongooseConnection) {
                     res.status(404).json("workspace not found");
                     return null;
                   }
-                  return workspace.findSuggestions(variantId, mapId, suggestionText);
+                  return workspace.findSuggestions(mapId, suggestionText);
                 })
                 .done(function(suggestions) {
+                  if(!suggestions.submaps){
+                    suggestions.submaps = [];
+                  }
+                  if(!suggestions.nodes){
+                    suggestions.nodes = [];
+                  }
                   res.json({
                     suggestions: suggestions
                   });

@@ -120,143 +120,153 @@ module.exports = function(conn) {
       foreignField : 'parentMap'
     });
 
-    _MapSchema.methods.withNodes = function() {
-        return this.populate('nodes').execPopulate();
-    };
-
 
     _MapSchema.methods.makeComment = function(data) {
         this.comments.push(data);
         return this.save();
     };
 
-    _MapSchema.methods.defaultPopulate = function(){
-        return this.populate("workspace nodes").execPopulate();
-    };
-
-    _MapSchema.methods.updateComment = function(id, dataPos) {
-        for (var i = 0; i < this.comments.length; i++) {
-            if ('' + this.comments[i]._id === id) {
-                if (dataPos.x && dataPos.y) {
-                    this.comments[i].set('x', dataPos.x);
-                    this.comments[i].set('y', dataPos.y);
-                }
-                if (dataPos.text) {
-                    this.comments[i].set('text', dataPos.text);
-                }
-                if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
-                  this.comments[i].set('width', dataPos.width);
-                }
-            }
-        }
-        return this.save();
-    };
-
-    _MapSchema.methods.deleteComment = function(seq) {
-        for (var i = 0; i < this.comments.length; i++) {
-            if ('' + this.comments[i]._id === seq) {
-                this.comments.splice(i, 1);
-                break;
-            }
-        }
-        this.markModified('comments');
-        return this.save();
-    };
-
-    _MapSchema.methods.addUser = function(data) {
-        this.users.push(data);
-        return this.save();
-    };
-
-    _MapSchema.methods.updateUser = function(id, dataPos) {
-        for (var i = 0; i < this.users.length; i++) {
-            if ('' + this.users[i]._id === id) {
-                if (dataPos.x && dataPos.y) {
-                    this.users[i].set('x', dataPos.x);
-                    this.users[i].set('y', dataPos.y);
-                }
-                if (dataPos.name) {
-                    this.users[i].set('name', dataPos.name);
-                }
-                if (dataPos.description) {
-                    this.users[i].set('description', dataPos.description);
-                }
-                if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
-                  this.users[i].set('width', dataPos.width);
-                }
-            }
-        }
-        return this.save();
-    };
-
-    _MapSchema.methods.deleteUser = function(seq) {
-        for (var i = 0; i < this.users.length; i++) {
-            if ('' + this.users[i]._id === seq) {
-                this.users.splice(i, 1);
-                break;
-            }
-        }
-        this.markModified('users');
-        return this.save();
-    };
-
-    _MapSchema.methods.makeUserDepTo = function(user, node) {
-      if (!user || !node) {
-        throw new Error('unspecified attributes');
-      }
-      for (let i = 0; i < this.users.length; i++) {
-        if ('' + this.users[i]._id === user) {
-          let selectedUser = this.users[i];
-          let found = false;
-          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
-            if ('' + selectedUser.associatedNeeds[j] === node) {
-              found = true;
-              break;
-            }
+    _MapSchema.methods.defaultPopulate = function() {
+      return this
+        .populate("workspace")
+        .populate({
+          path: 'nodes',
+          match: {
+            status: 'EXISTING'
           }
-          if (!found) {
-            selectedUser.associatedNeeds.push(new ObjectId(node));
-          }
-          break;
-        }
-      }
-      this.markModified('users');
-      return this.save();
+        })
+        .execPopulate();
     };
 
-    _MapSchema.methods.deleteUserDepTo = function(user, node) {
-      if (!user || !node) {
-        throw new Error('unspecified attributes');
-      }
-      for (let i = 0; i < this.users.length; i++) {
-        if ('' + this.users[i]._id === user) {
-          let selectedUser = this.users[i];
-          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
-            if ('' + selectedUser.associatedNeeds[j] === node) {
-              selectedUser.associatedNeeds.splice(j,1);
-              break;
-            }
-          }
-          break;
-        }
-      }
-      this.markModified('users');
-      return this.save();
-    };
+    // _MapSchema.methods.updateComment = function(id, dataPos) {
+    //     for (var i = 0; i < this.comments.length; i++) {
+    //         if ('' + this.comments[i]._id === id) {
+    //             if (dataPos.x && dataPos.y) {
+    //                 this.comments[i].set('x', dataPos.x);
+    //                 this.comments[i].set('y', dataPos.y);
+    //             }
+    //             if (dataPos.text) {
+    //                 this.comments[i].set('text', dataPos.text);
+    //             }
+    //             if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
+    //               this.comments[i].set('width', dataPos.width);
+    //             }
+    //         }
+    //     }
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.deleteComment = function(seq) {
+    //     for (var i = 0; i < this.comments.length; i++) {
+    //         if ('' + this.comments[i]._id === seq) {
+    //             this.comments.splice(i, 1);
+    //             break;
+    //         }
+    //     }
+    //     this.markModified('comments');
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.addUser = function(data) {
+    //     this.users.push(data);
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.updateUser = function(id, dataPos) {
+    //     for (var i = 0; i < this.users.length; i++) {
+    //         if ('' + this.users[i]._id === id) {
+    //             if (dataPos.x && dataPos.y) {
+    //                 this.users[i].set('x', dataPos.x);
+    //                 this.users[i].set('y', dataPos.y);
+    //             }
+    //             if (dataPos.name) {
+    //                 this.users[i].set('name', dataPos.name);
+    //             }
+    //             if (dataPos.description) {
+    //                 this.users[i].set('description', dataPos.description);
+    //             }
+    //             if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
+    //               this.users[i].set('width', dataPos.width);
+    //             }
+    //         }
+    //     }
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.deleteUser = function(seq) {
+    //     for (var i = 0; i < this.users.length; i++) {
+    //         if ('' + this.users[i]._id === seq) {
+    //             this.users.splice(i, 1);
+    //             break;
+    //         }
+    //     }
+    //     this.markModified('users');
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.makeUserDepTo = function(user, node) {
+    //   if (!user || !node) {
+    //     throw new Error('unspecified attributes');
+    //   }
+    //   for (let i = 0; i < this.users.length; i++) {
+    //     if ('' + this.users[i]._id === user) {
+    //       let selectedUser = this.users[i];
+    //       let found = false;
+    //       for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+    //         if ('' + selectedUser.associatedNeeds[j] === node) {
+    //           found = true;
+    //           break;
+    //         }
+    //       }
+    //       if (!found) {
+    //         selectedUser.associatedNeeds.push(new ObjectId(node));
+    //       }
+    //       break;
+    //     }
+    //   }
+    //   this.markModified('users');
+    //   return this.save();
+    // };
+    //
+    // _MapSchema.methods.deleteUserDepTo = function(user, node) {
+    //   if (!user || !node) {
+    //     throw new Error('unspecified attributes');
+    //   }
+    //   for (let i = 0; i < this.users.length; i++) {
+    //     if ('' + this.users[i]._id === user) {
+    //       let selectedUser = this.users[i];
+    //       for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+    //         if ('' + selectedUser.associatedNeeds[j] === node) {
+    //           selectedUser.associatedNeeds.splice(j,1);
+    //           break;
+    //         }
+    //       }
+    //       break;
+    //     }
+    //   }
+    //   this.markModified('users');
+    //   return this.save();
+    // };
 
     _MapSchema.methods.verifyAccess = function(user) {
         var Workspace = require('./workspace-schema')(conn);
+        var WardleyMap = require('./map-schema')(conn);
         var mapID = this._id;
         var _this = this;
         return Workspace.findOne({
             owner: user,
-            'maps': mapID
         }).exec().then(function(workspace) {
-            if (workspace) {
-                return _this; // if we found workspace, then we have access to the map
-            } else {
-              return null;
-            }
+            return WardleyMap.findOne({
+                _id: mapID,
+                workspace: getId(workspace)
+              }).exec()
+              .then(function(map) {
+                if (workspace) {
+                    return _this; // if we found workspace, then we have access to the map
+                } else {
+                  return null;
+                }
+              });
         });
     };
 
@@ -287,14 +297,17 @@ module.exports = function(conn) {
       return this.save();
     };
 
-    _MapSchema.methods.addNode = function(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+    _MapSchema.methods.addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
       let _this = this;
-      return _this.__addNode(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null).then(function() {
-        return _this;
+      return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null).then(function() {
+        return _this.populate({
+                  path: 'nodes',
+                  match: {status:'EXISTING'}
+                }).execPopulate();
       });
     };
 
-    _MapSchema.methods.__addNode = function(name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap) {
+    _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap) {
         const Node = require('./node-schema')(conn);
         const Workspace = require('./workspace-schema')(conn);
 
@@ -314,26 +327,20 @@ module.exports = function(conn) {
                 inertia: inertia,
                 responsiblePerson: responsiblePerson,
                 constraint : constraint,
-                submapID : submap
+                submapID : submap,
+                status: 'EXISTING'
             })
             .save()
             .then(function(node) {
-              return Workspace
-                .findOneAndUpdate({
-                  _id: workspaceId
-                }, {
-                  $push: {
-                    'nodes': node._id
-                  }
-                })
-                .exec()
-                .then(function(res) {
-                  return node;
-                });
+              History.log(getId(_this.workspace), actor, [getId(_this)], [node._id], [
+                ['nodes', 'ADD', getId(_this), null],
+                ['node.name', 'SET', node.name, null]
+              ]);
+              return node;
             });
     };
 
-    _MapSchema.methods.referenceNode = function(nodeId, visibility, dependencies) {
+    _MapSchema.methods.referenceNode = function(actor, nodeId, visibility, dependencies) {
       const Node = require('./node-schema')(conn);
       const Workspace = require('./workspace-schema')(conn);
       const WardleyMap = require('./map-schema')(conn);
@@ -358,18 +365,28 @@ module.exports = function(conn) {
             new: true
           }).exec()
         .then(function(node) {
-            return WardleyMap.findById(getId(_this)).populate('nodes').exec();
+          History.log(getId(node.workspace), actor, [getId(_this)], [node._id, nodeId], [
+            ['node.dependencies', 'ADD', getId(nodeId), null],
+          ]);
+          return WardleyMap.findById(getId(_this)).populate({
+            path: 'nodes',
+            match: {
+              status: 'EXISTING'
+            }
+          }).exec();
         });
     };
 
-    _MapSchema.methods.changeNode = function(name, evolution, visibility, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
+    _MapSchema.methods.changeNode = function(actor, workspaceId, name, evolution, visibility, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
       var _this = this;
       var Node = require('./node-schema')(conn);
       const WardleyMap = require('./map-schema')(conn);
+      let changes = [];
 
       desiredNodeId = getId(desiredNodeId);
       let query = {
-        _id: desiredNodeId
+        _id: desiredNodeId,
+        workspace: workspaceId
       };
       let updateOrder = {
         $set: {
@@ -380,27 +397,35 @@ module.exports = function(conn) {
 
       if (name) {
         updateOrder.$set.name = name;
+        changes.push(['node.name', 'SET', name, null]);
       }
       if (evolution) {
         updateOrder.$set.evolution = evolution;
+        changes.push(['node.evolution', 'SET', evolution, null]);
       }
       if (width) {
         updateOrder.$set.width = width;
+        changes.push(['node.width', 'SET', width, null]);
       }
       if (type) {
         updateOrder.$set.type = type;
+        changes.push(['node.type', 'SET', type, null]);
       }
       if (description) {
         updateOrder.$set.description = description;
+        changes.push(['node.description', 'SET', description, null]);
       }
       if (inertia) {
         updateOrder.$set.inertia = inertia;
+        changes.push(['node.inertia', 'SET', inertia, null]);
       }
       if (responsiblePerson) {
         updateOrder.$set.responsiblePerson = responsiblePerson;
+        changes.push(['node.responsiblePerson', 'SET', responsiblePerson, null]);
       }
       if (constraint) {
         updateOrder.$set.constraint = constraint;
+        changes.push(['node.constraint', 'SET', constraint, null]);
       }
       if (visibility) {
         /**
@@ -427,21 +452,32 @@ module.exports = function(conn) {
             }
           }
         };
+        changes.push(['node.visibility', 'SET', visibility, null]);
       }
 
       return Node.findOneAndUpdate(query,
         updateOrder,
         select
-      ).exec().then(function(){
-        return WardleyMap.findById(_this._id);
+      ).exec().then(function() {
+        if (changes.length > 0) {
+          History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], [
+            changes,
+          ]);
+        }
+        return WardleyMap.findById(getId(_this)).populate({
+          path: 'nodes',
+          match: {
+            status: 'EXISTING'
+          }
+        }).exec();
       });
-    };
+      };
 
     /**
      * Removes the node from the current map. If it was a last reference,
      * it removes the node from the workspace.
      */
-    _MapSchema.methods.removeNode = function(nodeId) {
+    _MapSchema.methods.removeNode = function(actor, nodeId) {
       var _this = this;
       nodeId = getId(nodeId);
       let mapId = getId(_this);
@@ -449,22 +485,23 @@ module.exports = function(conn) {
       const Node = require('./node-schema')(conn);
 
 
-      // first, clean up users depending on a removed node (within map only)
-      for (let i = 0; i < this.users.length; i++) {
-        let selectedUser = this.users[i];
-        for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
-          if ('' + selectedUser.associatedNeeds[j] === '' + nodeId) {
-            selectedUser.associatedNeeds.splice(j, 1);
-            this.markModified('users');
-          }
-        }
-      }
+      // // first, clean up users depending on a removed node (within map only)
+      // for (let i = 0; i < this.users.length; i++) {
+      //   let selectedUser = this.users[i];
+      //   for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
+      //     if ('' + selectedUser.associatedNeeds[j] === '' + nodeId) {
+      //       selectedUser.associatedNeeds.splice(j, 1);
+      //       this.markModified('users');
+      //     }
+      //   }
+      // }
 
       // fourthly, node prev & next TODO: think about how it should be handled
 
       // thirdly, handle other nodes depending on this one (if there are any)
       return Node.update({
           parentMap: mapId,
+          workspace : _this.workspace,
           'dependencies.target': nodeId,
           'dependencies.visibleOn': mapId
         }, {
@@ -544,8 +581,16 @@ module.exports = function(conn) {
           }).exec();
         }).then(function(modifiedWorkspace) {
           //save the map
+          History.log(getId(_this.workspace), actor, [getId(_this)], [nodeId], [
+            ['map.nodes', 'REMOVE', getId(nodeId), null],
+          ]);
           return _this.save().then(function(map){
-            return map.populate('nodes').execPopulate();
+            return map.populate({
+              path: 'nodes',
+              match: {
+                status: 'EXISTING'
+              }
+            }).execPopulate();
           });
         });
     };
