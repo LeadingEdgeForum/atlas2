@@ -85,13 +85,16 @@ export default class NewNodeStore extends Store {
           this.updateParam(action.mapId, action.param, action.value);
           break;
         case ActionTypes.NEW_NODE_RECORD_STEP_CHANGE:
-          this.recordStepChange(action.mapId, action.step, action.selectedNodeId);
+          this.recordStepChange(action.mapId, action.step, action.selectedNodeId, action.selectedNodeName);
           break;
         case ActionTypes.SUBMIT_ADD_NEW_NODE_DIALOG:
           this.submitAddNewNodeDialog(action.mapId);
           break;
         case ActionTypes.NEW_NODE_REFERENCE_EXISTING_NODE:
           this.submitAddNewNodeDialogEstablishReference(action.mapId, action.nodeId, action.visibility, action.dependenciesMode);
+          break;
+        case ActionTypes.NEW_NODE_DUPLICATE_EXISTING_NODE:
+          this.submitAddNewNodeDialogDuplicateNode(action.mapId, action.nodeId);
           break;
         case ActionTypes.NEW_NODE_REFERENCE_EXISTING_MAP:
           this.submitAddNewNodeDialogEstablishSubmapReference(action.mapId, action.submapId, action.evolution, action.visibility);
@@ -150,12 +153,13 @@ export default class NewNodeStore extends Store {
     this.emitChange();
   }
 
-  recordStepChange(mapId, step, selectedNodeId){
+  recordStepChange(mapId, step, selectedNodeId, selectedNodeName){
     if (mapId !== this.mapId) {
       return;
     }
     this.internalState.currentStep = step;
     this.internalState.nodeId = selectedNodeId;
+    this.internalState.selectedNodeName = selectedNodeName;
     this.emitChange();
   }
 
@@ -237,6 +241,39 @@ export default class NewNodeStore extends Store {
       url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/node/' + nodeId + '/reference',
       data: {
         y: visibility
+      },
+      success: function(data) {
+        this.referenceRequestInProgress[mapId][nodeId] = false;
+        this.closeNewNodeDialog(mapId);
+        this.singleMapStore.updateMap(mapId, data);
+        this.emitChange();
+      }.bind(this)
+    });
+  }
+
+  submitAddNewNodeDialogDuplicateNode(mapId, nodeId) {
+    if (mapId !== this.mapId) {
+      return;
+    }
+    if(!this.referenceRequestInProgress[mapId]){
+      this.referenceRequestInProgress[mapId] = {};
+    }
+    if(this.referenceRequestInProgress[mapId][nodeId] === true){
+      console.log('ignoring reference request as one is in progress');
+    } else {
+      this.referenceRequestInProgress[mapId][nodeId] = true;
+    }
+    $.ajax({
+      type: 'POST',
+      url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/node/' + nodeId + '/duplicate',
+      data: {
+        name:  this.internalState.name,
+        responsiblePerson : this.internalState.responsiblePerson,
+        inertia: this.internalState.inertia,
+        description : this.internalState.description,
+        type: this.internalState.type,
+        x: this.internalState.coords.x,
+        y: this.internalState.coords.y
       },
       success: function(data) {
         this.referenceRequestInProgress[mapId][nodeId] = false;

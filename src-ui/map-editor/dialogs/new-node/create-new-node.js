@@ -64,8 +64,8 @@ class ComponentName extends React.Component{
     return suggestion.name;
   }
 
-  jump(step, selectedNodeId){
-    Actions.recordStepChange(this.props.mapId, step, selectedNodeId);
+  jump(step, selectedNodeId, selectedNodeName){
+    Actions.recordStepChange(this.props.mapId, step, selectedNodeId, selectedNodeName);
     this.props.jumpToStep(step);
   }
 
@@ -78,21 +78,27 @@ class ComponentName extends React.Component{
       return <div>{suggestion.name}</div>;
     }
     let bsStyle = params.isHighlighted ? 'info' : null;
+    let bsWarnStyle = params.isHighlighted ? 'warning' : null;
     if(suggestion.type === 'createnew'){
-      return (<Button onClick={this.jump.bind(this,1)} bsStyle={bsStyle}>
+      return (<Button onClick={this.jump.bind(this,1)} bsStyle={bsStyle} style={{width:'100%', textAlign:'left'}}>
         Create a new component <b>{suggestion.name}</b>.
       </Button>);
     }
     if(suggestion.type === 'node'){
       return (
-        <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle}>
-          Reference existing component {suggestion.name}
+        <span>
+        <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle} style={{width:'80%', textAlign:'left'}}>
+          Reference existing component <b>{suggestion.name}</b>.
         </Button>
+        <Button onClick={this.jump.bind(this,1, suggestion._id, suggestion.name)} bsStyle={bsWarnStyle} style={{width:'20%', right:0}} class="float-right">
+          Duplicate it...
+        </Button>
+        </span>
       );
     }
     if(suggestion.type === 'submap'){
       return (
-        <Button onClick={this.referenceASubmapAndCloseDialog.bind(this, this.props.mapId, suggestion._id, this.props.evolution, this.props.visibility)} bsStyle={bsStyle}>
+        <Button onClick={this.referenceASubmapAndCloseDialog.bind(this, this.props.mapId, suggestion._id, this.props.evolution, this.props.visibility)} bsStyle={bsStyle} style={{width:'100%', textAlign:'left'}}>
           Reference existing submap {suggestion.name}
         </Button>
       );
@@ -303,7 +309,8 @@ export default class NewNodeDialog extends React.Component {
                                     inertia={inertia}
                                     constraint={constraint}
                                     description={description}
-                                    mapId={mapId}/>},
+                                    mapId={mapId}
+                                    nodeId={nodeId}/>},
         {name:'name', component: <ReusedComponentProperties
                                     mapId={mapId}
                                     nodeId={nodeId}
@@ -318,10 +325,17 @@ export default class NewNodeDialog extends React.Component {
     let dialogName = 'Add a new, ' + componentType + ' component';
     let footer = null;
     if(this.state.currentStep === 1){
-      dialogName = 'Add a new, ' + componentType + ' component named \'' +  this.state.name + '\'.';
-      footer = (<Modal.Footer>
-        <Button type="submit" bsStyle="primary" value="Create" onClick={Actions.submitAddNewNodeDialog.bind(Actions, mapId)}>Create!</Button>
-        </Modal.Footer>);
+      if(this.state.nodeId){// if node id is SET for new component, it means we are introduced a duplicate (different component that does the same)
+        dialogName = 'Duplicate component \'' +  this.state.selectedNodeName + '\'.';
+        footer = (<Modal.Footer>
+          <Button type="submit" bsStyle="primary" value="Duplicate" onClick={Actions.duplicateExistingNode.bind(Actions, mapId, this.state.nodeId)}>Duplicate!</Button>
+          </Modal.Footer>);
+      } else {
+        dialogName = 'Add a new, ' + componentType + ' component named \'' +  this.state.name + '\'.';
+        footer = (<Modal.Footer>
+          <Button type="submit" bsStyle="primary" value="Create" onClick={Actions.submitAddNewNodeDialog.bind(Actions, mapId)}>Create!</Button>
+          </Modal.Footer>);
+      }
     }
     if(this.state.currentStep === 2){
       dialogName = 'Reference existing component named \'' +  this.state.name + '\'.';

@@ -60,12 +60,13 @@ export default {
       });
     },
 
-    recordStepChange(mapId, step, selectedNodeId){
+    recordStepChange(mapId, step, selectedNodeId,selectedNodeName){
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.NEW_NODE_RECORD_STEP_CHANGE,
           mapId : mapId,
           step:step,
-          selectedNodeId:selectedNodeId
+          selectedNodeId:selectedNodeId,
+          selectedNodeName:selectedNodeName
       });
     },
 
@@ -76,6 +77,14 @@ export default {
         nodeId: nodeId,
         dependenciesMode: dependenciesMode,
         visibility: visibility
+      });
+    },
+
+    duplicateExistingNode(mapId, nodeId) {
+      Dispatcher.dispatch({
+        actionType: ACTION_TYPES.NEW_NODE_DUPLICATE_EXISTING_NODE,
+        mapId: mapId,
+        nodeId: nodeId
       });
     },
 
