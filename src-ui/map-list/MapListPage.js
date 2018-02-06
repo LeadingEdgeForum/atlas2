@@ -42,6 +42,8 @@ import {LinkContainer} from 'react-router-bootstrap';
 import SingleWorkspaceActions from './single-workspace-actions';
 import EditWorkspaceDialog from '../workspace/edit-workspace-dialog';
 import EditorList from './editors-list';
+import $ from 'jquery';
+import NodeLink from '../map-editor/nodelink';
 /* globals FileReader */
 
 export default class MapListPage extends React.Component {
@@ -59,6 +61,9 @@ export default class MapListPage extends React.Component {
     this._changeImport = this._changeImport.bind(this);
     this._uploadImport = this._uploadImport.bind(this);
 
+    this._closeWarningsDialog = this._closeWarningsDialog.bind(this);
+    this._openWarningsDialog = this._openWarningsDialog.bind(this);
+    this._renderWarnings = this._renderWarnings.bind(this);
   }
 
   componentDidMount() {
@@ -87,9 +92,23 @@ export default class MapListPage extends React.Component {
     SingleWorkspaceActions.openEditWorkspaceDialog();
   }
 
+  _openWarningsDialog(){
+    this.setState({warningOpen:true});
+      $.ajax({
+        type: 'GET',
+        url: '/api/workspace/' + this.props.singleWorkspaceStore.getWorkspaceId() + '/warnings/',
+        success: function(data) {
+          this.setState(data);
+        }.bind(this)
+      });
+  }
+
+  _closeWarningsDialog(){
+    this.setState({warningOpen:false, warningsData:null});
+  }
+
   prepareWorkspaceMenu(){
     const workspaceID = this.props.singleWorkspaceStore.getWorkspaceId();
-    // const deduplicateHref = '/fixit/' + workspaceID + '/variant/' + variantId;
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditWorkspaceDialog.bind(this)}>
           <Glyphicon glyph="edit"></Glyphicon>
@@ -98,14 +117,12 @@ export default class MapListPage extends React.Component {
       <NavItem eventKey={2} href="#" key="2" onClick={this._openImport}>
           <Glyphicon glyph="upload"></Glyphicon>
           &nbsp;Upload a map
+      </NavItem>,
+      <NavItem eventKey={3} href="#" key="3" onClick={this._openWarningsDialog.bind(this)}>
+          <Glyphicon glyph="warning-sign"></Glyphicon>
+          &nbsp;Warnings
       </NavItem>
     ];
-    /*<LinkContainer to={{pathname: deduplicateHref}} key="3">
-        <NavItem eventKey={3} href={deduplicateHref} key="3">
-        <Glyphicon glyph="plus" style={{color: "basil"}}></Glyphicon>
-        &nbsp;Fix it!
-        </NavItem>
-    </LinkContainer>*/
   }
 
   _openImport(){
@@ -143,6 +160,29 @@ export default class MapListPage extends React.Component {
     this.setState({fileToUpload: event.target.value});
   }
 
+  _renderWarnings(warnings){
+    if(!warnings || warnings.length === 0){
+        return "Nothing to show";
+    }
+
+    let list = [];
+    for(let i = 0; i < warnings.length; i++){
+      let warning = warnings[i];
+      if(warning.type === 'duplication'){
+        let duplicationList = [];
+        for(let j = 0; j < warning.affectedNodes.length; j++){
+          let affectedNode = warning.affectedNodes[j];
+          duplicationList.push(<NodeLink mapID={affectedNode.parentMap[0]} nodeID={affectedNode._id}/>);
+          if(j !== warning.affectedNodes.length-1){
+            duplicationList.push(", ");
+          }
+        }
+        list.push(<li>Duplication of {duplicationList}.</li>);
+      }
+    }
+    return <ul>{list}</ul>;
+  }
+
   render() {
     const auth = this.props.auth;
     const history = this.props.history;
@@ -166,6 +206,8 @@ export default class MapListPage extends React.Component {
     }
 
     const state = this.state;
+
+    const warnings = this._renderWarnings(this.state.warnings);
 
     return (
       <DocumentTitle title='Atlas2, the mapping Tool'>
@@ -222,6 +264,19 @@ export default class MapListPage extends React.Component {
             <Modal.Footer>
               <Button type="reset" onClick={this._closeImport}>Cancel</Button>
               <Button type="submit" bsStyle="primary" value="Submit" onClick={this._uploadImport}>Upload</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={state.warningOpen} onHide={this._closeWarningsDialog}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                Workspace Warnings
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {warnings}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button type="submit" bsStyle="primary" value="OK" onClick={this._closeWarningsDialog}>Close</Button>
             </Modal.Footer>
           </Modal>
         </Grid>

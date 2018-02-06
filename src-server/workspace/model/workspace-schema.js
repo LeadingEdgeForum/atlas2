@@ -532,6 +532,66 @@ module.exports = function(conn) {
         });
     };
 
+    workspaceSchema.methods.getWarnings = function() {
+      // let template = {type, affectedNodes, affectedMaps}
+      let Node = require('./node-schema')(conn);
+      let Analysis = require('./analysis-schema')(conn);
+
+      let _this = this;
+
+      return Node.aggregate([{
+            $match: {
+              workspace: _this._id
+            }
+          },
+          {
+            $match: {
+              status: 'EXISTING'
+            }
+          },
+          {
+            $match: {
+              analysis: {
+                $exists: true
+              }
+            }
+          },
+          {
+            $group: {
+              _id: '$analysis',
+              count: {
+                $sum: 1
+              }
+            }
+          }
+        ])
+        .sort('-count')
+        .limit(5)
+        .exec().then(function(searchResult) {
+          let promises = [];
+          for (let i = 0; i < searchResult.length; i++) {
+            let id = searchResult[i]._id;
+            promises.push(Analysis.findById(id).populate('nodes').exec());
+          }
+          return q.allSettled(promises).then(function(results){
+            for(let i = 0; i < results.length; i++){
+              searchResult[i].analysis = results[i].value;
+            }
+            return searchResult;
+          });
+        })
+        .then(function(duplicationResult){
+          let result = [];
+          for(let i = 0; i < duplicationResult.length; i++){
+              result.push({
+                  type:'duplication',
+                  affectedNodes : duplicationResult[i].analysis.nodes
+              });
+          }
+          return result;
+        });
+    };
+
     workspace[conn.name] = conn.model('Workspace', workspaceSchema);
     return workspace[conn.name];
 };
