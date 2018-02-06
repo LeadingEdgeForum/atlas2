@@ -307,7 +307,40 @@ module.exports = function(conn) {
       });
     };
 
-    _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap) {
+    _MapSchema.methods.duplicateNode = function(actor, duplicatedNodeId, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      const Analysis = require('./analysis-schema')(conn);
+
+      let _this = this;
+      return Node.findById(duplicatedNodeId).exec()
+        .then(function(duplicatedNode) {
+          if (duplicatedNode.analysis) {
+            return duplicatedNode.analysis;
+          }
+          return new Analysis({
+            workspace: duplicatedNode.workspace
+          }).save().then(function(analysis){
+            duplicatedNode.analysis = analysis;
+            return duplicatedNode.save().then(function(){
+              return analysis;
+            });
+          });
+        })
+        .then(function(analysis) {
+          console.log(analysis);
+          return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null, getId(analysis)).then(function() {
+            return _this.populate({
+              path: 'nodes',
+              match: {
+                status: 'EXISTING'
+              }
+            }).execPopulate();
+          });
+        });
+    };
+
+    _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap, analysis) {
         const Node = require('./node-schema')(conn);
         const Workspace = require('./workspace-schema')(conn);
 
@@ -328,7 +361,8 @@ module.exports = function(conn) {
                 responsiblePerson: responsiblePerson,
                 constraint : constraint,
                 submapID : submap,
-                status: 'EXISTING'
+                status: 'EXISTING',
+                analysis:analysis
             })
             .save()
             .then(function(node) {

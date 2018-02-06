@@ -101,6 +101,10 @@ module.exports = function(conn){
           enum: ['EXISTING', 'DELETED'],
           default: 'EXISTING',
           required: true
+        },
+        analysis : {
+          type: Schema.Types.ObjectId,
+          ref: 'Analysis'
         }
     });
 

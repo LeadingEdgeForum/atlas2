@@ -44,6 +44,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   var Workspace = require('./model/workspace-schema')(mongooseConnection);
   var Node = require('./model/node-schema')(mongooseConnection);
   var History = require('./model/history-schema')(mongooseConnection);
+  var Analysis = require('./model/analysis-schema')(mongooseConnection);
 
   var module = {};
 
@@ -649,6 +650,65 @@ module.exports = function(authGuardian, mongooseConnection) {
           'node_id': nodeId,
         }, req.body);
       }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/duplicate', authGuardian.authenticationRequired, function(req, res) {
+    var actor = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var mapID = req.params.mapID;
+    var name = req.body.name;
+    var description = req.body.description;
+    var inertia = req.body.inertia;
+    var responsiblePerson = req.body.responsiblePerson;
+    var x = req.body.x;
+    var y = req.body.y;
+    var type = req.body.type;
+    var constraint = req.body.constraint;
+    var parentMap = getId(mapID);
+    let duplicatedNode = getId(req.params.nodeID);
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+            _id: mapID,
+            workspace: workspaceID
+        }).exec()
+        .then(checkAccess.bind(this, req.params.mapID, actor))
+        .then(function(map) {
+            return map.duplicateNode(actor, duplicatedNode, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
+        })
+        .then(function(map){
+            return map.defaultPopulate();
+        })
+        .done(function(map) {
+            res.json({
+                map: map
+            });
+            track(actor,'duplicate_node',{
+              'map_id' : req.params.mapID,
+            }, req.body);
+        }, defaultErrorHandler.bind(this, res));
+  });
+
+
+  module.router.get('/workspace/:workspaceID/analysis/:analysisID', authGuardian.authenticationRequired, function(req, res) {
+    var actor = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+    var analysisID = req.params.analysisID;
+
+    Workspace.findOne({
+      _id : workspaceID,
+      owner : actor
+    }).exec()
+    .then(function(workspace){
+      return Analysis.findOne({
+        _id : analysisID,
+        workspace : getId(workspace)
+      }).populate('nodes').exec();
+    })
+    .done(function(analysis){
+        res.json({
+          analysis : analysis
+        });
+    }, defaultErrorHandler.bind(this, res));
   });
 
   module.router.post('/workspace/:workspaceId/map/:mapId/submap/:submapId/reference', authGuardian.authenticationRequired, function(req, res) {

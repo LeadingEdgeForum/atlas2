@@ -29,6 +29,7 @@ import {
 } from 'react-bootstrap';
 import MapLink from '../../fixit/maplink';
 import NodeLink from '../nodelink';
+import $ from 'jquery';
 
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 
@@ -40,6 +41,9 @@ export default class Usage extends React.Component{
     this.calculateSubmapMessage = this.calculateSubmapMessage.bind(this);
     this.calculateOwnerMessage = this.calculateOwnerMessage.bind(this);
     this.calculateDependencyMessage = this.calculateDependencyMessage.bind(this);
+    this.calculateDuplication = this.calculateDuplication.bind(this);
+    this.componentDidMount = this.componentDidMount.bind(this);
+    this.state = {};
   }
 
   calculateOwnerMessage(listOfMessages, node){
@@ -47,6 +51,19 @@ export default class Usage extends React.Component{
       listOfMessages.push(<li>Nobody seems to be responsible for this component.</li>);
     } else {
       listOfMessages.push(<li>{node.responsiblePerson} is responsible for this component.</li>);
+    }
+  }
+
+  componentDidMount() {
+    const node = this.props.node;
+    if (node.analysis) {
+      $.ajax({
+        type: 'GET',
+        url: '/api/workspace/' + node.workspace + '/analysis/' + node.analysis,
+        success: function(data) {
+          this.setState(data);
+        }.bind(this)
+      });
     }
   }
 
@@ -109,6 +126,23 @@ export default class Usage extends React.Component{
     }
   }
 
+  calculateDuplication(listOfMessages, node){
+    if(!this.state.analysis){
+      return;
+    }
+    let duplicatingNodes = [];
+    for(let i = 0; i < this.state.analysis.nodes.length; i++){
+      let duplicatingNode = this.state.analysis.nodes[i];
+      if(duplicatingNode._id !== node._id){
+          duplicatingNodes.push(<li><NodeLink mapID={duplicatingNode.parentMap[0]} nodeID={duplicatingNode._id}/></li>);
+      }
+    }
+
+    if(duplicatingNodes.length > 0){
+      listOfMessages.push(<li>Other, similar components (possibly duplicating this one):<ul>{duplicatingNodes}</ul></li>);
+    }
+  }
+
   render(){
     const node = this.props.node;
     let listOfMessages = [];
@@ -117,6 +151,7 @@ export default class Usage extends React.Component{
     this.calculateOwnerMessage(listOfMessages, node);
     this.calculateSubmapMessage(listOfMessages, node);
     this.calculateDependencyMessage(listOfMessages, node);
+    this.calculateDuplication(listOfMessages, node);
 
     return (<ListGroup>{listOfMessages}</ListGroup>);
   }
