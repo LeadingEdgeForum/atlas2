@@ -494,9 +494,7 @@ module.exports = function(conn) {
         select
       ).exec().then(function() {
         if (changes.length > 0) {
-          History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], [
-            changes,
-          ]);
+          History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], changes);
         }
         return WardleyMap.findById(getId(_this)).populate({
           path: 'nodes',

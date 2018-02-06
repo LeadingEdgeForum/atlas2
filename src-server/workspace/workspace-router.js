@@ -1084,8 +1084,6 @@ module.exports = function(authGuardian, mongooseConnection) {
 
           Workspace.findOne({
             _id : workspaceID,
-            'timeline.maps' : mapID,
-            'timeline.nodes' : {$in : [nodeID1, nodeID2]},
             owner: owner
           }).exec().then(function(workspace){
               if(!workspace){
@@ -1125,10 +1123,6 @@ module.exports = function(authGuardian, mongooseConnection) {
 
       Workspace.findOne({
         _id: workspaceID,
-        'timeline.maps': mapID,
-        'timeline.nodes': {
-          $in: [nodeID1, nodeID2]
-        },
         owner: owner
       }).exec().then(function(workspace) {
         if (!workspace) {
@@ -1168,10 +1162,6 @@ module.exports = function(authGuardian, mongooseConnection) {
 
       Workspace.findOne({
         _id: workspaceID,
-        'timeline.maps': mapID,
-        'timeline.nodes': {
-          $in: [nodeID1, nodeID2]
-        },
         owner: owner
       }).exec().then(function(workspace) {
         if (!workspace) {
@@ -1239,8 +1229,6 @@ module.exports = function(authGuardian, mongooseConnection) {
           var nodeId = getId(req.params.nodeId);
           Workspace.findOne({
               _id: workspaceId,
-              'timeline.maps': mapId,
-              'timeline.nodes': nodeId,
               owner: owner
             }).exec()
             .then(function(workspace) {
