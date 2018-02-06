@@ -80,14 +80,14 @@ class ComponentName extends React.Component{
     let bsStyle = params.isHighlighted ? 'info' : null;
     let bsWarnStyle = params.isHighlighted ? 'warning' : null;
     if(suggestion.type === 'createnew'){
-      return (<Button onClick={this.jump.bind(this,1)} bsStyle={bsStyle} style={{width:'100%', textAlign:'left'}}>
+      return (<Button onClick={this.jump.bind(this,1, null, null)} bsStyle={bsStyle} style={{width:'100%', textAlign:'left'}}>
         Create a new component <b>{suggestion.name}</b>.
       </Button>);
     }
     if(suggestion.type === 'node'){
       return (
         <span>
-        <Button onClick={this.jump.bind(this,2, suggestion._id)} bsStyle={bsStyle} style={{width:'80%', textAlign:'left'}}>
+        <Button onClick={this.jump.bind(this,2, suggestion._id, null)} bsStyle={bsStyle} style={{width:'80%', textAlign:'left'}}>
           Reference existing component <b>{suggestion.name}</b>.
         </Button>
         <Button onClick={this.jump.bind(this,1, suggestion._id, suggestion.name)} bsStyle={bsWarnStyle} style={{width:'20%', right:0}} class="float-right">
