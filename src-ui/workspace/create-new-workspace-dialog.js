@@ -36,11 +36,13 @@ var CreateNewWorkspaceDialog = createReactClass({
   _onChange: function() {
     this.setState(this.props.workspaceListStore.isWorkspaceNewDialogOpen());
   },
-  _close: function() {
+  _close: function(event) {
+    event.stopPropagation();
     Actions.closeNewWorkspaceDialog();
     this.internalState = {};
   },
-  _submit: function() {
+  _submit: function(event) {
+    event.stopPropagation();
     Actions.submitNewWorkspaceDialog(this.internalState);
   },
 

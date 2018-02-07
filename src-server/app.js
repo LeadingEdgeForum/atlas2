@@ -22,8 +22,8 @@ var express = require('express');
 var userProvider = require('./user-provider.js');
 var freshdesk = require('./freshdesk-helper');
 
+
 var app = express();
-var io = null;
 
 var webpack_middleware = null;
 
@@ -189,7 +189,8 @@ app.get('/js/freshdesk.js', freshdesk);
 userProvider.installUserProvider(app, config, conn);
 
 app.use('/api/tos', require('./tos/tos.js')(conn).router);
-app.use('/api', require('./workspace/workspace-router.js')(userProvider.getGuard(), conn).router);
+let routerModule = require('./workspace/workspace-router.js')(userProvider.getGuard(), conn);
+app.use('/api', routerModule.router);
 
 var imageRendererModule = require('./workspace/image-renderer.js')(userProvider.getGuard(), conn, app.webpack_middleware);
 app.use('/img', imageRendererModule.router);
@@ -224,39 +225,51 @@ var server = app.listen(appEnv.port, '0.0.0.0', function() {
 
 });
 
-io = require('socket.io').listen(server);
 
-io.on('connection', function(socket) {
 
-    socket.on('disconnect', function() {
-    });
+let ioServ = require('socket.io').listen(server);
+ioServ.on('connection', function(socket) {
 
-    socket.on('map', function(msg){
-      if(msg.type === 'sub'){
-        socket.join(msg.id);
-      }
-      if(msg.type === 'unsub'){
-        socket.leave(msg.id);
-      }
-      if(msg.type === 'change'){
-        socket.broadcast.to(msg.id).emit('mapchange', msg);
-      }
-    });
+  socket.on('map', function(msg) {
+    if (msg.type === 'sub') {
+      socket.join(msg.id);
+    }
+    if (msg.type === 'unsub') {
+      socket.leave(msg.id);
+    }
+    if (msg.type === 'change') {
+      socket.broadcast.to(msg.id).emit('mapchange', msg);
+    }
+  });
 
-    socket.on('workspace', function(msg){
-      if(msg.type === 'sub'){
-        socket.join(msg.id);
-      }
-      if(msg.type === 'unsub'){
-        socket.leave(msg.id);
-      }
-      if(msg.type === 'change'){
-        socket.broadcast.to(msg.id).emit('workspacechange', msg);
-      }
-    });
+  socket.on('workspace', function(msg) {
+    if (msg.type === 'sub') {
+      socket.join(msg.id);
+    }
+    if (msg.type === 'change') {
+      socket.broadcast.to(msg.id).emit('workspacechange', msg);
+    }
+    if (msg.type === 'unsub') {
+      socket.leave(msg.id);
+    }
+  });
 });
+
+let clientSocket = require('socket.io-client')(appEnv.url, { rejectUnauthorized: false });
+routerModule.setSocket(clientSocket);
+clientSocket.on('connect_error', function (socket) {
+    console.log('socket error', socket);
+});
+clientSocket.on('error', function (socket) {
+    console.log('socket error', socket);
+});
+clientSocket.on('connect', function () {
+    console.log('socket connected', clientSocket);
+    routerModule.setSocket(clientSocket);
+});
+
 
 server.___app = app;
 server.___conn = conn;
-server.___app.io = io;
+server.___app.io = ioServ;
 module.exports=server;
