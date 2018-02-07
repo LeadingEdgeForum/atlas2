@@ -8,9 +8,6 @@ module.exports  = keyMirror({
       CLOSE_EDIT_MAP_DIALOG : null,
       SUBMIT_EDIT_MAP_DIALOG : null,
 
-      OPEN_NEW_NODE_DIALOG : null,
-      CLOSE_NEW_NODE_DIALOG : null,
-      SUBMIT_NEW_NODE_DIALOG : null,
       OPEN_EDIT_NODE_DIALOG : null,
       CLOSE_EDIT_NODE_DIALOG : null,
       DELETE_NODE : null,
@@ -43,11 +40,6 @@ module.exports  = keyMirror({
       UPDATE_CONNECTION : null,
       DELETE_CONNECTION : null,
 
-
-      OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG : null,
-
-      SHOW_SUBMAP_REFERENCES : null,
-      CLOSE_SUBMAP_REFERENCES : null,
       SHOW_REFERENCES : null,
       CLOSE_REFERENCES : null,
 

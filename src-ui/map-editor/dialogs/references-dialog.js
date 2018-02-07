@@ -5,7 +5,7 @@ var Input = require('react-bootstrap').Input;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
 import Actions from '../single-map-actions';
-var UsageInfo = require('../../fixit/usage-info');
+import Usage from './usage';
 var createReactClass = require('create-react-class');
 
 var ReferencesDialog = createReactClass({
@@ -57,7 +57,7 @@ var ReferencesDialog = createReactClass({
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
-              <UsageInfo node={node} workspaceID={workspaceID} variantId={variantId} alternativeNames={true} emptyInfo={true} showMarketReferences={true}/>
+              <Usage node={node} workspaceID={workspaceID} variantId={variantId}/>
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>

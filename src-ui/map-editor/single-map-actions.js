@@ -33,18 +33,6 @@ var SingleMapActions = {
       });
     },
 
-    openAddNodeDialog : function(coords, type){
-      if(!coords || !type){
-        console.error('No new node data, aborting...');
-        return;
-      }
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.OPEN_NEW_NODE_DIALOG,
-          coords : coords,
-          type : type
-      });
-    },
-
     openAddNewUserDialog : function(coords, type){
       if(!coords){
         console.error('No new user data, aborting...');
@@ -98,30 +86,6 @@ var SingleMapActions = {
             pos: pos,
             width:width
           }
-      });
-    },
-
-    closeAddNodeDialog : function(){
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.CLOSE_NEW_NODE_DIALOG
-      });
-    },
-
-    submitAddNodeDialog : function(data){
-      if(!data){
-        console.error('missing data, aborting...');
-        return;
-      }
-      if(!data.coords || !data.type){
-        console.error('incomplete data, aborting', data);
-        return;
-      }
-      if(!data.name || !data.responsiblePerson || !data.inertia || !data.description){
-        console.error('incomplete data', data);
-      }
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.SUBMIT_NEW_NODE_DIALOG,
-          data : data
       });
     },
 
@@ -203,18 +167,6 @@ var SingleMapActions = {
           actionType: ACTION_TYPES.SUBMIT_ADD_REFERENCED_SUBMAP,
           refID : refID,
           coords : coords
-      });
-    },
-
-
-    openCreateSubmapDialog: function(data) {
-      if (!data.mapID || !data.nodes || !data.comments) {
-        console.error('not enough of data to create a submap', data.mapId, data.nodes, data.comments);
-        return;
-      }
-      Dispatcher.dispatch({
-        actionType: ACTION_TYPES.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG,
-        data: data
       });
     },
 
@@ -499,7 +451,7 @@ var SingleMapActions = {
       });
     },
 
-    openEditConnectionDialog: function(workspaceId, mapId, sourceId, targetId, label, description, type){
+    openEditConnectionDialog: function(workspaceId, mapId, sourceId, targetId, label, description, connectionType){
       if(!sourceId || !targetId){
         console.error('no data to open the dialog');
         return;
@@ -513,7 +465,7 @@ var SingleMapActions = {
             targetId: targetId,
             label:label,
             description:description,
-            type:type
+            connectionType:connectionType
           }
       });
     },
@@ -524,13 +476,13 @@ var SingleMapActions = {
       });
     },
 
-    updateConnection: function(workspaceId, mapId, sourceId, targetId, label, description, type) {
+    updateConnection: function(workspaceId, mapId, sourceId, targetId, label, description, connectionType) {
       if(!sourceId || !targetId){
         console.error('no data to open the dialog');
         return;
       }
-      if(!(type !== undefined || label || description)){
-        console.warn('missing connection data', type, label, description);
+      if(!(connectionType !== undefined || label || description)){
+        console.warn('missing connection data', connectionType, label, description);
         return;
       }
       Dispatcher.dispatch({
@@ -542,7 +494,7 @@ var SingleMapActions = {
             targetId: targetId,
             label:label,
             description:description,
-            type:type
+            connectionType:connectionType
           }
       });
     },
@@ -563,35 +515,14 @@ var SingleMapActions = {
       });
     },
 
-    openSubmapReferencesDialog: function(currentName, mapID, submapID, node, workspaceID, variantId){
+    openReferencesDialog: function(currentName, node, workspaceID) {
       Dispatcher.dispatch({
-          actionType: ACTION_TYPES.SHOW_SUBMAP_REFERENCES,
-          data : {
-            currentName: currentName,
-            mapID:mapID,
-            submapID:submapID,
-            node :node,
-            workspaceID:workspaceID,
-            variantId : variantId
-          }
-      });
-    },
-
-    closeSubmapReferencesDialog : function(){
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.CLOSE_SUBMAP_REFERENCES,
-      });
-    },
-
-    openReferencesDialog: function(currentName, node, workspaceID, variantId){
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.SHOW_REFERENCES,
-          data : {
-            currentName: currentName,
-            node:node,
-            workspaceID:workspaceID,
-            variantId : variantId
-          }
+        actionType: ACTION_TYPES.SHOW_REFERENCES,
+        data: {
+          currentName: currentName,
+          node: node,
+          workspaceID: workspaceID
+        }
       });
     },
 
