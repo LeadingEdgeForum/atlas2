@@ -33,6 +33,8 @@
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
     "log4js": "2.5.0",
+    "mongoose": "5.0.3",
+    "log4js": "2.5.0",
     "mongoose": "4.13.7",
     "morgan": "^1.7.0",
     "passport": "^0.4.0",
