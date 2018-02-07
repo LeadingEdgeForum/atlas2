@@ -87,7 +87,7 @@
     "wdio-webpack-service": "^1.0.1",
     "webdriverio": "^4.9.11",
     "webpack": "3.10.0",
-    "webpack-dev-middleware": "2.0.3"
+    "webpack-dev-middleware": "2.0.4"
   },
   "repository": {},
   "engines": {
