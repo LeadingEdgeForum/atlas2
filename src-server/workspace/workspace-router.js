@@ -45,6 +45,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   var Node = require('./model/node-schema')(mongooseConnection);
   var History = require('./model/history-schema')(mongooseConnection);
   var Analysis = require('./model/analysis-schema')(mongooseConnection);
+  var Project = require('./model/project-schema')(mongooseConnection);
 
   var module = {};
 
@@ -640,6 +641,36 @@ module.exports = function(authGuardian, mongooseConnection) {
       .then(checkAccess.bind(this, req.params.mapID, actor))
       .then(function(map) {
         return map.referenceNode(actor, nodeId, /*visibility*/ y, null);
+      })
+      .done(function(map) {
+        res.json({
+          map: map
+        });
+        track(actor, 'reference_node', {
+          'map_id': req.params.mapID,
+          'node_id': nodeId,
+        }, req.body);
+      }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort', authGuardian.authenticationRequired, function(req, res) {
+    var actor = getUserIdFromReq(req);
+    var workspaceId = getId(req.params.workspaceID);
+    var mapId = getId(req.params.mapID);
+    var nodeId = getId(req.params.nodeID);
+    let x = req.body.x;
+    let y = req.body.y;
+    let shortSummary = req.body.shortSummary;
+    let description = req.body.description;
+    let type = req.body.type;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapId,
+        workspace: workspaceId
+      }).exec()
+      .then(checkAccess.bind(this, req.params.mapID, actor))
+      .then(function(map) {
+        return map.addEffort(actor, nodeId, shortSummary, description, type, x, y);
       })
       .done(function(map) {
         res.json({

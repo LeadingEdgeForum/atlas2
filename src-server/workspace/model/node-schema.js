@@ -83,12 +83,6 @@ module.exports = function(conn){
               connectionType : Schema.Types.Number
             }
         }],
-        action: [{
-            x : Schema.Types.Number,
-            y : Schema.Types.Number,
-            shortSummary : Schema.Types.String,
-            description : Schema.Types.String
-        }],
         submapID: {
             type: Schema.Types.ObjectId,
             ref: 'WardleyMap'
@@ -106,6 +100,19 @@ module.exports = function(conn){
           type: Schema.Types.ObjectId,
           ref: 'Analysis'
         }
+    }, {
+      toObject: {
+        virtuals: true
+      },
+      toJSON: {
+        virtuals: true
+      }
+    });
+
+    NodeSchema.virtual('actions', {
+      ref : 'Project',
+      localField : '_id',
+      foreignField : 'affectedNodes'
     });
 
     NodeSchema.methods.makeDependencyTo = function(_mapId, _targetId) {

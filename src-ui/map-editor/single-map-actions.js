@@ -265,21 +265,6 @@ var SingleMapActions = {
       });
     },
 
-    recordAction : function(workspaceID, mapID, sourceId, pos /*{pos: [x, y]} */){
-      if(!sourceId || !pos){
-        console.error('missing data, aborting');
-        return;
-      }
-      Dispatcher.dispatch({
-          actionType: ACTION_TYPES.RECORD_ACTION,
-          data: {
-            workspaceID: workspaceID,
-            mapID: mapID,
-            sourceId: sourceId,
-            pos: pos.pos
-          }
-      });
-    },
 
     openEditActionDialog: function(workspaceID, mapID, sourceId, actionId, shortSummary, description){
       if(!sourceId || !actionId){

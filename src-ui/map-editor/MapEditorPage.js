@@ -22,6 +22,8 @@ import NewNodeDialog from './dialogs/new-node/create-new-node';
 import NewNodeStore from './dialogs/new-node/create-new-node-store';
 import FormASubmapDialog from './dialogs/form-submap/form-a-submap';
 import FormASubmapStore from './dialogs/form-submap/form-a-submap-store';
+import NewActionDialog from './dialogs/new-action/new-action-dialog';
+import NewActionStore from './dialogs/new-action/new-action-store';
 import CreateNewUserDialog from './dialogs/create-new-user-dialog';
 import EditNodeDialog from './dialogs/edit-node-dialog';
 import EditUserDialog from './dialogs/edit-user-dialog';
@@ -65,33 +67,28 @@ export default class MapEditorPage extends React.Component {
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
     // this.state.diff = this.props.singleMapStore.getDiff();
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
-    this.getNewNodeStore = this.getNewNodeStore.bind(this);
-    this.getFormASubmapStore = this.getFormASubmapStore.bind(this);
+    this.getStore = this.getStore.bind(this);
     this.storesToUndispatch = [];
   }
 
-  getNewNodeStore(workspaceId, mapId) {
-    if (!this.newNodeStores) {
-      this.newNodeStores = {};
+  getStore(type, workspaceId, mapId){
+    if (!this[type]) {
+      this[type] = {};
     }
-    if (!this.newNodeStores[mapId]) {
-      this.newNodeStores[mapId] = new NewNodeStore(workspaceId, mapId, this.props.singleMapStore);
+    if (!this[type][mapId]) {
+      if(type === 'NewNodeStore'){
+          this[type][mapId] = new NewNodeStore(workspaceId, mapId, this.props.singleMapStore);
+      } else if(type === 'FormASubmapStore'){
+          this[type][mapId] = new FormASubmapStore(workspaceId, mapId, this.props.singleMapStore);
+      } else if(type === 'NewActionStore'){
+          this[type][mapId] = new NewActionStore(workspaceId, mapId, this.props.singleMapStore);
+      } else {
+        throw new Error('unknown store');
+      }
     }
-    this.newNodeStores[mapId].workspaceId = workspaceId;
-    this.storesToUndispatch.push(this.newNodeStores[mapId]);
-    return this.newNodeStores[mapId];
-  }
-
-  getFormASubmapStore(workspaceId, mapId){
-    if (!this.formASubmapStores) {
-      this.formASubmapStores = {};
-    }
-    if (!this.formASubmapStores[mapId]) {
-      this.formASubmapStores[mapId] = new FormASubmapStore(workspaceId, mapId, this.props.singleMapStore);
-    }
-    this.formASubmapStores[mapId].workspaceId = workspaceId;
-    this.storesToUndispatch.push(this.formASubmapStores[mapId]);
-    return this.formASubmapStores[mapId];
+    this[type][mapId].workspaceId = workspaceId;
+    this.storesToUndispatch.push(this[type][mapId]);
+    return this[type][mapId];
   }
 
   componentDidMount() {
@@ -245,8 +242,10 @@ export default class MapEditorPage extends React.Component {
     const mapName = calculateMapName('wait...', this.state.map.name, this.state.map.isSubmap);
     const mapID = singleMapStore.getMapId();
     const nodes = singleMapStore.getMap().map.nodes;
-    const newNodeStore = this.getNewNodeStore(workspaceID, mapID);
-    const formASubmapStore = this.getFormASubmapStore(workspaceID, mapID);
+    const newNodeStore = this.getStore('NewNodeStore', workspaceID, mapID);
+    const formASubmapStore = this.getStore('FormASubmapStore',workspaceID, mapID);
+    const newActionStore = this.getStore('NewActionStore',workspaceID, mapID);
+
     const connections = singleMapStore.getMap().map.connections;
     const comments = singleMapStore.getMap().map.comments;
     const users = singleMapStore.getMap().map.users;
@@ -306,6 +305,7 @@ export default class MapEditorPage extends React.Component {
           <EditMapDialog singleMapStore={singleMapStore}/>
           <NewNodeDialog store={newNodeStore}/>
           <FormASubmapDialog store={formASubmapStore}/>
+          <NewActionDialog store={newActionStore}/>
           <NewGenericCommentDialog singleMapStore={singleMapStore}/>
           <CreateNewSubmapDialog singleMapStore={singleMapStore}/>
           <EditGenericCommentDialog singleMapStore={singleMapStore}/>

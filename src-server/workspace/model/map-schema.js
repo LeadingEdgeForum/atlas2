@@ -23,41 +23,6 @@ let getId = require('../../util/util.js').getId;
 var wardleyMap = {};
 
 
-var calculateMean = function(list, field) {
-    // submapLogger.trace('multisave', list, field);
-    if (!list || list.length === 0) {
-        return 0.5;
-    }
-    var mean = 0;
-    for (var i = 0; i < list.length; i++) {
-        mean += list[i][field];
-    }
-    return mean / list.length;
-};
-
-var removeDuplicatesDependenciesFromList = function(dependencies) {
-    var mySet = new Set();
-    for (var i = 0; i < dependencies.length; i++) {
-        mySet.add('' + dependencies[i]);
-    }
-    for (var j = dependencies.length - 1; j >= 0; j--) {
-        if (mySet.has('' + dependencies[j])) {
-            mySet.delete('' + dependencies[j]);
-        } else {
-            dependencies.splice(j, 1);
-            j--;
-        }
-    }
-};
-
-var removeDuplicatesDependencies = function(nodes) {
-    for (var i = 0; i < nodes.length; i++) {
-        removeDuplicatesDependenciesFromList(nodes[i].outboundDependencies);
-    }
-};
-
-
-
 module.exports = function(conn) {
 
     if (wardleyMap[conn.name]) {
@@ -133,6 +98,12 @@ module.exports = function(conn) {
           path: 'nodes',
           match: {
             status: 'EXISTING'
+          },
+          populate: {
+            path: 'actions',
+            match: {
+              type: 'EFFORT'
+            }
           }
         })
         .execPopulate();
@@ -624,6 +595,46 @@ module.exports = function(conn) {
               }
             }).execPopulate();
           });
+        });
+    };
+
+
+    _MapSchema.methods.addEffort = function(actor, nodeId, shortSummary, description, type, x, y) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      const Analysis = require('./analysis-schema')(conn);
+      const Project = require('./project-schema')(conn);
+
+      let _this = this;
+      return Node.findById(nodeId).exec()
+        .then(function(node) {
+          let relativeEvolution = x - node.evolution;
+          let relativeVisibility = y - node.visibility[0].value;
+          for(let i = 0; i < node.visibility; i++){
+            if(getId(node.visibility[i].map).equals(getId(_this))){
+              relativeVisibility = y - node.visibility[i].value;
+            }
+          }
+          return {
+            relativeEvolution: relativeEvolution,
+            relativeVisibility: relativeVisibility
+          };
+        })
+        .then(function(newPos) {
+          return new Project({
+              affectedNodes: [nodeId],
+              workspace: _this.workspace,
+              shortSummary: shortSummary,
+              description: description,
+              type: type,
+              evolution: newPos.relativeEvolution,
+              visibility: newPos.relativeVisibility,
+              state: 'PROPOSED'
+            }).save()
+            .then(function(project) {
+              console.log(project);
+              return _this.defaultPopulate();
+            });
         });
     };
 

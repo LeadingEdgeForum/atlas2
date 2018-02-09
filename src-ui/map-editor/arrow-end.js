@@ -24,7 +24,15 @@ function getElementOffset(element)
 }
 
 var ArrowEnd = createReactClass({
-
+  getVisibility(mapId, node){
+    let visibilityArray = node.visibility;
+    for(let i = 0; i < visibilityArray.length; i++){
+      if(visibilityArray[i].map === mapId){
+        return visibilityArray[i].value;
+      }
+    }
+    return null;
+  },
 
   render: function() {
     var node = this.props.node;
@@ -32,8 +40,18 @@ var ArrowEnd = createReactClass({
 
     var style = getStyleForType("ArrowEnd");
 
-    var left = (node.x + action.x) * this.props.size.width;
-    var top = (node.y + action.y) * this.props.size.height;
+    /**
+    * Since actions are relative, it may appear that they do not fit on some maps.
+    * Ensure they do not exceed the canvas (relative)
+    */
+    var left = (node.evolution + action.evolution);
+    left = Math.min(1, Math.max(0, left)); //between 0 & 1
+    left = left  * this.props.size.width;
+
+    var top = (this.getVisibility(this.props.mapID, node) + action.visibility);
+    top = Math.min(1, Math.max(0, top));
+    top = top * this.props.size.height;
+
     style = _.extend(style, {
       left: left,
       top: top,

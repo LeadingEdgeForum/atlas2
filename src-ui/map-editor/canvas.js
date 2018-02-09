@@ -9,6 +9,7 @@ import {Glyphicon} from 'react-bootstrap';
 var _ = require('underscore');
 import SingleMapActions from './single-map-actions';
 import CanvasActions from './canvas-actions';
+import NewActionActions from './dialogs/new-action/new-action-actions';
 var MapComponent = require('./map-component');
 var HistoricComponent = require('./historic-component');
 var ArrowEnd = require('./arrow-end');
@@ -112,10 +113,10 @@ export default class MapCanvas extends React.Component {
   }
 
   connectionDragStop(info, e) {
-      if (info.getData().scope === 'WM_Action') {
+      if (info.getData().scope === 'WM_Action_EFFORT') {
           var coords = this.props.canvasStore.normalizeComponentCoord([e.x, e.y]);
-          SingleMapActions.recordAction(this.props.workspaceID, this.props.mapID, info.sourceId, {
-              pos: [coords.x, coords.y]
+          NewActionActions.openAddActionDialog(this.props.mapID, info.sourceId, {
+            pos: [coords.x, coords.y]
           });
       }
   }
@@ -407,9 +408,9 @@ export default class MapCanvas extends React.Component {
       // iterate over all nodes
       for (var ii = 0; ii < this.props.nodes.length; ii++) {
           var __node = this.props.nodes[ii];
-          var desiredActions = __node.action;
+          var desiredActions = __node.actions.filter(action => (action.type ==='EFFORT' && action.evolution && action.visibility));
           var existingActions = jsPlumb.getConnections({
-              scope: "WM_Action",
+              scope: "WM_Action_EFFORT",
               source: '' + __node._id
           });
           // for every existing action
@@ -428,7 +429,7 @@ export default class MapCanvas extends React.Component {
           // now we have only desired connections, but some may be missing
           for (var ll = 0; ll < desiredActions.length; ll++) {
               var existingNodeConnection = jsPlumb.getConnections({
-                  scope: "WM_Action",
+                  scope: "WM_Action_EFFORT",
                   source: '' + __node._id,
                   target: '' + desiredActions[ll]._id
               });
@@ -436,7 +437,7 @@ export default class MapCanvas extends React.Component {
                   var connection = jsPlumb.connect({
                       source: __node._id,
                       target: desiredActions[ll]._id,
-                      scope: "WM_Action",
+                      scope: "WM_Action_EFFORT",
                       anchors: [
                           "Right", "Left"
                       ],
@@ -646,16 +647,18 @@ export default class MapCanvas extends React.Component {
             }
         }
 
-        for (var j = 0; j < component.action.length; j++) {
+        let actions = component.actions.filter(action => action.type === 'EFFORT');
+
+        for (var j = 0; j < actions.length; j++) {
           arrowends.push(
             <ArrowEnd workspaceID = {workspaceID}
               canvasStore = {canvasStore}
               mapID = {mapID}
               node = {component}
               size = {size}
-              id = {component.action[j]._id}
-              key = {component.action[j]._id}
-              action = {component.action[j]}/>);
+              id = {component.actions[j]._id}
+              key = {component.actions[j]._id}
+              action = {component.actions[j]}/>);
         }
 
         return (

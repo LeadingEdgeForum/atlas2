@@ -28,7 +28,6 @@ module.exports  = keyMirror({
       MOVE_COMMENT : null,
       DELETE_COMMENT : null,
 
-      RECORD_ACTION : null,
       OPEN_EDIT_ACTION_DIALOG : null,
       CLOSE_EDIT_ACTION_DIALOG : null,
       UPDATE_ACTION : null,

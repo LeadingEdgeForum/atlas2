@@ -59,6 +59,10 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
+      this.addActionDialog = {
+        open : false
+      };
+
       this.updateNodeObjects = [];
       this.updateUserObjects = [];
 
@@ -176,11 +180,6 @@ export default class SingleWorkspaceStore extends Store {
           break;
         case ActionTypes.MOVE_COMMENT:
           this.updateComment(action.data);
-          break;
-
-
-        case ActionTypes.RECORD_ACTION:
-          this.recordAction(action.data);
           break;
         case ActionTypes.OPEN_EDIT_ACTION_DIALOG:
           this.actionDialog.open = true;

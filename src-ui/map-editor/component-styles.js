@@ -179,7 +179,7 @@ var actionEndpointOptions = {
   ],
   deleteEndpointsOnDetach: false,
   uniqueEndpoints: true,
-  scope: "WM_Action",
+  scope: "WM_Action_EFFORT",
   connectorOverlays: [
     ["Arrow", {
       width: 10,
