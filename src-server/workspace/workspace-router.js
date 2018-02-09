@@ -722,7 +722,6 @@ module.exports = function(authGuardian, mongooseConnection) {
   module.router.get('/workspace/:workspaceID/warnings', authGuardian.authenticationRequired, function(req, res) {
     var actor = getUserIdFromReq(req);
     var workspaceID = req.params.workspaceID;
-    var analysisID = req.params.analysisID;
 
     Workspace.findOne({
       _id : workspaceID,
@@ -734,6 +733,24 @@ module.exports = function(authGuardian, mongooseConnection) {
     .done(function(warnings){
         res.json({
           warnings : warnings
+        });
+    }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.get('/workspace/:workspaceID/projects', authGuardian.authenticationRequired, function(req, res) {
+    var actor = getUserIdFromReq(req);
+    var workspaceID = req.params.workspaceID;
+
+    Workspace.findOne({
+      _id : workspaceID,
+      owner : actor
+    }).exec()
+    .then(function(workspace){
+      return workspace.getProjects();
+    })
+    .done(function(projects){
+        res.json({
+          projects : projects
         });
     }, defaultErrorHandler.bind(this, res));
   });

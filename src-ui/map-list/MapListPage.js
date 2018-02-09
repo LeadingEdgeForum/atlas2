@@ -64,6 +64,10 @@ export default class MapListPage extends React.Component {
     this._closeWarningsDialog = this._closeWarningsDialog.bind(this);
     this._openWarningsDialog = this._openWarningsDialog.bind(this);
     this._renderWarnings = this._renderWarnings.bind(this);
+
+    this._closeProjectsDialog = this._closeProjectsDialog.bind(this);
+    this._openProjectsDialog = this._openProjectsDialog.bind(this);
+    this._renderProjects = this._renderProjects.bind(this);
   }
 
   componentDidMount() {
@@ -104,7 +108,22 @@ export default class MapListPage extends React.Component {
   }
 
   _closeWarningsDialog(){
-    this.setState({warningOpen:false, warningsData:null});
+    this.setState({warningOpen:false, warnings:null});
+  }
+
+  _openProjectsDialog(){
+    this.setState({projectsOpen:true});
+      $.ajax({
+        type: 'GET',
+        url: '/api/workspace/' + this.props.singleWorkspaceStore.getWorkspaceId() + '/projects/',
+        success: function(data) {
+          this.setState(data);
+        }.bind(this)
+      });
+  }
+
+  _closeProjectsDialog(){
+    this.setState({projectsOpen:false, projects:null});
   }
 
   prepareWorkspaceMenu(){
@@ -118,10 +137,14 @@ export default class MapListPage extends React.Component {
           <Glyphicon glyph="upload"></Glyphicon>
           &nbsp;Upload a map
       </NavItem>,
-      <NavItem eventKey={3} href="#" key="3" onClick={this._openWarningsDialog.bind(this)}>
+      <NavItem eventKey={3} href="#" key="3" onClick={this._openProjectsDialog.bind(this)}>
+          <Glyphicon glyph="flash"></Glyphicon>
+          &nbsp;Projects
+      </NavItem>,
+      <NavItem eventKey={4} href="#" key="4" onClick={this._openWarningsDialog.bind(this)}>
           <Glyphicon glyph="warning-sign"></Glyphicon>
           &nbsp;Warnings
-      </NavItem>
+      </NavItem>,
     ];
   }
 
@@ -183,6 +206,26 @@ export default class MapListPage extends React.Component {
     return <ul>{list}</ul>;
   }
 
+  _renderProjects(projects){
+    if(!projects || projects.length === 0){
+        return "Nothing to show";
+    }
+
+    let list = [];
+    for(let i = 0; i < projects.length; i++){
+      let project = projects[i];
+      if(project.type === 'EFFORT'){
+        let nodes = project.affectedNodes.map(node => <li><NodeLink mapID={node.parentMap[0]} nodeID={node._id}/></li>);
+        list.push(project.shortSummary + '  ('  + project.state + ')');
+        list.push(<br/>);
+        list.push(<ul>{nodes}</ul>);
+      } else {
+        console.log('unknown type');
+      }
+    }
+    return <ul>{list}</ul>;
+  }
+
   render() {
     const auth = this.props.auth;
     const history = this.props.history;
@@ -208,6 +251,7 @@ export default class MapListPage extends React.Component {
     const state = this.state;
 
     const warnings = this._renderWarnings(this.state.warnings);
+    const projects = this._renderProjects(this.state.projects);
 
     return (
       <DocumentTitle title='Atlas2, the mapping Tool'>
@@ -277,6 +321,19 @@ export default class MapListPage extends React.Component {
             </Modal.Body>
             <Modal.Footer>
               <Button type="submit" bsStyle="primary" value="OK" onClick={this._closeWarningsDialog}>Close</Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={state.projectsOpen} onHide={this._closeProjectsDialog}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                Workspace Projects
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              {projects}
+            </Modal.Body>
+            <Modal.Footer>
+              <Button type="submit" bsStyle="primary" value="OK" onClick={this._closeProjectsDialog}>Close</Button>
             </Modal.Footer>
           </Modal>
         </Grid>

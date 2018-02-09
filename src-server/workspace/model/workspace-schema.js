@@ -592,6 +592,19 @@ module.exports = function(conn) {
         });
     };
 
+    workspaceSchema.methods.getProjects = function() {
+      let Node = require('./node-schema')(conn);
+      let Project = require('./project-schema')(conn);
+
+      let _this = this;
+
+      return Project.find({
+        workspace : getId(this)
+      })
+      .populate('affectedNodes')
+      .exec();
+    };
+
     workspace[conn.name] = conn.model('Workspace', workspaceSchema);
     return workspace[conn.name];
 };
