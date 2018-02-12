@@ -478,6 +478,12 @@ module.exports = function(authGuardian, mongooseConnection) {
             return Node.findById(nodeID).exec();
           })
           .done(function(result) {
+            if(!result){
+              res.json({
+                node:null
+              });
+              return;
+            }
             res.json({
               node: {
                 _id: result._id,
@@ -808,12 +814,14 @@ module.exports = function(authGuardian, mongooseConnection) {
     var actor = getUserIdFromReq(req);
     var workspaceID = req.params.workspaceID;
 
+    let node = req.query.node;
+
     Workspace.findOne({
       _id : workspaceID,
       owner : actor
     }).exec()
     .then(function(workspace){
-      return workspace.getProjects();
+      return workspace.getProjects(node);
     })
     .done(function(projects){
         res.json({

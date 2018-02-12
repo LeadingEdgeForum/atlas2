@@ -236,6 +236,14 @@ export default class SingleWorkspaceStore extends Store {
           this.referencesDialog.currentName = action.data.currentName;
           this.referencesDialog.node = action.data.node;
           this.referencesDialog.workspaceID = action.data.workspaceID;
+          $.ajax({
+            type: 'GET',
+            url: '/api/workspace/' + action.data.workspaceID + '/projects?node=' + action.data.node._id,
+            success: function(data) {
+              this.referencesDialog.projects = data.projects;
+              this.emitChange();
+            }.bind(this)
+          });
           this.emitChange();
           break;
         case ActionTypes.CLOSE_REFERENCES:

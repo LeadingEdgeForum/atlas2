@@ -212,16 +212,59 @@ export default class MapListPage extends React.Component {
     }
 
     let list = [];
+    let proposed = [];
+    let executing = [];
+    let rest = [];
     for(let i = 0; i < projects.length; i++){
-      let project = projects[i];
-      if(project.type === 'EFFORT'){
-        let nodes = project.affectedNodes.map(node => <li><NodeLink mapID={node.parentMap[0]} nodeID={node._id}/></li>);
-        list.push(project.shortSummary + '  ('  + project.state + ')');
-        list.push(<br/>);
-        list.push(<ul>{nodes}</ul>);
+      if(projects[i].state === 'PROPOSED'){
+        proposed.push(projects[i]);
+      } else if(projects[i].state === 'EXECUTING'){
+        executing.push(projects[i]);
       } else {
-        console.log('unknown type');
+        rest.push(projects[i]);
       }
+    }
+    if(proposed.length > 0){
+      list.push(<span>Projects proposed for execution:</span>);
+      let internalList = [];
+      for(let i = 0; i <proposed.length; i++){
+         let entry = [];
+         entry.push(proposed[i].shortSummary);
+         if(proposed[i].affectedNodes[0].parentMap){
+           entry.push(" ");
+           entry.push(<NodeLink mapID={proposed[i].affectedNodes[0].parentMap[0]} nodeID={proposed[i].affectedNodes[0]._id}/>);
+         }
+         internalList.push(<li>{entry}</li>);
+      }
+      list.push(<ul>{internalList}</ul>);
+    }
+    if(executing.length > 0){
+      list.push(<span>Projects currently being executed:</span>);
+      let internalList = [];
+      for(let i = 0; i <executing.length; i++){
+        let entry = [];
+         entry.push(executing[i].shortSummary);
+         if(executing[i].affectedNodes[0].parentMap){
+           entry.push(" ");
+           entry.push(<NodeLink mapID={executing[i].affectedNodes[0].parentMap[0]} nodeID={executing[i].affectedNodes[0]._id}/>);
+         }
+         internalList.push(<li>{entry}</li>);
+      }
+      list.push(<ul>{internalList}</ul>);
+    }
+    if(rest.length > 0){
+      list.push(<span>Succeded, rejected, failed or deleted projects:</span>);
+      let internalList = [];
+      for(let i = 0; i <rest.length; i++){
+        let entry = [];
+         entry.push(rest[i].shortSummary);
+         if(rest[i].affectedNodes[0].parentMap){
+           entry.push(" ");
+           entry.push(<NodeLink mapID={rest[i].affectedNodes[0].parentMap[0]} nodeID={rest[i].affectedNodes[0]._id}/>);
+         }
+         internalList.push(<li>{entry}</li>);
+      }
+      list.push(<ul>{internalList}</ul>);
     }
     return <ul>{list}</ul>;
   }

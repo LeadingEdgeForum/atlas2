@@ -4,6 +4,7 @@ var React = require('react');
 var Input = require('react-bootstrap').Input;
 var Modal = require('react-bootstrap').Modal;
 var Button = require('react-bootstrap').Button;
+var $ = require('jquery');
 import Actions from '../single-map-actions';
 import Usage from './usage';
 var createReactClass = require('create-react-class');
@@ -15,6 +16,7 @@ var ReferencesDialog = createReactClass({
   },
 
   _close: function() {
+    this.setState({open: false, projects:null});
     Actions.closeReferencesDialog();
   },
 
@@ -39,6 +41,59 @@ var ReferencesDialog = createReactClass({
     this.setState(this.props.singleMapStore.getReferencesDialogState());
   },
 
+  renderPast: function(projects){
+    if(!projects || projects.length === 0){
+      return null;
+    }
+    let worked = [];
+    let notWorked = [];
+    let rejected = [];
+
+    for(let i = 0; i < projects.length; i++){
+      let proj = projects[i];
+      if(proj.state === 'SUCCEEDED'){
+        worked.push(proj);
+      } else if(proj.state === 'FAILED'){
+        notWorked.push(proj);
+      } else if(proj.state === 'REJECTED'){
+        rejected.push(proj);
+      }
+    }
+
+    let mainResultList = [];
+    if(worked.length > 0){
+      mainResultList.push(<span>Following things worked in the past:</span>);
+      let internalList = [];
+      for(let i = 0; i <worked.length; i++){
+         let entry = [];
+         entry.push(worked[i].shortSummary);
+         internalList.push(<li>{entry}</li>);
+      }
+      mainResultList.push(<ul>{internalList}</ul>);
+    }
+    if(notWorked.length > 0){
+      mainResultList.push(<span>Following things did not work in the past:</span>);
+      let internalList = [];
+      for(let i = 0; i <notWorked.length; i++){
+         let entry = [];
+         entry.push(notWorked[i].shortSummary);
+         internalList.push(<li>{entry}</li>);
+      }
+      mainResultList.push(<ul>{internalList}</ul>);
+    }
+    if(rejected.length > 0){
+      mainResultList.push(<span>Following things were  not tried in the past:</span>);
+      let internalList = [];
+      for(let i = 0; i <rejected.length; i++){
+         let entry = [];
+         entry.push(rejected[i].shortSummary);
+         internalList.push(<li>{entry}</li>);
+      }
+      mainResultList.push(<ul>{internalList}</ul>);
+    }
+    return mainResultList;
+  },
+
   render: function() {
     var show = this.state.open;
     if (!show) {
@@ -48,6 +103,9 @@ var ReferencesDialog = createReactClass({
     var node = this.state.node;
     var workspaceID = this.state.workspaceID;
     var variantId = this.state.variantId;
+
+    let projects = this.state.projects;
+    let past = this.renderPast(projects);
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -58,6 +116,7 @@ var ReferencesDialog = createReactClass({
           </Modal.Header>
           <Modal.Body>
               <Usage node={node} workspaceID={workspaceID} variantId={variantId}/>
+              {past}
           </Modal.Body>
           <Modal.Footer>
             <Button type="submit" bsStyle="primary" value="Change" onClick={this._close}>Close</Button>
