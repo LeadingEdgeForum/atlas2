@@ -104,7 +104,7 @@ module.exports = function(conn) {
             match: {
               type: 'EFFORT',
               state: {
-                $in: ['PROPOSED', 'EXECUTING', 'REJECTED', 'FAILED', 'SUCCEEDED']
+                $in: ['PROPOSED', 'EXECUTING']
               }
             }
           }
@@ -642,7 +642,6 @@ module.exports = function(conn) {
     };
 
     _MapSchema.methods.updateEffort = function(actor, nodeId, effortId, shortSummary, description, x, y, state) {
-      console.log('update', actor, nodeId, effortId,shortSummary, description, x, y, state);
       const Node = require('./node-schema')(conn);
       const Workspace = require('./workspace-schema')(conn);
       const Analysis = require('./analysis-schema')(conn);
@@ -659,6 +658,7 @@ module.exports = function(conn) {
             }
           }
           return {
+            node: node,
             relativeEvolution: relativeEvolution,
             relativeVisibility: relativeVisibility
           };
@@ -674,12 +674,21 @@ module.exports = function(conn) {
               project.evolution = newPos.relativeEvolution;
               project.visibility = newPos.relativeVisibility;
             }
+            let nodeToSave;
             if(state){
               project.state = state;
+              if(state === 'SUCCEEDED' && project.type === 'EFFORT'){
+                newPos.node.evolution = newPos.node.evolution + project.evolution;
+                nodeToSave = newPos.node;
+              }
             }
-            return project.save();
+            return project.save().then(function(project){
+              if(nodeToSave){
+                return nodeToSave.save();
+              }
+            });
           })
-          .then(function(savedProject){
+          .then(function(savedProjectOrNode){
             console.log("TODO: history entry - effort updated");
             return _this.defaultPopulate();
           });
