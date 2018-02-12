@@ -79,6 +79,7 @@ export default class MapCanvas extends React.Component {
     this.reconcileComponentDependencies = this.reconcileComponentDependencies.bind(this);
     this.updateOverlaysVisiblityAndType = this.updateOverlaysVisiblityAndType.bind(this);
     this.getOverlays = this.getOverlays.bind(this);
+    this.constructEffortOverlays = this.constructEffortOverlays.bind(this);
   }
 
   beforeDropListener(connection) {
@@ -283,6 +284,26 @@ export default class MapCanvas extends React.Component {
     existingConnection.getOverlay("label").setLabel(modelConnection.displayData.label || "");
   }
 
+  constructEffortOverlays(node, desiredAction){
+    let result = [];
+    // standard edit action
+    result.push(["pencil", SingleMapActions.openEditActionDialog.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, node._id, desiredAction._id, desiredAction.shortSummary, desiredAction.description)]);
+
+    if(desiredAction.state === "PROPOSED"){
+      result.push(["play", SingleMapActions.updateAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, node._id, desiredAction._id, null, null, null, 'EXECUTING')]);
+      result.push(["eject", SingleMapActions.updateAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, node._id, desiredAction._id, null, null, null, 'REJECTED')]);
+    }
+
+    if(desiredAction.state === "EXECUTING"){
+      result.push(["thumbs-up", SingleMapActions.updateAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, node._id, desiredAction._id, null, null, null, 'SUCCEEDED')]);
+      result.push(["thumbs-down", SingleMapActions.updateAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, node._id, desiredAction._id, null, null, null, 'FAILED')]);
+    }
+
+    //standard remove action
+    result.push(["remove", SingleMapActions.deleteAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, node._id, desiredAction._id)]);
+    return result;
+  }
+
   reconcileComponentDependencies(nodes) {
     let mapId = this.props.mapID;
     let existingConnections = jsPlumb.getConnections({
@@ -408,7 +429,7 @@ export default class MapCanvas extends React.Component {
       // iterate over all nodes
       for (var ii = 0; ii < this.props.nodes.length; ii++) {
           var __node = this.props.nodes[ii];
-          var desiredActions = __node.actions.filter(action => (action.type ==='EFFORT' && action.evolution && action.visibility));
+          var desiredActions = __node.actions ? __node.actions.filter(action => (action.type ==='EFFORT' && action.evolution && action.visibility)) : [];
           var existingActions = jsPlumb.getConnections({
               scope: "WM_Action_EFFORT",
               source: '' + __node._id
@@ -447,12 +468,7 @@ export default class MapCanvas extends React.Component {
                       endpointStyles: [
                           actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
                       ],
-                      overlays: this.getOverlays(actionEndpointOptions.connectorOverlays, [
-                              ["pencil", SingleMapActions.openEditActionDialog.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
-                              ["remove", SingleMapActions.deleteAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
-                          ],
-                          desiredActions[ll].shortSummary
-                      )
+                      overlays: this.getOverlays(actionEndpointOptions.connectorOverlays, this.constructEffortOverlays(__node, desiredActions[ll]), desiredActions[ll].shortSummary)
                   });
                   connection.___overlayVisible = false;
                   connection.getOverlay("menuOverlay").hide();
@@ -461,12 +477,7 @@ export default class MapCanvas extends React.Component {
               } else {
                   existingNodeConnection[0].removeOverlay("menuOverlay");
                   existingNodeConnection[0].removeOverlay("label");
-                  var overlaysToReadd = this.getOverlays(null, [
-                          ["pencil", SingleMapActions.openEditActionDialog.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id, desiredActions[ll].shortSummary, desiredActions[ll].description)],
-                          ["remove", SingleMapActions.deleteAction.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, __node._id, desiredActions[ll]._id)]
-                      ],
-                      desiredActions[ll].shortSummary
-                  );
+                  var overlaysToReadd = this.getOverlays(null, this.constructEffortOverlays(__node, desiredActions[ll]), desiredActions[ll].shortSummary);
                   for (var zz = 0; zz < overlaysToReadd.length; zz++) {
                       existingNodeConnection[0].addOverlay(overlaysToReadd[zz]);
                   }
@@ -647,7 +658,7 @@ export default class MapCanvas extends React.Component {
             }
         }
 
-        let actions = component.actions.filter(action => action.type === 'EFFORT');
+        let actions = component.actions ? component.actions.filter(action => action.type === 'EFFORT') : [];
 
         for (var j = 0; j < actions.length; j++) {
           arrowends.push(
@@ -656,9 +667,9 @@ export default class MapCanvas extends React.Component {
               mapID = {mapID}
               node = {component}
               size = {size}
-              id = {component.actions[j]._id}
-              key = {component.actions[j]._id}
-              action = {component.actions[j]}/>);
+              id = {actions[j]._id}
+              key = {actions[j]._id}
+              action = {actions[j]}/>);
         }
 
         return (

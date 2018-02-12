@@ -46,7 +46,7 @@ module.exports = function(conn) {
         },
         state : {
           type : String,
-          enum:['PROPOSED', 'EXECUTING', 'REJECTED', 'FAILED', 'SUCCEEDED'],
+          enum:['PROPOSED', 'EXECUTING', 'REJECTED', 'FAILED', 'SUCCEEDED', 'DELETED'],
           required :true
         },
         description : String,

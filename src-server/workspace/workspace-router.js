@@ -676,9 +676,76 @@ module.exports = function(authGuardian, mongooseConnection) {
         res.json({
           map: map
         });
-        track(actor, 'reference_node', {
+        track(actor, 'create_effort', {
           'map_id': req.params.mapID,
           'node_id': nodeId,
+          shortSummary : shortSummary
+        }, req.body);
+      }, defaultErrorHandler.bind(this, res));
+  });
+
+  module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
+    var actor = getUserIdFromReq(req);
+    var workspaceId = getId(req.params.workspaceID);
+    var mapId = getId(req.params.mapID);
+    var nodeId = getId(req.params.nodeID);
+    let effortId = getId(req.params.effortId);
+    let x = req.body.x;
+    let y = req.body.y;
+    let shortSummary = req.body.shortSummary;
+    let description = req.body.description;
+    let state = req.body.state;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapId,
+        workspace: workspaceId
+      }).exec()
+      .then(checkAccess.bind(this, req.params.mapID, actor))
+      .then(function(map) {
+        return map.updateEffort(actor, nodeId, effortId, shortSummary, description, x, y, state);
+      })
+      .done(function(map) {
+        res.json({
+          map: map
+        });
+        track(actor, 'update_effort', {
+          'map_id': req.params.mapID,
+          'node_id': nodeId,
+          shortSummary : shortSummary,
+          state : state
+        }, req.body);
+      }, defaultErrorHandler.bind(this, res));
+  });
+
+
+  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
+    var actor = getUserIdFromReq(req);
+    var workspaceId = getId(req.params.workspaceID);
+    var mapId = getId(req.params.mapID);
+    var nodeId = getId(req.params.nodeID);
+    let effortId = getId(req.params.effortId);
+    let x = req.body.x;
+    let y = req.body.y;
+    let shortSummary = req.body.shortSummary;
+    let description = req.body.description;
+    let state = req.body.state;
+
+    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        _id: mapId,
+        workspace: workspaceId
+      }).exec()
+      .then(checkAccess.bind(this, req.params.mapID, actor))
+      .then(function(map) {
+        return map.deleteEffort(actor, nodeId, effortId);
+      })
+      .done(function(map) {
+        res.json({
+          map: map
+        });
+        track(actor, 'delete_effort', {
+          'map_id': req.params.mapID,
+          'node_id': nodeId,
+          effortId:effortId
         }, req.body);
       }, defaultErrorHandler.bind(this, res));
   });

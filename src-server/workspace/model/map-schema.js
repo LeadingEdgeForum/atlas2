@@ -102,7 +102,10 @@ module.exports = function(conn) {
           populate: {
             path: 'actions',
             match: {
-              type: 'EFFORT'
+              type: 'EFFORT',
+              state: {
+                $in: ['PROPOSED', 'EXECUTING', 'REJECTED', 'FAILED', 'SUCCEEDED']
+              }
             }
           }
         })
@@ -636,6 +639,69 @@ module.exports = function(conn) {
               return _this.defaultPopulate();
             });
         });
+    };
+
+    _MapSchema.methods.updateEffort = function(actor, nodeId, effortId, shortSummary, description, x, y, state) {
+      console.log('update', actor, nodeId, effortId,shortSummary, description, x, y, state);
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      const Analysis = require('./analysis-schema')(conn);
+      const Project = require('./project-schema')(conn);
+
+      let _this = this;
+      return Node.findById(nodeId).exec()
+        .then(function(node) {
+          let relativeEvolution = x - node.evolution;
+          let relativeVisibility = y - node.visibility[0].value;
+          for(let i = 0; i < node.visibility; i++){
+            if(getId(node.visibility[i].map).equals(getId(_this))){
+              relativeVisibility = y - node.visibility[i].value;
+            }
+          }
+          return {
+            relativeEvolution: relativeEvolution,
+            relativeVisibility: relativeVisibility
+          };
+        })
+        .then(function(newPos) {
+          return Project.findById(effortId).exec()
+          .then(function(project){
+            if (shortSummary || description) {
+              project.shortSummary = shortSummary;
+              project.description = description;
+            }
+            if (x || y) {
+              project.evolution = newPos.relativeEvolution;
+              project.visibility = newPos.relativeVisibility;
+            }
+            if(state){
+              project.state = state;
+            }
+            return project.save();
+          })
+          .then(function(savedProject){
+            console.log("TODO: history entry - effort updated");
+            return _this.defaultPopulate();
+          });
+        });
+    };
+
+    _MapSchema.methods.deleteEffort = function(actor, nodeId, effortId) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      const Analysis = require('./analysis-schema')(conn);
+      const Project = require('./project-schema')(conn);
+
+      let _this = this;
+      return Project.findById(effortId).exec()
+      .then(function(project){
+        project.state = 'DELETED';
+        return project.save();
+      })
+      .then(function(status){
+        console.log("TODO: history entry - effort deleted");
+        return _this.defaultPopulate();
+      });
     };
 
 

@@ -777,30 +777,6 @@ export default class SingleWorkspaceStore extends Store {
     });
   }
 
-  recordAction(data){
-    var coords = {
-      x : data.pos[0],
-      y: data.pos[1]
-    };
-    $.ajax({
-        type: 'POST',
-        url: '/api/workspace/' + this.getWorkspaceId() +
-            '/map/' + this.getMapId() +
-            '/node/' + data.sourceId +
-            '/action/',
-        data: coords,
-        success: function(data2) {
-          this.map = data2;
-          this.diff = null;
-          this.emitChange();
-          this.io.emit('map', {
-            type: 'change',
-            id: this.getMapId()
-          });
-        }.bind(this)
-    });
-  }
-
   updateAction(data){
     var actionData = {};
     if(data.pos){
@@ -811,12 +787,15 @@ export default class SingleWorkspaceStore extends Store {
       actionData.shortSummary = data.shortSummary;
       actionData.description = data.description;
     }
+    if(data.state){
+      actionData.state = data.state;
+    }
     $.ajax({
         type: 'PUT',
         url: '/api/workspace/' + this.getWorkspaceId() +
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
-            '/action/' + data.actionId,
+            '/effort/' + data.actionId,
         data: actionData,
         success: function(data2) {
           this.map = data2;
@@ -837,7 +816,7 @@ export default class SingleWorkspaceStore extends Store {
         url: '/api/workspace/' + this.getWorkspaceId() +
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
-            '/action/' + data.actionId,
+            '/effort/' + data.actionId,
         success: function(data2) {
           this.map = data2;
           this.diff = null;

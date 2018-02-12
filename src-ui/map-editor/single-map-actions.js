@@ -290,13 +290,13 @@ var SingleMapActions = {
       });
     },
 
-    updateAction: function(workspaceID, mapID, sourceID, actionID, pos, shortSummary, description) {
+    updateAction: function(workspaceID, mapID, sourceID, actionID, pos, shortSummary, description, state) {
       if(!actionID){
         console.error('missing action id');
         return;
       }
-      if(!(pos || shortSummary || description)){
-        console.error('missing action data', pos, shortSummary, description);
+      if(!(pos || shortSummary || description || state)){
+        console.error('missing action data', pos, shortSummary, description, state);
         return;
       }
       Dispatcher.dispatch({
@@ -308,7 +308,8 @@ var SingleMapActions = {
             sourceId: sourceID,
             actionId: actionID,
             shortSummary:shortSummary,
-            description:description
+            description:description,
+            state:state
           }
       });
     },
