@@ -82,7 +82,12 @@ var genericCommentStyle = {
   float: 'left'
 };
 
-var getStyleForType = function(type) {
+var canvasComponent = {
+  position: 'absolute',
+  cursor: 'pointer'
+};
+
+var getStyleForType = function(type, forCanvas) {
   var style = null;
   switch (type) {
     case Constants.USER:
@@ -110,7 +115,11 @@ var getStyleForType = function(type) {
       style = genericCommentStyle;
       break;
   }
-  return _.clone(style);
+  style = _.clone(style);
+  if(forCanvas){
+    style = _.extend(style, canvasComponent);
+  }
+  return style;
 };
 
 var endpointOptions = {
@@ -218,6 +227,54 @@ var moveEndpointOptions = {
     }]
   ]
 };
+
+let inactiveMenuStyle = {
+  position: "absolute",
+  fontSize: "20px",
+  color: "silver",
+  zIndex: "30"
+};
+
+let activeMenuStyle = {
+  boxShadow: "0 0 10px #00789b",
+  color: "#00789b"
+};
+
+var itemCaptionStyle = {
+  left: 10,
+  position: 'absolute',
+  zIndex: 20,
+  textShadow: '0 0 5px white, 0 0 3px white, 0 0 7px white, 0 0 1px white',
+  maxWidth: 300,
+  maxHeight: 200,
+  marginBottom: -20,
+  lineHeight: 1.1,
+  overflow: 'auto',
+  resize :'horizontal'
+};
+
+var inertiaStyle = {
+  top: -15,
+  left: 15,
+  position: 'absolute',
+  zIndex: 10,
+  backgroundColor: 'grey',
+  height: 40
+};
+/* globals document */
+/* globals window */
+function getElementOffset(element)
+{
+    var de = document.documentElement;
+    var box = element.getBoundingClientRect();
+    var top = box.top + window.pageYOffset - de.clientTop;
+    var left = box.left + window.pageXOffset - de.clientLeft;
+    return { top: top, left: left };
+}
+
+function getInertiaWidth(inertia){
+  return 15 * inertia;
+}
 export {
   userStyle,
   userNeedStyle,
@@ -229,5 +286,12 @@ export {
   endpointOptions,
   userEndpointOptions,
   actionEndpointOptions,
-  moveEndpointOptions
+  moveEndpointOptions,
+  inactiveMenuStyle,
+  activeMenuStyle,
+  canvasComponent,
+  itemCaptionStyle,
+  inertiaStyle,
+  getElementOffset,
+  getInertiaWidth
 };
