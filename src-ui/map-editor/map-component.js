@@ -293,7 +293,7 @@ var MapComponent = createReactClass({
             canvasStore={this.props.canvasStore}/>
 
         <MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={{top: "20px",left: "-5px"}}
-            action={SubmapActions.openFormASubmapDialog.bind(SubmapActions, workspaceID, mapID, this.props.canvasStore.getCanvasState().currentlySelectedNodes, this.props.canvasStore.getCanvasState().currentlySelectedComments)}
+            action={Actions.openTurnIntoSubmapNodeDialog.bind(Actions, this.props.workspaceID, this.props.mapID, this.props.id)}
             canvasStore={this.props.canvasStore}
             href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>
 
