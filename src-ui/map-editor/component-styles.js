@@ -275,6 +275,20 @@ function getElementOffset(element)
 function getInertiaWidth(inertia){
   return 15 * inertia;
 }
+
+function getMenuItemRelativePos(rad){
+  let left = (_diameter / 2); //initial starting position
+  left -= 2.8 * (Math.sin(rad) * (_diameter)); //magic number says how big is the circle
+  left -= parseInt(inactiveMenuStyle.fontSize, 10) / 2;
+
+  let top = (_diameter / 2); //initial starting position
+  top -= 2.8 * (Math.cos(rad) * (_diameter));
+  top -= parseInt(inactiveMenuStyle.fontSize, 10) / 2;
+  return {
+      left: left + 'px',
+      top: top + 'px'
+  };
+}
 export {
   userStyle,
   userNeedStyle,
@@ -293,5 +307,6 @@ export {
   itemCaptionStyle,
   inertiaStyle,
   getElementOffset,
-  getInertiaWidth
+  getInertiaWidth,
+  getMenuItemRelativePos
 };

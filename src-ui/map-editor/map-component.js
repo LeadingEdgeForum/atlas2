@@ -26,7 +26,8 @@ import {
   getStyleForType,
   inertiaStyle,
   getElementOffset,
-  getInertiaWidth
+  getInertiaWidth,
+  getMenuItemRelativePos
 } from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
@@ -272,36 +273,36 @@ var MapComponent = createReactClass({
           <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
         </div>
         {inertia}
-        <MenuItem name="group" glyph="resize-small" parentFocused={focused} pos={{top: "-25px",left: "-25px"}}
+        <MenuItem name="group" glyph="resize-small" parentFocused={focused} pos={getMenuItemRelativePos(- Math.PI / 4)}
             action={this.___openFormASubmapDialog}
             canvasStore={this.props.canvasStore}/>
 
-        <MenuItem name="pencil" parentFocused={focused} pos={{top: "-25px",left: "-25px"}}
+        <MenuItem name="pencil" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI / 4)}
             action={Actions.openEditNodeDialog.bind(Actions,mapID, id)}
             canvasStore={this.props.canvasStore}/>
 
-        <MenuItem name="remove" parentFocused={focused} pos={{top: "-25px",left: "15px"}}
+        <MenuItem name="remove" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/4)}
             action={Actions.deleteNode.bind(Actions,workspaceID, mapID, id)}
             canvasStore={this.props.canvasStore}/>
 
-        <MenuItem name="link" parentFocused={focused} pos={{top: "15px",left: "15px"}}
+        <MenuItem name="link" parentFocused={focused} pos={getMenuItemRelativePos(-3*Math.PI/4)}
             jsPlumbOn={this.setNodeSource} jsPlumbOff={this.setNodeJsplumbDisabled}
             canvasStore={this.props.canvasStore}/>
 
-        <MenuItem name="move" parentFocused={focused} pos={{top: "15px",left: "-25px"}}
+        <MenuItem name="move" parentFocused={focused} pos={getMenuItemRelativePos(3*Math.PI/4)}
             jsPlumbOn={this.setNodeMovable} jsPlumbOff={this.setNodeJsplumbDisabled}
             canvasStore={this.props.canvasStore}/>
 
-        <MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={{top: "20px",left: "-5px"}}
+        <MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI)}
             action={Actions.openTurnIntoSubmapNodeDialog.bind(Actions, this.props.workspaceID, this.props.mapID, this.props.id)}
             canvasStore={this.props.canvasStore}
             href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>
 
-        <MenuItem name="info" glyph="info-sign" parentFocused={focused} pos={{top: "-33px",left: "-4px"}}
+        <MenuItem name="info" glyph="info-sign" parentFocused={focused} pos={getMenuItemRelativePos(0)}
             action={Actions.openReferencesDialog.bind(Actions,node.name, node, workspaceID)}
             canvasStore={this.props.canvasStore}/>
 
-        <MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={{top: "-5px",left: "22px"}}
+        <MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
             jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
             canvasStore={this.props.canvasStore}/>
 
