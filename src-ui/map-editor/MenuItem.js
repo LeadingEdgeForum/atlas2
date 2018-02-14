@@ -25,9 +25,10 @@ import {
 } from './component-styles';
 var _ = require('underscore');
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
-import {Glyphicon} from 'react-bootstrap';
+import {Glyphicon, Popover, OverlayTrigger} from 'react-bootstrap';
 
 export default class MenuItem extends React.Component {
+
   constructor(props){
     super(props);
     this.render = this.render.bind(this);
@@ -38,18 +39,21 @@ export default class MenuItem extends React.Component {
       hover:false
     };
   }
+
   mouseOver(){
     this.setState({'hover': true});
     if(this.props.jsPlumbOn){
       this.props.jsPlumbOn();
     }
   }
+
   mouseOut(){
     this.setState({'hover': false});
     if(this.props.jsPlumbOff){
       this.props.jsPlumbOff();
     }
   }
+
   onClickHandler(e){
     if(this.props.href){
       // we need to pass the click to the underlying link container
@@ -63,6 +67,7 @@ export default class MenuItem extends React.Component {
     }
     this.setState({'hover': false});
   }
+
   render() {
     if(!this.props.parentFocused){
       return null;
@@ -70,6 +75,8 @@ export default class MenuItem extends React.Component {
     let menuItemName = this.props.name;
     let glyphicon = this.props.glyph || menuItemName;
     let href = this.props.href;
+    let hint = <Popover>{this.props.hint}</Popover>;
+    let placement = this.props.placement;
 
     let style = _.extend(_.clone(inactiveMenuStyle), this.props.pos);
     if(this.state.hover){
@@ -78,9 +85,17 @@ export default class MenuItem extends React.Component {
 
     if(this.props.canvasStore.shouldShow(menuItemName)){
       if(this.props.href){
-          return <LinkContainer to={href}><a href={href} key={menuItemName}><Glyphicon onMouseOver={this.mouseOver} onMouseOut={this.mouseOut} glyph={glyphicon} key={menuItemName} style={style}/></a></LinkContainer>;
+          return (<OverlayTrigger overlay={hint} placement={placement} trigger={['hover', 'focus']}>
+                    <LinkContainer to={href}>
+                      <a href={href} key={menuItemName}>
+                        <Glyphicon onMouseOver={this.mouseOver} onMouseOut={this.mouseOut} glyph={glyphicon} key={menuItemName} style={style}/>
+                      </a>
+                    </LinkContainer>
+                  </OverlayTrigger>);
       } else {
-          return (<Glyphicon onMouseOver={this.mouseOver} onClick={this.onClickHandler} onMouseOut={this.mouseOut} glyph={glyphicon} key={menuItemName} style={style}/>);
+          return (<OverlayTrigger overlay={hint} placement={placement} trigger={['hover', 'focus']}>
+                    <Glyphicon onMouseOver={this.mouseOver} onClick={this.onClickHandler} onMouseOut={this.mouseOut} glyph={glyphicon} key={menuItemName} style={style}/>
+                  </OverlayTrigger>);
       }
     }
     return null;
