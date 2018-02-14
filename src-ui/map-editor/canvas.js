@@ -229,6 +229,7 @@ export default class MapCanvas extends React.Component {
     fromStyle.push([
       "Custom", {
         create: function(component) {
+          component.menu = root;
           return root;
         },
         location: 0.5,
@@ -316,6 +317,7 @@ export default class MapCanvas extends React.Component {
     if (!(nodes && nodes.length)) {
       // remove all component dependencies
       for (let i = 0; i < existingConnections.length; i++) {
+        ReactDOM.unmountComponentAtNode(existingConnections[i].menu);
         jsPlumb.deleteConnection(existingConnections[i]);
       }
       return;
@@ -364,6 +366,7 @@ export default class MapCanvas extends React.Component {
       existingConnection.getOverlay("menuOverlay").hide();
       //delete them
       existingConnection.removeOverlay("menuOverlay");
+      ReactDOM.unmountComponentAtNode(existingConnection.menu);
       existingConnection.removeOverlay("label");
 
       if(!shouldExist){
@@ -448,6 +451,8 @@ export default class MapCanvas extends React.Component {
               }
               // if not desired - remove it
               if (!desired) {
+                existingActions[jj].getOverlay("menuOverlay").hide();
+                ReactDOM.unmountComponentAtNode(existingActions[jj].menu);
                   jsPlumb.deleteConnection(existingActions[jj]);
               }
           }
@@ -479,6 +484,8 @@ export default class MapCanvas extends React.Component {
                   connection.getOverlay("label").show();
                   connection.bind('click', this.overlayClickHandler);
               } else {
+                existingNodeConnection[0].getOverlay("menuOverlay").hide();
+                ReactDOM.unmountComponentAtNode(existingNodeConnection[0].menu);
                   existingNodeConnection[0].removeOverlay("menuOverlay");
                   existingNodeConnection[0].removeOverlay("label");
                   var overlaysToReadd = this.getOverlays(null, this.constructEffortOverlays(__node, desiredActions[ll]), desiredActions[ll].shortSummary);
