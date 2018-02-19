@@ -52,6 +52,7 @@ var MapComponent = createReactClass({
     if (!this.props.focused) {
       this.setNodeTarget();
     }
+    this.refreshAnchors();
   },
 
   refreshAnchors(){
@@ -69,11 +70,16 @@ var MapComponent = createReactClass({
     }
     jsPlumb.setDraggable(this.input, false);
     jsPlumb.unmakeSource(this.input);
-    jsPlumb.makeTarget(this.input,
-      endpointOptions, {
-        anchor: "TopCenter",
-        scope: jsPlumb.Defaults.Scope + " WM_User WM_Action_EFFORT"
-      });
+    if(this.type === Constants.USER){
+      /* users do not accept connections */
+      jsPlumb.unmakeTarget(this.input);
+    } else {
+      jsPlumb.makeTarget(this.input,
+        endpointOptions, {
+          anchor: "TopCenter",
+          scope: jsPlumb.Defaults.Scope + " WM_Users WM_Action_EFFORT"
+        });
+    }
     this.refreshAnchors();
   },
 
@@ -158,9 +164,16 @@ var MapComponent = createReactClass({
       clearTimeout(this.resizeHandlerTimeout);
       return;
     }
-    var updateCall = function(){
-      Actions.updateNode(workspaceID, mapID, id, null, newWidth);
-    };
+    let updateCall;
+    if(this.type === Constants.USER){
+      updateCall = function(){
+        Actions.updateUser(workspaceID, mapID, id, null, null, null,  newWidth);
+      };
+    } else {
+      updateCall = function(){
+       Actions.updateNode(workspaceID, mapID, id, null, newWidth);
+     };
+    }
     this.resizeHandlerTimeout = setTimeout(updateCall,100);
   },
 
@@ -173,15 +186,45 @@ var MapComponent = createReactClass({
 
     if ((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)) {
       if (this.props.focused) {
-        CanvasActions.deselectNode(nodeId);
+        if(this.props.node.type === Constants.USER){
+          CanvasActions.focusUser(this.props.id);
+        } else {
+          CanvasActions.deselectNode(nodeId);
+        }
       } else {
-        CanvasActions.focusAdditionalNode(nodeId);
+        if(this.props.node.type === Constants.USER){
+          CanvasActions.focusAddUser(this.props.id);
+        } else {
+          CanvasActions.focusAdditionalNode(nodeId);
+        }
       }
     } else if (this.props.focused) {
-      CanvasActions.deselectNodesAndConnections();
+      if(this.props.node.type === Constants.USER){
+        CanvasActions.focusRemoveUser(this.props.id);
+      } else {
+        CanvasActions.deselectNodesAndConnections();
+      }
     } else {
-      CanvasActions.focusNode(nodeId);
+      if(this.props.node.type === Constants.USER){
+        CanvasActions.focusRemoveUser(this.props.id);
+      } else {
+        CanvasActions.focusNode(nodeId);
+      }
     }
+  },
+
+  jsPlumbDragStopHandler: function(event){
+      let offset = getElementOffset(this.input);
+      let x = offset.left;
+      let y = offset.top;
+      let coords = this.props.canvasStore.normalizeComponentCoord({pos : [x,y] });
+      let workspaceID = this.props.workspaceID;
+      let mapID = this.props.mapID;
+      if(this.type === Constants.USER){
+          Actions.updateUser(workspaceID, mapID, this.props.id, null, null, {x : coords.x,y:coords.y});
+      } else {
+          Actions.updateNode(workspaceID, mapID, this.props.id, {x : coords.x,y:coords.y});
+      }
   },
 
   renderInertia: function(inertia){
@@ -220,6 +263,86 @@ var MapComponent = createReactClass({
     return SubmapActions.openFormASubmapDialog(this.props.workspaceID, this.props.mapID, this.props.canvasStore.getCanvasState().currentlySelectedNodes, this.props.canvasStore.getCanvasState().currentlySelectedComments);
   },
 
+  ___openEditDialog(){
+    var id = this.props.id;
+    var mapID = this.props.mapID;
+    var workspaceID = this.props.workspaceID;
+    var node = this.props.node;
+    if(this.type === Constants.USER){
+        Actions.openEditUserDialog(workspaceID, mapID, id, node.name, node.description);
+    } else {
+        Actions.openEditNodeDialog.bind(mapID, id);
+    }
+  },
+
+  ___remove(){
+    var id = this.props.id;
+    var mapID = this.props.mapID;
+    var workspaceID = this.props.workspaceID;
+    var node = this.props.node;
+    if(this.type === Constants.USER){
+        Actions.deleteUser(workspaceID, mapID, id);
+    } else {
+        Actions.deleteNode(workspaceID, mapID, id);
+    }
+  },
+
+  constructComponentMenu(workspaceID, mapID, node, id, focused){
+    let results = [];
+
+    if(this.type !== Constants.USER){
+      results.push(<MenuItem name="group" glyph="resize-small" parentFocused={focused} pos={getMenuItemRelativePos(- Math.PI / 4)}
+          hint="Form a submap" placement="left" key="group"
+          action={this.___openFormASubmapDialog}
+          canvasStore={this.props.canvasStore}/>);
+    }
+
+    results.push(<MenuItem name="pencil" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI / 4)}
+        hint="Edit" placement="top" key="pencil"
+        action={this.___openEditDialog.bind(this, node)}
+        canvasStore={this.props.canvasStore}/>);
+
+    results.push(<MenuItem name="remove" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/4)}
+            hint="Remove" placement="right" key="remove"
+            action={this.___remove}
+            canvasStore={this.props.canvasStore}/>);
+
+    if(this.type !== Constants.USER){
+      results.push(<MenuItem name="link" parentFocused={focused} pos={getMenuItemRelativePos(-3*Math.PI/4)}
+          hint="Drag to establish dependency" placement="right" key="link"
+          jsPlumbOn={this.setNodeSource} jsPlumbOff={this.setNodeJsplumbDisabled}
+          canvasStore={this.props.canvasStore}/>);
+    }
+
+    results.push(<MenuItem name="move" parentFocused={focused} pos={getMenuItemRelativePos(3*Math.PI/4)}
+        hint="Move" placement="left" key="move"
+        jsPlumbOn={this.setNodeMovable} jsPlumbOff={this.setNodeJsplumbDisabled}
+        canvasStore={this.props.canvasStore}/>);
+
+    if(this.type !== Constants.USER && this.type !== Constants.USERNEED){
+      results.push(<MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI)}
+          hint="Turn a node into a submap" placement="bottom" key="submap"
+          action={Actions.openTurnIntoSubmapNodeDialog.bind(Actions, this.props.workspaceID, this.props.mapID, this.props.id)}
+          canvasStore={this.props.canvasStore}
+          href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>);
+    }
+
+    if(this.type !== Constants.USER){
+      results.push(<MenuItem name="info" glyph="info-sign" parentFocused={focused} pos={getMenuItemRelativePos(0)}
+          hint="Display detailed component info" placement="top" key="info"
+          action={Actions.openReferencesDialog.bind(Actions,node.name, node, workspaceID)}
+          canvasStore={this.props.canvasStore}/>);
+    }
+
+    if(this.type !== Constants.USER){
+      results.push(<MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
+          hint="Draw an action you want to execute" placement="top" key="action"
+          jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
+          canvasStore={this.props.canvasStore}/>);
+    }
+    return results;
+  },
+
   render: function() {
     var node = this.props.node;
     var style = getStyleForType(node.type, true);
@@ -247,6 +370,8 @@ var MapComponent = createReactClass({
     localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
     localItemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
 
+    let menu = this.constructComponentMenu(workspaceID, mapID, node, id, focused);
+
     return (
       <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
         if (input) {
@@ -260,60 +385,14 @@ var MapComponent = createReactClass({
           grid: [
             10, 10
           ],
-          stop: function(event) {
-            var offset = getElementOffset(input);
-            var x = offset.left;
-            var y = offset.top;
-            var coords = canvasStore.normalizeComponentCoord({pos : [x,y] });
-            Actions.updateNode(workspaceID, mapID, id, {x : coords.x,y:coords.y});
-          }
+          stop: this.jsPlumbDragStopHandler
         });
       }}>
         <div style={localItemCaptionStyle} className="node-label">{name}
           <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
         </div>
         {inertia}
-        <MenuItem name="group" glyph="resize-small" parentFocused={focused} pos={getMenuItemRelativePos(- Math.PI / 4)}
-            hint="Form a submap" placement="left"
-            action={this.___openFormASubmapDialog}
-            canvasStore={this.props.canvasStore}/>
-
-        <MenuItem name="pencil" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI / 4)}
-            hint="Edit" placement="top"
-            action={Actions.openEditNodeDialog.bind(Actions,mapID, id)}
-            canvasStore={this.props.canvasStore}/>
-
-        <MenuItem name="remove" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/4)}
-            hint="Remove" placement="right"
-            action={Actions.deleteNode.bind(Actions,workspaceID, mapID, id)}
-            canvasStore={this.props.canvasStore}/>
-
-        <MenuItem name="link" parentFocused={focused} pos={getMenuItemRelativePos(-3*Math.PI/4)}
-            hint="Drag to establish dependency" placement="right"
-            jsPlumbOn={this.setNodeSource} jsPlumbOff={this.setNodeJsplumbDisabled}
-            canvasStore={this.props.canvasStore}/>
-
-        <MenuItem name="move" parentFocused={focused} pos={getMenuItemRelativePos(3*Math.PI/4)}
-            hint="Move" placement="left"
-            jsPlumbOn={this.setNodeMovable} jsPlumbOff={this.setNodeJsplumbDisabled}
-            canvasStore={this.props.canvasStore}/>
-
-        <MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI)}
-            hint="Turn a node into a submap" placement="bottom"
-            action={Actions.openTurnIntoSubmapNodeDialog.bind(Actions, this.props.workspaceID, this.props.mapID, this.props.id)}
-            canvasStore={this.props.canvasStore}
-            href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>
-
-        <MenuItem name="info" glyph="info-sign" parentFocused={focused} pos={getMenuItemRelativePos(0)}
-            hint="Display detailed component info" placement="top"
-            action={Actions.openReferencesDialog.bind(Actions,node.name, node, workspaceID)}
-            canvasStore={this.props.canvasStore}/>
-
-        <MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
-            hint="Draw an action you want to execute" placement="top"
-            jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
-            canvasStore={this.props.canvasStore}/>
-
+        {menu}
       </div>
     );
   }

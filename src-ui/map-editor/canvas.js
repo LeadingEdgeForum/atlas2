@@ -26,7 +26,6 @@ import NewActionActions from './dialogs/new-action/new-action-actions';
 var MapComponent = require('./map-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
-var User = require('./user');
 
 import {
   userEndpointOptions,
@@ -59,6 +58,7 @@ var setContainer = function(input) {
 This scope represents actions, ie components that will advance in evolution
 */
 const WM_ACTION_EFFORT = "WM_Action_EFFORT";
+const WM_USER_DEPENDENCY = "WM_Users";
 
 export default class MapCanvas extends React.Component {
   constructor(props) {
@@ -101,7 +101,7 @@ export default class MapCanvas extends React.Component {
       //connection already exists, so do not do anything
       return false;
     }
-    if (scope === "WM_User") {
+    if (scope === WM_USER_DEPENDENCY) {
       SingleMapActions.recordUserConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
     } else if (scope === jsPlumb.Defaults.Scope) {
       SingleMapActions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
@@ -227,10 +227,10 @@ export default class MapCanvas extends React.Component {
     }
     var menuItems = [];
     for(let i = 0; i < menuDefinition.length; i++){
-      let hint = <Popover>{menuDefinition[i][1]}</Popover>;
+      let hint = <Popover key={'menu' + i} id={'menu' + i}>{menuDefinition[i][1]}</Popover>;
       let glyph = <Glyphicon glyph={menuDefinition[i][0]} onClick={menuDefinition[i][2]} style={{zIndex: 50,  cursor: 'pointer'}} key={'menu' + i}/>;
 
-      menuItems.push(<OverlayTrigger overlay={hint} placement="top" trigger={['hover', 'focus']}>{glyph}</OverlayTrigger>);
+      menuItems.push(<OverlayTrigger key={'menutrigger' + i} overlay={hint} placement="top" trigger={['hover', 'focus']}>{glyph}</OverlayTrigger>);
       if(i !== menuDefinition.length - 1){
         menuItems.push(<span key={'menu' + i + 'span'}>&nbsp;</span>);
       }
