@@ -1467,6 +1467,7 @@ module.exports = function(authGuardian, mongooseConnection) {
               var workspaceID = req.params.workspaceID;
               var mapId = new ObjectId(req.params.mapId);
               var suggestionText = req.params.text;
+              let scope = req.query.scope;
               Workspace
                 .findOne({
                   _id: workspaceID,
@@ -1479,7 +1480,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                     res.status(404).json("workspace not found");
                     return null;
                   }
-                  return workspace.findSuggestions(mapId, suggestionText);
+                  return workspace.findSuggestions(mapId, suggestionText, scope);
                 })
                 .done(function(suggestions) {
                   if(!suggestions.submaps){

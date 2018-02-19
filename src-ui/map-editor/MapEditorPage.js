@@ -65,7 +65,6 @@ export default class MapEditorPage extends React.Component {
     this.closeHelpDialog = this.closeHelpDialog.bind(this);
     this.openHelpDialog = this.openHelpDialog.bind(this);
     this.prepareGoBackForSubmap = this.prepareGoBackForSubmap.bind(this);
-    // this.state.diff = this.props.singleMapStore.getDiff();
     this.componentDidUpdate = this.componentDidUpdate.bind(this);
     this.getStore = this.getStore.bind(this);
     this.storesToUndispatch = [];
@@ -192,18 +191,8 @@ export default class MapEditorPage extends React.Component {
       </NavItem>,
       <NavItem eventKey={2} key="download" href="#" download={tempName} onClick={this.download.bind(this, downloadMapHref, tempName)}>
         <Glyphicon glyph="download"></Glyphicon>&nbsp; Download
-      </NavItem>,
-      goBack,
-      <NavItem eventKey={5} href="#" key="5" onClick={this.toggleDiff.bind(this)}>
-          <Glyphicon glyph="tags" style={{color: "basil"}}></Glyphicon>
-          &nbsp;Diff
       </NavItem>
     ];
-  }
-
-  toggleDiff(){
-    jsPlumb.reset();
-    this.canvasStore.toggleDiff();
   }
 
   closeHelpDialog() {

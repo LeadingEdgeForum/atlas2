@@ -41,17 +41,6 @@ module.exports = function(conn) {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'
         },
-        users : [{
-            x: Schema.Types.Number,
-            y: Schema.Types.Number,
-            name : Schema.Types.String,
-            description : Schema.Types.String,
-            width : Schema.Types.Number,
-            associatedNeeds : [{
-                type: Schema.Types.ObjectId,
-                ref: 'Node'
-            }]
-        }],
         comments: [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
@@ -143,86 +132,7 @@ module.exports = function(conn) {
     //     return this.save();
     // };
     //
-    // _MapSchema.methods.addUser = function(data) {
-    //     this.users.push(data);
-    //     return this.save();
-    // };
-    //
-    // _MapSchema.methods.updateUser = function(id, dataPos) {
-    //     for (var i = 0; i < this.users.length; i++) {
-    //         if ('' + this.users[i]._id === id) {
-    //             if (dataPos.x && dataPos.y) {
-    //                 this.users[i].set('x', dataPos.x);
-    //                 this.users[i].set('y', dataPos.y);
-    //             }
-    //             if (dataPos.name) {
-    //                 this.users[i].set('name', dataPos.name);
-    //             }
-    //             if (dataPos.description) {
-    //                 this.users[i].set('description', dataPos.description);
-    //             }
-    //             if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
-    //               this.users[i].set('width', dataPos.width);
-    //             }
-    //         }
-    //     }
-    //     return this.save();
-    // };
-    //
-    // _MapSchema.methods.deleteUser = function(seq) {
-    //     for (var i = 0; i < this.users.length; i++) {
-    //         if ('' + this.users[i]._id === seq) {
-    //             this.users.splice(i, 1);
-    //             break;
-    //         }
-    //     }
-    //     this.markModified('users');
-    //     return this.save();
-    // };
-    //
-    // _MapSchema.methods.makeUserDepTo = function(user, node) {
-    //   if (!user || !node) {
-    //     throw new Error('unspecified attributes');
-    //   }
-    //   for (let i = 0; i < this.users.length; i++) {
-    //     if ('' + this.users[i]._id === user) {
-    //       let selectedUser = this.users[i];
-    //       let found = false;
-    //       for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
-    //         if ('' + selectedUser.associatedNeeds[j] === node) {
-    //           found = true;
-    //           break;
-    //         }
-    //       }
-    //       if (!found) {
-    //         selectedUser.associatedNeeds.push(new ObjectId(node));
-    //       }
-    //       break;
-    //     }
-    //   }
-    //   this.markModified('users');
-    //   return this.save();
-    // };
-    //
-    // _MapSchema.methods.deleteUserDepTo = function(user, node) {
-    //   if (!user || !node) {
-    //     throw new Error('unspecified attributes');
-    //   }
-    //   for (let i = 0; i < this.users.length; i++) {
-    //     if ('' + this.users[i]._id === user) {
-    //       let selectedUser = this.users[i];
-    //       for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
-    //         if ('' + selectedUser.associatedNeeds[j] === node) {
-    //           selectedUser.associatedNeeds.splice(j,1);
-    //           break;
-    //         }
-    //       }
-    //       break;
-    //     }
-    //   }
-    //   this.markModified('users');
-    //   return this.save();
-    // };
+
 
     _MapSchema.methods.verifyAccess = function(user) {
         var Workspace = require('./workspace-schema')(conn);

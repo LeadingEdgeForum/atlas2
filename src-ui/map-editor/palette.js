@@ -43,12 +43,11 @@ var makeDraggable = function(type, mapID, canvasStore, input) {
     stop: function(params) {
       CanvasActions.highlightCanvas(false);
       var coords = canvasStore.normalizeComponentCoord(params);
-      if(type === Constants.SUBMAP){
+      /*if(type === Constants.SUBMAP){
         SingleMapActions.openAddSubmapDialog(coords, type);
-      } else if (type === Constants.GENERIC_COMMENT){
+      } else */
+      if (type === Constants.GENERIC_COMMENT){
         SingleMapActions.openAddCommentDialog(coords, type);
-      } else if (type === Constants.USER){
-        SingleMapActions.openAddNewUserDialog(coords, type);
       } else {
         NewNodeActions.openAddNodeDialog(mapID, coords, type);
       }

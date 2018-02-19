@@ -54,7 +54,7 @@ class ComponentName extends React.Component{
 
   onSuggestionsFetchRequested(value) {
     if(value.value.length > 2){
-      Actions.fetchSuggestions(this.props.mapId, value.value);
+      Actions.fetchSuggestions(this.props.mapId, value.value, (this.state || {}).type);
     } else {
       Actions.clearSuggestions(this.props.mapId);
     }
@@ -318,11 +318,17 @@ export default class NewNodeDialog extends React.Component {
     ];
     let componentType = null;
     if(this.state.type === "INTERNAL"){
-      componentType = "internal";
+      componentType = "internal component";
     } else if (this.state.type === "EXTERNAL"){
-      componentType = "external";
+      componentType = "external component";
+    } else if(this.state.type === "USERNEED"){
+      componentType = "user need";
+    } else if(this.state.type === "USER"){
+      componentType = "user";
+    }else if(this.state.type === "SUBMAP"){
+      componentType = "submap";
     }
-    let dialogName = 'Add a new, ' + componentType + ' component';
+    let dialogName = 'Add a new ' + componentType;
     let footer = null;
     if(this.state.currentStep === 1){
       if(this.state.nodeId){// if node id is SET for new component, it means we are introduced a duplicate (different component that does the same)

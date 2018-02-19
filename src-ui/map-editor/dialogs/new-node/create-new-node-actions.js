@@ -40,11 +40,12 @@ export default {
       });
     },
 
-    fetchSuggestions(mapId, query){
+    fetchSuggestions(mapId, query, type){
       Dispatcher.dispatch({
           actionType: ACTION_TYPES.NEW_NODE_FETCH_SUGGESTIONS,
           mapId : mapId,
-          query:query
+          query:query,
+          type:type
       });
     },
 

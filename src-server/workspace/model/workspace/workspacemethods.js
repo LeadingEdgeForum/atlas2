@@ -14,14 +14,21 @@ limitations under the License.*/
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
 
-let findNodeSuggestions = function(workspace, Node, mapId, suggestionText) {
+let findNodeSuggestions = function(workspace, Node, mapId, suggestionText, type) {
 
   let regexp = new RegExp(suggestionText, 'i');
   let mapObjectId = new ObjectId(mapId);
 
-  let mapIds = [];
-  // here we have a list of maps, so let's use them to find appropriate nodes
-  return Node.aggregate([
+  let allowedTypes;
+  if(type === 'USER'){
+    allowedTypes = ['USER'];
+  } else if(type === 'USERNEED'){
+    allowedTypes = ['USERNEED'];
+  } else {
+    allowedTypes = ['INTERNAL', 'EXTERNAL', 'SUBMAP'];
+  }
+
+  let pipeline = [
     {
         $match: {
           workspace: workspace._id
@@ -37,6 +44,13 @@ let findNodeSuggestions = function(workspace, Node, mapId, suggestionText) {
     {
       $match: {
         status: 'EXISTING'
+      }
+    },
+    {
+      $match: {
+        type: {
+          $in : allowedTypes
+        }
       }
     },
     {
@@ -57,10 +71,18 @@ let findNodeSuggestions = function(workspace, Node, mapId, suggestionText) {
         }]
       }
     }
-  ]).exec();
+  ];
+
+  let mapIds = [];
+  // here we have a list of maps, so let's use them to find appropriate nodes
+  return Node.aggregate(pipeline).exec();
 };
 
-let findSubmapSuggestions = function(workspace, WardleyMap, suggestionText) {
+let findSubmapSuggestions = function(workspace, WardleyMap, suggestionText, type) {
+  if(type === 'USER' || type ==='USERNEED'){
+    /*never ever return any submap for components of users and userneeds*/
+    return [];
+  }
   let regexp = new RegExp(suggestionText, 'i');
 
   return WardleyMap.aggregate([

@@ -76,7 +76,7 @@ export default class NewNodeStore extends Store {
           this.submitNewNodeDialog(action.data);
           break;
         case ActionTypes.NEW_NODE_FETCH_SUGGESTIONS:
-          this.fetchSuggestions(action.mapId, action.query);
+          this.fetchSuggestions(action.mapId, action.query, action.type);
           break;
         case ActionTypes.NEW_NODE_CANCEL_FETCHING_SUGGESTIONS:
           this.cancelSuggestions(action.mapId);
@@ -172,9 +172,13 @@ export default class NewNodeStore extends Store {
       this.internalState.suggestionRequest.abort();
       delete this.internalState.suggestionRequest;
     }
+    let url = '/api/workspace/' + this.workspaceId + '/map/' + this.mapId + '/suggestions/' + query;
+    if(this.internalState.type){
+      url += '?scope=' + this.internalState.type;
+    }
     this.internalState.suggestionRequest = $.ajax({
       type: 'GET',
-      url: '/api/workspace/' + this.workspaceId + '/map/' + this.mapId + '/suggestions/' + query,
+      url: url,
       success: function(data) {
         this.internalState.suggestions = data.suggestions;
         this.internalState.suggestionRequest.abort();
