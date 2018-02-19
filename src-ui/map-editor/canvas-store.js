@@ -146,6 +146,11 @@ export default class CanvasStore extends Store {
     });
   }
 
+  shouldBeFocused(nodeId){
+    nodeId = nodeId._id || nodeId;
+    return (this.state.currentlySelectedNodes.indexOf(nodeId) > -1) || (this.state.currentlySelectedUsers.indexOf(nodeId) > -1);
+  }
+
   /**
     This method should be invoked only for focused nodes
   */

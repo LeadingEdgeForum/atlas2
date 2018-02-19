@@ -49,10 +49,14 @@ var MapComponent = createReactClass({
     if (!this.input) {
       return;
     }
-    if (!this.props.focused) {
+    if (!this.isFocused()) {
       this.setNodeTarget();
     }
     this.refreshAnchors();
+  },
+
+  isFocused(){
+    return this.props.canvasStore.shouldBeFocused(this.props.node);
   },
 
   refreshAnchors(){
@@ -70,7 +74,7 @@ var MapComponent = createReactClass({
     }
     jsPlumb.setDraggable(this.input, false);
     jsPlumb.unmakeSource(this.input);
-    if(this.type === Constants.USER){
+    if(this.props.node.type === Constants.USER){
       /* users do not accept connections */
       jsPlumb.unmakeTarget(this.input);
     } else {
@@ -130,28 +134,28 @@ var MapComponent = createReactClass({
     this.refreshAnchors();
   },
 
-  shouldComponentUpdate(nextProps, nextState){
-    if(!nextProps){
-      return true;
-    }
-    if(nextProps.focused === false && this.props.focused === true){
-      let n = this.props.node;
-      if(n.action && n.action.length > 0){
-        for(let i = 0; i < n.action.length; i++){
-            jsPlumb.removeFromDragSelection(n.action[i]._id);
-        }
-      }
-    }
-    if(nextProps.focused === true && this.props.focused === false){
-      let n = this.props.node;
-      if(n.action && n.action.length > 0){
-        for(let i = 0; i < n.action.length; i++){
-            jsPlumb.addToDragSelection(n.action[i]._id);
-        }
-      }
-    }
-    return true;
-  },
+  // shouldComponentUpdate(nextProps, nextState){
+  //   if(!nextProps){
+  //     return true;
+  //   }
+  //   if(nextProps.focused === false && this.props.focused === true){
+  //     let n = this.props.node;
+  //     if(n.action && n.action.length > 0){
+  //       for(let i = 0; i < n.action.length; i++){
+  //           jsPlumb.removeFromDragSelection(n.action[i]._id);
+  //       }
+  //     }
+  //   }
+  //   if(nextProps.focused === true && this.props.focused === false){
+  //     let n = this.props.node;
+  //     if(n.action && n.action.length > 0){
+  //       for(let i = 0; i < n.action.length; i++){
+  //           jsPlumb.addToDragSelection(n.action[i]._id);
+  //       }
+  //     }
+  //   }
+  //   return true;
+  // },
 
   resizeHandler : function(newWidth,x,y,z){
     if(this.resizeHandlerTimeout){
@@ -165,7 +169,7 @@ var MapComponent = createReactClass({
       return;
     }
     let updateCall;
-    if(this.type === Constants.USER){
+    if(this.props.node.type === Constants.USER){
       updateCall = function(){
         Actions.updateUser(workspaceID, mapID, id, null, null, null,  newWidth);
       };
@@ -184,10 +188,11 @@ var MapComponent = createReactClass({
 
     let nodeId = this.props.id;
 
+
     if ((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)) {
-      if (this.props.focused) {
+      if (this.isFocused()) {
         if(this.props.node.type === Constants.USER){
-          CanvasActions.focusUser(this.props.id);
+          CanvasActions.focusRemoveUser(this.props.id);
         } else {
           CanvasActions.deselectNode(nodeId);
         }
@@ -198,7 +203,7 @@ var MapComponent = createReactClass({
           CanvasActions.focusAdditionalNode(nodeId);
         }
       }
-    } else if (this.props.focused) {
+    } else if (this.isFocused()) {
       if(this.props.node.type === Constants.USER){
         CanvasActions.focusRemoveUser(this.props.id);
       } else {
@@ -206,7 +211,7 @@ var MapComponent = createReactClass({
       }
     } else {
       if(this.props.node.type === Constants.USER){
-        CanvasActions.focusRemoveUser(this.props.id);
+        CanvasActions.focusUser(this.props.id);
       } else {
         CanvasActions.focusNode(nodeId);
       }
@@ -288,9 +293,10 @@ var MapComponent = createReactClass({
   },
 
   constructComponentMenu(workspaceID, mapID, node, id, focused){
+    console.log(workspaceID, mapID, node, id, focused);
     let results = [];
 
-    if(this.type !== Constants.USER){
+    if(node.type !== Constants.USER){
       results.push(<MenuItem name="group" glyph="resize-small" parentFocused={focused} pos={getMenuItemRelativePos(- Math.PI / 4)}
           hint="Form a submap" placement="left" key="group"
           action={this.___openFormASubmapDialog}
@@ -307,19 +313,17 @@ var MapComponent = createReactClass({
             action={this.___remove}
             canvasStore={this.props.canvasStore}/>);
 
-    if(this.type !== Constants.USER){
-      results.push(<MenuItem name="link" parentFocused={focused} pos={getMenuItemRelativePos(-3*Math.PI/4)}
+    results.push(<MenuItem name="link" parentFocused={focused} pos={getMenuItemRelativePos(-3*Math.PI/4)}
           hint="Drag to establish dependency" placement="right" key="link"
           jsPlumbOn={this.setNodeSource} jsPlumbOff={this.setNodeJsplumbDisabled}
           canvasStore={this.props.canvasStore}/>);
-    }
 
     results.push(<MenuItem name="move" parentFocused={focused} pos={getMenuItemRelativePos(3*Math.PI/4)}
         hint="Move" placement="left" key="move"
         jsPlumbOn={this.setNodeMovable} jsPlumbOff={this.setNodeJsplumbDisabled}
         canvasStore={this.props.canvasStore}/>);
 
-    if(this.type !== Constants.USER && this.type !== Constants.USERNEED){
+    if(node.type !== Constants.USER && node.type !== Constants.USERNEED){
       results.push(<MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI)}
           hint="Turn a node into a submap" placement="bottom" key="submap"
           action={Actions.openTurnIntoSubmapNodeDialog.bind(Actions, this.props.workspaceID, this.props.mapID, this.props.id)}
@@ -327,14 +331,14 @@ var MapComponent = createReactClass({
           href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>);
     }
 
-    if(this.type !== Constants.USER){
+    if(node.type !== Constants.USER){
       results.push(<MenuItem name="info" glyph="info-sign" parentFocused={focused} pos={getMenuItemRelativePos(0)}
           hint="Display detailed component info" placement="top" key="info"
           action={Actions.openReferencesDialog.bind(Actions,node.name, node, workspaceID)}
           canvasStore={this.props.canvasStore}/>);
     }
 
-    if(this.type !== Constants.USER){
+    if(node.type !== Constants.USER && node.type !== Constants.USERNEED){
       results.push(<MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
           hint="Draw an action you want to execute" placement="top" key="action"
           jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
@@ -359,7 +363,7 @@ var MapComponent = createReactClass({
 
     var name = this.renderName(node);
     var id = this.props.id;
-    var focused = this.props.focused;
+    let focused = this.props.canvasStore.shouldBeFocused(node);
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);
     var canvasStore = this.props.canvasStore;

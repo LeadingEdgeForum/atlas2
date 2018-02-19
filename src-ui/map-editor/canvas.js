@@ -526,14 +526,6 @@ export default class MapCanvas extends React.Component {
 
     if (this.props.nodes) {
       components = this.props.nodes.map(function(component) {
-        var focused = false;
-        if (state && state.currentlySelectedNodes) {
-            for (var i = 0; i < state.currentlySelectedNodes.length; i++) {
-                if (component._id === state.currentlySelectedNodes[i]) {
-                    focused = true;
-                }
-            }
-        }
 
         let actions = component.actions ? component.actions.filter(action => action.type === 'EFFORT') : [];
 
@@ -557,7 +549,6 @@ export default class MapCanvas extends React.Component {
               size={size}
               key={component._id}
               id={component._id}
-              focused={focused}
               inertia={component.inertia}/>);
       });
     }

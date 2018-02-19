@@ -6,24 +6,30 @@ import Actions from './single-map-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
-import {actionEndpointOptions} from './component-styles';
+import {actionEndpointOptions, getElementOffset} from './component-styles';
 import CanvasActions from './canvas-actions';
 var LinkContainer = require('react-router-bootstrap').LinkContainer;
 var createReactClass = require('create-react-class');
 var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
-/* globals document */
-/* globals window */
-function getElementOffset(element)
-{
-    var de = document.documentElement;
-    var box = element.getBoundingClientRect();
-    var top = box.top + window.pageYOffset - de.clientTop;
-    var left = box.left + window.pageXOffset - de.clientLeft;
-    return { top: top, left: left };
-}
-
 var ArrowEnd = createReactClass({
+
+  refreshAnchors(){
+    let mapID = this.props.mapID;
+    let node = this.props.node;
+    let left = node.evolution * this.props.size.width;
+    let top = this.getVisibility(mapID, node) * this.props.size.height;
+    jsPlumb.repaint(this.input, {left:left,top:top});
+  },
+
+  componentDidMount: function() {
+    this.componentDidUpdate();
+  },
+
+  componentDidUpdate: function() {
+    this.refreshAnchors();
+  },
+
   getVisibility(mapId, node){
     let visibilityArray = node.visibility;
     for(let i = 0; i < visibilityArray.length; i++){
@@ -76,9 +82,9 @@ var ArrowEnd = createReactClass({
         }
         jsPlumb.draggable(input, {
           containment: true,
-          grid: [
-            10, 10
-          ],
+          // grid: [
+          //   10, 10
+          // ],
           stop: function(event) {
               /* Gently skip update of this is source node is dragged together. This is a relative action, so it does not require manual update in this case, as the relative position does not change*/
               if(event.selection && event.selection.length > 0){

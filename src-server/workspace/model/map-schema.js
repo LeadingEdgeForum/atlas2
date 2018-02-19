@@ -402,18 +402,6 @@ module.exports = function(conn) {
       const Workspace = require('./workspace-schema')(conn);
       const Node = require('./node-schema')(conn);
 
-
-      // // first, clean up users depending on a removed node (within map only)
-      // for (let i = 0; i < this.users.length; i++) {
-      //   let selectedUser = this.users[i];
-      //   for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
-      //     if ('' + selectedUser.associatedNeeds[j] === '' + nodeId) {
-      //       selectedUser.associatedNeeds.splice(j, 1);
-      //       this.markModified('users');
-      //     }
-      //   }
-      // }
-
       // fourthly, node prev & next TODO: think about how it should be handled
 
       // thirdly, handle other nodes depending on this one (if there are any)
