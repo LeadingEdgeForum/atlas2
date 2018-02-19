@@ -91,15 +91,6 @@ export default class NewActionDialog extends React.Component {
                   <FormControl type="textarea" value={description} componentClass="textarea" placeholder="Describe this action" onChange={descriptionChangeHandler} onKeyDown={this._enterInterceptor} style={{ height: 100 }}/>
                 </Col>
               </FormGroup>
-              <FormGroup controlId="type">
-                <Col sm={2}>
-                  <ControlLabel>Type</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                <Radio inline value={"EFFORT"} checked={ type==="EFFORT" || !type}  onChange={typeChangeHandler}>Effort</Radio>{' '}
-                <Radio inline value={"REPLACEMENT"} checked={type==="REPLACEMENT"} onChange={typeChangeHandler}>Replacement</Radio>{' '}
-                </Col>
-              </FormGroup>
             </Form>
           </Modal.Body>
           <Modal.Footer>

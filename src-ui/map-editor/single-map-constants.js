@@ -55,6 +55,8 @@ module.exports  = keyMirror({
       DELETE_USER : null,
       UPDATE_USER : null,
       RECORD_USER_CONNECTION : null,
-      DELETE_USER_CONNECTION : null
+      DELETE_USER_CONNECTION : null,
+
+      RECORD_EFFORT_REPLACEMENT : null
   }
 });

@@ -72,7 +72,7 @@ var MapComponent = createReactClass({
     jsPlumb.makeTarget(this.input,
       endpointOptions, {
         anchor: "TopCenter",
-        scope: jsPlumb.Defaults.Scope + " WM_User"
+        scope: jsPlumb.Defaults.Scope + " WM_User WM_Action_EFFORT"
       });
     this.refreshAnchors();
   },

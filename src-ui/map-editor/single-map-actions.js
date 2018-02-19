@@ -405,6 +405,22 @@ var SingleMapActions = {
       });
     },
 
+    recordEffortReplacement : function(workspaceId, mapId, sourceId, targetId){
+      if(!workspaceId || !mapId || !sourceId || !targetId){
+        console.error('not enough of data to create connection');
+        return;
+      }
+      Dispatcher.dispatch({
+          actionType: ACTION_TYPES.RECORD_EFFORT_REPLACEMENT,
+          data : {
+            workspaceId : workspaceId,
+            mapId : mapId,
+            sourceId:sourceId,
+            targetId:targetId
+          }
+      });
+    },
+
     recordUserConnection : function(workspaceId, mapId, sourceId, targetId){
       if(!workspaceId || !mapId || !sourceId || !targetId){
         console.error('not enough of data to create connection');

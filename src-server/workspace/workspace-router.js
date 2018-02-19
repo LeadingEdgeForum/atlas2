@@ -669,6 +669,7 @@ module.exports = function(authGuardian, mongooseConnection) {
     let shortSummary = req.body.shortSummary;
     let description = req.body.description;
     let type = req.body.type;
+    let targetId = req.body.targetId;
 
     WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
         _id: mapId,
@@ -676,7 +677,7 @@ module.exports = function(authGuardian, mongooseConnection) {
       }).exec()
       .then(checkAccess.bind(this, req.params.mapID, actor))
       .then(function(map) {
-        return map.addEffort(actor, nodeId, shortSummary, description, type, x, y);
+        return map.addEffort(actor, nodeId, shortSummary, description, type, x, y, targetId);
       })
       .done(function(map) {
         res.json({

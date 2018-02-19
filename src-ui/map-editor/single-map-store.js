@@ -316,7 +316,7 @@ export default class SingleWorkspaceStore extends Store {
             this.updateUser(action.data);
             break;
           case ActionTypes.RECORD_USER_CONNECTION:
-          this.recordUserConnection(action.data);
+            this.recordUserConnection(action.data);
             break;
           case ActionTypes.DELETE_USER_CONNECTION:
             this.deleteUserConnection(action.data);

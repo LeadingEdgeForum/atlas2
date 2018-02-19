@@ -55,6 +55,10 @@ module.exports = function(conn) {
             type: Schema.Types.ObjectId,
             ref: 'Node',
         }],
+        targetId : {
+            type: Schema.Types.ObjectId,
+            ref: 'Node',
+        },
         evolution: Number,
         visibility: Number,
         schemaVersion : {

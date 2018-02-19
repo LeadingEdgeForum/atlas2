@@ -102,7 +102,9 @@ module.exports = function(conn) {
           populate: {
             path: 'actions',
             match: {
-              type: 'EFFORT',
+              type: {
+                $in: ['EFFORT', 'REPLACEMENT']
+              },
               state: {
                 $in: ['PROPOSED', 'EXECUTING']
               }
@@ -602,7 +604,7 @@ module.exports = function(conn) {
     };
 
 
-    _MapSchema.methods.addEffort = function(actor, nodeId, shortSummary, description, type, x, y) {
+    _MapSchema.methods.addEffort = function(actor, nodeId, shortSummary, description, type, x, y, targetId) {
       const Node = require('./node-schema')(conn);
       const Workspace = require('./workspace-schema')(conn);
       const Analysis = require('./analysis-schema')(conn);
@@ -611,6 +613,15 @@ module.exports = function(conn) {
       let _this = this;
       return Node.findById(nodeId).exec()
         .then(function(node) {
+          console.log(actor, nodeId, shortSummary, description, type, x, y, targetId);
+          if(targetId){
+            // return ANYTHING as the action is between different nodes,
+            // so this value is ignored
+            return {
+              relativeEvolution: 0,
+              relativeVisibility: 0
+            };
+          }
           let relativeEvolution = x - node.evolution;
           let relativeVisibility = y - node.visibility[0].value;
           for(let i = 0; i < node.visibility; i++){
@@ -632,7 +643,8 @@ module.exports = function(conn) {
               type: type,
               evolution: newPos.relativeEvolution,
               visibility: newPos.relativeVisibility,
-              state: 'PROPOSED'
+              state: 'PROPOSED',
+              targetId : targetId
             }).save()
             .then(function(project) {
               console.log(project);

@@ -1,3 +1,16 @@
+/* Copyright 2016,2018 Krzysztof Daniel.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 /* globals document */
 /* globals window */
@@ -11,17 +24,18 @@ import SingleMapActions from './single-map-actions';
 import CanvasActions from './canvas-actions';
 import NewActionActions from './dialogs/new-action/new-action-actions';
 var MapComponent = require('./map-component');
-var HistoricComponent = require('./historic-component');
 var ArrowEnd = require('./arrow-end');
 var Comment = require('./comment');
 var User = require('./user');
-var HistoricUser = require('./historic-user');
 
 import {
   userEndpointOptions,
   endpointOptions,
   actionEndpointOptions,
-  moveEndpointOptions
+  moveEndpointOptions,
+  mapCanvasStyle,
+  mapCanvasHighlightStyle,
+  getElementOffset
 } from './component-styles';
 
 //remove min to fix connections
@@ -32,24 +46,6 @@ jsPlumb.registerConnectionType("flow", {paintStyle : {stroke:'#1ABC9C'}});
 jsPlumb.registerConnectionType("movement", {paintStyle : {stroke:'orange'}});
 jsPlumb.registerConnectionType("antimovement", {paintStyle : {stroke:'#E74C3C'}});
 
-//this is style applied to the place where actuall components can be drawn
-var mapCanvasStyle = {
-  position: 'relative',
-  top: 0,
-  minHeight : '500px',
-  width: '98%',
-  left: '2%',
-  zIndex: 4
-};
-
-function getElementOffset(element)
-{
-    var de = document.documentElement;
-    var box = element.getBoundingClientRect();
-    var top = box.top + window.pageYOffset - de.clientTop;
-    var left = box.left + window.pageXOffset - de.clientLeft;
-    return { top: top, left: left };
-}
 
 var setContainer = function(input) {
   if (input === null) {
@@ -58,6 +54,11 @@ var setContainer = function(input) {
   }
   jsPlumb.setContainer(input);
 };
+
+/*
+This scope represents actions, ie components that will advance in evolution
+*/
+const WM_ACTION_EFFORT = "WM_Action_EFFORT";
 
 export default class MapCanvas extends React.Component {
   constructor(props) {
@@ -80,6 +81,9 @@ export default class MapCanvas extends React.Component {
     this.updateOverlaysVisiblityAndType = this.updateOverlaysVisiblityAndType.bind(this);
     this.getOverlays = this.getOverlays.bind(this);
     this.constructEffortOverlays = this.constructEffortOverlays.bind(this);
+    this.cleanupConnectionOverlays = this.cleanupConnectionOverlays.bind(this);
+    this.reconcileActionEffort = this.reconcileActionEffort.bind(this);
+    this.calculateCanvasSize = this.calculateCanvasSize.bind(this);
   }
 
   beforeDropListener(connection) {
@@ -97,10 +101,12 @@ export default class MapCanvas extends React.Component {
       //connection already exists, so do not do anything
       return false;
     }
-    if(scope === "WM_User"){
+    if (scope === "WM_User") {
       SingleMapActions.recordUserConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
-    } else {
+    } else if (scope === jsPlumb.Defaults.Scope) {
       SingleMapActions.recordConnection(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
+    } else if (scope === WM_ACTION_EFFORT) {
+      NewActionActions.openAddActionReplacementDialog(this.props.workspaceID, this.props.mapID, connection.sourceId, connection.targetId);
     }
     //never create connection as they will be reconciled
     return false;
@@ -114,7 +120,13 @@ export default class MapCanvas extends React.Component {
   }
 
   connectionDragStop(info, e) {
-      if (info.getData().scope === 'WM_Action_EFFORT') {
+      /*
+      * If target id starts with jsPlumb, it is not a node that was created by the user,
+      * which means it is a temporary node created as a result of drop. Hence,
+      * we are not dropping the connection on any component, so it is a free action,
+      * improving a component.
+      */
+      if (info.getData().scope === WM_ACTION_EFFORT && info.targetId.startsWith('jsPlumb')) {
           var coords = this.props.canvasStore.normalizeComponentCoord([e.x, e.y]);
           NewActionActions.openAddActionDialog(this.props.mapID, info.sourceId, {
             pos: [coords.x, coords.y]
@@ -147,14 +159,14 @@ export default class MapCanvas extends React.Component {
       return;
     }
 
-    let windowHeight =  window.innerHeight;
+    let windowHeight = window.innerHeight;
     let offset = getElementOffset(this.input).top;
 
     let newHeight = windowHeight - offset - 20; // some margin
-    if(newHeight < 500) {
+    if (newHeight < 500) {
       newHeight = 500;
     }
-    if(mapCanvasStyle.height !== newHeight){
+    if (mapCanvasStyle.height !== newHeight) {
       mapCanvasStyle.height = newHeight;
     }
 
@@ -165,7 +177,7 @@ export default class MapCanvas extends React.Component {
       },
       size: {
         width: this.input.offsetWidth,
-        height: newHeight//this.input.offsetHeight
+        height: newHeight //this.input.offsetHeight
       }
     };
     let _this = this;
@@ -174,7 +186,7 @@ export default class MapCanvas extends React.Component {
     });
     CanvasActions.updateCanvasSizeAndOffset(coord);
     _this.forceUpdate();
-    }
+  }
 
   componentDidMount() {
     if (this.props.canvasStore) {
@@ -267,6 +279,8 @@ export default class MapCanvas extends React.Component {
     conn.getOverlay("label").setVisible(!conn.___overlayVisible);
   }
 
+  /* This method has to be called last, as manipulating types wipes overlay
+     visibility */
   updateOverlaysVisiblityAndType(existingConnection, modelConnection){
     // update type
     existingConnection.clearTypes();
@@ -309,40 +323,38 @@ export default class MapCanvas extends React.Component {
     return result;
   }
 
-  reconcileComponentDependencies(nodes) {
-    let mapId = this.props.mapID;
+  cleanupConnectionOverlays(connection){
+    // the code below may look like an overkill, but jsplumb loves leaving
+    // artifacts, and we need to reatach changed overlays
+    connection.getOverlay("label").hide();
+    connection.getOverlay("menuOverlay").hide();
+    //delete them
+    connection.removeOverlay("menuOverlay");
+    if(connection.menu){
+        ReactDOM.unmountComponentAtNode(connection.menu);
+    }
+    connection.removeOverlay("label");
+  }
+
+
+  /*
+   * Universal method
+   */
+  reconcileScopeConnections(scope, desiredConnections, anchors, endpointOptions){
     let existingConnections = jsPlumb.getConnections({
-      scope: jsPlumb.Defaults.Scope
+      scope: scope
     });
-    if (!(nodes && nodes.length)) {
+
+    // nothing is desired, so wipeout every connection
+    if(!desiredConnections || desiredConnections.length === 0){
       // remove all component dependencies
       for (let i = 0; i < existingConnections.length; i++) {
-        ReactDOM.unmountComponentAtNode(existingConnections[i].menu);
+        if(existingConnections[i].menu){
+            ReactDOM.unmountComponentAtNode(existingConnections[i].menu);
+        }
         jsPlumb.deleteConnection(existingConnections[i]);
       }
       return;
-    }
-    //otherwise, build a list of connections we should have
-    let connectionsWeShouldHave = [];
-    for(let i = 0; i < nodes.length ;i++){
-      let affectedNode = nodes[i];
-      for(let j = 0 ; j < affectedNode.dependencies.length; j++){
-        let affectedDependency = affectedNode.dependencies[j];
-        //we are interested in the dep if and only if it is visible on a given map
-        let visible = false;
-        for(let k = 0; k < affectedDependency.visibleOn.length; k++){
-          if(affectedDependency.visibleOn[k] === mapId){
-            visible = true;
-          }
-        }
-        if (visible) {
-          connectionsWeShouldHave.push({
-            sourceId: affectedNode._id,
-            targetId: affectedDependency.target,
-            displayData: affectedDependency.displayData || {}
-          });
-        }
-      }
     }
 
     // and now, for every existing connection
@@ -350,76 +362,46 @@ export default class MapCanvas extends React.Component {
       let existingConnection = existingConnections[i];
       let modelConnection = null;
       let shouldExist = false;
-      for (let k = connectionsWeShouldHave.length - 1; k >= 0 ; k--) {
-        if ((connectionsWeShouldHave[k].sourceId === existingConnection.sourceId) &&
-            (connectionsWeShouldHave[k].targetId === existingConnection.targetId)) {
+      for (let k = desiredConnections.length - 1; k >= 0 ; k--) {
+        if ((desiredConnections[k].sourceId === existingConnection.sourceId) &&
+            (desiredConnections[k].targetId === existingConnection.targetId)) {
               //since the connection has a canvas counterpart, we will only update it
               // but we do not have to recreate it
-              modelConnection = connectionsWeShouldHave.splice(k,1)[0];
+              modelConnection = desiredConnections.splice(k,1)[0];
               shouldExist = true;
               break;
         }
       }
-      // the code below may look like an overkill, but jsplumb loves leaving
-      // artifacts, and we need to reatach changed overlays
-      existingConnection.getOverlay("label").hide();
-      existingConnection.getOverlay("menuOverlay").hide();
-      //delete them
-      existingConnection.removeOverlay("menuOverlay");
-      ReactDOM.unmountComponentAtNode(existingConnection.menu);
-      existingConnection.removeOverlay("label");
+
+      this.cleanupConnectionOverlays(existingConnection);
 
       if(!shouldExist){
         //delete connection, that was easy
         jsPlumb.deleteConnection(existingConnection);
       } else {
-        // update overlays
-        var overlaysToReadd = this.getOverlays(null, [
-                ["pencil", "Edit", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
-                                  this.props.workspaceID,
-                                  this.props.mapID,
-                                  existingConnection.sourceId,
-                                  existingConnection.targetId,
-                                  modelConnection.displayData.label,
-                                  modelConnection.displayData.description,
-                                  modelConnection.displayData.connectionType)],
-                ["remove", "Delete", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, existingConnection.sourceId, existingConnection.targetId)],
-            ], modelConnection.displayData.label
-        );
-        for (var zz = 0; zz < overlaysToReadd.length; zz++) {
-            existingConnection.addOverlay(overlaysToReadd[zz]);
+        for (let j = 0; j < modelConnection.overlays.length; j++) {
+            existingConnection.addOverlay(modelConnection.overlays[j]);
         }
         this.updateOverlaysVisiblityAndType(existingConnection, modelConnection);
       }
     }
 
-    // and, at this point, we have only connections that should exist but do not
-    for(let i = 0; i < connectionsWeShouldHave.length; i++){
-      let connectionToCreate = connectionsWeShouldHave[i];
+    // and, at this point, we have only connections that should exist but do not,
+    // so let's create them.
+    for(let i = 0; i < desiredConnections.length; i++){
+      let connectionToCreate = desiredConnections[i];
       let createdConnection = jsPlumb.connect({
           source: connectionToCreate.sourceId,
           target: connectionToCreate.targetId,
-          scope: jsPlumb.Defaults.Scope,
-          anchors: [
-              "BottomCenter", "TopCenter"
-          ],
+          scope: scope,
+          anchors: anchors,
           paintStyle: endpointOptions.connectorStyle,
           endpoint: endpointOptions.endpoint,
           connector: endpointOptions.connector,
           endpointStyles: [
               endpointOptions.paintStyle, endpointOptions.paintStyle
           ],
-          overlays: this.getOverlays(null, [
-            ["pencil", "Edit", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
-                              this.props.workspaceID,
-                              this.props.mapID,
-                              connectionToCreate.sourceId,
-                              connectionToCreate.targetId,
-                              connectionToCreate.displayData.label,
-                              connectionToCreate.displayData.description,
-                              connectionToCreate.displayData.connectionType)],
-              ["remove", "Delete", SingleMapActions.deleteConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, connectionToCreate.sourceId, connectionToCreate.targetId)]
-          ], connectionToCreate.displayData.label)
+          overlays: connectionToCreate.overlays
       });
       createdConnection.___overlayVisible = false;
       this.updateOverlaysVisiblityAndType(createdConnection, connectionToCreate);
@@ -427,230 +409,114 @@ export default class MapCanvas extends React.Component {
     }
   }
 
-  reconcileDependencies() {
-      this.reconcileComponentDependencies(this.props.nodes);
-      if (!this.props.nodes) {
-          return;
-      }
 
-      // iterate over all nodes
-      for (var ii = 0; ii < this.props.nodes.length; ii++) {
-          var __node = this.props.nodes[ii];
-          var desiredActions = __node.actions ? __node.actions.filter(action => (action.type ==='EFFORT' && action.evolution && action.visibility)) : [];
-          var existingActions = jsPlumb.getConnections({
-              scope: "WM_Action_EFFORT",
-              source: '' + __node._id
-          });
-          // for every existing action
-          for (var jj = 0; jj < existingActions.length; jj++) {
-              var desired = false;
-              for (var kk = 0; kk < desiredActions.length; kk++) {
-                  if (existingActions[jj].targetId === desiredActions[kk]._id) {
-                      desired = true;
-                  }
-              }
-              // if not desired - remove it
-              if (!desired) {
-                existingActions[jj].getOverlay("menuOverlay").hide();
-                ReactDOM.unmountComponentAtNode(existingActions[jj].menu);
-                  jsPlumb.deleteConnection(existingActions[jj]);
-              }
-          }
-          // now we have only desired connections, but some may be missing
-          for (var ll = 0; ll < desiredActions.length; ll++) {
-              var existingNodeConnection = jsPlumb.getConnections({
-                  scope: "WM_Action_EFFORT",
-                  source: '' + __node._id,
-                  target: '' + desiredActions[ll]._id
-              });
-              if (existingNodeConnection.length === 0) {
-                  var connection = jsPlumb.connect({
-                      source: __node._id,
-                      target: desiredActions[ll]._id,
-                      scope: "WM_Action_EFFORT",
-                      anchors: [
-                          "Right", "Left"
-                      ],
-                      paintStyle: actionEndpointOptions.connectorStyle,
-                      endpoint: actionEndpointOptions.endpoint,
-                      connector: actionEndpointOptions.connector,
-                      endpointStyles: [
-                          actionEndpointOptions.paintStyle, actionEndpointOptions.paintStyle
-                      ],
-                      overlays: this.getOverlays(actionEndpointOptions.connectorOverlays, this.constructEffortOverlays(__node, desiredActions[ll]), desiredActions[ll].shortSummary)
-                  });
-                  connection.___overlayVisible = false;
-                  connection.getOverlay("menuOverlay").hide();
-                  connection.getOverlay("label").show();
-                  connection.bind('click', this.overlayClickHandler);
-              } else {
-                existingNodeConnection[0].getOverlay("menuOverlay").hide();
-                ReactDOM.unmountComponentAtNode(existingNodeConnection[0].menu);
-                  existingNodeConnection[0].removeOverlay("menuOverlay");
-                  existingNodeConnection[0].removeOverlay("label");
-                  var overlaysToReadd = this.getOverlays(null, this.constructEffortOverlays(__node, desiredActions[ll]), desiredActions[ll].shortSummary);
-                  for (var zz = 0; zz < overlaysToReadd.length; zz++) {
-                      existingNodeConnection[0].addOverlay(overlaysToReadd[zz]);
-                  }
-                  if (!existingNodeConnection[0].___overlayVisible) {
-                      existingNodeConnection[0].getOverlay("menuOverlay").hide();
-                      existingNodeConnection[0].getOverlay("label").show();
-                  } else {
-                      existingNodeConnection[0].getOverlay("menuOverlay").show();
-                      existingNodeConnection[0].getOverlay("label").hide();
-                  }
-              }
-          }
-      }
+  reconcileComponentDependencies(nodes) {
+    let workspaceId = this.props.workspaceID;
+    let mapId = this.props.mapID;
+    let connectionsWeShouldHave = [];
+    if (!(nodes && nodes.length)) {
+      this.reconcileScopeConnections(jsPlumb.Defaults.Scope, connectionsWeShouldHave);
+      return;
+    }
 
-      // jsPlumb cannot handle div recreation
-
-      if (this.props.users && this.props.users.length > 0) {
-        for (let z = 0; z < this.props.users.length; z++) {
-          let user = this.props.users[z];
-          let existingConnections = jsPlumb.getConnections({
-            scope: "WM_Users",
-            source: '' + user._id
-          });
-          for (let zz = 0; zz < user.associatedNeeds.length; zz++) {
-            let exists = false;
-            for (let k = 0; k < existingConnections.length; k++) {
-              if (existingConnections[k].targetId === user.associatedNeeds[zz]) {
-                let _temp= existingConnections.splice(k, 1)[0];
-                if(_temp.___overlayVisible){
-                  _temp.getOverlay("label").hide();
-                  _temp.getOverlay("menuOverlay").show();
-                } else {
-                  _temp.getOverlay("label").show();
-                  _temp.getOverlay("menuOverlay").hide();
-                }
-                exists = true;
-              }
-            }
-            if (!exists) {
-              /*
-                Yet another workaround for jsPlumb issues. Since endpoints are
-                improperly cached, which results in connections starting in the
-                top left corner, it is necessary to remove them all, and draw
-                connections again.
-                However, removal of endpoints confuses programmatical connections,
-                for some reason connecting with the userEndpointOptions style
-                creates classic connections with endpointOptions (the other style
-                that is supplied).
-                As a workaround/kludge, I am forcing the jsPlumb to make a new
-                endpoint through calling makeTarget and supplying desired
-                options before calling the 'connect' method.
-                May have undesired consequences.
-              */
-              jsPlumb.makeTarget(user.associatedNeeds[zz],
-                userEndpointOptions,
-                {anchor: "TopCenter",
-                  scope: jsPlumb.Defaults.Scope + " WM_User"
-                });
-
-
-
-              let _connection = jsPlumb.connect({
-                source: user._id,
-                target: user.associatedNeeds[zz],
-                scope: "WM_Users",
-                anchors: [
-                  "BottomCenter", "TopCenter"
-                ],
-                paintStyle: userEndpointOptions.connectorStyle,
-                endpoint: userEndpointOptions.endpoint,
-                connector: userEndpointOptions.connector,
-                endpointStyles: [
-                  userEndpointOptions.paintStyle, userEndpointOptions.paintStyle
-                ],
-                overlays: this.getOverlays(null, [
-                  ["remove", "Delete", SingleMapActions.deleteUserConnection.bind(SingleMapActions, this.props.workspaceID, this.props.mapID, user._id, user.associatedNeeds[zz])]
-                ])
-              });
-              _connection.___overlayVisible = false;
-              _connection.getOverlay("label").hide();
-              _connection.getOverlay("menuOverlay").hide();
-              _connection.bind('click', this.overlayClickHandler);
-            }
-          }
-          for (let k = 0; k < existingConnections.length; k++) { // what is left are existing connections that should not exist
-            jsPlumb.deleteConnection(existingConnections[k]);
+    //otherwise, build a list of connections we should have
+    for (let i = 0; i < nodes.length; i++) {
+      let affectedNode = nodes[i];
+      for (let j = 0; j < affectedNode.dependencies.length; j++) {
+        let affectedDependency = affectedNode.dependencies[j];
+        //we are interested in the dep if and only if it is visible on a given map
+        let visible = false;
+        for (let k = 0; k < affectedDependency.visibleOn.length; k++) {
+          if (affectedDependency.visibleOn[k] === mapId) {
+            visible = true;
           }
         }
-      } else {
-        jsPlumb.select({scope:'WM_Users'}).each(function(connection){
-            jsPlumb.deleteConnection(connection);
-        });
-      }
-
-      //movement
-      // iterate over all nodes
-      // round one - find all the connections we should have
-      let desiredMovementConnections = [];
-      // jsPlumb cannot handle div recreation
-      jsPlumb.select({scope:'WM_MOVED'}).each(function(connection){
-          jsPlumb.deleteConnection(connection);
-      });
-      if(this.props.canvasStore.isDiffEnabled()){ // if diff is disabled - make it easier to connect
-        for(let ii = 0; ii < this.props.diff.nodesModified.length; ii++){
-          if(this.props.diff.nodesModified[ii].diff.x){ // evolution changed
-            desiredMovementConnections.push(this.props.diff.nodesModified[ii]._id);
-          }
-        }
-
-
-        for(let ii = 0; ii < desiredMovementConnections.length; ii++){
-          let historicConnectionToCreate = desiredMovementConnections[ii];
-          let createdHistoricConnection = jsPlumb.connect({
-              source: historicConnectionToCreate + '_history',
-              target: historicConnectionToCreate,
-              scope: "WM_MOVED",
-              anchors: [
-                  "AutoDefault", "AutoDefault"
-              ],
-              deleteEndpointsOnDetach : true,
-              paintStyle: moveEndpointOptions.connectorStyle,
-              endpoint: moveEndpointOptions.endpoint,
-              connector: moveEndpointOptions.connector,
-              endpointStyles: [
-                  moveEndpointOptions.paintStyle, moveEndpointOptions.paintStyle
-              ],
-              // overlays: this.getOverlays(moveEndpointOptions.connectorOverlays, [  ])
+        if (visible) {
+          let displayData = affectedDependency.displayData || {};
+          connectionsWeShouldHave.push({
+            sourceId: affectedNode._id,
+            targetId: affectedDependency.target,
+            displayData: displayData,
+            overlays: this.getOverlays(null, [
+              ["pencil", "Edit", SingleMapActions.openEditConnectionDialog.bind(SingleMapActions,
+                this.props.workspaceID,
+                this.props.mapID,
+                affectedNode._id,
+                affectedDependency.target,
+                displayData.label,
+                displayData.description,
+                displayData.connectionType)],
+              ["remove", "Delete", SingleMapActions.deleteConnection.bind(SingleMapActions, workspaceId, mapId, affectedNode._id, affectedDependency.target)]
+            ], displayData.label)
           });
-          if(createdHistoricConnection){
-            if(createdHistoricConnection.source.offsetLeft < createdHistoricConnection.target.offsetLeft){
-                createdHistoricConnection.addType('movement');
-            } else {
-              createdHistoricConnection.addType('antimovement');
-            }
-          }
         }
       }
+    }
+
+    this.reconcileScopeConnections(jsPlumb.Defaults.Scope, connectionsWeShouldHave, ["BottomCenter", "TopCenter"], endpointOptions);
   }
 
-
-  render() {
-    jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
-    var style = _.clone(mapCanvasStyle);
-    if (this.state && this.state.dropTargetHighlight) {
-      style = _.extend(style, {
-        borderColor: "#00789b",
-        boxShadow: "0 0 10px #00789b",
-        border: '1px solid #00789b'
-      });
+  reconcileActionEffort(nodes) {
+    let connectionsWeShouldHave = [];
+    if (!(nodes && nodes.length)) {
+      this.reconcileScopeConnections(WM_ACTION_EFFORT, connectionsWeShouldHave);
+      return;
     }
-    var size = {
+    // iterate over all nodes
+    let actions = [];
+    let _this = this;
+    for (let i = 0; i < this.props.nodes.length; i++) {
+        let node = this.props.nodes[i];
+        let desiredActions = node.actions ? node.actions.filter(action => ( (action.type ==='EFFORT' && action.evolution && action.visibility)) || (action.type === 'REPLACEMENT' && action.targetId)) : [];
+        desiredActions = desiredActions.map(function(action){ // jshint ignore:line
+          return {
+            sourceId : node._id,
+            targetId : action.targetId || action._id,
+            overlays: _this.getOverlays(actionEndpointOptions.connectorOverlays, _this.constructEffortOverlays(node, action), action.shortSummary),
+            displayData : {
+              description : action.description || "",
+              label : action.shortSummary || ""
+            }
+          };
+        });
+        actions = actions.concat(desiredActions);
+    }
+
+    this.reconcileScopeConnections(WM_ACTION_EFFORT, actions, ["Right", "Left"], actionEndpointOptions);
+  }
+
+  reconcileDependencies() {
+      this.reconcileComponentDependencies(this.props.nodes);
+      this.reconcileActionEffort(this.props.nodes);
+  }
+
+  calculateCanvasSize(){
+    let size = {
       width: 0,
       height: 0
     };
+    // this is for server side rendering - we set the size declaratively
     if(global.OPTS && global.OPTS.coords){
       size = global.OPTS.coords.size;
     } else if (this.state.coords && this.state.coords.size) {
       size = this.state.coords.size;
     }
+    return size;
+  }
+
+
+  render() {
+    jsPlumb.setSuspendDrawing(true, true); // this will be cleaned in did update
+
+    var style = _.clone(mapCanvasStyle);
+    if (this.state && this.state.dropTargetHighlight) {
+      style = _.extend(style, mapCanvasHighlightStyle);
+    }
+
+    let size = this.calculateCanvasSize();
+
     var components = null;
     var arrowends = [];
-    var oldComponents = [];
 
 
     var mapID = this.props.mapID;
@@ -719,35 +585,12 @@ export default class MapCanvas extends React.Component {
                   />);
             }
         }
-        var users = [];
-        if (this.props.users) {
-            for (let i = 0; i < this.props.users.length; i++) {
-              let focused = false;
-              if (state && state.currentlySelectedUsers) {
-                  for (let ii = 0; ii < state.currentlySelectedUsers.length; ii++) {
-                      if (this.props.users[i]._id === state.currentlySelectedUsers[ii]) {
-                          focused = true;
-                      }
-                  }
-              }
-              users.push(
-                <User workspaceID = {workspaceID}
-                  canvasStore = {canvasStore}
-                  mapID = {mapID}
-                  user = {this.props.users[i]}
-                  id = {this.props.users[i]._id}
-                  key = {this.props.users[i]._id}
-                  focused = {focused}
-                  size = {size}
-                  />);
-            }
-        }
+
     return (
       <div style={style} ref={input => this.setContainer(input)} onClick={CanvasActions.deselectNodesAndConnections}>
         {components}
         {arrowends}
         {comments}
-        {users}
       </div>
     );
   }

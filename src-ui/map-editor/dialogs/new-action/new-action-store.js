@@ -52,7 +52,7 @@ export default class NewActionStore extends Store {
     this.dispatchToken = Dispatcher.register(action => {
       switch (action.actionType) {
         case ActionTypes.OPEN_ADD_ACTION_DIALOG:
-          this.openNewActionDialog(action.mapId, action.sourceId, action.pos);
+          this.openNewActionDialog(action.mapId, action.sourceId, action.pos, action.targetId, action.type);
           break;
         case ActionTypes.CLOSE_ADD_ACTION_DIALOG:
           this.closeNewActionDialog(action.mapId);
@@ -84,13 +84,15 @@ export default class NewActionStore extends Store {
     return this.state;
   }
 
-  openNewActionDialog(mapId, sourceId, pos){
+  openNewActionDialog(mapId, sourceId, pos, targetId, type){
     if(mapId === this.mapId){
       this.state.open = true;
       this.state.pos = pos;
       this.state.sourceId = sourceId;
+      this.state.targetId = targetId;
       this.state.shortSummary = "";
       this.state.description = "";
+      this.state.type = type;
       this.emitChange();
     }
   }
@@ -121,16 +123,27 @@ export default class NewActionStore extends Store {
     if (mapId !== this.mapId) {
       return;
     }
+    let data = null;
+    if(this.state.type === 'REPLACEMENT'){
+      data = {
+        shortSummary:  this.state.shortSummary,
+        description : this.state.description,
+        type: 'REPLACEMENT',
+        targetId: this.state.targetId,
+      };
+    } else {
+      data = {
+        shortSummary:  this.state.shortSummary,
+        description : this.state.description,
+        type: 'EFFORT',
+        x: this.state.pos[0],
+        y: this.state.pos[1]
+      };
+    }
     $.ajax({
       type: 'POST',
       url: '/api/workspace/' + this.workspaceId + '/map/' + this.mapId + '/node/' + this.state.sourceId + '/effort',
-      data: {
-        shortSummary:  this.state.shortSummary,
-        description : this.state.description,
-        type: this.state.type ? this.state.type : 'EFFORT',
-        x: this.state.pos[0],
-        y: this.state.pos[1]
-      },
+      data:data,
       success: function(data) {
         this.closeNewActionDialog(mapId);
         this.singleMapStore.updateMap(mapId, data);

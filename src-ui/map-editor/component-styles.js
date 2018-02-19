@@ -1,3 +1,16 @@
+/* Copyright 2016,2018 Krzysztof Daniel.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 
 var _ = require('underscore');
@@ -289,6 +302,23 @@ function getMenuItemRelativePos(rad){
       top: top + 'px'
   };
 }
+
+//this is style applied to the place where actuall components can be drawn
+var mapCanvasStyle = {
+  position: 'relative',
+  top: 0,
+  minHeight : '500px',
+  width: '98%',
+  left: '2%',
+  zIndex: 4
+};
+
+let mapCanvasHighlightStyle = {
+  borderColor: "#00789b",
+  boxShadow: "0 0 10px #00789b",
+  border: '1px solid #00789b'
+};
+
 export {
   userStyle,
   userNeedStyle,
@@ -308,5 +338,7 @@ export {
   inertiaStyle,
   getElementOffset,
   getInertiaWidth,
-  getMenuItemRelativePos
+  getMenuItemRelativePos,
+  mapCanvasStyle,
+  mapCanvasHighlightStyle
 };
