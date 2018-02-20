@@ -186,10 +186,7 @@ module.exports = function(conn) {
     _MapSchema.methods.addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
       let _this = this;
       return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null).then(function() {
-        return _this.populate({
-                  path: 'nodes',
-                  match: {status:'EXISTING'}
-                }).execPopulate();
+        return _this.defaultPopulate();
       });
     };
 
@@ -216,12 +213,7 @@ module.exports = function(conn) {
         .then(function(analysis) {
           console.log(analysis);
           return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null, getId(analysis)).then(function() {
-            return _this.populate({
-              path: 'nodes',
-              match: {
-                status: 'EXISTING'
-              }
-            }).execPopulate();
+            return _this.defaultPopulate();
           });
         });
     };
@@ -288,12 +280,7 @@ module.exports = function(conn) {
           History.log(getId(node.workspace), actor, [getId(_this)], [node._id, nodeId], [
             ['node.dependencies', 'ADD', getId(nodeId), null],
           ]);
-          return WardleyMap.findById(getId(_this)).populate({
-            path: 'nodes',
-            match: {
-              status: 'EXISTING'
-            }
-          }).exec();
+          return _this.defaultPopulate();
         });
     };
 
@@ -382,12 +369,7 @@ module.exports = function(conn) {
         if (changes.length > 0) {
           History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], changes);
         }
-        return WardleyMap.findById(getId(_this)).populate({
-          path: 'nodes',
-          match: {
-            status: 'EXISTING'
-          }
-        }).exec();
+        return _this.defaultPopulate();
       });
       };
 
@@ -491,12 +473,7 @@ module.exports = function(conn) {
             ['map.nodes', 'REMOVE', getId(nodeId), null],
           ]);
           return _this.save().then(function(map){
-            return map.populate({
-              path: 'nodes',
-              match: {
-                status: 'EXISTING'
-              }
-            }).execPopulate();
+            return _this.defaultPopulate();
           });
         });
     };
@@ -545,7 +522,6 @@ module.exports = function(conn) {
               targetId : targetId
             }).save()
             .then(function(project) {
-              console.log(project);
               return _this.defaultPopulate();
             });
         });

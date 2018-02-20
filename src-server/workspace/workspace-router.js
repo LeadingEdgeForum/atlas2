@@ -619,9 +619,6 @@ module.exports = function(authGuardian, mongooseConnection) {
           .then(function(map) {
               return map.addNode(actor, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
           })
-          .then(function(map){
-              return map.defaultPopulate();
-          })
           .done(function(map) {
               res.json({
                   map: map
@@ -1308,41 +1305,6 @@ module.exports = function(authGuardian, mongooseConnection) {
       }, defaultErrorHandler.bind(this, res));
     });
 
-      module.router.post(
-          '/workspace/:workspaceID/map/:mapID/node/:nodeID1/action/',
-          authGuardian.authenticationRequired,
-          function(req, res) {
-              var owner = getUserIdFromReq(req);
-              var workspaceID = req.params.workspaceID;
-              var mapID = req.params.mapID;
-              var nodeID1 = new ObjectId(req.params.nodeID1);
-              var parentMap = new ObjectId(mapID);
-              var actionPos = req.body;
-
-              WardleyMap.findOne({
-                      _id: mapID,
-                      archived: false,
-                      workspace: workspaceID,
-                      nodes: nodeID1
-                  })
-                  .exec()
-                  .then(checkAccess.bind(this, req.params.mapID, owner))
-                  .then(function(map) {
-                      return Node
-                        .findById(nodeID1)
-                        .exec().then(function(node) {
-                            return node.makeAction(actionPos);
-                        }).then(function(){
-                          return map.defaultPopulate();
-                        });
-                  })
-                  .done(function(jsonResult) {
-                      res.json({
-                          map: jsonResult
-                      });
-                  }, defaultErrorHandler.bind(this, res));
-          });
-
       module.router.put(
         '/workspace/:workspaceId/map/:mapId/node/:nodeId/submap/',
         authGuardian.authenticationRequired,
@@ -1387,77 +1349,6 @@ module.exports = function(authGuardian, mongooseConnection) {
             }, defaultErrorHandler.bind(this, res));
 
         });
-
-      module.router.put(
-          '/workspace/:workspaceID/map/:mapID/node/:nodeID1/action/:seq',
-          authGuardian.authenticationRequired,
-          function(req, res) {
-              var owner = getUserIdFromReq(req);
-              var workspaceID = req.params.workspaceID;
-              var mapID = req.params.mapID;
-              var nodeID1 = new ObjectId(req.params.nodeID1);
-              var parentMap = new ObjectId(mapID);
-              var seq = req.params.seq;
-              var actionBody = req.body;
-
-              WardleyMap.findOne({
-                      _id: mapID,
-                      archived: false,
-                      workspace: workspaceID,
-                      nodes: nodeID1
-                  })
-                  .exec()
-                  .then(checkAccess.bind(this, req.params.mapID, owner))
-                  .then(function(map) {
-                      return Node
-                          .findById(nodeID1)
-                          .exec().then(function(node) {
-                              return node.updateAction(seq, actionBody);
-                          }).then(function(){
-                            return map.defaultPopulate();
-                          });
-                  })
-                  .done(function(jsonResult) {
-                      res.json({
-                          map: jsonResult
-                      });
-                  }, defaultErrorHandler.bind(this, res));
-          });
-
-      module.router.delete(
-          '/workspace/:workspaceID/map/:mapID/node/:nodeID1/action/:seq',
-          authGuardian.authenticationRequired,
-          function(req, res) {
-              var owner = getUserIdFromReq(req);
-              var workspaceID = req.params.workspaceID;
-              var mapID = req.params.mapID;
-              var nodeID1 = new ObjectId(req.params.nodeID1);
-              var parentMap = new ObjectId(mapID);
-              var seq = req.params.seq;
-
-              WardleyMap.findOne({
-                      _id: mapID,
-                      archived: false,
-                      workspace: workspaceID,
-                      nodes: nodeID1
-                  })
-                  .exec()
-                  .then(checkAccess.bind(this, req.params.mapID, owner))
-                  .then(function(map) {
-                      return Node
-                          .findById(nodeID1)
-                          .exec().then(function(node) {
-                              return node.deleteAction(seq);
-                          }).then(function(){
-                            return map.defaultPopulate();
-                          });
-                  })
-                  .done(function(jsonResult) {
-                      res.json({
-                          map: jsonResult
-                      });
-                  }, defaultErrorHandler.bind(this, res));
-          });
 
       module.router.get(
             '/workspace/:workspaceID/map/:mapId/suggestions/:text',

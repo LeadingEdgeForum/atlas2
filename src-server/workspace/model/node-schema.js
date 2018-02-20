@@ -221,52 +221,6 @@ module.exports = function(conn){
         return _this.save();
     };
 
-    NodeSchema.methods.makeAction = function(dataPos) {
-        var relativeX = dataPos.x - this.x;
-        var relativeY = dataPos.y - this.y;
-        this.action.push({
-          x : relativeX,
-          y : relativeY
-        });
-        return this.save();
-    };
-
-    NodeSchema.methods.updateAction = function(seq, actionBody) {
-        if (actionBody.x && actionBody.y) {
-            var relativeX = actionBody.x - this.x;
-            var relativeY = actionBody.y - this.y;
-
-            for (var i = 0; i < this.action.length; i++) {
-                if ('' + this.action[i]._id === seq) {
-                    this.action[i].set('x', relativeX);
-                    this.action[i].set('y', relativeY);
-                }
-            }
-        }
-        if (actionBody.shortSummary || actionBody.description) {
-            for (var j = 0; j < this.action.length; j++) {
-                if ('' + this.action[j]._id === seq) {
-                    this.action[j].set('shortSummary', actionBody.shortSummary);
-                    this.action[j].set('description', actionBody.description);
-                }
-            }
-        }
-        return this.save();
-    };
-
-    NodeSchema.methods.deleteAction = function(seq) {
-
-        for(var i = 0; i < this.action.length; i++){
-          if('' + this.action[i]._id === seq){
-            this.action.splice(i,1);
-            break;
-          }
-        }
-        this.markModified('action');
-
-        return this.save();
-    };
-
     //dependency switch in one node. New node was introduced in place
     // of existing dependency, so we have to move data
     NodeSchema.methods.moveDependencyData = function(sourceId, targetId) {
