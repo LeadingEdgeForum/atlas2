@@ -250,10 +250,10 @@ var MapComponent = createReactClass({
     var mapID = this.props.mapID;
     var workspaceID = this.props.workspaceID;
     var node = this.props.node;
-    if(this.type === Constants.USER){
+    if(node.type === Constants.USER){
         Actions.openEditUserDialog(workspaceID, mapID, id, node.name, node.description);
     } else {
-        Actions.openEditNodeDialog.bind(mapID, id);
+        Actions.openEditNodeDialog(mapID, id);
     }
   },
 
