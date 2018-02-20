@@ -74,7 +74,7 @@
     "babel-preset-stage-0": "^6.5.0",
     "babel-register": "^6.26.0",
     "babel-runtime": "^6.9.2",
-    "imports-loader": "^0.7.0",
+    "imports-loader": "^0.8.0",
     "mocha": ">=4.1.0",
     "script-loader": "^0.7.0",
     "selenium-standalone": "6.12.0",
