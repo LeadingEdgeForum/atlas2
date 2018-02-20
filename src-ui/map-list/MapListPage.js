@@ -68,6 +68,7 @@ export default class MapListPage extends React.Component {
     this._closeProjectsDialog = this._closeProjectsDialog.bind(this);
     this._openProjectsDialog = this._openProjectsDialog.bind(this);
     this._renderProjects = this._renderProjects.bind(this);
+    this._renderSingleProject = this._renderSingleProject.bind(this);
   }
 
   componentDidMount() {
@@ -206,6 +207,26 @@ export default class MapListPage extends React.Component {
     return <ul>{list}</ul>;
   }
 
+  _renderSingleProject(project){
+      let entry = [];
+      if(project.type === 'EFFORT'){
+          entry.push(project.shortSummary);
+          if(project.affectedNodes[0].parentMap){
+              entry.push(" ");
+              entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+          }
+      } else if(project.type === 'REPLACEMENT'){
+          if(project.affectedNodes[0].parentMap){
+              entry.push(project.shortSummary);
+              entry.push(", ");
+              entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+              entry.push(" should be replaced by ");
+              entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.targetId}/>);
+          }
+      }
+      return <li>{entry}</li>;
+  }
+
   _renderProjects(projects){
     if(!projects || projects.length === 0){
         return "Nothing to show";
@@ -228,13 +249,7 @@ export default class MapListPage extends React.Component {
       list.push(<span>Projects proposed for execution:</span>);
       let internalList = [];
       for(let i = 0; i <proposed.length; i++){
-         let entry = [];
-         entry.push(proposed[i].shortSummary);
-         if(proposed[i].affectedNodes[0].parentMap){
-           entry.push(" ");
-           entry.push(<NodeLink mapID={proposed[i].affectedNodes[0].parentMap[0]} nodeID={proposed[i].affectedNodes[0]._id}/>);
-         }
-         internalList.push(<li>{entry}</li>);
+         internalList.push(this._renderSingleProject(proposed[i]));
       }
       list.push(<ul>{internalList}</ul>);
     }
@@ -242,13 +257,7 @@ export default class MapListPage extends React.Component {
       list.push(<span>Projects currently being executed:</span>);
       let internalList = [];
       for(let i = 0; i <executing.length; i++){
-        let entry = [];
-         entry.push(executing[i].shortSummary);
-         if(executing[i].affectedNodes[0].parentMap){
-           entry.push(" ");
-           entry.push(<NodeLink mapID={executing[i].affectedNodes[0].parentMap[0]} nodeID={executing[i].affectedNodes[0]._id}/>);
-         }
-         internalList.push(<li>{entry}</li>);
+          internalList.push(this._renderSingleProject(executing[i]));
       }
       list.push(<ul>{internalList}</ul>);
     }
@@ -256,13 +265,7 @@ export default class MapListPage extends React.Component {
       list.push(<span>Succeded, rejected, failed or deleted projects:</span>);
       let internalList = [];
       for(let i = 0; i <rest.length; i++){
-        let entry = [];
-         entry.push(rest[i].shortSummary);
-         if(rest[i].affectedNodes[0].parentMap){
-           entry.push(" ");
-           entry.push(<NodeLink mapID={rest[i].affectedNodes[0].parentMap[0]} nodeID={rest[i].affectedNodes[0]._id}/>);
-         }
-         internalList.push(<li>{entry}</li>);
+          internalList.push(this._renderSingleProject(rest[i]));
       }
       list.push(<ul>{internalList}</ul>);
     }
