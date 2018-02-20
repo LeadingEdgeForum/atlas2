@@ -134,29 +134,6 @@ var MapComponent = createReactClass({
     this.refreshAnchors();
   },
 
-  // shouldComponentUpdate(nextProps, nextState){
-  //   if(!nextProps){
-  //     return true;
-  //   }
-  //   if(nextProps.focused === false && this.props.focused === true){
-  //     let n = this.props.node;
-  //     if(n.action && n.action.length > 0){
-  //       for(let i = 0; i < n.action.length; i++){
-  //           jsPlumb.removeFromDragSelection(n.action[i]._id);
-  //       }
-  //     }
-  //   }
-  //   if(nextProps.focused === true && this.props.focused === false){
-  //     let n = this.props.node;
-  //     if(n.action && n.action.length > 0){
-  //       for(let i = 0; i < n.action.length; i++){
-  //           jsPlumb.addToDragSelection(n.action[i]._id);
-  //       }
-  //     }
-  //   }
-  //   return true;
-  // },
-
   resizeHandler : function(newWidth,x,y,z){
     if(this.resizeHandlerTimeout){
       clearTimeout(this.resizeHandlerTimeout);
@@ -186,7 +163,7 @@ var MapComponent = createReactClass({
     e.preventDefault();
     e.stopPropagation();
 
-    let nodeId = this.props.id;
+    let node = this.props.node;
 
 
     if ((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)) {
@@ -194,13 +171,13 @@ var MapComponent = createReactClass({
         if(this.props.node.type === Constants.USER){
           CanvasActions.focusRemoveUser(this.props.id);
         } else {
-          CanvasActions.deselectNode(nodeId);
+          CanvasActions.deselectNode(node);
         }
       } else {
         if(this.props.node.type === Constants.USER){
           CanvasActions.focusAddUser(this.props.id);
         } else {
-          CanvasActions.focusAdditionalNode(nodeId);
+          CanvasActions.focusAdditionalNode(node);
         }
       }
     } else if (this.isFocused()) {
@@ -213,7 +190,7 @@ var MapComponent = createReactClass({
       if(this.props.node.type === Constants.USER){
         CanvasActions.focusUser(this.props.id);
       } else {
-        CanvasActions.focusNode(nodeId);
+        CanvasActions.focusNode(node);
       }
     }
   },
@@ -293,7 +270,6 @@ var MapComponent = createReactClass({
   },
 
   constructComponentMenu(workspaceID, mapID, node, id, focused){
-    console.log(workspaceID, mapID, node, id, focused);
     let results = [];
 
     if(node.type !== Constants.USER){
@@ -325,7 +301,7 @@ var MapComponent = createReactClass({
 
     if(node.type !== Constants.USER && node.type !== Constants.USERNEED){
       results.push(<MenuItem name="submap" glyph="zoom-in" parentFocused={focused} pos={getMenuItemRelativePos(Math.PI)}
-          hint="Turn a node into a submap" placement="bottom" key="submap"
+          hint="Turn a node into a submap" placement="top" key="submap"
           action={Actions.openTurnIntoSubmapNodeDialog.bind(Actions, this.props.workspaceID, this.props.mapID, this.props.id)}
           canvasStore={this.props.canvasStore}
           href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>);
@@ -386,9 +362,6 @@ var MapComponent = createReactClass({
         }
         jsPlumb.draggable(input, {
           containment: true,
-          grid: [
-            10, 10
-          ],
           stop: this.jsPlumbDragStopHandler
         });
       }}>

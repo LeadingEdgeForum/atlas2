@@ -50,34 +50,19 @@ export default class CanvasStore extends Store {
           this.emitChange();
           break;
         case ActionTypes.DESELECT_NODES_AND_CONNECTIONS:
-          this.state.currentlySelectedNodes = [];
-          this.state.currentlySelectedConnections = [];
-          this.state.currentlySelectedComments = [];
-          this.state.currentlySelectedUsers = [];
-          jsPlumb.clearDragSelection();
+          this.blurNodesAndConnections();
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_SINGLE_NODE:
-          this.state.currentlySelectedNodes = [];
-          this.state.currentlySelectedNodes.push(action.data);
-          this.state.currentlySelectedConnections = [];
-          this.state.currentlySelectedComments = [];
-          this.state.currentlySelectedUsers = [];
-          jsPlumb.clearDragSelection();
-          jsPlumb.addToDragSelection(action.data);
+          this.focusNode(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS__ADD_FOCUS_SINGLE_NODE:
-          this.state.currentlySelectedNodes.push(action.data);
-          this.state.currentlySelectedConnections = [];
-          jsPlumb.addToDragSelection(action.data);
+          this.addNodeToFocus(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_REMOVE_FOCUS_SINGLE_NODE:
-          let nodePosToRemove = this.state.currentlySelectedNodes.indexOf(action.data);
-          this.state.currentlySelectedNodes.splice(nodePosToRemove, 1);
-          this.state.currentlySelectedConnections = [];
-          jsPlumb.removeFromDragSelection(action.data);
+          this.blurNode(action.data);
           this.emitChange();
           break;
         case ActionTypes.CANVAS_FOCUS_SINGLE_COMMENT:
@@ -144,6 +129,48 @@ export default class CanvasStore extends Store {
           return;
       }
     });
+  }
+
+  addNodeToFocus(node){
+    let id = node._id || node;
+    this.state.currentlySelectedNodes.push(id);
+    this.state.currentlySelectedConnections = [];
+    jsPlumb.addToDragSelection(id);
+    let actions = node.actions ? node.actions.filter(action => action.type === 'EFFORT') : [];
+    for(let i = 0; i < actions.length; i++){
+      jsPlumb.addToDragSelection(actions[i]._id);
+    }
+  }
+
+  focusNode(node){
+    let id = node._id || node;
+    this.state.currentlySelectedNodes = [];
+    this.state.currentlySelectedNodes.push(id);
+    this.state.currentlySelectedConnections = [];
+    this.state.currentlySelectedComments = [];
+    this.state.currentlySelectedUsers = [];
+    jsPlumb.clearDragSelection();
+    jsPlumb.addToDragSelection(id);
+    let actions = node.actions ? node.actions.filter(action => action.type === 'EFFORT') : [];
+    for(let i = 0; i < actions.length; i++){
+      jsPlumb.addToDragSelection(actions[i]._id);
+    }
+  }
+
+  blurNode(node){
+    let id = node._id || node;
+    let nodePosToRemove = this.state.currentlySelectedNodes.indexOf(id);
+    this.state.currentlySelectedNodes.splice(nodePosToRemove, 1);
+    this.state.currentlySelectedConnections = [];
+    jsPlumb.removeFromDragSelection(id);
+  }
+
+  blurNodesAndConnections(){
+    this.state.currentlySelectedNodes = [];
+    this.state.currentlySelectedConnections = [];
+    this.state.currentlySelectedComments = [];
+    this.state.currentlySelectedUsers = [];
+    jsPlumb.clearDragSelection();
   }
 
   shouldBeFocused(nodeId){

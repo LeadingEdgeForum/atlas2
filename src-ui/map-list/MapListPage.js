@@ -138,8 +138,8 @@ export default class MapListPage extends React.Component {
           &nbsp;Upload a map
       </NavItem>,
       <NavItem eventKey={3} href="#" key="3" onClick={this._openProjectsDialog.bind(this)}>
-          <Glyphicon glyph="flash"></Glyphicon>
-          &nbsp;Projects
+          <Glyphicon glyph="dashboard"></Glyphicon>
+          &nbsp;Spend Controls
       </NavItem>,
       <NavItem eventKey={4} href="#" key="4" onClick={this._openWarningsDialog.bind(this)}>
           <Glyphicon glyph="warning-sign"></Glyphicon>

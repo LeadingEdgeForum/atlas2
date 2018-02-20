@@ -19,7 +19,9 @@ var ArrowEnd = createReactClass({
     let node = this.props.node;
     let left = node.evolution * this.props.size.width;
     let top = this.getVisibility(mapID, node) * this.props.size.height;
-    jsPlumb.repaint(this.input, {left:left,top:top});
+    if(this.input){
+      jsPlumb.repaint(this.input, {left:left,top:top});
+    }
   },
 
   componentDidMount: function() {
@@ -82,9 +84,6 @@ var ArrowEnd = createReactClass({
         }
         jsPlumb.draggable(input, {
           containment: true,
-          // grid: [
-          //   10, 10
-          // ],
           stop: function(event) {
               /* Gently skip update of this is source node is dragged together. This is a relative action, so it does not require manual update in this case, as the relative position does not change*/
               if(event.selection && event.selection.length > 0){
