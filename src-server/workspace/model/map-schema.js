@@ -443,31 +443,36 @@ module.exports = function(conn) {
 
           // it is, however, necessary, to remove the node if it has no parent map
           // as it is no longer referenced by any of those
-          return Node.findOneAndRemove({
+
+          return Node.findOneAndUpdate({
             _id: nodeId,
             parentMap: {
               $size: 0
             }
-          }).exec();
-        }).then(function(removedNode) {
-          if (!removedNode) {
-            // node has not been removed, meaning something else is using it,
-            // so it has to stay in the workspace
-            return null;
-          }
-          //otherwise, remove it from the workspace
-          return Workspace.findOneAndUpdate({
-            _id: _this.workspace,
-            'nodes': nodeId
           }, {
-            $pull: {
-              'nodes': nodeId
-            }
+            status: 'DELETED'
           }, {
-            safe: true,
-            new: true //return modified doc
-          }).exec();
-        }).then(function(modifiedWorkspace) {
+            new: true
+          }).exec().then(function(node) {
+            return node.populate('actions').execPopulate()
+              .then(function(populatedAndDeletedNode) {
+                let promises = [];
+                for (let i = 0; i < populatedAndDeletedNode.actions.length; i++) {
+                  let project = populatedAndDeletedNode.actions[i];
+                  if (project.affectedNodes.length > 1) {
+                    // the project affected mutliple nodes, so remove the node
+                    project.affectedNodes.pull(getId(nodeId));
+                  } else {
+                    project.state = 'DELETED';
+                  }
+                  promises.push(project.save());
+                }
+                return q.allSettled(promises).then(function(result) {
+                  return node;
+                });
+              });
+          });
+        }).then(function(node) {
           //save the map
           History.log(getId(_this.workspace), actor, [getId(_this)], [nodeId], [
             ['map.nodes', 'REMOVE', getId(nodeId), null],
