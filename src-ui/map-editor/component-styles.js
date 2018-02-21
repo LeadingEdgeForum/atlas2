@@ -258,10 +258,9 @@ var itemCaptionStyle = {
   position: 'absolute',
   zIndex: 20,
   textShadow: '0 0 5px white, 0 0 3px white, 0 0 7px white, 0 0 1px white',
-  maxWidth: 300,
-  maxHeight: 200,
+  maxWidth: '30em',
+  maxHeight: '20em',
   marginBottom: -20,
-  lineHeight: 1.1,
   overflow: 'auto',
   resize :'horizontal'
 };

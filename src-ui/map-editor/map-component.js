@@ -10,17 +10,14 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 
-var React = require('react');
-var _ = require('underscore');
-var Constants = require('../constants');
+const React = require('react');
+const _ = require('underscore');
+const Constants = require('../constants');
 import Actions from './single-map-actions';
 import SubmapActions from './dialogs/form-submap/form-a-submap-actions';
-import {Button, Glyphicon} from 'react-bootstrap';
+import {Glyphicon} from 'react-bootstrap';
 import {
   actionEndpointOptions,
-  inactiveMenuStyle,
-  activeMenuStyle,
-  nonInlinedStyle,
   itemCaptionStyle,
   endpointOptions,
   getStyleForType,
@@ -30,16 +27,14 @@ import {
   getMenuItemRelativePos
 } from './component-styles';
 import CanvasActions from './canvas-actions';
-var LinkContainer = require('react-router-bootstrap').LinkContainer;
 import ReactResizeDetector from 'react-resize-detector';
-var createReactClass = require('create-react-class');
+const createReactClass = require('create-react-class');
 import MenuItem from './MenuItem';
 
-var jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
+const jsPlumb = require("../../node_modules/jsplumb/dist/js/jsplumb.min.js").jsPlumb;
 
 
-
-var MapComponent = createReactClass({
+const MapComponent = createReactClass({
 
   componentDidMount: function() {
     this.componentDidUpdate();
@@ -134,29 +129,36 @@ var MapComponent = createReactClass({
     this.refreshAnchors();
   },
 
-  resizeHandler : function(newWidth,x,y,z){
-    if(this.resizeHandlerTimeout){
-      clearTimeout(this.resizeHandlerTimeout);
-    }
-    var id = this.props.id;
-    var mapID = this.props.mapID;
-    var workspaceID = this.props.workspaceID;
-    if(newWidth === this.props.node.width){
-      clearTimeout(this.resizeHandlerTimeout);
-      return;
-    }
-    let updateCall;
-    if(this.props.node.type === Constants.USER){
-      updateCall = function(){
-        Actions.updateUser(workspaceID, mapID, id, null, null, null,  newWidth);
-      };
-    } else {
-      updateCall = function(){
-       Actions.updateNode(workspaceID, mapID, id, null, newWidth);
-     };
-    }
-    this.resizeHandlerTimeout = setTimeout(updateCall,100);
-  },
+    resizeHandler : function(newWidth,x,y,z){
+        // newWidth comes with px. We want to use em.
+        newWidth = (newWidth / this.props.canvasStore.getNodeFontSize());
+
+        if(this.resizeHandlerTimeout){
+            clearTimeout(this.resizeHandlerTimeout);
+        }
+
+        const id = this.props.id;
+        const mapID = this.props.mapID;
+        const workspaceID = this.props.workspaceID;
+
+        if(newWidth === this.props.node.width){
+            clearTimeout(this.resizeHandlerTimeout);
+            return;
+        }
+
+
+        let updateCall;
+        if(this.props.node.type === Constants.USER){
+            updateCall = function(){
+                Actions.updateUser(workspaceID, mapID, id, null, null, null,  newWidth);
+            };
+        } else {
+            updateCall = function(){
+                Actions.updateNode(workspaceID, mapID, id, null, newWidth);
+            };
+        }
+        this.resizeHandlerTimeout = setTimeout(updateCall,100);
+    },
 
   onClickHandler: function(e) {
 
@@ -348,7 +350,8 @@ var MapComponent = createReactClass({
 
     localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
     localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
-    localItemCaptionStyle.width = node.width ? node.width + 'px' : 'auto';
+    localItemCaptionStyle.width = node.width ? node.width + 'em' : 'auto';
+    console.log(localItemCaptionStyle.width, canvasStore.getNodeFontSize());
 
     let menu = this.constructComponentMenu(workspaceID, mapID, node, id, focused);
 

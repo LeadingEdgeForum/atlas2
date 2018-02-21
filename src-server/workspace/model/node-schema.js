@@ -65,7 +65,7 @@ module.exports = function(conn){
             ref: 'WardleyMap'
           }
         }],
-        width : Schema.Types.Number, //label width, TODO: express in font size relation
+        width : Schema.Types.Number, //label width,
         type: Schema.Types.String,
         constraint: Schema.Types.Number, // 0 - none, 10 - constraint, 20 - barrier
         dependencies: [{
