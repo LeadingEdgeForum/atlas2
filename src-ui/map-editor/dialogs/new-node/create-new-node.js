@@ -185,73 +185,94 @@ class ReusedComponentProperties extends React.Component{
   }
 }
 
-class NewComponentPropeties extends React.Component {
-  constructor(props) {
-    super(props);
-    this.render = this.render.bind(this);
-    this._enterInterceptor = this._enterInterceptor.bind(this);
-  }
-  _enterInterceptor(e) {
-    if (e.nativeEvent.keyCode === 13) {
-      e.preventDefault();
-      e.stopPropagation();
+class NewComponentProperties extends React.Component {
+    constructor(props) {
+        super(props);
+        this.render = this.render.bind(this);
+        this._enterInterceptor = this._enterInterceptor.bind(this);
+        this.renderComponentStatus = this.renderComponentStatus.bind(this);
     }
-  }
-  render(){
-    let responsiblePerson = this.props.responsiblePerson;
-    let inertia = this.props.inertia;
-    let constraint = this.props.constraint;
-    if (constraint === null || constraint === undefined) {
-      constraint = 0;
+    _enterInterceptor(e) {
+        if (e.nativeEvent.keyCode === 13) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
     }
-    let description = this.props.description;
 
-    let responsiblePersonUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'responsiblePerson');
-    let inertiaUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'inertia');
-    let constraintUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'constraint');
-    let descriptionUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'description');
-    return (
-      <Form horizontal>
-              <FormGroup controlId="description">
-                <Col sm={2}>
-                  <ControlLabel>Description</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="textarea" componentClass="textarea" value={description} placeholder="Describing what the component does will help other people" onChange={descriptionUpdate} onKeyDown={this._enterInterceptor}/>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="responsiblePerson">
-                <Col sm={2}>
-                  <ControlLabel>Owner</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                  <FormControl type="text" placeholder="Responsible Person" value={responsiblePerson} onChange={responsiblePersonUpdate} onKeyDown={this._enterInterceptor}/>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="inertia">
-                <Col sm={2}>
-                  <ControlLabel>Inertia</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                    <Radio inline checked={ inertia==0 || !inertia} value={0} onChange={inertiaUpdate}>None</Radio>{' '}
-                    <Radio inline value={0.33} checked={inertia==0.33} onChange={inertiaUpdate}>Small</Radio>{' '}
-                    <Radio inline value={0.66} checked={inertia==0.66} onChange={inertiaUpdate}>Considerable</Radio>{' '}
-                    <Radio inline value={1} checked={inertia==1} onChange={inertiaUpdate}>Huge</Radio>
-                </Col>
-              </FormGroup>
-              <FormGroup controlId="constraint">
-                <Col sm={2}>
-                  <ControlLabel>Limitation</ControlLabel>
-                </Col>
-                <Col sm={9}>
-                    <Radio inline checked={ constraint==0 || !constraint} value={0} onChange={constraintUpdate}>None</Radio>{' '}
-                    <Radio inline value={10} checked={constraint==10} onChange={constraintUpdate}>Constraint</Radio>{' '}
-                    <Radio inline value={20} checked={constraint==20} onChange={constraintUpdate}>Barrier to entry</Radio>{' '}
-                </Col>
-              </FormGroup>
+    renderComponentStatus(type, status, onChange){
+        return <FormGroup controlId="status">
+            <Col sm={2}>
+                <ControlLabel>Status</ControlLabel>
+            </Col>
+            <Col sm={9}>
+                <Radio inline value={'EXISTING'} checked={ status=== 'EXISTING' || !status}  onChange={onChange}>Exists</Radio>{' '}
+                <Radio inline value={'PROPOSED'} checked={status=== 'PROPOSED'} onChange={onChange}>Proposed</Radio>{' '}
+                <Radio inline value={'SCHEDULED_FOR_DELETION'} checked={status==='SCHEDULED_FOR_DELETION'} onChange={onChange}>For deletion</Radio>{' '}
+            </Col>
+        </FormGroup>;
+    }
+
+    render(){
+        let responsiblePerson = this.props.responsiblePerson;
+        let inertia = this.props.inertia;
+        let constraint = this.props.constraint;
+        if (constraint === null || constraint === undefined) {
+            constraint = 0;
+        }
+        let description = this.props.description;
+
+        let responsiblePersonUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'responsiblePerson');
+        let inertiaUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'inertia');
+        let constraintUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'constraint');
+        let descriptionUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'description');
+
+        let statusUpdate = Actions.handleDialogChange.bind(Actions, this.props.mapId, 'status');
+        let status = this.props.status;
+        let type = this.props.type;
+        let statusGroup = this.renderComponentStatus(type, status, statusUpdate);
+        return (
+            <Form horizontal>
+                <FormGroup controlId="description">
+                    <Col sm={2}>
+                        <ControlLabel>Description</ControlLabel>
+                    </Col>
+                    <Col sm={9}>
+                        <FormControl type="textarea" componentClass="textarea" value={description} placeholder="Describing what the component does will help other people" onChange={descriptionUpdate} onKeyDown={this._enterInterceptor}/>
+                    </Col>
+                </FormGroup>
+                <FormGroup controlId="responsiblePerson">
+                    <Col sm={2}>
+                        <ControlLabel>Owner</ControlLabel>
+                    </Col>
+                    <Col sm={9}>
+                        <FormControl type="text" placeholder="Responsible Person" value={responsiblePerson} onChange={responsiblePersonUpdate} onKeyDown={this._enterInterceptor}/>
+                    </Col>
+                </FormGroup>
+                <FormGroup controlId="inertia">
+                    <Col sm={2}>
+                        <ControlLabel>Inertia</ControlLabel>
+                    </Col>
+                    <Col sm={9}>
+                        <Radio inline checked={ inertia==0 || !inertia} value={0} onChange={inertiaUpdate}>None</Radio>{' '}
+                        <Radio inline value={0.33} checked={inertia==0.33} onChange={inertiaUpdate}>Small</Radio>{' '}
+                        <Radio inline value={0.66} checked={inertia==0.66} onChange={inertiaUpdate}>Considerable</Radio>{' '}
+                        <Radio inline value={1} checked={inertia==1} onChange={inertiaUpdate}>Huge</Radio>
+                    </Col>
+                </FormGroup>
+                <FormGroup controlId="constraint">
+                    <Col sm={2}>
+                        <ControlLabel>Limitation</ControlLabel>
+                    </Col>
+                    <Col sm={9}>
+                        <Radio inline checked={ constraint==0 || !constraint} value={0} onChange={constraintUpdate}>None</Radio>{' '}
+                        <Radio inline value={10} checked={constraint==10} onChange={constraintUpdate}>Constraint</Radio>{' '}
+                        <Radio inline value={20} checked={constraint==20} onChange={constraintUpdate}>Barrier to entry</Radio>{' '}
+                    </Col>
+                </FormGroup>
+                {statusGroup}
             </Form>
-    );
-  }
+        );
+    }
 }
 
 export default class NewNodeDialog extends React.Component {
@@ -297,6 +318,10 @@ export default class NewNodeDialog extends React.Component {
     const visibility = (this.state.coords || {}).y;
     const evolution = (this.state.coords || {}).x;
 
+    const status = this.state.status;
+
+    let type = this.state.type;
+
     var steps = [
         {name:'name', component: <ComponentName
                                     name={name}
@@ -304,13 +329,15 @@ export default class NewNodeDialog extends React.Component {
                                     mapId={mapId}
                                     evolution={evolution}
                                     visibility={visibility}/>},
-        {name:'name', component: <NewComponentPropeties
+        {name:'name', component: <NewComponentProperties
                                     responsiblePerson={responsiblePerson}
                                     inertia={inertia}
                                     constraint={constraint}
                                     description={description}
                                     mapId={mapId}
-                                    nodeId={nodeId}/>},
+                                    nodeId={nodeId}
+                                    status={status}
+                                    type={type}/>},
         {name:'name', component: <ReusedComponentProperties
                                     mapId={mapId}
                                     nodeId={nodeId}

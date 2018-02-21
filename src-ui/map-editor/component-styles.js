@@ -277,10 +277,10 @@ var inertiaStyle = {
 /* globals window */
 function getElementOffset(element)
 {
-    var de = document.documentElement;
-    var box = element.getBoundingClientRect();
-    var top = box.top + window.pageYOffset - de.clientTop;
-    var left = box.left + window.pageXOffset - de.clientLeft;
+    let de = document.documentElement;
+    let box = element.getBoundingClientRect();
+    let top = box.top + window.pageYOffset - de.clientTop;
+    let left = box.left + window.pageXOffset - de.clientLeft;
     return { top: top, left: left };
 }
 
@@ -303,13 +303,13 @@ function getMenuItemRelativePos(rad){
 }
 
 //this is style applied to the place where actuall components can be drawn
-var mapCanvasStyle = {
-  position: 'relative',
-  top: 0,
-  minHeight : '500px',
-  width: '98%',
-  left: '2%',
-  zIndex: 4
+let mapCanvasStyle = {
+    position: 'relative',
+    top: 0,
+    minHeight: '500px',
+    width: '98%',
+    left: '2%',
+    zIndex: 4
 };
 
 let mapCanvasHighlightStyle = {
@@ -318,26 +318,38 @@ let mapCanvasHighlightStyle = {
   border: '1px solid #00789b'
 };
 
+let componentForDeletionShadow = {
+    boxShadow : "0 0 3px 3px red",
+    opacity : "0.8"
+};
+
+let componentProposedShadow = {
+    boxShadow : "0 0 3px 3px green",
+    opacity : "0.8"
+};
+
 export {
-  userStyle,
-  userNeedStyle,
-  externalStyle,
-  internalStyle,
-  submapStyle,
-  genericCommentPalletteStyle,
-  getStyleForType,
-  endpointOptions,
-  userEndpointOptions,
-  actionEndpointOptions,
-  moveEndpointOptions,
-  inactiveMenuStyle,
-  activeMenuStyle,
-  canvasComponent,
-  itemCaptionStyle,
-  inertiaStyle,
-  getElementOffset,
-  getInertiaWidth,
-  getMenuItemRelativePos,
-  mapCanvasStyle,
-  mapCanvasHighlightStyle
+    userStyle,
+    userNeedStyle,
+    externalStyle,
+    internalStyle,
+    submapStyle,
+    genericCommentPalletteStyle,
+    getStyleForType,
+    endpointOptions,
+    userEndpointOptions,
+    actionEndpointOptions,
+    moveEndpointOptions,
+    inactiveMenuStyle,
+    activeMenuStyle,
+    canvasComponent,
+    itemCaptionStyle,
+    inertiaStyle,
+    getElementOffset,
+    getInertiaWidth,
+    getMenuItemRelativePos,
+    mapCanvasStyle,
+    mapCanvasHighlightStyle,
+    componentForDeletionShadow,
+    componentProposedShadow
 };

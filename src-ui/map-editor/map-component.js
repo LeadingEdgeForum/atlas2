@@ -17,14 +17,16 @@ import Actions from './single-map-actions';
 import SubmapActions from './dialogs/form-submap/form-a-submap-actions';
 import {Glyphicon} from 'react-bootstrap';
 import {
-  actionEndpointOptions,
-  itemCaptionStyle,
-  endpointOptions,
-  getStyleForType,
-  inertiaStyle,
-  getElementOffset,
-  getInertiaWidth,
-  getMenuItemRelativePos
+    actionEndpointOptions,
+    itemCaptionStyle,
+    endpointOptions,
+    getStyleForType,
+    inertiaStyle,
+    getElementOffset,
+    getInertiaWidth,
+    getMenuItemRelativePos,
+    componentForDeletionShadow,
+    componentProposedShadow
 } from './component-styles';
 import CanvasActions from './canvas-actions';
 import ReactResizeDetector from 'react-resize-detector';
@@ -316,14 +318,26 @@ const MapComponent = createReactClass({
           canvasStore={this.props.canvasStore}/>);
     }
 
-    if(node.type !== Constants.USER && node.type !== Constants.USERNEED){
-      results.push(<MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
-          hint="Draw an action you want to execute" placement="top" key="action"
-          jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
-          canvasStore={this.props.canvasStore}/>);
-    }
+      if(node.type !== Constants.USER && node.type !== Constants.USERNEED
+          && (node.status === 'EXISTING' || node.status === 'PROPOSED')){
+          results.push(<MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
+                                 hint="Draw an action you want to execute" placement="top" key="action"
+                                 jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
+                                 canvasStore={this.props.canvasStore}/>);
+      }
     return results;
   },
+
+    decorateStatus(style){
+        let node = this.props.node;
+        if(node.status === 'PROPOSED'){
+            return _.extend(style, componentProposedShadow);
+        } else if (node.status === 'SCHEDULED_FOR_DELETION'){
+            return _.extend(style, componentForDeletionShadow);
+        } else {
+            return style;
+        }
+    },
 
   render: function() {
     var node = this.props.node;
@@ -339,6 +353,11 @@ const MapComponent = createReactClass({
       top: top,
     });
 
+    style = this.decorateStatus(style);
+
+    // TODO: info about state in the info dialog
+    // TODO: workflow actions, also in the project
+
     var name = this.renderName(node);
     var id = this.props.id;
     let focused = this.props.canvasStore.shouldBeFocused(node);
@@ -351,7 +370,6 @@ const MapComponent = createReactClass({
     localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
     localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
     localItemCaptionStyle.width = node.width ? node.width + 'em' : 'auto';
-    console.log(localItemCaptionStyle.width, canvasStore.getNodeFontSize());
 
     let menu = this.constructComponentMenu(workspaceID, mapID, node, id, focused);
 

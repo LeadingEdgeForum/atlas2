@@ -16,9 +16,7 @@ limitations under the License.*/
 
 
 var _ = require('underscore');
-var logger = require('./../log');
 var workspaceLogger = require('./../log').getLogger('workspace');
-var submapLogger = require('./../log').getLogger('submap');
 var capabilityLogger = require('./../log').getLogger('capability');
 var mongoose = require('mongoose');
 var ObjectId = mongoose.Types.ObjectId;
@@ -31,9 +29,7 @@ var workspaceHistoryEntryToString = require('./model/changelogNameCalculator').w
 var q = require('q');
 q.longStackSupport = true;
 
-var _async = require('async');
 
-var log4js = require('log4js');
 
 var track = require('../tracker-helper');
 
@@ -598,18 +594,18 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
   module.router.post('/workspace/:workspaceID/map/:mapID/node', authGuardian.authenticationRequired, function(req, res) {
-      var actor = getUserIdFromReq(req);
-      var workspaceID = req.params.workspaceID;
-      var mapID = req.params.mapID;
-      var name = req.body.name;
-      var description = req.body.description;
-      var inertia = req.body.inertia;
-      var responsiblePerson = req.body.responsiblePerson;
-      var x = req.body.x;
-      var y = req.body.y;
-      var type = req.body.type;
-      var constraint = req.body.constraint;
-      var parentMap = getId(mapID);
+      const actor = getUserIdFromReq(req);
+      const workspaceID = req.params.workspaceID;
+      const mapID = req.params.mapID;
+      const name = req.body.name;
+      const description = req.body.description;
+      const inertia = req.body.inertia;
+      const responsiblePerson = req.body.responsiblePerson;
+      const x = req.body.x;
+      const y = req.body.y;
+      const type = req.body.type;
+      const constraint = req.body.constraint;
+      const status = req.body.status;
 
       WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
               _id: mapID,
@@ -617,7 +613,7 @@ module.exports = function(authGuardian, mongooseConnection) {
           }).exec()
           .then(checkAccess.bind(this, req.params.mapID, actor))
           .then(function(map) {
-              return map.addNode(actor, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
+              return map.addNode(actor, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint, status);
           })
           .done(function(map) {
               res.json({
@@ -722,73 +718,68 @@ module.exports = function(authGuardian, mongooseConnection) {
   });
 
 
-  module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
-    var actor = getUserIdFromReq(req);
-    var workspaceId = getId(req.params.workspaceID);
-    var mapId = getId(req.params.mapID);
-    var nodeId = getId(req.params.nodeID);
-    let effortId = getId(req.params.effortId);
-    let x = req.body.x;
-    let y = req.body.y;
-    let shortSummary = req.body.shortSummary;
-    let description = req.body.description;
-    let state = req.body.state;
+    module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
+        const actor = getUserIdFromReq(req);
+        const workspaceId = getId(req.params.workspaceID);
+        const mapId = getId(req.params.mapID);
+        const nodeId = getId(req.params.nodeID);
+        const effortId = getId(req.params.effortId);
 
-    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-        _id: mapId,
-        workspace: workspaceId
-      }).exec()
-      .then(checkAccess.bind(this, req.params.mapID, actor))
-      .then(function(map) {
-        return map.deleteEffort(actor, nodeId, effortId);
-      })
-      .done(function(map) {
-        res.json({
-          map: map
-        });
-        track(actor, 'delete_effort', {
-          'map_id': req.params.mapID,
-          'node_id': nodeId,
-          effortId:effortId
-        }, req.body);
-      }, defaultErrorHandler.bind(this, res));
-  });
+        WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+            _id: mapId,
+            workspace: workspaceId
+        }).exec()
+            .then(checkAccess.bind(this, req.params.mapID, actor))
+            .then(function(map) {
+                return map.deleteEffort(actor, nodeId, effortId);
+            })
+            .done(function(map) {
+                res.json({
+                    map: map
+                });
+                track(actor, 'delete_effort', {
+                    'map_id': req.params.mapID,
+                    'node_id': nodeId,
+                    effortId:effortId
+                }, req.body);
+            }, defaultErrorHandler.bind(this, res));
+    });
 
-  module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/duplicate', authGuardian.authenticationRequired, function(req, res) {
-    var actor = getUserIdFromReq(req);
-    var workspaceID = req.params.workspaceID;
-    var mapID = req.params.mapID;
-    var name = req.body.name;
-    var description = req.body.description;
-    var inertia = req.body.inertia;
-    var responsiblePerson = req.body.responsiblePerson;
-    var x = req.body.x;
-    var y = req.body.y;
-    var type = req.body.type;
-    var constraint = req.body.constraint;
-    var parentMap = getId(mapID);
-    let duplicatedNode = getId(req.params.nodeID);
+    module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/duplicate', authGuardian.authenticationRequired, function(req, res) {
+        const actor = getUserIdFromReq(req);
+        const workspaceID = req.params.workspaceID;
+        const mapID = req.params.mapID;
+        const name = req.body.name;
+        const description = req.body.description;
+        const inertia = req.body.inertia;
+        const responsiblePerson = req.body.responsiblePerson;
+        const x = req.body.x;
+        const y = req.body.y;
+        const type = req.body.type;
+        const constraint = req.body.constraint;
+        const status = req.body.status;
+        const duplicatedNode = getId(req.params.nodeID);
 
-    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+        WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
             _id: mapID,
             workspace: workspaceID
         }).exec()
-        .then(checkAccess.bind(this, req.params.mapID, actor))
-        .then(function(map) {
-            return map.duplicateNode(actor, duplicatedNode, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint);
-        })
-        .then(function(map){
-            return map.defaultPopulate();
-        })
-        .done(function(map) {
-            res.json({
-                map: map
-            });
-            track(actor,'duplicate_node',{
-              'map_id' : req.params.mapID,
-            }, req.body);
-        }, defaultErrorHandler.bind(this, res));
-  });
+            .then(checkAccess.bind(this, req.params.mapID, actor))
+            .then(function(map) {
+                return map.duplicateNode(actor, duplicatedNode, name, /* evolution */ x, /*visibility*/y, type, getId(workspaceID), description, inertia, responsiblePerson, constraint, status);
+            })
+            .then(function(map){
+                return map.defaultPopulate();
+            })
+            .done(function(map) {
+                res.json({
+                    map: map
+                });
+                track(actor,'duplicate_node',{
+                    'map_id' : req.params.mapID,
+                }, req.body);
+            }, defaultErrorHandler.bind(this, res));
+    });
 
   module.router.get('/workspace/:workspaceID/warnings', authGuardian.authenticationRequired, function(req, res) {
     var actor = getUserIdFromReq(req);

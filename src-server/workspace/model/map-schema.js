@@ -81,26 +81,28 @@ module.exports = function(conn) {
     };
 
     _MapSchema.methods.defaultPopulate = function() {
-      return this
-        .populate("workspace")
-        .populate({
-          path: 'nodes',
-          match: {
-            status: 'EXISTING'
-          },
-          populate: {
-            path: 'actions',
-            match: {
-              type: {
-                $in: ['EFFORT', 'REPLACEMENT']
-              },
-              state: {
-                $in: ['PROPOSED', 'EXECUTING']
-              }
-            }
-          }
-        })
-        .execPopulate();
+        return this
+            .populate("workspace")
+            .populate({
+                path: 'nodes',
+                match: {
+                    status: {
+                        $in:['PROPOSED','EXISTING','SCHEDULED_FOR_DELETION']
+                    }
+                },
+                populate: {
+                    path: 'actions',
+                    match: {
+                        type: {
+                            $in: ['EFFORT', 'REPLACEMENT']
+                        },
+                        state: {
+                            $in: ['PROPOSED', 'EXECUTING']
+                        }
+                    }
+                }
+            })
+            .execPopulate();
     };
 
     // _MapSchema.methods.updateComment = function(id, dataPos) {
@@ -183,82 +185,86 @@ module.exports = function(conn) {
       return this.save();
     };
 
-    _MapSchema.methods.addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
-      let _this = this;
-      return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null).then(function() {
-        return _this.defaultPopulate();
-      });
-    };
-
-    _MapSchema.methods.duplicateNode = function(actor, duplicatedNodeId, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
-      const Node = require('./node-schema')(conn);
-      const Workspace = require('./workspace-schema')(conn);
-      const Analysis = require('./analysis-schema')(conn);
-
-      let _this = this;
-      return Node.findById(duplicatedNodeId).exec()
-        .then(function(duplicatedNode) {
-          if (duplicatedNode.analysis) {
-            return duplicatedNode.analysis;
-          }
-          return new Analysis({
-            workspace: duplicatedNode.workspace
-          }).save().then(function(analysis){
-            duplicatedNode.analysis = analysis;
-            return duplicatedNode.save().then(function(){
-              return analysis;
-            });
-          });
-        })
-        .then(function(analysis) {
-          console.log(analysis);
-          return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null, getId(analysis)).then(function() {
+    _MapSchema.methods.addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, status) {
+        let _this = this;
+        return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null, null, status).then(function() {
             return _this.defaultPopulate();
-          });
         });
     };
 
-    _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap, analysis) {
+    _MapSchema.methods.duplicateNode = function(actor, duplicatedNodeId, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, status) {
         const Node = require('./node-schema')(conn);
-        const Workspace = require('./workspace-schema')(conn);
+        const Analysis = require('./analysis-schema')(conn);
+
+        let _this = this;
+        return Node.findById(duplicatedNodeId).exec()
+            .then(function(duplicatedNode) {
+                if (duplicatedNode.analysis) {
+                    return duplicatedNode.analysis;
+                }
+                return new Analysis({
+                    workspace: duplicatedNode.workspace
+                }).save().then(function(analysis){
+                    duplicatedNode.analysis = analysis;
+                    return duplicatedNode.save().then(function(){
+                        return analysis;
+                    });
+                });
+            })
+            .then(function(analysis) {
+                console.log(analysis);
+                return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null, getId(analysis), status).then(function() {
+                    return _this.defaultPopulate();
+                });
+            });
+    };
+
+    _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap, analysis, status) {
+        const Node = require('./node-schema')(conn);
 
         const _this = this;
 
+        let statusForCreatedNode;
+        if(status === 'PROPOSED'){
+            statusForCreatedNode = 'PROPOSED';
+        } else if(status === 'SCHEDULED_FOR_DELETION') {
+            statusForCreatedNode = 'SCHEDULED_FOR_DELETION';
+        } else {
+            statusForCreatedNode = 'EXISTING';
+        }
+
         return new Node({
-                name: name,
-                evolution: evolution,
-                visibility: [{
-                  value : visibility,
-                  map: [_this._id]
-                }],
-                type: type,
-                workspace: workspaceId,
-                parentMap: [_this._id],
-                description: description,
-                inertia: inertia,
-                responsiblePerson: responsiblePerson,
-                constraint : constraint,
-                submapID : submap,
-                status: 'EXISTING',
-                analysis:analysis
-            })
+            name: name,
+            evolution: evolution,
+            visibility: [{
+                value : visibility,
+                map: [_this._id]
+            }],
+            type: type,
+            workspace: workspaceId,
+            parentMap: [_this._id],
+            description: description,
+            inertia: inertia,
+            responsiblePerson: responsiblePerson,
+            constraint : constraint,
+            submapID : submap,
+            status: statusForCreatedNode,
+            analysis:analysis
+        })
             .save()
             .then(function(node) {
-              History.log(getId(_this.workspace), actor, [getId(_this)], [node._id], [
-                ['nodes', 'ADD', getId(_this), null],
-                ['node.name', 'SET', node.name, null]
-              ]);
-              return node;
+                History.log(getId(_this.workspace), actor, [getId(_this)], [node._id], [
+                    ['nodes', 'ADD', getId(_this), null],
+                    ['node.name', 'SET', node.name, null]
+                ]);
+                return node;
             });
     };
 
     _MapSchema.methods.referenceNode = function(actor, nodeId, visibility, dependencies) {
       const Node = require('./node-schema')(conn);
-      const Workspace = require('./workspace-schema')(conn);
-      const WardleyMap = require('./map-schema')(conn);
 
       const _this = this;
-      const timeSliceId = _this.timesliceId;
 
       nodeId = getId(nodeId);
 

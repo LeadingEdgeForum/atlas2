@@ -120,30 +120,32 @@ export default class NewNodeStore extends Store {
     return this.internalState;
   }
 
-  openNewNodeDialog(mapId, coords, type){
-    if(mapId === this.mapId){
-      this.internalState.open = true;
-      this.internalState.coords = coords;
-      this.internalState.type = type;
-      this.internalState.currentStep = 0;
-      this.internalState.responsiblePerson = '';
-      this.internalState.inertia = 0;
-      this.internalState.constraint = 0;
-      this.internalState.description = '';
-      this.emitChange();
+    openNewNodeDialog(mapId, coords, type){
+        if(mapId === this.mapId){
+            this.internalState.open = true;
+            this.internalState.coords = coords;
+            this.internalState.type = type;
+            this.internalState.currentStep = 0;
+            this.internalState.responsiblePerson = '';
+            this.internalState.inertia = 0;
+            this.internalState.constraint = 0;
+            this.internalState.description = '';
+            this.internalState.state = null;
+            this.emitChange();
+        }
     }
-  }
 
-  closeNewNodeDialog(mapId){
-    if(mapId === this.mapId){
-      this.internalState.open = false;
-      this.internalState.name = "";
-      this.internalState.currentStep = 0;
-      delete this.internalState.coords;
-      delete this.internalState.type;
-      this.emitChange();
+    closeNewNodeDialog(mapId){
+        if(mapId === this.mapId){
+            this.internalState.open = false;
+            this.internalState.name = "";
+            this.internalState.currentStep = 0;
+            delete this.internalState.coords;
+            delete this.internalState.type;
+            delete  this.internalState.state;
+            this.emitChange();
+        }
     }
-  }
 
   updateParam(mapId, param, value) {
     if (mapId !== this.mapId) {
@@ -218,7 +220,8 @@ export default class NewNodeStore extends Store {
         description : this.internalState.description,
         type: this.internalState.type,
         x: this.internalState.coords.x,
-        y: this.internalState.coords.y
+        y: this.internalState.coords.y,
+          status : this.internalState.status
       },
       success: function(data) {
         this.closeNewNodeDialog(mapId);
@@ -255,38 +258,39 @@ export default class NewNodeStore extends Store {
     });
   }
 
-  submitAddNewNodeDialogDuplicateNode(mapId, nodeId) {
-    if (mapId !== this.mapId) {
-      return;
+    submitAddNewNodeDialogDuplicateNode(mapId, nodeId) {
+        if (mapId !== this.mapId) {
+            return;
+        }
+        if(!this.referenceRequestInProgress[mapId]){
+            this.referenceRequestInProgress[mapId] = {};
+        }
+        if(this.referenceRequestInProgress[mapId][nodeId] === true){
+            console.log('ignoring reference request as one is in progress');
+        } else {
+            this.referenceRequestInProgress[mapId][nodeId] = true;
+        }
+        $.ajax({
+            type: 'POST',
+            url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/node/' + nodeId + '/duplicate',
+            data: {
+                name:  this.internalState.name,
+                responsiblePerson : this.internalState.responsiblePerson,
+                inertia: this.internalState.inertia,
+                description : this.internalState.description,
+                type: this.internalState.type,
+                x: this.internalState.coords.x,
+                y: this.internalState.coords.y,
+                status : this.internalState.status
+            },
+            success: function(data) {
+                this.referenceRequestInProgress[mapId][nodeId] = false;
+                this.closeNewNodeDialog(mapId);
+                this.singleMapStore.updateMap(mapId, data);
+                this.emitChange();
+            }.bind(this)
+        });
     }
-    if(!this.referenceRequestInProgress[mapId]){
-      this.referenceRequestInProgress[mapId] = {};
-    }
-    if(this.referenceRequestInProgress[mapId][nodeId] === true){
-      console.log('ignoring reference request as one is in progress');
-    } else {
-      this.referenceRequestInProgress[mapId][nodeId] = true;
-    }
-    $.ajax({
-      type: 'POST',
-      url: '/api/workspace/' + this.workspaceId + '/map/' + mapId + '/node/' + nodeId + '/duplicate',
-      data: {
-        name:  this.internalState.name,
-        responsiblePerson : this.internalState.responsiblePerson,
-        inertia: this.internalState.inertia,
-        description : this.internalState.description,
-        type: this.internalState.type,
-        x: this.internalState.coords.x,
-        y: this.internalState.coords.y
-      },
-      success: function(data) {
-        this.referenceRequestInProgress[mapId][nodeId] = false;
-        this.closeNewNodeDialog(mapId);
-        this.singleMapStore.updateMap(mapId, data);
-        this.emitChange();
-      }.bind(this)
-    });
-  }
 
   submitAddNewNodeDialogEstablishSubmapReference(mapId, submapId, evolution, visibility) {
     if (mapId !== this.mapId) {

@@ -15,15 +15,11 @@ limitations under the License.*/
 /*jshint esversion: 6 */
 
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var ObjectId = mongoose.Types.ObjectId;
-var modelLogger = require('./../../log').getLogger('NodeSchema');
-var nodeRemovalLogger = require('./../../log').getLogger('NodeRemoval');
-var q = require('q');
-let getId = require('../../util/util.js').getId;
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const getId = require('../../util/util.js').getId;
 
-var node = {};
+const node = {};
 
 
 
@@ -32,7 +28,7 @@ module.exports = function(conn){
         return node[conn.name];
     }
 
-    var NodeSchema = new Schema({
+    const NodeSchema = new Schema({
         /*
           EXPERIMENTAL - subject to change without notification.
           this is a special field that stores the ID of an imported map.
@@ -92,7 +88,7 @@ module.exports = function(conn){
         description : Schema.Types.String,
         status : {
           type: String,
-          enum: ['EXISTING', 'DELETED'],
+          enum: ['PROPOSED','EXISTING','SCHEDULED_FOR_DELETION','DELETED'],
           default: 'EXISTING',
           required: true
         },
@@ -171,8 +167,6 @@ module.exports = function(conn){
     };
 
     NodeSchema.methods.removeDependencyTo = function(_mapId, _targetId, onAllMaps) {
-      let Node = require('./node-schema')(conn);
-
       _targetId = getId(_targetId);
       _mapId = getId(_mapId);
       let _this = this;

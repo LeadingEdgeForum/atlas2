@@ -43,6 +43,7 @@ export default class Usage extends React.Component{
     this.calculateDependencyMessage = this.calculateDependencyMessage.bind(this);
     this.calculateDuplication = this.calculateDuplication.bind(this);
     this.componentDidMount = this.componentDidMount.bind(this);
+    this.calculateStatusMessage = this.calculateStatusMessage.bind(this);
     this.state = {};
   }
 
@@ -143,10 +144,31 @@ export default class Usage extends React.Component{
     }
   }
 
+    calculateStatusMessage(listOfMessages, node){
+        if(node.status === 'PROPOSED'){
+            if(node.type === 'USER'){
+                listOfMessages.push(<li>This is a potential customer.</li>);
+            } else if (node.type === 'USERNEED'){
+                listOfMessages.push(<li>This is a potential user need.</li>);
+            } else {
+                listOfMessages.push(<li>This is a component that can be added.</li>);
+            }
+        } else if (node.status==='SCHEDULED_FOR_DELETION') {
+            if(node.type === 'USER'){
+                listOfMessages.push(<li>This customer may be abandoned in the future.</li>);
+            } else if (node.type === 'USERNEED'){
+                listOfMessages.push(<li>This is user need may be abandoned in the future.</li>);
+            } else {
+                listOfMessages.push(<li>This is component may be disbanded.</li>);
+            }
+        }
+    }
+
   render(){
     const node = this.props.node;
     let listOfMessages = [];
 
+    this.calculateStatusMessage(listOfMessages, node);
     this.calculateUsageMessage(listOfMessages, node);
     this.calculateOwnerMessage(listOfMessages, node);
     this.calculateSubmapMessage(listOfMessages, node);
