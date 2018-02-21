@@ -500,11 +500,11 @@ export default class SingleWorkspaceStore extends Store {
 
   openEditNodeDialog(data){
     this.editNodeDialog = {open : true};
-    var map = this.getMap().map;
-    var nodes = map.nodes;
+    let map = this.getMap().map;
+    let nodes = map.nodes;
     /* find node and populate node internal state
     */
-    for (var i = 0; i < nodes.length; i++) {
+    for (let i = 0; i < nodes.length; i++) {
       if (nodes[i]._id === data.nodeID) {
         this.editNodeDialog.name = nodes[i].name;
         this.editNodeDialog.type = nodes[i].type;
@@ -515,6 +515,7 @@ export default class SingleWorkspaceStore extends Store {
         this.editNodeDialog.workspaceId = this.getWorkspaceId();
         this.editNodeDialog.mapId = this.getMapId();
         this.editNodeDialog.nodeId = data.nodeID;
+        this.editNodeDialog.status = nodes[i].status;
       }
     }
     this.emitChange();
@@ -569,8 +570,9 @@ export default class SingleWorkspaceStore extends Store {
           id: this.getMapId()
         });
       }.bind(this)
-    });
-
+    }).fail(function(){
+        this.nodeOrUserUpdateInProgress = false;
+    }.bind(this));
   }
 
   updateNode(data){
@@ -589,6 +591,7 @@ export default class SingleWorkspaceStore extends Store {
       payload.inertia = data.inertia;
       payload.description = data.description;
       payload.constraint = data.constraint;
+      payload.status = data.status;
     }
     this.updateNodeObjects.push({data:data, payload:payload});
     this.executeNodeUpdate();
@@ -691,7 +694,9 @@ export default class SingleWorkspaceStore extends Store {
             id: this.getMapId()
           });
         }.bind(this)
-    });
+    }).fail(function(){
+        this.nodeOrUserUpdateInProgress = false;
+    }.bind(this));
 
   }
 
@@ -709,6 +714,9 @@ export default class SingleWorkspaceStore extends Store {
     }
     if(data.width){
       payload.width = data.width;
+    }
+    if(data.status){
+      payload.status = data.status;
     }
     this.updateUserObjects.push({data:data, payload:payload});
     this.executeUserUpdate();
