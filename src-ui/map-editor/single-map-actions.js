@@ -71,7 +71,7 @@ var SingleMapActions = {
       });
     },
 
-    updateUser: function(workspaceID, mapID, id, name, description, pos /*{pos:[x,y]}*/, width){
+    updateUser: function(workspaceID, mapID, id, name, description, pos /*{pos:[x,y]}*/, width, status){
       if(!workspaceID || !mapID || !id || ! ((pos && pos.x && pos.y) || width)){
         console.error('missing data', workspaceID, mapID, id, pos, width);
       }
@@ -84,7 +84,8 @@ var SingleMapActions = {
             name : name,
             description : description,
             pos: pos,
-            width:width
+            width:width,
+            status:status
           }
       });
     },
@@ -346,7 +347,7 @@ var SingleMapActions = {
     },
 
     updateNode: function(workspaceId, mapId, nodeId, pos, width,
-      name, type, person, inertia, description, constraint){
+      name, type, person, inertia, description, constraint, status){
       if(!nodeId){
         console.error('missing node id');
         return;
@@ -364,7 +365,8 @@ var SingleMapActions = {
             person : person,
             inertia : inertia,
             description: description,
-            constraint : constraint
+            constraint : constraint,
+              status: status
           }
       });
     },
