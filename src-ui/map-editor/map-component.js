@@ -319,7 +319,7 @@ const MapComponent = createReactClass({
     }
 
       if(node.type !== Constants.USER && node.type !== Constants.USERNEED
-          && (node.status === 'EXISTING' || node.status === 'PROPOSED')){
+          && (node.status === 'EXISTING' || node.status === 'SCHEDULED_FOR_DELETION')){
           results.push(<MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
                                  hint="Draw an action you want to execute" placement="top" key="action"
                                  jsPlumbOn={this.setNodeActionSource} jsPlumbOff={this.setNodeJsplumbDisabled}
@@ -354,9 +354,6 @@ const MapComponent = createReactClass({
     });
 
     style = this.decorateStatus(style);
-
-    // TODO: info about state in the info dialog
-    // TODO: workflow actions, also in the project
 
     var name = this.renderName(node);
     var id = this.props.id;

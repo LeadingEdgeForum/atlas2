@@ -1,4 +1,4 @@
-/* Copyright 2017  Krzysztof Daniel.
+/* Copyright 2017, 2018  Krzysztof Daniel.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -11,16 +11,16 @@ limitations under the License.*/
 /*jshint esversion: 6 */
 
 
-var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
-var ObjectId = mongoose.Types.ObjectId;
-var modelLogger = require('./../../log').getLogger('MapSchema');
-var _ = require('underscore');
-var q = require('q');
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const ObjectId = mongoose.Types.ObjectId;
+const modelLogger = require('./../../log').getLogger('MapSchema');
+const _ = require('underscore');
+const q = require('q');
 let mapExport = require('./map-import-export').mapExport;
 let getId = require('../../util/util.js').getId;
 
-var wardleyMap = {};
+const wardleyMap = {};
 
 
 module.exports = function(conn) {
@@ -31,8 +31,7 @@ module.exports = function(conn) {
     /**
      * see capability-category-schema for explanations.
      */
-
-    var _MapSchema = new Schema({
+    const _MapSchema = new Schema({
         name: Schema.Types.String,
         user: Schema.Types.String,//must be held until migration happens
         purpose: Schema.Types.String, //must be held until migration happens
@@ -45,28 +44,28 @@ module.exports = function(conn) {
             x: Schema.Types.Number,
             y: Schema.Types.Number,
             text: Schema.Types.String,
-            width : Schema.Types.Number,
+            width: Schema.Types.Number,
         }],
         responsiblePerson: Schema.Types.String,
-        status : {
-          type: String,
-          enum: ['EXISTING', 'DELETED'],
-          default: 'EXISTING',
-          required: true
+        status: {
+            type: String,
+            enum: ['EXISTING', 'DELETED'],
+            default: 'EXISTING',
+            required: true
         },
-        schemaVersion : {
-          type: Schema.Types.Number,
-          default : 2
+        schemaVersion: {
+            type: Schema.Types.Number,
+            default: 2
         }
     }, {
-      toObject: {
-        virtuals: true
-      },
-      toJSON: {
-        virtuals: true
-      }
+        toObject: {
+            virtuals: true
+        },
+        toJSON: {
+            virtuals: true
+        }
     });
-    var History = require('./history-schema')(conn);
+    const History = require('./history-schema')(conn);
 
     _MapSchema.virtual('nodes', {
       ref : 'Node',
@@ -137,10 +136,10 @@ module.exports = function(conn) {
 
 
     _MapSchema.methods.verifyAccess = function(user) {
-        var Workspace = require('./workspace-schema')(conn);
-        var WardleyMap = require('./map-schema')(conn);
-        var mapID = this._id;
-        var _this = this;
+        const Workspace = require('./workspace-schema')(conn);
+        const WardleyMap = require('./map-schema')(conn);
+        const mapID = this._id;
+        const _this = this;
         return Workspace.findOne({
             owner: user,
         }).exec().then(function(workspace) {
@@ -221,6 +220,7 @@ module.exports = function(conn) {
 
     _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap, analysis, status) {
         const Node = require('./node-schema')(conn);
+        const Project = require('./project-schema')(conn);
 
         const _this = this;
 
@@ -252,6 +252,31 @@ module.exports = function(conn) {
             analysis:analysis
         })
             .save()
+            .then(function(node){
+                // create a counter party action
+                let project;
+                if(status === 'PROPOSED'){
+                    project = new Project({
+                        workspace : getId(node.workspace),
+                        type : 'PROPOSAL',
+                        state: 'PROPOSED',
+                        affectedNodes:[getId(node)]
+                    });
+                } else if (status === 'SCHEDULED_FOR_DELETION'){
+                    project = new Project({
+                        workspace : getId(node.workspace),
+                        type : 'REMOVAL_PROPOSAL',
+                        state: 'PROPOSED',
+                        affectedNodes:[getId(node)]
+                    });
+                }
+                if(project){
+                    return project.save().then(function(pr){
+                        return node;
+                    });
+                }
+                return node;
+            })
             .then(function(node) {
                 History.log(getId(_this.workspace), actor, [getId(_this)], [node._id], [
                     ['nodes', 'ADD', getId(_this), null],
@@ -291,202 +316,202 @@ module.exports = function(conn) {
     };
 
     _MapSchema.methods.changeNode = function(actor, workspaceId, name, evolution, visibility, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
-      var _this = this;
-      var Node = require('./node-schema')(conn);
-      const WardleyMap = require('./map-schema')(conn);
-      let changes = [];
+        const _this = this;
+        const Node = require('./node-schema')(conn);
+        const WardleyMap = require('./map-schema')(conn);
+        let changes = [];
 
-      desiredNodeId = getId(desiredNodeId);
-      let query = {
-        _id: desiredNodeId,
-        workspace: workspaceId
-      };
-      let updateOrder = {
-        $set: {
-
-        }
-      };
-      let select = {};
-
-      if (name) {
-        updateOrder.$set.name = name;
-        changes.push(['node.name', 'SET', name, null]);
-      }
-      if (evolution) {
-        updateOrder.$set.evolution = evolution;
-        changes.push(['node.evolution', 'SET', evolution, null]);
-      }
-      if (width) {
-        updateOrder.$set.width = width;
-        changes.push(['node.width', 'SET', width, null]);
-      }
-      if (type) {
-        updateOrder.$set.type = type;
-        changes.push(['node.type', 'SET', type, null]);
-      }
-      if (description) {
-        updateOrder.$set.description = description;
-        changes.push(['node.description', 'SET', description, null]);
-      }
-      if (inertia) {
-        updateOrder.$set.inertia = inertia;
-        changes.push(['node.inertia', 'SET', inertia, null]);
-      }
-      if (responsiblePerson) {
-        updateOrder.$set.responsiblePerson = responsiblePerson;
-        changes.push(['node.responsiblePerson', 'SET', responsiblePerson, null]);
-      }
-      if (constraint) {
-        updateOrder.$set.constraint = constraint;
-        changes.push(['node.constraint', 'SET', constraint, null]);
-      }
-      if (visibility) {
-        /**
-         * First of all, we are updating a single entry in the array,
-         * so we must do the search for the array object, otherwise the $
-         * operator will not work.
-         */
-        query['visibility.map'] = _this._id;
-
-        /**
-         * Now, let's set the value for all visibility parameters. It's a very
-         * broad operator, so in the next step we will narrow it down.
-         */
-        updateOrder.$set['visibility.$.value'] = visibility;
-        /**
-         * Ensure that only one visibility entry is selected for the change.
-         */
-        select = {
-          select: {
-            'visibility': {
-              $elemMatch: {
-                map: _this._id //visiblity should be changed only for current map
-              }
-            }
-          }
+        desiredNodeId = getId(desiredNodeId);
+        let query = {
+            _id: desiredNodeId,
+            workspace: workspaceId
         };
-        changes.push(['node.visibility', 'SET', visibility, null]);
-      }
+        let updateOrder = {
+            $set: {
 
-      return Node.findOneAndUpdate(query,
-        updateOrder,
-        select
-      ).exec().then(function() {
-        if (changes.length > 0) {
-          History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], changes);
+            }
+        };
+        let select = {};
+
+        if (name) {
+            updateOrder.$set.name = name;
+            changes.push(['node.name', 'SET', name, null]);
         }
-        return _this.defaultPopulate();
-      });
-      };
+        if (evolution) {
+            updateOrder.$set.evolution = evolution;
+            changes.push(['node.evolution', 'SET', evolution, null]);
+        }
+        if (width) {
+            updateOrder.$set.width = width;
+            changes.push(['node.width', 'SET', width, null]);
+        }
+        if (type) {
+            updateOrder.$set.type = type;
+            changes.push(['node.type', 'SET', type, null]);
+        }
+        if (description) {
+            updateOrder.$set.description = description;
+            changes.push(['node.description', 'SET', description, null]);
+        }
+        if (inertia) {
+            updateOrder.$set.inertia = inertia;
+            changes.push(['node.inertia', 'SET', inertia, null]);
+        }
+        if (responsiblePerson) {
+            updateOrder.$set.responsiblePerson = responsiblePerson;
+            changes.push(['node.responsiblePerson', 'SET', responsiblePerson, null]);
+        }
+        if (constraint) {
+            updateOrder.$set.constraint = constraint;
+            changes.push(['node.constraint', 'SET', constraint, null]);
+        }
+        if (visibility) {
+            /**
+             * First of all, we are updating a single entry in the array,
+             * so we must do the search for the array object, otherwise the $
+             * operator will not work.
+             */
+            query['visibility.map'] = _this._id;
+
+            /**
+             * Now, let's set the value for all visibility parameters. It's a very
+             * broad operator, so in the next step we will narrow it down.
+             */
+            updateOrder.$set['visibility.$.value'] = visibility;
+            /**
+             * Ensure that only one visibility entry is selected for the change.
+             */
+            select = {
+                select: {
+                    'visibility': {
+                        $elemMatch: {
+                            map: _this._id //visiblity should be changed only for current map
+                        }
+                    }
+                }
+            };
+            changes.push(['node.visibility', 'SET', visibility, null]);
+        }
+
+        return Node.findOneAndUpdate(query,
+            updateOrder,
+            select
+        ).exec().then(function() {
+            if (changes.length > 0) {
+                History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], changes);
+            }
+            return _this.defaultPopulate();
+        });
+    };
 
     /**
      * Removes the node from the current map. If it was a last reference,
      * it removes the node from the workspace.
      */
     _MapSchema.methods.removeNode = function(actor, nodeId) {
-      var _this = this;
-      nodeId = getId(nodeId);
-      let mapId = getId(_this);
-      const Workspace = require('./workspace-schema')(conn);
-      const Node = require('./node-schema')(conn);
+        const _this = this;
+        nodeId = getId(nodeId);
+        let mapId = getId(_this);
+        const Workspace = require('./workspace-schema')(conn);
+        const Node = require('./node-schema')(conn);
 
-      // fourthly, node prev & next TODO: think about how it should be handled
+        // fourthly, node prev & next TODO: think about how it should be handled
 
-      // thirdly, handle other nodes depending on this one (if there are any)
-      return Node.update({
-          parentMap: mapId,
-          workspace : _this.workspace,
-          'dependencies.target': nodeId,
-          'dependencies.visibleOn': mapId
+        // thirdly, handle other nodes depending on this one (if there are any)
+        return Node.update({
+            parentMap: mapId,
+            workspace : _this.workspace,
+            'dependencies.target': nodeId,
+            'dependencies.visibleOn': mapId
         }, {
-          $pull: {
-            dependencies: {
-              target: nodeId,
-              visibleOn: mapId
+            $pull: {
+                dependencies: {
+                    target: nodeId,
+                    visibleOn: mapId
+                }
             }
-          }
         }, {
-          safe: true
+            safe: true
         }).exec()
         // and handle this node depending on others
-        .then(function() {
-          return Node.findById(nodeId).exec()
-            .then(function(node) {
-              for (let i = node.dependencies.length - 1; i >= 0; i--) {
-                for (let j = node.dependencies[i].visibleOn.length; j >= 0; j--) {
-                  if (mapId.equals(node.dependencies[i].visibleOn[j])) {
-                    node.dependencies[i].visibleOn.splice(j, 1);
-                    break;
-                  }
-                }
-                if (node.dependencies[i].visibleOn.length === 0) {
-                  //remove dependency that is nowhere visible
-                  node.dependencies.splice(i, 1);
-                  break;
-                }
-              }
-              return node.save();
-            });
-        })
-        .then(function() {
-          //fifthly, remove parent map (node has been removed from it, so reference is no longer mandatory)
-          return Node.findOneAndUpdate({
-            _id: nodeId
-          }, {
-            $pull: {
-              parentMap: _this._id,
-              visibility: {
-                map: _this._id
-              }
-            }
-          }, {
-            safe: true,
-            new: true //return modified doc
-          }).exec();
-        }).then(function(node) {
-          // here, the node has been updated and no longer points to the parent map
-          // or the workspace
+            .then(function() {
+                return Node.findById(nodeId).exec()
+                    .then(function(node) {
+                        for (let i = node.dependencies.length - 1; i >= 0; i--) {
+                            for (let j = node.dependencies[i].visibleOn.length; j >= 0; j--) {
+                                if (mapId.equals(node.dependencies[i].visibleOn[j])) {
+                                    node.dependencies[i].visibleOn.splice(j, 1);
+                                    break;
+                                }
+                            }
+                            if (node.dependencies[i].visibleOn.length === 0) {
+                                //remove dependency that is nowhere visible
+                                node.dependencies.splice(i, 1);
+                                break;
+                            }
+                        }
+                        return node.save();
+                    });
+            })
+            .then(function() {
+                //fifthly, remove parent map (node has been removed from it, so reference is no longer mandatory)
+                return Node.findOneAndUpdate({
+                    _id: nodeId
+                }, {
+                    $pull: {
+                        parentMap: _this._id,
+                        visibility: {
+                            map: _this._id
+                        }
+                    }
+                }, {
+                    safe: true,
+                    new: true //return modified doc
+                }).exec();
+            }).then(function(node) {
+                // here, the node has been updated and no longer points to the parent map
+                // or the workspace
 
-          // it is, however, necessary, to remove the node if it has no parent map
-          // as it is no longer referenced by any of those
+                // it is, however, necessary, to remove the node if it has no parent map
+                // as it is no longer referenced by any of those
 
-          return Node.findOneAndUpdate({
-            _id: nodeId,
-            parentMap: {
-              $size: 0
-            }
-          }, {
-            status: 'DELETED'
-          }, {
-            new: true
-          }).exec().then(function(node) {
-            return node.populate('actions').execPopulate()
-              .then(function(populatedAndDeletedNode) {
-                let promises = [];
-                for (let i = 0; i < populatedAndDeletedNode.actions.length; i++) {
-                  let project = populatedAndDeletedNode.actions[i];
-                  if (project.affectedNodes.length > 1) {
-                    // the project affected mutliple nodes, so remove the node
-                    project.affectedNodes.pull(getId(nodeId));
-                  } else {
-                    project.state = 'DELETED';
-                  }
-                  promises.push(project.save());
-                }
-                return q.allSettled(promises).then(function(result) {
-                  return node;
+                return Node.findOneAndUpdate({
+                    _id: nodeId,
+                    parentMap: {
+                        $size: 0
+                    }
+                }, {
+                    status: 'DELETED'
+                }, {
+                    new: true
+                }).exec().then(function(node) {
+                    return node.populate('actions').execPopulate()
+                        .then(function(populatedAndDeletedNode) {
+                            let promises = [];
+                            for (let i = 0; i < populatedAndDeletedNode.actions.length; i++) {
+                                let project = populatedAndDeletedNode.actions[i];
+                                if (project.affectedNodes.length > 1) {
+                                    // the project affected mutliple nodes, so remove the node
+                                    project.affectedNodes.pull(getId(nodeId));
+                                } else {
+                                    project.state = 'DELETED';
+                                }
+                                promises.push(project.save());
+                            }
+                            return q.allSettled(promises).then(function(result) {
+                                return node;
+                            });
+                        });
                 });
-              });
-          });
-        }).then(function(node) {
-          //save the map
-          History.log(getId(_this.workspace), actor, [getId(_this)], [nodeId], [
-            ['map.nodes', 'REMOVE', getId(nodeId), null],
-          ]);
-          return _this.save().then(function(map){
-            return _this.defaultPopulate();
-          });
-        });
+            }).then(function(node) {
+                //save the map
+                History.log(getId(_this.workspace), actor, [getId(_this)], [nodeId], [
+                    ['map.nodes', 'REMOVE', getId(nodeId), null],
+                ]);
+                return _this.save().then(function(map){
+                    return _this.defaultPopulate();
+                });
+            });
     };
 
 

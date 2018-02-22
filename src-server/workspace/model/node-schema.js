@@ -256,6 +256,28 @@ module.exports = function(conn){
         }
     };
 
+    NodeSchema.methods.verifyAccess = function(user) {
+        const Workspace = require('./workspace-schema')(conn);
+        const Node = require('./node-schema')(conn);
+        const nodeId = getId(this);
+        const _this = this;
+        return Workspace.findOne({
+            owner: user,
+        }).exec().then(function(workspace) {
+            return Node.findOne({
+                _id: nodeId,
+                workspace: getId(workspace)
+            }).exec()
+                .then(function(map) {
+                    if (workspace) {
+                        return _this; // if we found workspace, then we have access to the node
+                    } else {
+                        return null;
+                    }
+                });
+        });
+    };
+
 
     node[conn.name] = conn.model('Node', NodeSchema);
 

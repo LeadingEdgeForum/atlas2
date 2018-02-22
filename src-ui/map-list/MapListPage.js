@@ -71,23 +71,23 @@ export default class MapListPage extends React.Component {
     this._renderSingleProject = this._renderSingleProject.bind(this);
   }
 
-  componentDidMount() {
-    var _this = this;
-    this.props.singleWorkspaceStore.addChangeListener(this._onChange);
-    this.props.singleWorkspaceStore.io.emit('workspace', {
-      type: 'sub',
-      id: _this.props.singleWorkspaceStore.getWorkspaceId()
-    });
-  }
+    componentDidMount() {
+        const _this = this;
+        this.props.singleWorkspaceStore.addChangeListener(this._onChange);
+        this.props.singleWorkspaceStore.io.emit('workspace', {
+            type: 'sub',
+            id: _this.props.singleWorkspaceStore.getWorkspaceId()
+        });
+    }
 
-  componentWillUnmount() {
-    var _this = this;
-    this.props.singleWorkspaceStore.removeChangeListener(this._onChange);
-    this.props.singleWorkspaceStore.io.emit('workspace', {
-      type: 'unsub',
-      id: _this.props.singleWorkspaceStore.getWorkspaceId()
-    });
-  }
+    componentWillUnmount() {
+        const _this = this;
+        this.props.singleWorkspaceStore.removeChangeListener(this._onChange);
+        this.props.singleWorkspaceStore.io.emit('workspace', {
+            type: 'unsub',
+            id: _this.props.singleWorkspaceStore.getWorkspaceId()
+        });
+    }
 
   _onChange() {
     this.setState(this.props.singleWorkspaceStore.getWorkspaceInfo());
@@ -128,22 +128,21 @@ export default class MapListPage extends React.Component {
   }
 
   prepareWorkspaceMenu(){
-    const workspaceID = this.props.singleWorkspaceStore.getWorkspaceId();
     return [
       <NavItem eventKey={1} href="#" key="1" onClick={this.openEditWorkspaceDialog.bind(this)}>
-          <Glyphicon glyph="edit"></Glyphicon>
+          <Glyphicon glyph="edit"/>
           &nbsp;Edit organization info
       </NavItem>,
       <NavItem eventKey={2} href="#" key="2" onClick={this._openImport}>
-          <Glyphicon glyph="upload"></Glyphicon>
+          <Glyphicon glyph="upload"/>
           &nbsp;Upload a map
       </NavItem>,
       <NavItem eventKey={3} href="#" key="3" onClick={this._openProjectsDialog.bind(this)}>
-          <Glyphicon glyph="dashboard"></Glyphicon>
+          <Glyphicon glyph="dashboard"/>
           &nbsp;Spend Controls
       </NavItem>,
       <NavItem eventKey={4} href="#" key="4" onClick={this._openWarningsDialog.bind(this)}>
-          <Glyphicon glyph="warning-sign"></Glyphicon>
+          <Glyphicon glyph="warning-sign"/>
           &nbsp;Warnings
       </NavItem>,
     ];
@@ -207,25 +206,40 @@ export default class MapListPage extends React.Component {
     return <ul>{list}</ul>;
   }
 
-  _renderSingleProject(project){
-      let entry = [];
-      if(project.type === 'EFFORT'){
-          entry.push(project.shortSummary);
-          if(project.affectedNodes[0].parentMap){
-              entry.push(" ");
-              entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
-          }
-      } else if(project.type === 'REPLACEMENT'){
-          if(project.affectedNodes[0].parentMap){
-              entry.push(project.shortSummary);
-              entry.push(", ");
-              entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
-              entry.push(" should be replaced by ");
-              entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.targetId}/>);
-          }
-      }
-      return <li>{entry}</li>;
-  }
+    _renderSingleProject(project){
+        let entry = [];
+        if(project.type === 'EFFORT'){
+            entry.push(project.shortSummary);
+            if(project.affectedNodes[0].parentMap){
+                entry.push(" for component ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+            }
+        } else if(project.type === 'REPLACEMENT'){
+            if(project.affectedNodes[0].parentMap){
+                entry.push(project.shortSummary);
+                entry.push(", ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+                entry.push(" should be replaced by ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.targetId}/>);
+            }
+        } else if(project.type === 'PROPOSAL' && project.affectedNodes[0].parentMap){
+                let mainAffectedNode = project.affectedNodes[0];
+                if (mainAffectedNode.type === 'USER') {
+                    entry.push("Start serving user ");
+                    entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+                } else if (mainAffectedNode.type === 'USERNEED') {
+                    entry.push("Start satisfying ");
+                    entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+                } else {
+                    entry.push("Build ");
+                    entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+                    if (project.shortSummary) {
+                        entry.push(", " + project.shortSummary);
+                    }
+                }
+        }
+        return <li>{entry}</li>;
+    }
 
   _renderProjects(projects){
     if(!projects || projects.length === 0){

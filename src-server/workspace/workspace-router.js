@@ -76,7 +76,7 @@ module.exports = function(authGuardian, mongooseConnection) {
   }.bind(module);
 
 
-  var defaultErrorHandler = function(res, err){
+  const defaultErrorHandler = function(res, err){
       if(err){
         console.log(err);
           if(err instanceof AccessError){
@@ -226,6 +226,10 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   module.router.get('/map/:mapID/name', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
+      if(req.params.mapID === 'null' || req.params.mapID === 'undefined'){
+          res.status(500).json({error:'invalid request. The mapId should be specified, but is ' + req.params.mapID});
+          return;
+      }
       WardleyMap
           .findOne({
               _id: req.params.mapID
@@ -462,30 +466,25 @@ module.exports = function(authGuardian, mongooseConnection) {
 
   module.router.get('/map/:mapID/node/:nodeID/name', authGuardian.authenticationRequired, function(req, res) {
       var owner = getUserIdFromReq(req);
+
+      if(req.params.nodeID === 'null' || req.params.nodeID === 'undefined'){
+          res.status(500).json({error:'invalid request. The nodeID should be specified, but is ' + req.params.nodeID});
+          return;
+      }
+
       let nodeID = getId(req.params.nodeID);
-      WardleyMap
-          .findOne({
-              _id: req.params.mapID
+      return Node.findById(nodeID).select('name').exec()
+          .then(function(node){
+                return node.verifyAccess(owner);
           })
-          .select('name')
-          .exec()
-          .then(checkAccess.bind(this,req.params.mapID,owner))
-          .then(function(){
-            return Node.findById(nodeID).exec();
-          })
-          .done(function(result) {
-            if(!result){
-              res.json({
-                node:null
-              });
-              return;
-            }
-            res.json({
-              node: {
-                _id: result._id,
-                name: result.name
+          .done(function(node){
+              if(!node){
+                  return res.status(404).json({message:'not found'});
+              } else {
+                  return res.json({
+                      node: node
+                  });
               }
-            });
           }, defaultErrorHandler.bind(this, res));
   });
 

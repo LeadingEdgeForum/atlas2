@@ -41,7 +41,7 @@ module.exports = function(conn) {
         },
         type : {
           type : String,
-          enum:['EFFORT', 'REPLACEMENT', 'DEDUPLICATION'],
+          enum:['EFFORT', 'REPLACEMENT', 'PROPOSAL', 'REMOVAL_PROPOSAL',/*not implemented yet*/'DEDUPLICATION'],
           required :true
         },
         state : {
