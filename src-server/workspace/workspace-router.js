@@ -651,70 +651,110 @@ module.exports = function(authGuardian, mongooseConnection) {
       }, defaultErrorHandler.bind(this, res));
   });
 
-  module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort', authGuardian.authenticationRequired, function(req, res) {
-    var actor = getUserIdFromReq(req);
-    var workspaceId = getId(req.params.workspaceID);
-    var mapId = getId(req.params.mapID);
-    var nodeId = getId(req.params.nodeID);
-    let x = req.body.x;
-    let y = req.body.y;
-    let shortSummary = req.body.shortSummary;
-    let description = req.body.description;
-    let type = req.body.type;
-    let targetId = req.body.targetId;
+  module.router.post('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:type', authGuardian.authenticationRequired, function(req, res) {
+    const actor = getUserIdFromReq(req);
+    const workspaceId = getId(req.params.workspaceID);
+    const mapId = getId(req.params.mapID);
+    const nodeId = getId(req.params.nodeID);
+    const type = req.params.type; //TODO: validation
 
-    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-        _id: mapId,
-        workspace: workspaceId
+      WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+          _id: mapId,
+          workspace: workspaceId
       }).exec()
-      .then(checkAccess.bind(this, req.params.mapID, actor))
-      .then(function(map) {
-        return map.addEffort(actor, nodeId, shortSummary, description, type, x, y, targetId);
-      })
-      .done(function(map) {
-        res.json({
-          map: map
-        });
-        track(actor, 'create_effort', {
-          'map_id': req.params.mapID,
-          'node_id': nodeId,
-          shortSummary : shortSummary
-        }, req.body);
-      }, defaultErrorHandler.bind(this, res));
+          .then(checkAccess.bind(this, req.params.mapID, actor))
+          .then(function(map) {
+              if(type === 'EFFORT'){
+                  let x = req.body.x;
+                  let y = req.body.y;
+                  let shortSummary = req.body.shortSummary;
+                  let description = req.body.description;
+                  return map.addEffort(actor, nodeId, shortSummary, description, type, x, y, null);
+              } else if (type === 'REPLACEMENT') {
+                  let targetId = req.body.targetId;
+                  let shortSummary = req.body.shortSummary;
+                  let description = req.body.description;
+                  return map.addEffort(actor, nodeId, shortSummary, description, type, null, null, targetId);
+              } else if (type === 'REMOVAL_PROPOSAL') {
+                  let shortSummary = req.body.shortSummary;
+                  let description = req.body.description;
+                  return map.addRemovalProposal(actor, nodeId, shortSummary, description);
+              }
+          })
+          .then(function(map) {
+              return map.defaultPopulate();
+          })
+          .done(function(map) {
+              res.json({
+                  map: map
+              });
+              track(actor, 'create_effort', {
+                  'map_id': req.params.mapID,
+                  'node_id': nodeId,
+                  'type': type,
+                  shortSummary : req.body.shortSummary
+              }, req.body);
+          }, defaultErrorHandler.bind(this, res));
   });
 
-  module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
-    var actor = getUserIdFromReq(req);
-    var workspaceId = getId(req.params.workspaceID);
-    var mapId = getId(req.params.mapID);
-    var nodeId = getId(req.params.nodeID);
-    let effortId = getId(req.params.effortId);
-    let x = req.body.x;
-    let y = req.body.y;
-    let shortSummary = req.body.shortSummary;
-    let description = req.body.description;
-    let state = req.body.state;
+    module.router.put('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
+        var actor = getUserIdFromReq(req);
+        var workspaceId = getId(req.params.workspaceID);
+        var mapId = getId(req.params.mapID);
+        var nodeId = getId(req.params.nodeID);
+        let effortId = getId(req.params.effortId);
+        let state = req.body.state;
 
-    WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
-        _id: mapId,
-        workspace: workspaceId
-      }).exec()
-      .then(checkAccess.bind(this, req.params.mapID, actor))
-      .then(function(map) {
-        return map.updateEffort(actor, nodeId, effortId, shortSummary, description, x, y, state);
-      })
-      .done(function(map) {
-        res.json({
-          map: map
-        });
-        track(actor, 'update_effort', {
-          'map_id': req.params.mapID,
-          'node_id': nodeId,
-          shortSummary : shortSummary,
-          state : state
-        }, req.body);
-      }, defaultErrorHandler.bind(this, res));
-  });
+        WardleyMap.findOne({ //this is check that the person logged in can actually write to workspace
+            _id: mapId,
+            workspace: workspaceId
+        }).exec()
+            .then(checkAccess.bind(this, req.params.mapID, actor))
+            .then(function(map) {
+                return Project.findById(effortId)
+                    .exec()
+                    .then(function(project){
+                        return project.verifyAccess(actor);
+                    })
+                    .then(function(project){
+                        let shortSummary = req.body.shortSummary;
+                        let description = req.body.description;
+                        if(shortSummary || description){
+                            return project.updateSummaryAndDescription(shortSummary, description);
+                        }
+                        return project;
+                    })
+                    .then(function(project){
+                        let newX = req.body.x;
+                        let newY = req.body.y;
+                        if(project.type === 'EFFORT' && (newX||newY)){
+                            return project.updateEffort(mapId, newX, newY);
+                        }
+                        return project;
+                    })
+                    .then(function(project){
+                        let state = req.body.state;
+                        if(state){
+                            return project.updateState(state);
+                        }
+                        return project;
+                    })
+                    .then(function(project){
+                        return map.defaultPopulate();
+                    });
+            })
+            .done(function(map) {
+                res.json({
+                    map: map
+                });
+                track(actor, 'update_effort', {
+                    'map_id': req.params.mapID,
+                    'node_id': nodeId,
+                    shortSummary : req.body.shortSummary,
+                    state : state
+                }, req.body);
+            }, defaultErrorHandler.bind(this, res));
+    });
 
 
     module.router.delete('/workspace/:workspaceID/map/:mapID/node/:nodeID/effort/:effortId', authGuardian.authenticationRequired, function(req, res) {
@@ -730,7 +770,17 @@ module.exports = function(authGuardian, mongooseConnection) {
         }).exec()
             .then(checkAccess.bind(this, req.params.mapID, actor))
             .then(function(map) {
-                return map.deleteEffort(actor, nodeId, effortId);
+                return Project.findById(effortId)
+                    .exec()
+                    .then(function(project){
+                        return project.verifyAccess(actor);
+                    })
+                    .then(function(project){
+                        return project.removeProject();
+                    })
+                    .then(function(project){
+                        return map.defaultPopulate();
+                    });
             })
             .done(function(map) {
                 res.json({

@@ -268,7 +268,7 @@ module.exports = function(conn){
                 _id: nodeId,
                 workspace: getId(workspace)
             }).exec()
-                .then(function(map) {
+                .then(function(node) {
                     if (workspace) {
                         return _this; // if we found workspace, then we have access to the node
                     } else {

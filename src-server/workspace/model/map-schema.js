@@ -490,13 +490,7 @@ module.exports = function(conn) {
                             let promises = [];
                             for (let i = 0; i < populatedAndDeletedNode.actions.length; i++) {
                                 let project = populatedAndDeletedNode.actions[i];
-                                if (project.affectedNodes.length > 1) {
-                                    // the project affected mutliple nodes, so remove the node
-                                    project.affectedNodes.pull(getId(nodeId));
-                                } else {
-                                    project.state = 'DELETED';
-                                }
-                                promises.push(project.save());
+                                promises.push(project.nodeRemoved(nodeId));
                             }
                             return q.allSettled(promises).then(function(result) {
                                 return node;
@@ -524,7 +518,6 @@ module.exports = function(conn) {
       let _this = this;
       return Node.findById(nodeId).exec()
         .then(function(node) {
-          console.log(actor, nodeId, shortSummary, description, type, x, y, targetId);
           if(targetId){
             // return ANYTHING as the action is between different nodes,
             // so this value is ignored
@@ -563,77 +556,6 @@ module.exports = function(conn) {
         });
     };
 
-    _MapSchema.methods.updateEffort = function(actor, nodeId, effortId, shortSummary, description, x, y, state) {
-      const Node = require('./node-schema')(conn);
-      const Workspace = require('./workspace-schema')(conn);
-      const Analysis = require('./analysis-schema')(conn);
-      const Project = require('./project-schema')(conn);
-
-      let _this = this;
-      return Node.findById(nodeId).exec()
-        .then(function(node) {
-          let relativeEvolution = x - node.evolution;
-          let relativeVisibility = y - node.visibility[0].value;
-          for(let i = 0; i < node.visibility; i++){
-            if(getId(node.visibility[i].map).equals(getId(_this))){
-              relativeVisibility = y - node.visibility[i].value;
-            }
-          }
-          return {
-            node: node,
-            relativeEvolution: relativeEvolution,
-            relativeVisibility: relativeVisibility
-          };
-        })
-        .then(function(newPos) {
-          return Project.findById(effortId).exec()
-          .then(function(project){
-            if (shortSummary || description) {
-              project.shortSummary = shortSummary;
-              project.description = description;
-            }
-            if (x || y) {
-              project.evolution = newPos.relativeEvolution;
-              project.visibility = newPos.relativeVisibility;
-            }
-            let nodeToSave;
-            if(state){
-              project.state = state;
-              if(state === 'SUCCEEDED' && project.type === 'EFFORT'){
-                newPos.node.evolution = newPos.node.evolution + project.evolution;
-                nodeToSave = newPos.node;
-              }
-            }
-            return project.save().then(function(project){
-              if(nodeToSave){
-                return nodeToSave.save();
-              }
-            });
-          })
-          .then(function(savedProjectOrNode){
-            console.log("TODO: history entry - effort updated");
-            return _this.defaultPopulate();
-          });
-        });
-    };
-
-    _MapSchema.methods.deleteEffort = function(actor, nodeId, effortId) {
-      const Node = require('./node-schema')(conn);
-      const Workspace = require('./workspace-schema')(conn);
-      const Analysis = require('./analysis-schema')(conn);
-      const Project = require('./project-schema')(conn);
-
-      let _this = this;
-      return Project.findById(effortId).exec()
-      .then(function(project){
-        project.state = 'DELETED';
-        return project.save();
-      })
-      .then(function(status){
-        console.log("TODO: history entry - effort deleted");
-        return _this.defaultPopulate();
-      });
-    };
 
 
     _MapSchema.methods.exportJSON = function(){

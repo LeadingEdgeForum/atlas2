@@ -119,36 +119,34 @@ export default class NewActionStore extends Store {
 
 
 
-  submitAddActionDialog(mapId){
-    if (mapId !== this.mapId) {
-      return;
+    submitAddActionDialog(mapId){
+        if (mapId !== this.mapId) {
+            return;
+        }
+        let data = null;
+        if(this.state.type === 'REPLACEMENT'){
+            data = {
+                shortSummary:  this.state.shortSummary,
+                description : this.state.description,
+                targetId: this.state.targetId,
+            };
+        } else {
+            data = {
+                shortSummary:  this.state.shortSummary,
+                description : this.state.description,
+                x: this.state.pos[0],
+                y: this.state.pos[1]
+            };
+        }
+        $.ajax({
+            type: 'POST',
+            url: '/api/workspace/' + this.workspaceId + '/map/' + this.mapId + '/node/' + this.state.sourceId + '/effort/' + this.state.type,
+            data:data,
+            success: function(data) {
+                this.closeNewActionDialog(mapId);
+                this.singleMapStore.updateMap(mapId, data);
+                this.emitChange();
+            }.bind(this)
+        });
     }
-    let data = null;
-    if(this.state.type === 'REPLACEMENT'){
-      data = {
-        shortSummary:  this.state.shortSummary,
-        description : this.state.description,
-        type: 'REPLACEMENT',
-        targetId: this.state.targetId,
-      };
-    } else {
-      data = {
-        shortSummary:  this.state.shortSummary,
-        description : this.state.description,
-        type: 'EFFORT',
-        x: this.state.pos[0],
-        y: this.state.pos[1]
-      };
-    }
-    $.ajax({
-      type: 'POST',
-      url: '/api/workspace/' + this.workspaceId + '/map/' + this.mapId + '/node/' + this.state.sourceId + '/effort',
-      data:data,
-      success: function(data) {
-        this.closeNewActionDialog(mapId);
-        this.singleMapStore.updateMap(mapId, data);
-        this.emitChange();
-      }.bind(this)
-    });
-  }
 }

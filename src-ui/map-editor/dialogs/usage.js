@@ -1,5 +1,5 @@
 /*
- * Copyright ${YEAR} Krzysztof Daniel.
+ * Copyright 2018,  Krzysztof Daniel.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,8 +74,14 @@ export default class Usage extends React.Component{
   }
 
   calculateUsageMessage(listOfMessages, node){
+      let referenceStrings = ['node', 'used'];
+      if(node.type === 'USER'){
+          referenceStrings = ['user', 'served'];
+      } else if (node.type === 'USERNEED'){
+          referenceStrings = ['user need', 'served'];
+      }
     if(node.parentMap.length === 1){
-      listOfMessages.push(<li>This node is used on this map only.</li>);
+      listOfMessages.push(<li>This {referenceStrings[0]} is {referenceStrings[1]} on this map only.</li>);
     }
     if(node.parentMap.length === 2){
       let length = node.parentMap.length;
@@ -86,17 +92,20 @@ export default class Usage extends React.Component{
       }
       listOfMaps.push(<MapLink mapID={node.parentMap[length - 1]}/>);
 
-      listOfMessages.push(<li>This node is used on {length} maps: {listOfMaps}.</li>);
+      listOfMessages.push(<li>This {referenceStrings[0]} is {referenceStrings[1]} on {length} maps: {listOfMaps}.</li>);
     }
   }
 
-  calculateSubmapMessage(listOfMessages, node){
-    if(!node.submapID){
-      listOfMessages.push(<li>This node has no submap attached.</li>);
-    } else {
-      listOfMessages.push(<li>This node has a submap attached:  <MapLink mapID={node.submapID}/>. </li>);
+    calculateSubmapMessage(listOfMessages, node){
+        if(node.type === 'USER' || node.type ==='USERNEED'){
+            return;
+        }
+        if(!node.submapID){
+            listOfMessages.push(<li>This node has no submap attached.</li>);
+        } else {
+            listOfMessages.push(<li>This node has a submap attached:  <MapLink mapID={node.submapID}/>. </li>);
+        }
     }
-  }
 
   calculateDependencyMessage(listOfMessages, node){
     if(node.parentMap.length === 1){

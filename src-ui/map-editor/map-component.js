@@ -311,12 +311,10 @@ const MapComponent = createReactClass({
           href={this.props.node.type === Constants.SUBMAP ? "/map/" + this.props.node.submapID : null}/>);
     }
 
-    if(node.type !== Constants.USER){
       results.push(<MenuItem name="info" glyph="info-sign" parentFocused={focused} pos={getMenuItemRelativePos(0)}
           hint="Display detailed component info" placement="top" key="info"
           action={Actions.openReferencesDialog.bind(Actions,node.name, node, workspaceID)}
           canvasStore={this.props.canvasStore}/>);
-    }
 
       if(node.type !== Constants.USER && node.type !== Constants.USERNEED
           && (node.status === 'EXISTING' || node.status === 'SCHEDULED_FOR_DELETION')){
