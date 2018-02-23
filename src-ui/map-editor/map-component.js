@@ -218,11 +218,11 @@ const MapComponent = createReactClass({
       return null;
     }
 
-    var style = _.extend(inertiaStyle, {
+    const style = _.extend(inertiaStyle, {
         width : getInertiaWidth(inertia)
     });
 
-    return <div style={style}></div>;
+    return <div style={style}/>;
   },
 
   renderName(node){
@@ -249,29 +249,28 @@ const MapComponent = createReactClass({
     return SubmapActions.openFormASubmapDialog(this.props.workspaceID, this.props.mapID, this.props.canvasStore.getCanvasState().currentlySelectedNodes, this.props.canvasStore.getCanvasState().currentlySelectedComments);
   },
 
-  ___openEditDialog(){
-    var id = this.props.id;
-    var mapID = this.props.mapID;
-    var workspaceID = this.props.workspaceID;
-    var node = this.props.node;
-    if(node.type === Constants.USER){
-        Actions.openEditUserDialog(workspaceID, mapID, id, node.name, node.description);
-    } else {
-        Actions.openEditNodeDialog(mapID, id);
-    }
-  },
+    ___openEditDialog(){
+        const id = this.props.id;
+        const mapID = this.props.mapID;
+        const workspaceID = this.props.workspaceID;
+        const node = this.props.node;
+        if(node.type === Constants.USER){
+            Actions.openEditUserDialog(workspaceID, mapID, id, node.name, node.description);
+        } else {
+            Actions.openEditNodeDialog(mapID, id);
+        }
+    },
 
-  ___remove(){
-    var id = this.props.id;
-    var mapID = this.props.mapID;
-    var workspaceID = this.props.workspaceID;
-    var node = this.props.node;
-    if(this.type === Constants.USER){
-        Actions.deleteUser(workspaceID, mapID, id);
-    } else {
-        Actions.deleteNode(workspaceID, mapID, id);
-    }
-  },
+    ___remove(){
+        const id = this.props.id;
+        const mapID = this.props.mapID;
+        const workspaceID = this.props.workspaceID;
+        if(this.type === Constants.USER){
+            Actions.deleteUser(workspaceID, mapID, id);
+        } else {
+            Actions.deleteNode(workspaceID, mapID, id);
+        }
+    },
 
   constructComponentMenu(workspaceID, mapID, node, id, focused){
     let results = [];
@@ -337,58 +336,58 @@ const MapComponent = createReactClass({
         }
     },
 
-  render: function() {
-    var node = this.props.node;
-    var style = getStyleForType(node.type, true);
-    var left = node.evolution * this.props.size.width;
-    var mapID = this.props.mapID;
-    var top = this.getVisibility(mapID, node) * this.props.size.height;
-    if(!top){
-      console.log('error, component without visiblity');
-    }
-    style = _.extend(style, {
-      left: left,
-      top: top,
-    });
-
-    style = this.decorateStatus(style);
-
-    var name = this.renderName(node);
-    var id = this.props.id;
-    let focused = this.props.canvasStore.shouldBeFocused(node);
-    var workspaceID = this.props.workspaceID;
-    var inertia = this.renderInertia(this.props.inertia);
-    var canvasStore = this.props.canvasStore;
-
-    let localItemCaptionStyle = _.clone(itemCaptionStyle);
-
-    localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
-    localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
-    localItemCaptionStyle.width = node.width ? node.width + 'em' : 'auto';
-
-    let menu = this.constructComponentMenu(workspaceID, mapID, node, id, focused);
-
-    return (
-      <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
-        if (input) {
-          this.input = input;
+    render: function() {
+        const node = this.props.node;
+        let style = getStyleForType(node.type, true);
+        const left = node.evolution * this.props.size.width;
+        const mapID = this.props.mapID;
+        let top = this.getVisibility(mapID, node) * this.props.size.height;
+        if(!top){
+            console.log('error, component without visiblity');
         }
-        if (!input) {
-          return;
-        }
-        jsPlumb.draggable(input, {
-          containment: true,
-          stop: this.jsPlumbDragStopHandler
+        style = _.extend(style, {
+            left: left,
+            top: top,
         });
-      }}>
-        <div style={localItemCaptionStyle} className="node-label">{name}
-          <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
-        </div>
-        {inertia}
-        {menu}
-      </div>
-    );
-  }
+
+        style = this.decorateStatus(style);
+
+        const name = this.renderName(node);
+        const id = this.props.id;
+        let focused = this.props.canvasStore.shouldBeFocused(node);
+        const workspaceID = this.props.workspaceID;
+        const inertia = this.renderInertia(this.props.inertia);
+        const canvasStore = this.props.canvasStore;
+
+        let localItemCaptionStyle = _.clone(itemCaptionStyle);
+
+        localItemCaptionStyle.fontSize = canvasStore.getNodeFontSize();
+        localItemCaptionStyle.top = - localItemCaptionStyle.fontSize;
+        localItemCaptionStyle.width = node.width ? node.width + 'em' : 'auto';
+
+        let menu = this.constructComponentMenu(workspaceID, mapID, node, id, focused);
+
+        return (
+            <div style={style} onClick={this.onClickHandler} id={id} key={id} ref={input => {
+                if (input) {
+                    this.input = input;
+                }
+                if (!input) {
+                    return;
+                }
+                jsPlumb.draggable(input, {
+                    containment: true,
+                    stop: this.jsPlumbDragStopHandler
+                });
+            }}>
+                <div style={localItemCaptionStyle} className="node-label">{name}
+                    <ReactResizeDetector handleWidth onResize={this.resizeHandler} />
+                </div>
+                {inertia}
+                {menu}
+            </div>
+        );
+    }
 });
 
 module.exports = MapComponent;
