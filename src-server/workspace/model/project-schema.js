@@ -147,7 +147,6 @@ module.exports = function(conn) {
                     return _this.populate('affectedNodes').execPopulate();
                 }})
             .then(function(populatedProject){
-                console.log('before', populatedProject);
                 /* project manipulations */
 
                 if(_this.state === 'SUCCEEDED' && _this.type === 'EFFORT'){
@@ -155,7 +154,6 @@ module.exports = function(conn) {
                     affectedNode.evolution = affectedNode.evolution + _this.evolution;
                     return affectedNode.save()
                         .then(function(){
-                            console.log('1', populatedProject);
                             return populatedProject;
                         });
                 }
@@ -163,7 +161,6 @@ module.exports = function(conn) {
 
                 if(_this.state === 'SUCCEEDED' && _this.type === 'REPLACEMENT'){
                     console.log('not implemented');
-                    console.log('null', populatedProject);
                     return null;
                 }
 
@@ -192,7 +189,6 @@ module.exports = function(conn) {
                 return populatedProject;
             })
             .then(function(populatedProject){
-                console.log('after', populatedProject);
                 return populatedProject.save();
             });
     };

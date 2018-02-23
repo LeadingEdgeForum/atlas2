@@ -316,7 +316,7 @@ const MapComponent = createReactClass({
           action={Actions.openReferencesDialog.bind(Actions,node.name, node, workspaceID)}
           canvasStore={this.props.canvasStore}/>);
 
-      if(node.type !== Constants.USER && node.type !== Constants.USERNEED
+      if(node.type !== Constants.USER
           && (node.status === 'EXISTING' || node.status === 'SCHEDULED_FOR_DELETION')){
           results.push(<MenuItem name="action" glyph="arrow-right" parentFocused={focused} pos={getMenuItemRelativePos(-Math.PI/2)}
                                  hint="Draw an action you want to execute" placement="top" key="action"
