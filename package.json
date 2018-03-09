@@ -74,7 +74,7 @@
     "imports-loader": "^0.7.0",
     "mocha": ">=4.1.0",
     "script-loader": "^0.7.0",
-    "selenium-standalone": "6.12.0",
+    "selenium-standalone": "6.13.0",
     "should": "13.2.1",
     "supertest": "*",
     "wdio-concise-reporter": "^0.1.2",
