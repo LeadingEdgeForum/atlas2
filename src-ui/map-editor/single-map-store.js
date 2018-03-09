@@ -516,6 +516,7 @@ export default class SingleWorkspaceStore extends Store {
         this.editNodeDialog.mapId = this.getMapId();
         this.editNodeDialog.nodeId = data.nodeID;
         this.editNodeDialog.status = nodes[i].status;
+        this.editNodeDialog.node = nodes[i];
       }
     }
     this.emitChange();
@@ -794,6 +795,7 @@ export default class SingleWorkspaceStore extends Store {
   }
 
   updateAction(data){
+      console.log(data);
     var actionData = {};
     if(data.pos){
       actionData.x = data.pos[0];

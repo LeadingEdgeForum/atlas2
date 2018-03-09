@@ -44,18 +44,30 @@ export default class AuthService extends Store {
     this.getToken = this.getToken.bind(this);
     this.loggedIn = this.loggedIn.bind(this);
     this.logout = this.logout.bind(this);
+    let logger = function(arg){
+      return function(arg, msg) {
+          console.log('log', arg, msg);
+      }
+    }
     this.auth0.on('authenticated', this._doAuthentication);
+    this.auth0.on('authorization_error', logger('authorization_error'));
+      this.auth0.on('unrecoverable_error', logger('unrecoverable_error'));
+      this.auth0.on('hash_parsed', logger('hash_parsed'));
   }
 
   _doAuthentication(authResult) {
+    console.log('auth', authResult);
       this.setToken(authResult.idToken);
       this.emitChange();
-      this.history.push(this.location);
+      if(this.history && this.location) {
+          this.history.push(this.location);
+      }
       this.history = null;
       this.location = null;
   }
 
   next(location,history){
+    console.log(location, history);
     this.location = location;
     this.history = history;
   }
@@ -90,10 +102,13 @@ export default class AuthService extends Store {
 
   loggedIn() {
     const token = this.getToken();
-    return !!token && !isTokenExpired(token);
+    const loggedIn = !!token && !isTokenExpired(token);
+    console.log('loggedIn', loggedIn, token);
+    return loggedIn;
   }
 
   setToken(idToken) {
+    console.log('set token', idToken);
     localStorage.setItem('id_token', idToken);
   }
 
@@ -103,6 +118,7 @@ export default class AuthService extends Store {
   }
 
   logout() {
+      // console.log('logout', idToken);
     // Clear user token and profile data from local storage
     localStorage.removeItem('id_token');
     localStorage.removeItem('profile');

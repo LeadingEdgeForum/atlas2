@@ -75,7 +75,7 @@ module.exports = function(conn) {
     });
 
 
-    ProjectSchema.methods.updateSummaryAndDescription = function(shortSummary, description){
+    ProjectSchema.methods.updateSummaryAndDescription = function(actor, shortSummary, description){
         if(shortSummary || description){
             this.shortSummary = shortSummary;
             this.description = description;
@@ -90,7 +90,7 @@ module.exports = function(conn) {
      * @param newY
      * @returns {mongoose.Schema.methods}
      */
-    ProjectSchema.methods.updateEffort = function(mapId, newX, newY){
+    ProjectSchema.methods.updateEffort = function(actor, mapId, newX, newY){
         const _this = this;
         if(_this.type !== 'EFFORT'){
             //non effort projects cannot execute this method
@@ -131,7 +131,7 @@ module.exports = function(conn) {
     };
 
 
-    ProjectSchema.methods.updateState = function(targetState){
+    ProjectSchema.methods.updateState = function(actor, targetState){
         const _this = this;
         if(['EXECUTING', 'REJECTED', 'FAILED', 'SUCCEEDED'].indexOf(targetState) === -1){
             console.log('unknown target state', targetState);
@@ -144,10 +144,19 @@ module.exports = function(conn) {
                 if(_this.populated('affectedNodes')){
                     return _this;
                 } else {
-                    return _this.populate('affectedNodes').execPopulate();
+                    return _this.populate('affectedNodes affectedNodes.parentMap').execPopulate();
                 }})
             .then(function(populatedProject){
                 /* project manipulations */
+
+                if(_this.state === 'EXECUTING' && _this.type === 'REMOVAL_PROPOSAL'){
+                    let affectedNode = _this.affectedNodes[0];
+                    _this.affectedNodes[0].status = 'SCHEDULED_FOR_DELETION';
+                    return affectedNode.save()
+                        .then(function(){
+                            return populatedProject;
+                        });
+                }
 
                 if(_this.state === 'SUCCEEDED' && _this.type === 'EFFORT'){
                     let affectedNode = _this.affectedNodes[0];
@@ -178,12 +187,12 @@ module.exports = function(conn) {
                 if(_this.state === 'SUCCEEDED' && _this.type === 'REMOVAL_PROPOSAL'){
                     let affectedNode = _this.affectedNodes[0];
                     if(affectedNode.status === 'SCHEDULED_FOR_DELETION'){
-                        affectedNode.status = 'DELETED';
+                        return affectedNode.parentMap[0].removeNode(actor, affectedNode._id)
+                            .then(function(){
+                                return populatedProject;
+                            });
                     }
-                    return affectedNode.save()
-                        .then(function(){
-                            return populatedProject;
-                        });
+                    return populatedProject;
                 }
 
                 return populatedProject;

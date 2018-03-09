@@ -93,7 +93,7 @@ module.exports = function(conn) {
                     path: 'actions',
                     match: {
                         type: {
-                            $in: ['EFFORT', 'REPLACEMENT']
+                            $in: ['EFFORT', 'REPLACEMENT', 'REMOVAL_PROPOSAL', 'PROPOSAL']
                         },
                         state: {
                             $in: ['PROPOSED', 'EXECUTING']
@@ -556,7 +556,21 @@ module.exports = function(conn) {
         });
     };
 
-
+    _MapSchema.methods.addRemovalProposal = function(actor, nodeId, shortSummary, description) {
+        const Project = require('./project-schema')(conn);
+        const _this = this;
+        return new Project({
+            affectedNodes: [nodeId],
+            workspace: _this.workspace,
+            shortSummary: shortSummary,
+            description: description,
+            type: 'REMOVAL_PROPOSAL',
+            state: 'PROPOSED',
+        }).save()
+            .then(function(project) {
+                return _this.defaultPopulate();
+            });
+    };
 
     _MapSchema.methods.exportJSON = function(){
       return mapExport(this);

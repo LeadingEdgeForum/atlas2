@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Chris" pattern="file[atlas2]:src-server//*||file[atlas2]:src-ui//*||file[atlas2]:tests//*||file[atlas2]:auth0-rules//*" />
+</component>

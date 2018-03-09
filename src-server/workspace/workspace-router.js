@@ -720,7 +720,7 @@ module.exports = function(authGuardian, mongooseConnection) {
                         let shortSummary = req.body.shortSummary;
                         let description = req.body.description;
                         if(shortSummary || description){
-                            return project.updateSummaryAndDescription(shortSummary, description);
+                            return project.updateSummaryAndDescription(actor,shortSummary, description);
                         }
                         return project;
                     })
@@ -728,14 +728,14 @@ module.exports = function(authGuardian, mongooseConnection) {
                         let newX = req.body.x;
                         let newY = req.body.y;
                         if(project.type === 'EFFORT' && (newX||newY)){
-                            return project.updateEffort(mapId, newX, newY);
+                            return project.updateEffort(actor, mapId, newX, newY);
                         }
                         return project;
                     })
                     .then(function(project){
                         let state = req.body.state;
                         if(state){
-                            return project.updateState(state);
+                            return project.updateState(actor,state);
                         }
                         return project;
                     })

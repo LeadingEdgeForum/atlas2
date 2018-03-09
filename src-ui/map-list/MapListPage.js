@@ -15,31 +15,33 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import DocumentTitle from 'react-document-title';
 import {
-  Grid,
-  Row,
-  Col,
-  Breadcrumb,
-  NavItem,
-  Glyphicon,
-  Tabs,
-  Tab,
-  Nav,
-  NavDropdown,
-  MenuItem,
-  Alert,
-  Button,
-  Form,
-  FormGroup,
-  FormControl,
-  ControlLabel,
-  HelpBlock,
-  Input,
-  Modal
+    Grid,
+    Row,
+    Col,
+    Breadcrumb,
+    NavItem,
+    Glyphicon,
+    Tabs,
+    Tab,
+    Nav,
+    NavDropdown,
+    MenuItem,
+    Alert,
+    Button,
+    Form,
+    FormGroup,
+    FormControl,
+    ControlLabel,
+    HelpBlock,
+    Modal,
+    Popover,
+    OverlayTrigger
 } from 'react-bootstrap';
 import AtlasNavbarWithLogout from '../atlas-navbar-with-logout';
 import MapList from './map-list';
 import {LinkContainer} from 'react-router-bootstrap';
 import SingleWorkspaceActions from './single-workspace-actions';
+import SingleMapActions from '../map-editor/single-map-actions';
 import EditWorkspaceDialog from '../workspace/edit-workspace-dialog';
 import EditorList from './editors-list';
 import $ from 'jquery';
@@ -206,38 +208,145 @@ export default class MapListPage extends React.Component {
     return <ul>{list}</ul>;
   }
 
-    _renderSingleProject(project){
+  _updateAction(workspaceId, mapId, nodeId, desiredActionId, state){
+      $.ajax({
+          type: 'PUT',
+          url: '/api/workspace/' + workspaceId +
+          '/map/' + mapId +
+          '/node/' + nodeId +
+          '/effort/' + desiredActionId,
+          data: {
+              state:state
+          },
+          success: function(data2) {
+              this.props.singleWorkspaceStore.fetchSingleWorkspaceInfo();
+              this.props.singleWorkspaceStore.emit('map', {
+                  type: 'change',
+                  id: mapId
+              });
+              this._openProjectsDialog();
+          }.bind(this)
+      });
+  }
+
+  _renderProjectMenu(entry, project){
+      if(project.state === 'REJECTED' || project.status === 'FAILED' || project.status === 'SUCCEEDED' || project.status === 'DELETED'){
+          return;
+      }
+
+
+      if(project.state === 'PROPOSED'){
+          let workspaceId = project.affectedNodes[0].workspace._id || project.affectedNodes[0].workspace;
+          let mapId = project.affectedNodes[0].parentMap[0]._id || project.affectedNodes[0].parentMap[0];
+          let nodeId = project.affectedNodes[0]._id;
+          let desiredActionId = project._id;
+
+
+
+          entry.push('\u00A0\u00A0\u00A0');
+          let hint0 = <Popover key='menu0' id='menu0'>Start execution</Popover>;
+          let action0 = this._updateAction.bind(this, workspaceId, mapId, nodeId, desiredActionId, 'EXECUTING');
+          let glyph0 = <Glyphicon glyph='play' onClick={action0} style={{zIndex: 50,  cursor: 'pointer'}} key='menu0'/>;
+
+          entry.push(<span style={{color:'silver'}}><OverlayTrigger key='menutrigger0' overlay={hint0} placement="top" trigger={['hover', 'focus']}>{glyph0}</OverlayTrigger></span>);
+
+
+
+          entry.push('\u00A0');
+          let hint1 = <Popover key='menu1' id='menu1'>Reject as not the best thing for now</Popover>;
+          let action1 = this._updateAction.bind(this, workspaceId, mapId, nodeId, desiredActionId, 'REJECTED');
+          let glyph1 = <Glyphicon glyph='eject' onClick={action1} style={{zIndex: 50,  cursor: 'pointer'}} key='menu1'/>;
+
+          entry.push(<span style={{color:'silver'}}><OverlayTrigger key='menutrigger1' overlay={hint1} placement="top" trigger={['hover', 'focus']}>{glyph1}</OverlayTrigger></span>);
+
+
+
+      }
+      if(project.state === 'EXECUTING'){
+          let workspaceId = project.affectedNodes[0].workspace._id || project.affectedNodes[0].workspace;
+          let mapId = project.affectedNodes[0].parentMap[0]._id || project.affectedNodes[0].parentMap[0];
+          let nodeId = project.affectedNodes[0]._id;
+          let desiredActionId = project._id;
+
+
+
+          entry.push('\u00A0\u00A0\u00A0');
+          let hint2 = <Popover key='menu2' id='menu2'>"Mark project as successfully executed."</Popover>;
+          let action2 = this._updateAction.bind(this, workspaceId, mapId, nodeId, desiredActionId, 'SUCCEEDED');
+          let glyph2 = <Glyphicon glyph='thumbs-up' onClick={action2} style={{zIndex: 50,  cursor: 'pointer'}} key='menu2'/>;
+
+          entry.push(<span style={{color:'silver'}}><OverlayTrigger key='menutrigger2' overlay={hint2} placement="top" trigger={['hover', 'focus']}>{glyph2}</OverlayTrigger></span>);
+
+
+
+          entry.push('\u00A0');
+          let hint3 = <Popover key='menu3' id='menu3'>Mark project as executed but without meeting expectations.</Popover>;
+          let action3 = this._updateAction.bind(this, workspaceId, mapId, nodeId, desiredActionId, 'FAILED');
+          let glyph3 = <Glyphicon glyph='thumbs-down' onClick={action3} style={{zIndex: 50,  cursor: 'pointer'}} key='menu3'/>;
+
+          entry.push(<span style={{color:'silver'}}><OverlayTrigger key='menutrigger3' overlay={hint3} placement="top" trigger={['hover', 'focus']}>{glyph3}</OverlayTrigger></span>);
+
+
+
+      }
+  }
+
+    _renderSingleProject(project) {
         let entry = [];
-        if(project.type === 'EFFORT'){
+        if (project.type === 'EFFORT') {
             entry.push(project.shortSummary);
-            if(project.affectedNodes[0].parentMap){
+            if (project.affectedNodes[0].parentMap) {
                 entry.push(" for component ");
-                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
             }
-        } else if(project.type === 'REPLACEMENT'){
-            if(project.affectedNodes[0].parentMap){
+        } else if (project.type === 'REPLACEMENT') {
+            if (project.affectedNodes[0].parentMap) {
                 entry.push(project.shortSummary);
                 entry.push(", ");
-                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
                 entry.push(" should be replaced by ");
                 entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.targetId}/>);
             }
-        } else if(project.type === 'PROPOSAL' && project.affectedNodes[0].parentMap){
-                let mainAffectedNode = project.affectedNodes[0];
-                if (mainAffectedNode.type === 'USER') {
-                    entry.push("Start serving user ");
-                    entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
-                } else if (mainAffectedNode.type === 'USERNEED') {
-                    entry.push("Start satisfying ");
-                    entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
-                } else {
-                    entry.push("Build ");
-                    entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]} nodeID={project.affectedNodes[0]._id}/>);
-                    if (project.shortSummary) {
-                        entry.push(", " + project.shortSummary);
-                    }
+        } else if (project.type === 'PROPOSAL' && project.affectedNodes[0].parentMap) {
+            let mainAffectedNode = project.affectedNodes[0];
+            if (mainAffectedNode.type === 'USER') {
+                entry.push("Start serving user ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
+            } else if (mainAffectedNode.type === 'USERNEED') {
+                entry.push("Start satisfying ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
+            } else {
+                entry.push("Build ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
+                if (project.shortSummary) {
+                    entry.push(", " + project.shortSummary);
                 }
+            }
+        } else if (project.type === 'REMOVAL_PROPOSAL' && project.affectedNodes[0].parentMap) {
+            let mainAffectedNode = project.affectedNodes[0];
+            if (mainAffectedNode.type === 'USER') {
+                entry.push("Stop serving user ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
+            } else if (mainAffectedNode.type === 'USERNEED') {
+                entry.push("Stop satisfying ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
+            } else {
+                entry.push("Discard ");
+                entry.push(<NodeLink mapID={project.affectedNodes[0].parentMap[0]}
+                                     nodeID={project.affectedNodes[0]._id}/>);
+                if (project.shortSummary) {
+                    entry.push(", " + project.shortSummary);
+                }
+            }
         }
+        this._renderProjectMenu(entry, project);
         return <li>{entry}</li>;
     }
 
