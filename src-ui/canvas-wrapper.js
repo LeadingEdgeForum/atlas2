@@ -1,4 +1,4 @@
-/* Copyright 2017 Krzysztof Daniel
+/* Copyright 2018 Krzysztof Daniel
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.*/
 /*jshint esversion: 6 */
 /* globals document */
-
+import "babel-polyfill";
 import React from 'react';
 import ReactDOM from 'react-dom';
 var CWB = require('./minimal-canvas/canvas-with-background.js').default;
