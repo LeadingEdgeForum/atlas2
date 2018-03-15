@@ -54,7 +54,9 @@ function migrator(doc, fn){
     delete doc._doc.capabilityCategories;
     delete doc.capabilityCategories;
   }
-  fn();
+  if(fn){
+      fn();
+  }
 }
 
 module.exports = function(conn) {
