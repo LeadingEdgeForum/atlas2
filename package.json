@@ -12,6 +12,7 @@
     "async": "2.6.0",
     "atob": "^2.0.3",
     "auth0-lock": "11.4.0",
+    "babel-polyfill": "^6.26.0",
     "blob": "0.0.4",
     "body-parser": "^1.15.2",
     "bootstrap": "^4.0.0",
@@ -85,6 +86,7 @@
     "wdio-webpack-service": "^1.0.1",
     "webdriverio": "^4.10.2",
     "webpack": "4.1.1",
+    "webpack-cli": "^2.0.12",
     "webpack-dev-middleware": "3.0.1"
   },
   "repository": {},
