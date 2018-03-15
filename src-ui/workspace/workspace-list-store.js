@@ -1,3 +1,13 @@
+/* Copyright 2018  Krzysztof Daniel.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 
 import Store from '../store.js';
@@ -44,6 +54,10 @@ export default class WorkspaceListStore extends Store {
               case ActionTypes.WORKSPACE_DELETE:
                   this.deleteWorkspace(action.workspaceID);
                   break;
+              case ActionTypes.WORKSPACE_HISTORY_SHOW:
+                  this.showHistory(action.workspaceID);
+                  this.emitChange();
+                  break;
               default:
                   return;
           }
@@ -65,6 +79,13 @@ export default class WorkspaceListStore extends Store {
   updateWorkspaces() {
     this.serverRequest = $.get('/api/workspaces', function(result) {
       this.workspaces = result;
+      this.emitChange();
+    }.bind(this));
+  }
+
+  showHistory(workspaceID) {
+    this.serverRequest = $.get('/api/workspace/' + workspaceID + '/history', function(result) {
+      console.log(result);
       this.emitChange();
     }.bind(this));
   }

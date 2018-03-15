@@ -19,10 +19,6 @@ export default class SingleWorkspaceStore extends Store {
           open : false,
       };
 
-      this.newNodeDialog = {
-        open : false
-      };
-
       this.addCommentDialog = {
         open : false
       };
@@ -51,10 +47,6 @@ export default class SingleWorkspaceStore extends Store {
         open : false
       };
 
-      this.submapReferencesDialog = {
-        open : false
-      };
-
       this.turnIntoSubmapDialog = {
         open : false
       };
@@ -70,9 +62,11 @@ export default class SingleWorkspaceStore extends Store {
       this.updateNodeObjects = [];
       this.updateUserObjects = [];
 
+      this.setMaxListeners(15);
+
       this.io = require('socket.io-client')();
 
-      this.io.on('mapchange', this.reloadOnSocketMessage);
+      this.io.on('mapchange', this.reloadOnSocketMessage.bind(this));
 
       this.dispatchToken = null;
       this.redispatch();
@@ -110,21 +104,6 @@ export default class SingleWorkspaceStore extends Store {
           break;
         case ActionTypes.SUBMIT_EDIT_MAP_DIALOG:
           this.submitEditMapDialog(action.data);
-          break;
-        case ActionTypes.OPEN_NEW_NODE_DIALOG:
-          this.newNodeDialog.open = true;
-          this.newNodeDialog.coords = action.coords;
-          this.newNodeDialog.type = action.type;
-          this.emitChange();
-          break;
-        case ActionTypes.CLOSE_NEW_NODE_DIALOG:
-          this.newNodeDialog = {
-            open: false
-          };
-          this.emitChange();
-          break;
-        case ActionTypes.SUBMIT_NEW_NODE_DIALOG:
-          this.submitNewNodeDialog(action.data);
           break;
         case ActionTypes.OPEN_EDIT_NODE_DIALOG:
           this.openEditNodeDialog(action.data);
@@ -170,21 +149,6 @@ export default class SingleWorkspaceStore extends Store {
               this.emitChange();
             }.bind(this)
           });
-          break;
-        case ActionTypes.OPEN_CREATE_SUBMAP_FROM_SELECTED_NODES_DIALOG:
-          this.addSubmapDialog.open = true;
-          this.addSubmapDialog.listOfNodesToSubmap = action.data.nodes;
-          this.addSubmapDialog.listOfCommentsToSubmap = action.data.comments;
-          this.emitChange();
-          break;
-        case ActionTypes.CLOSE_ADD_SUBMAP_DIALOG:
-          this.addSubmapDialog = {
-            open: false
-          };
-          this.emitChange();
-          break;
-        case ActionTypes.SUBMIT_ADD_SUBMAP_DIALOG:
-          this.createSubmap(action.data);
           break;
         case ActionTypes.SUBMIT_ADD_REFERENCED_SUBMAP:
           this.addReferenceToExistingSubmap(action.refID, action.coords);
@@ -253,7 +217,7 @@ export default class SingleWorkspaceStore extends Store {
           this.connectionDialog.targetId = action.data.targetId;
           this.connectionDialog.label = action.data.label;
           this.connectionDialog.description = action.data.description;
-          this.connectionDialog.type = action.data.type;
+          this.connectionDialog.connectionType = action.data.connectionType;
           this.emitChange();
           break;
         case ActionTypes.CLOSE_EDIT_CONNECTION_DIALOG:
@@ -268,38 +232,11 @@ export default class SingleWorkspaceStore extends Store {
         case ActionTypes.DELETE_CONNECTION:
           this.deleteConnection(action.data);
           break;
-
-
-        case ActionTypes.SHOW_SUBMAP_REFERENCES:
-          this.submapReferencesDialog.open = true;
-          this.submapReferencesDialog.currentName = action.data.currentName;
-          this.submapReferencesDialog.mapID = action.data.mapID;
-          this.submapReferencesDialog.submapID = action.data.submapID;
-          this.submapReferencesDialog.node = action.data.node;
-          this.submapReferencesDialog.workspaceID = action.data.workspaceID;
-          this.submapReferencesDialog.variantId = action.data.variantId;
-          $.ajax({
-            type: 'GET',
-            url: '/api/submap/' + this.submapReferencesDialog.submapID + '/usage',
-            success: function(data2) {
-              this.submapReferencesDialog.referencingMaps = data2;
-              this.emitChange();
-            }.bind(this)
-          });
-          this.emitChange();
-          break;
-        case ActionTypes.CLOSE_SUBMAP_REFERENCES:
-          this.submapReferencesDialog = {
-            open: false
-          };
-          this.emitChange();
-          break;
         case ActionTypes.SHOW_REFERENCES:
           this.referencesDialog.open = true;
           this.referencesDialog.currentName = action.data.currentName;
           this.referencesDialog.node = action.data.node;
           this.referencesDialog.workspaceID = action.data.workspaceID;
-          this.referencesDialog.variantId = action.data.variantId;
           this.emitChange();
           break;
         case ActionTypes.CLOSE_REFERENCES:
@@ -500,26 +437,6 @@ export default class SingleWorkspaceStore extends Store {
     }
   }
 
-  fetchMapDiff(){
-    if(!this.diffServerRequest && !this.errorCode){
-      this.diffServerRequest = $.get('/api/map/' + this.mapID + '/diff', function(result) {
-        this.diff = result;
-        this.diffServerRequest = null;
-        this.emitChange();
-      }.bind(this));
-    }
-  }
-
-  fetchMapVariants(){
-    if(!this.variantsServerRequest && !this.errorCode){
-      this.variantsServerRequest = $.get('/api/map/' + this.mapID + '/variants', function(result) {
-        this.variants = result;
-        this.variantsServerRequest = null;
-        this.emitChange();
-      }.bind(this));
-    }
-  }
-
   getMap(){
     if(!this.map && !this.errorCode){
       this.fetchMap();
@@ -545,39 +462,14 @@ export default class SingleWorkspaceStore extends Store {
     return this.map;
   }
 
-  getDiff(){
-    if(!this.diff){
-      this.fetchMapDiff();
-      return {
-        nodesRemoved : [],
-        nodesAdded : [],
-        nodesModified : [],
-        usersAdded : [],
-        usersRemoved : []
-      };
-    }
-    return this.diff;
-  }
-
-  getVariants(){
-    if(!this.variants){
-      this.fetchMapVariants();
-      return {
-        past : null,
-        alternatives : [],
-        futures : []
-      };
-    }
-    return this.variants;
-  }
-
 
   submitEditMapDialog(data){
     this.map.map.name = data.name;
     this.map.map.responsiblePerson = data.responsiblePerson;
+    this.map.map.isSubmap = data.isSubmap;
     $.ajax({
       type: 'PUT',
-      url: '/api/map/' + this.mapID,
+      url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.mapID,
       dataType: 'json',
       data: this.map,
       success: function(data2) {
@@ -594,34 +486,6 @@ export default class SingleWorkspaceStore extends Store {
         this.io.emit('workspace', {
           type: 'change',
           id: data.workspaceID
-        });
-      }.bind(this)
-    });
-  }
-
-  submitNewNodeDialog(data){
-    $.ajax({
-      type: 'POST',
-      url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/node/',
-      data: {
-        name:  data.name,
-        responsiblePerson : data.responsiblePerson,
-        inertia: data.inertia,
-        description : data.description,
-        type: data.type,
-        x: data.coords.x,
-        y: data.coords.y
-      },
-      success: function(data2) {
-        this.map = data2;
-        this.newNodeDialog = {
-          open: false
-        };
-        this.diff = null;
-        this.emitChange();
-        this.io.emit('map', {
-          type: 'change',
-          id: this.getMapId()
         });
       }.bind(this)
     });
@@ -676,7 +540,7 @@ export default class SingleWorkspaceStore extends Store {
     this.nodeOrUserUpdateInProgress = true;
     $.ajax({
       type: 'PUT',
-      url: '/api/workspace/' + this.getWorkspaceId()+ '/map/' + this.getMapId() + '/node/' + updateToExecute.data.nodeId,
+      url: '/api/workspace/' + this.getWorkspaceId() + '/map/' + this.getMapId() + '/node/' + updateToExecute.data.nodeId,
       data: updateToExecute.payload,
       success: function(data2) {
         this.nodeOrUserUpdateInProgress = false;
@@ -868,35 +732,6 @@ export default class SingleWorkspaceStore extends Store {
     });
   }
 
-  createSubmap(data){
-    $.ajax({
-          type: 'PUT',
-          url: '/api/map/' + this.getMapId() + '/submap',
-          dataType: 'json',
-          data : {
-            name : data.name,
-            responsiblePerson : data.responsiblePerson,
-            listOfNodesToSubmap : data.listOfNodesToSubmap,
-            listOfCommentsToSubmap : data.listOfCommentsToSubmap,
-            coords: data.coords
-          },
-          success: function(data2) {
-            this.map = data2;
-            this.addSubmapDialog = {open:false};
-            this.diff = null;
-            this.emitChange();
-            this.io.emit('map', {
-              type: 'change',
-              id: this.getMapId()
-            });
-            this.io.emit('workspace', {
-              type: 'change',
-              id: this.getWorkspaceId()
-            });
-          }.bind(this)
-        });
-  }
-
   updateComment(data){
     var payload = {};
     if(data.comment){
@@ -1022,7 +857,7 @@ export default class SingleWorkspaceStore extends Store {
       url:  '/api/workspace/' + this.getWorkspaceId() +
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
-            '/outgoingDependency/' + data.targetId,
+            '/dependency/' + data.targetId,
       success: function(data2) {
         this.map = data2;
         this.diff = null;
@@ -1042,7 +877,7 @@ export default class SingleWorkspaceStore extends Store {
         url:  '/api/workspace/' + this.getWorkspaceId() +
               '/map/' + this.getMapId() +
               '/node/' + data.sourceId +
-              '/outgoingDependency/' + data.targetId,
+              '/dependency/' + data.targetId,
         data: data,
         success: function(data2) {
           this.map = data2;
@@ -1063,7 +898,7 @@ export default class SingleWorkspaceStore extends Store {
       url:  '/api/workspace/' + this.getWorkspaceId() +
             '/map/' + this.getMapId() +
             '/node/' + data.sourceId +
-            '/outgoingDependency/' + data.targetId,
+            '/dependency/' + data.targetId,
       success: function(data2) {
         this.map = data2;
         this.diff = null;
@@ -1112,5 +947,17 @@ export default class SingleWorkspaceStore extends Store {
         });
       }.bind(this)
     });
+  }
+
+  updateMap(mapId, data){
+    if(this.mapID === mapId){
+      this.map = data;
+      this.diff = null;
+      this.emitChange();
+      this.io.emit('map', {
+        type: 'change',
+        id: this.getMapId()
+      });
+    }
   }
 }

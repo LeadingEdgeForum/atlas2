@@ -1,3 +1,13 @@
+/* Copyright 2018  Krzysztof Daniel.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.*/
 /*jshint esversion: 6 */
 
 import React from 'react';
@@ -20,6 +30,9 @@ export default class WorkspaceListElement extends React.Component {
     event.stopPropagation();
     event.preventDefault();
     Actions.deleteWorkspace(id);
+  }
+  showWorkspaceHistory(workspaceID, event){
+    Actions.showWorkspaceHistory(workspaceID);
   }
   stopPropagation(event){
     event.stopPropagation();
@@ -47,7 +60,8 @@ export default class WorkspaceListElement extends React.Component {
               <Col xs={11}>{this.props.description} {mapsCountInfo}.</Col>
               <Col xs={1}>
                 <DropdownButton title={dropDownTitle} onClick={this.stopPropagation}>
-                  <MenuItem eventKey="1" onClick={this.delete.bind(this, workspaceID)}><Glyphicon glyph="remove"></Glyphicon> Remove</MenuItem>
+                  <MenuItem eventKey="1" onClick={this.showWorkspaceHistory.bind(this, workspaceID)}><Glyphicon glyph="film"></Glyphicon> Fetch XHR History</MenuItem>
+                  <MenuItem eventKey="2" onClick={this.delete.bind(this, workspaceID)}><Glyphicon glyph="remove"></Glyphicon> Remove</MenuItem>
                 </DropdownButton>
                 </Col>
               </Row>

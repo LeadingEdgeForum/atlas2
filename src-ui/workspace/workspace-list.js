@@ -40,11 +40,10 @@ export default class WorkspaceList extends React.Component {
     if(!workspace){
       return [];
     }
-    if(!workspace.timeline){
+    if(!workspace.maps){
       return [];
     }
-    var timelineLength = workspace.timeline.length;
-    return workspace.timeline[timelineLength - 1].maps; //now for now
+    return workspace.maps;
   }
 
   render() {

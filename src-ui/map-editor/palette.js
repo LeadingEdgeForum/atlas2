@@ -9,6 +9,7 @@ import {
   Button
 } from 'react-bootstrap';
 import SingleMapActions from './single-map-actions';
+import NewNodeActions from './dialogs/new-node/create-new-node-actions';
 import CanvasActions from './canvas-actions';
 import Constants from '../constants';
 import {
@@ -49,7 +50,7 @@ var makeDraggable = function(type, mapID, canvasStore, input) {
       } else if (type === Constants.USER){
         SingleMapActions.openAddNewUserDialog(coords, type);
       } else {
-        SingleMapActions.openAddNodeDialog(coords, type);
+        NewNodeActions.openAddNodeDialog(mapID, coords, type);
       }
     }
   });

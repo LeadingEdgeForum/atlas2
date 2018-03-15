@@ -4,6 +4,7 @@ var React = require('react');
 var _ = require('underscore');
 var Constants = require('../constants');
 import Actions from './single-map-actions';
+import SubmapActions from './dialogs/form-submap/form-a-submap-actions';
 import {getStyleForType} from './component-styles';
 import {Button, Glyphicon} from 'react-bootstrap';
 import {endpointOptions} from './component-styles';
@@ -62,7 +63,51 @@ var MapComponent = createReactClass({
     return {focus: false};
   },
 
-  componentWillUnmount: function() {},
+  componentDidMount: function() {
+    this.componentDidUpdate();
+  },
+
+  componentDidUpdate: function() {
+    if (!this.input) {
+      return;
+    }
+    if (!this.props.focused) {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeSource(this.input);
+      jsPlumb.makeTarget(this.input,
+        endpointOptions, {
+          anchor: "TopCenter",
+          scope: jsPlumb.Defaults.Scope + " WM_User"
+        });
+    } else if (this.state.hover === "link") {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+      jsPlumb.makeSource(this.input, endpointOptions, {
+        anchor: "BottomCenter"
+      });
+    } else if (this.state.hover === "move") {
+      jsPlumb.setDraggable(this.input, true);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+    } else if (this.state.hover === "action") {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+      jsPlumb.makeSource(this.input, actionEndpointOptions, {
+        anchor: "Right"
+      });
+    } else {
+      jsPlumb.setDraggable(this.input, false);
+      jsPlumb.unmakeTarget(this.input);
+      jsPlumb.unmakeSource(this.input);
+    }
+    let mapID = this.props.mapID;
+    let node = this.props.node;
+    let left = node.evolution * this.props.size.width;
+    let top = this.getVisibility(mapID, node) * this.props.size.height;
+    jsPlumb.repaint(this.input, {left:left,top:top});
+  },
 
   shouldComponentUpdate(nextProps, nextState){
     if(nextProps.focused === false && this.props.focused === true){
@@ -85,13 +130,17 @@ var MapComponent = createReactClass({
     return true;
   },
 
-  resizeHandler : function(newWidth){
+  resizeHandler : function(newWidth,x,y,z){
     if(this.resizeHandlerTimeout){
       clearTimeout(this.resizeHandlerTimeout);
     }
     var id = this.props.id;
     var mapID = this.props.mapID;
     var workspaceID = this.props.workspaceID;
+    if(newWidth === this.props.node.width){
+      clearTimeout(this.resizeHandlerTimeout);
+      return;
+    }
     var updateCall = function(){
       Actions.updateNode(workspaceID, mapID, id, null, newWidth);
     };
@@ -120,28 +169,18 @@ var MapComponent = createReactClass({
       Actions.openEditNodeDialog(mapID, nodeID);
     }
     if (this.state.hover === "group") {
-      var mapID = this.props.mapID; //jshint ignore:line
-      Actions.openCreateSubmapDialog({
-        mapID:mapID,
-        nodes:this.props.canvasStore.getCanvasState().currentlySelectedNodes,
-        comments: this.props.canvasStore.getCanvasState().currentlySelectedComments});
+      SubmapActions.openFormASubmapDialog(
+        this.props.workspaceID,
+        this.props.mapID,
+        this.props.canvasStore.getCanvasState().currentlySelectedNodes,
+        this.props.canvasStore.getCanvasState().currentlySelectedComments);
     }
     if (this.state.hover === "info") {
       var mapID = this.props.mapID; //jshint ignore:line
-      var submapID = this.props.node.submapID;
       var currentName = this.props.node.name;
       var node = this.props.node; //jshint ignore:line
       let workspaceID = this.props.workspaceID;
-      var variantId = this.props.variantId;
-      if(submapID){
-        Actions.openSubmapReferencesDialog(currentName, mapID, submapID, node, workspaceID, variantId);
-      } else {
-        Actions.openReferencesDialog(currentName, node, workspaceID, variantId);
-      }
-    }
-
-    if(this.state.hover === 'action'){
-      console.log('action!!!');
+      Actions.openReferencesDialog(currentName, node, workspaceID);
     }
     if((e.nativeEvent.ctrlKey || e.nativeEvent.altKey)){
       if (this.props.focused) {
@@ -168,15 +207,6 @@ var MapComponent = createReactClass({
 
   renderMenu() {
     if (!this.props.focused) {
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeTarget(this.input,
-          endpointOptions,
-          {anchor: "TopCenter",
-            scope: jsPlumb.Defaults.Scope + " WM_User"
-          });
-      }
       return null;
     }
     var groupStyle = {
@@ -189,11 +219,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "group") {
       groupStyle = _.extend(groupStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var pencilStyle = {
       position: "absolute",
@@ -205,11 +230,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "pencil") {
       pencilStyle = _.extend(pencilStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var removeStyle = {
       position: "absolute",
@@ -221,11 +241,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "remove") {
       removeStyle = _.extend(removeStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var linkStyle = {
       position: "absolute",
@@ -237,12 +252,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "link") {
       linkStyle = _.extend(linkStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeSource(this.input, endpointOptions, {anchor: "BottomCenter"});
-      }
     }
     var moveStyle = {
       position: "absolute",
@@ -254,11 +263,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "move") {
       moveStyle = _.extend(moveStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, true);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var submapStyle = {
       position: "absolute",
@@ -270,11 +274,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "submap") {
       submapStyle = _.extend(submapStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var infoStyle = {
       position: "absolute",
@@ -286,11 +285,6 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "info") {
       infoStyle = _.extend(infoStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-      }
     }
     var actionStyle = {
       position: "absolute",
@@ -302,31 +296,25 @@ var MapComponent = createReactClass({
     };
     if (this.state.hover === "action") {
       actionStyle = _.extend(actionStyle, activeStyle);
-      if (this.input) {
-        jsPlumb.setDraggable(this.input, false);
-        jsPlumb.unmakeTarget(this.input);
-        jsPlumb.unmakeSource(this.input);
-        jsPlumb.makeSource(this.input, actionEndpointOptions, {anchor: "Right"});
-      }
     }
     var menuItems = [];
     if(this.props.canvasStore.shouldShow("pencil")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" style={pencilStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "pencil")} onMouseOut={this.mouseOut} glyph="pencil" key="pencil" style={pencilStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("remove")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" style={removeStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "remove")} onMouseOut={this.mouseOut} glyph="remove" key="remove" style={removeStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("link")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" style={linkStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "link")} onMouseOut={this.mouseOut} glyph="link" key="link" style={linkStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("move")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" style={moveStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "move")} onMouseOut={this.mouseOut} glyph="move" key="move" style={moveStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("action")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" style={actionStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "action")} onMouseOut={this.mouseOut} glyph="arrow-right" key="arrow-right" style={actionStyle}></Glyphicon>);
     }
     if(this.props.canvasStore.shouldShow("group")){
-      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" style={groupStyle}></Glyphicon>);
+      menuItems.push(<Glyphicon onMouseOver={this.mouseOver.bind(this, "group")} onMouseOut={this.mouseOut} glyph="resize-small" key="resize-small" style={groupStyle}></Glyphicon>);
     }
     let href = "/map/" + this.props.node.submapID;
     if(this.props.node.type === Constants.SUBMAP){
@@ -393,12 +381,26 @@ var MapComponent = createReactClass({
     style.boxShadow = "0 0 3px 3px orange";
   },
 
+  getVisibility(mapId, node){
+    let visibilityArray = node.visibility;
+    for(let i = 0; i < visibilityArray.length; i++){
+      if(visibilityArray[i].map === mapId){
+        return visibilityArray[i].value;
+      }
+    }
+    return null;
+  },
+
   render: function() {
     var node = this.props.node;
     var diff = this.props.diff;
     var style = getStyleForType(node.type);
-    var left = node.x * this.props.size.width;
-    var top = node.y * this.props.size.height;
+    var left = node.evolution * this.props.size.width;
+    var mapID = this.props.mapID;
+    var top = this.getVisibility(mapID, node) * this.props.size.height;
+    if(!top){
+      console.log('error, component without visiblity');
+    }
     style = _.extend(style, {
       left: left,
       top: top,
@@ -411,7 +413,6 @@ var MapComponent = createReactClass({
     var shouldBeDraggable = this.props.focused;
     var _this = this;
     var id = this.props.id;
-    var mapID = this.props.mapID;
     var focused = this.props.focused;
     var workspaceID = this.props.workspaceID;
     var inertia = this.renderInertia(this.props.inertia);

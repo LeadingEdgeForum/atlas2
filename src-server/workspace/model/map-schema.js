@@ -18,6 +18,7 @@ var modelLogger = require('./../../log').getLogger('MapSchema');
 var _ = require('underscore');
 var q = require('q');
 let mapExport = require('./map-import-export').mapExport;
+let getId = require('../../util/util.js').getId;
 
 var wardleyMap = {};
 
@@ -52,7 +53,6 @@ var removeDuplicatesDependenciesFromList = function(dependencies) {
 var removeDuplicatesDependencies = function(nodes) {
     for (var i = 0; i < nodes.length; i++) {
         removeDuplicatesDependenciesFromList(nodes[i].outboundDependencies);
-        removeDuplicatesDependenciesFromList(nodes[i].inboundDependencies);
     }
 };
 
@@ -60,8 +60,8 @@ var removeDuplicatesDependencies = function(nodes) {
 
 module.exports = function(conn) {
 
-    if (wardleyMap[conn]) {
-        return wardleyMap[conn];
+    if (wardleyMap[conn.name]) {
+        return wardleyMap[conn.name];
     }
     /**
      * see capability-category-schema for explanations.
@@ -72,26 +72,16 @@ module.exports = function(conn) {
         user: Schema.Types.String,//must be held until migration happens
         purpose: Schema.Types.String, //must be held until migration happens
         isSubmap: Schema.Types.Boolean,
-        archived: Schema.Types.Boolean,
         workspace: {
             type: Schema.Types.ObjectId,
             ref: 'Workspace'
         },
-        next : [Schema.Types.ObjectId],
-        previous : Schema.Types.ObjectId,
-        timesliceId : Schema.Types.ObjectId,
-        nodes: [{
-            type: Schema.Types.ObjectId,
-            ref: 'Node'
-        }],
         users : [{
             x: Schema.Types.Number,
             y: Schema.Types.Number,
             name : Schema.Types.String,
             description : Schema.Types.String,
             width : Schema.Types.Number,
-            next : [Schema.Types.ObjectId],
-            previous : Schema.Types.ObjectId,
             associatedNeeds : [{
                 type: Schema.Types.ObjectId,
                 ref: 'Node'
@@ -102,14 +92,32 @@ module.exports = function(conn) {
             y: Schema.Types.Number,
             text: Schema.Types.String,
             width : Schema.Types.Number,
-            next : [Schema.Types.ObjectId],
-            previous : Schema.Types.ObjectId,
         }],
         responsiblePerson: Schema.Types.String,
+        status : {
+          type: String,
+          enum: ['EXISTING', 'DELETED'],
+          default: 'EXISTING',
+          required: true
+        },
         schemaVersion : {
           type: Schema.Types.Number,
           default : 2
         }
+    }, {
+      toObject: {
+        virtuals: true
+      },
+      toJSON: {
+        virtuals: true
+      }
+    });
+    var History = require('./history-schema')(conn);
+
+    _MapSchema.virtual('nodes', {
+      ref : 'Node',
+      localField : '_id',
+      foreignField : 'parentMap'
     });
 
 
@@ -118,590 +126,504 @@ module.exports = function(conn) {
         return this.save();
     };
 
-    _MapSchema.methods.defaultPopulate = function(){
-        return this.populate("workspace nodes nodes.previous").execPopulate();
-    };
-
-    _MapSchema.methods.updateComment = function(id, dataPos) {
-        for (var i = 0; i < this.comments.length; i++) {
-            if ('' + this.comments[i]._id === id) {
-                if (dataPos.x && dataPos.y) {
-                    this.comments[i].set('x', dataPos.x);
-                    this.comments[i].set('y', dataPos.y);
-                }
-                if (dataPos.text) {
-                    this.comments[i].set('text', dataPos.text);
-                }
-                if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
-                  this.comments[i].set('width', dataPos.width);
-                }
-            }
-        }
-        return this.save();
-    };
-
-    _MapSchema.methods.deleteComment = function(seq) {
-        for (var i = 0; i < this.comments.length; i++) {
-            if ('' + this.comments[i]._id === seq) {
-                this.comments.splice(i, 1);
-                break;
-            }
-        }
-        this.markModified('comments');
-        return this.save();
-    };
-
-    _MapSchema.methods.addUser = function(data) {
-        this.users.push(data);
-        return this.save();
-    };
-
-    _MapSchema.methods.updateUser = function(id, dataPos) {
-        for (var i = 0; i < this.users.length; i++) {
-            if ('' + this.users[i]._id === id) {
-                if (dataPos.x && dataPos.y) {
-                    this.users[i].set('x', dataPos.x);
-                    this.users[i].set('y', dataPos.y);
-                }
-                if (dataPos.name) {
-                    this.users[i].set('name', dataPos.name);
-                }
-                if (dataPos.description) {
-                    this.users[i].set('description', dataPos.description);
-                }
-                if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
-                  this.users[i].set('width', dataPos.width);
-                }
-            }
-        }
-        return this.save();
-    };
-
-    _MapSchema.methods.deleteUser = function(seq) {
-        for (var i = 0; i < this.users.length; i++) {
-            if ('' + this.users[i]._id === seq) {
-                this.users.splice(i, 1);
-                break;
-            }
-        }
-        this.markModified('users');
-        return this.save();
-    };
-
-    _MapSchema.methods.makeUserDepTo = function(user, node) {
-      if (!user || !node) {
-        throw new Error('unspecified attributes');
-      }
-      for (let i = 0; i < this.users.length; i++) {
-        if ('' + this.users[i]._id === user) {
-          let selectedUser = this.users[i];
-          let found = false;
-          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
-            if ('' + selectedUser.associatedNeeds[j] === node) {
-              found = true;
-              break;
-            }
+    _MapSchema.methods.defaultPopulate = function() {
+      return this
+        .populate("workspace")
+        .populate({
+          path: 'nodes',
+          match: {
+            status: 'EXISTING'
           }
-          if (!found) {
-            selectedUser.associatedNeeds.push(new ObjectId(node));
-          }
-          break;
-        }
-      }
-      this.markModified('users');
-      return this.save();
+        })
+        .execPopulate();
     };
 
-    _MapSchema.methods.deleteUserDepTo = function(user, node) {
-      if (!user || !node) {
-        throw new Error('unspecified attributes');
-      }
-      for (let i = 0; i < this.users.length; i++) {
-        if ('' + this.users[i]._id === user) {
-          let selectedUser = this.users[i];
-          for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
-            if ('' + selectedUser.associatedNeeds[j] === node) {
-              selectedUser.associatedNeeds.splice(j,1);
-              break;
-            }
-          }
-          break;
-        }
-      }
-      this.markModified('users');
-      return this.save();
-    };
+    // _MapSchema.methods.updateComment = function(id, dataPos) {
+    //     for (var i = 0; i < this.comments.length; i++) {
+    //         if ('' + this.comments[i]._id === id) {
+    //             if (dataPos.x && dataPos.y) {
+    //                 this.comments[i].set('x', dataPos.x);
+    //                 this.comments[i].set('y', dataPos.y);
+    //             }
+    //             if (dataPos.text) {
+    //                 this.comments[i].set('text', dataPos.text);
+    //             }
+    //             if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
+    //               this.comments[i].set('width', dataPos.width);
+    //             }
+    //         }
+    //     }
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.deleteComment = function(seq) {
+    //     for (var i = 0; i < this.comments.length; i++) {
+    //         if ('' + this.comments[i]._id === seq) {
+    //             this.comments.splice(i, 1);
+    //             break;
+    //         }
+    //     }
+    //     this.markModified('comments');
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.addUser = function(data) {
+    //     this.users.push(data);
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.updateUser = function(id, dataPos) {
+    //     for (var i = 0; i < this.users.length; i++) {
+    //         if ('' + this.users[i]._id === id) {
+    //             if (dataPos.x && dataPos.y) {
+    //                 this.users[i].set('x', dataPos.x);
+    //                 this.users[i].set('y', dataPos.y);
+    //             }
+    //             if (dataPos.name) {
+    //                 this.users[i].set('name', dataPos.name);
+    //             }
+    //             if (dataPos.description) {
+    //                 this.users[i].set('description', dataPos.description);
+    //             }
+    //             if (dataPos.width && Number.isInteger(Number.parseInt(dataPos.width))){
+    //               this.users[i].set('width', dataPos.width);
+    //             }
+    //         }
+    //     }
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.deleteUser = function(seq) {
+    //     for (var i = 0; i < this.users.length; i++) {
+    //         if ('' + this.users[i]._id === seq) {
+    //             this.users.splice(i, 1);
+    //             break;
+    //         }
+    //     }
+    //     this.markModified('users');
+    //     return this.save();
+    // };
+    //
+    // _MapSchema.methods.makeUserDepTo = function(user, node) {
+    //   if (!user || !node) {
+    //     throw new Error('unspecified attributes');
+    //   }
+    //   for (let i = 0; i < this.users.length; i++) {
+    //     if ('' + this.users[i]._id === user) {
+    //       let selectedUser = this.users[i];
+    //       let found = false;
+    //       for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+    //         if ('' + selectedUser.associatedNeeds[j] === node) {
+    //           found = true;
+    //           break;
+    //         }
+    //       }
+    //       if (!found) {
+    //         selectedUser.associatedNeeds.push(new ObjectId(node));
+    //       }
+    //       break;
+    //     }
+    //   }
+    //   this.markModified('users');
+    //   return this.save();
+    // };
+    //
+    // _MapSchema.methods.deleteUserDepTo = function(user, node) {
+    //   if (!user || !node) {
+    //     throw new Error('unspecified attributes');
+    //   }
+    //   for (let i = 0; i < this.users.length; i++) {
+    //     if ('' + this.users[i]._id === user) {
+    //       let selectedUser = this.users[i];
+    //       for (let j = 0; j < selectedUser.associatedNeeds.length; j++) {
+    //         if ('' + selectedUser.associatedNeeds[j] === node) {
+    //           selectedUser.associatedNeeds.splice(j,1);
+    //           break;
+    //         }
+    //       }
+    //       break;
+    //     }
+    //   }
+    //   this.markModified('users');
+    //   return this.save();
+    // };
 
     _MapSchema.methods.verifyAccess = function(user) {
         var Workspace = require('./workspace-schema')(conn);
+        var WardleyMap = require('./map-schema')(conn);
         var mapID = this._id;
         var _this = this;
         return Workspace.findOne({
             owner: user,
-            'timeline.maps': mapID
         }).exec().then(function(workspace) {
-            if (workspace) {
-                return _this; // if we found workspace, then we have access to the map
-            } else {
-              return null;
-            }
-        });
-    };
-
-    _MapSchema.methods.calculateDiff = function() {
-        var Workspace = require('./workspace-schema')(conn);
-        var mapID = this._id;
-        var _this = this;
-        return _this.populate({
-            path: 'nodes',
-            model: 'Node',
-            populate : {
-              path: 'previous',
-              model: 'Node'
-            }
-        }).populate({
-            path: 'previous',
-            model: 'WardleyMap',
-            populate : {
-                path: 'nodes',
-                model: 'Node'
-            }
-        }).execPopulate()
-        .then(function(map){
-          let added = [];
-          for (let i = 0; i < map.nodes.length; i++) {
-            if (!map.nodes[i].previous) {
-              added.push({_id : map.nodes[i]._id});
-            }
-          }
-          // console.log('added', added);
-
-          let modified = [];
-          let hasCounterpart = {};
-          for (let i = 0; i < map.nodes.length; i++) {
-            let differs = false;
-            let diff = {};
-            let currentNode = map.nodes[i];
-            let previousNode = currentNode.previous;
-            if(!previousNode){
-              continue;
-            }
-            if (currentNode.name !== previousNode.name){
-              differs = true;
-              diff.name = {
-                old : previousNode.name,
-                new : currentNode.name
-              };
-            }
-            if (currentNode.type !== previousNode.type){
-              differs = true;
-              diff.type = {
-                old : previousNode.type,
-                new : currentNode.type
-              };
-            }
-            if (currentNode.x !== previousNode.x){
-              differs = true;
-              diff.x = {
-                old : previousNode.x,
-                new : currentNode.x
-              };
-            }
-            if(differs){
-              modified.push({
-                  _id : currentNode._id, diff: diff
+            return WardleyMap.findOne({
+                _id: mapID,
+                workspace: getId(workspace)
+              }).exec()
+              .then(function(map) {
+                if (workspace) {
+                    return _this; // if we found workspace, then we have access to the map
+                } else {
+                  return null;
+                }
               });
-            }
-            hasCounterpart[previousNode._id] = true;
-          }
-
-          // console.log('modified', modified);
-
-          let removed = [];
-          let previousMap = map.previous;
-          // console.log(hasCounterpart);
-          if (previousMap) {
-            for (let i = 0; i < previousMap.nodes.length; i++) {
-              let candidateNode = previousMap.nodes[i];
-              if (!hasCounterpart[candidateNode._id]) {
-                removed.push(candidateNode); // add full removed node as we want to show where it was);
-              }
-            }
-          }
-          // console.log('removed', removed);
-          let usersAdded = [];
-          for (let i = 0; i < map.users.length; i++) {
-            if (!map.users[i].previous) {
-              usersAdded.push({_id : map.users[i]._id});
-            }
-          }
-          let usersRemoved = [];
-          if (previousMap) {
-            for (let i = 0; i < previousMap.users.length; i++) {
-              let candidateUser = previousMap.users[i];
-              let foundCounterPart = false; // counter part means that an old map has a user that next is set to a user in a new map.
-              // simplest way to check.... go through a list of users in current map and check whether any references back
-              for (let j = 0; j < map.users.length; j++) {
-                if ('' + candidateUser._id === '' + map.users[j].previous) {
-                  foundCounterPart = true;
-                  break;
-                }
-              }
-              if (!foundCounterPart) {
-                usersRemoved.push(candidateUser); // add full removed user as we want to show where it was);
-              }
-            }
-          }
-          return {
-            nodesRemoved : removed,
-            nodesAdded : added,
-            nodesModified : modified,
-            usersAdded : usersAdded,
-            usersRemoved: usersRemoved
-          };
         });
     };
 
 
-    _MapSchema.methods.getRelevantVariants = function() {
-      return this.populate({
-          path: 'previous',
-          model: 'WardleyMap',
-          populate: {
-            path: 'next',
-            model: 'WardleyMap'
-          }
-        }).populate({
-          path: 'workspace',
-          model: 'Workspace'
-        }).populate({
-            path: 'next',
-            model: 'WardleyMap'
-        }).execPopulate()
-        .then(function(populatedMap) {
-          let result = {
-              past : null,
-              alternatives : [],
-              futures : []
-          };
 
-          let previousMap = populatedMap.previous;
-          let alternativeMaps = [];
-          let futureMaps = populatedMap.next;
-
-          if (previousMap) {
-            for (let i = 0; i < previousMap.next.length; i++) {
-              if (!populatedMap._id.equals(previousMap.next[i]._id)) {
-                alternativeMaps.push(previousMap.next[i]);
-              }
-            }
-          }
-
-          for (let i = 0; i < populatedMap.workspace.timeline.length; i++) {
-            let timeSlice = populatedMap.workspace.timeline[i];
-            // find alternatives maps
-            for (let j = 0; j < alternativeMaps.length; j++) {
-              if (timeSlice._id.equals(alternativeMaps[j].timesliceId)) {
-                result.alternatives.push({
-                  name: timeSlice.name,
-                  mapId: alternativeMaps[j]._id
-                });
-              }
-            }
-            // find future maps
-            for (let j = 0; j < futureMaps.length; j++) {
-              if (timeSlice._id.equals(futureMaps[j].timesliceId)) {
-                result.futures.push({
-                  name: timeSlice.name,
-                  mapId: futureMaps[j]._id
-                });
-              }
-            }
-            // find ancestor
-            if (previousMap && timeSlice._id.equals(previousMap.timesliceId)) {
-              result.past = {
-                name: timeSlice.name,
-                mapId: previousMap._id
-              };
-            }
-          }
-          return result;
-        });
-    };
-
-    _MapSchema.methods.newBody = function(body) {
-        _.extend(this, body);
-        _.extend(this.archived, false);
-
-        return this.save();
-    };
-
-    _MapSchema.methods.addNode = function(name, x, y, type, workspace, description, inertia, responsiblePerson, constraint) {
-        var Node = require('./node-schema')(conn);
-
-        var _this = this;
-
-        return new Node({
-                name: name,
-                x: x,
-                y: y,
-                type: type,
-                workspace: workspace,
-                parentMap: _this._id,
-                description: description,
-                inertia: inertia,
-                responsiblePerson: responsiblePerson,
-                constraint : constraint
-            }).save()
-            .then(function(node) {
-                _this.nodes.push(node._id);
-                return _this.save();
-            });
-    };
-
-    _MapSchema.methods.changeNode = function(name, x, y, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
-        var _this = this;
-        var Node = require('./node-schema')(conn);
-        return Node.findOne({
-                _id: desiredNodeId
-            }).exec()
-            .then(function(node) {
-                if (name) {
-                    node.name = name;
-                }
-                if (x) {
-                    node.x = x;
-                }
-                if (y) {
-                    node.y = y;
-                }
-                if (type) {
-                    node.type = type;
-                }
-                if (description) {
-                    node.description = description;
-                }
-                if (inertia) {
-                    node.inertia = inertia;
-                }
-                if (responsiblePerson) {
-                    node.responsiblePerson = responsiblePerson;
-                }
-                if (constraint !== null && constraint !== undefined) {
-                    node.constraint = constraint;
-                }
-                if(width && Number.isInteger(Number.parseInt(width))){
-                  node.width = width;
-                }
-                return node.save().then(function(){
-                  return _this.save();
-                });
-            });
-    };
-
-
-    _MapSchema.methods.removeNode = function(nodeID) {
-      var _this = this;
-      for (let i = 0; i < this.users.length; i++) {
-        let selectedUser = this.users[i];
-        for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
-          if ('' + selectedUser.associatedNeeds[j] === '' + nodeID) {
-            selectedUser.associatedNeeds.splice(j, 1);
-            this.markModified('users');
-          }
-        }
+    _MapSchema.methods.update = function(user, body) {
+      //TODO: be a little bit more careful when isSubmap is switched to false.
+      // what about nodes referencing this one?
+      let entries = [];
+      let name = body.name;
+      if(name){
+        this.name = name;
+        entries.push(['name', 'SET', name, null]);
       }
-      var Node = require('./node-schema')(conn);
-      return Node.findOne({
-          _id: nodeID
-        }).exec()
-        .then(function(node) {
-          return node.remove().then(function() {
-            return _this.save();
+      let responsiblePerson = body.responsiblePerson;
+      if(responsiblePerson){
+        this.responsiblePerson = responsiblePerson;
+        entries.push(['responsiblePerson', 'SET', responsiblePerson, null]);
+      }
+      let isSubmap = body.isSubmap;
+      if(isSubmap){
+        this.isSubmap = isSubmap;
+        entries.push(['isSubmap', 'SET', isSubmap, null]);
+      }
+      if(entries.length > 0){
+        History.log(getId(this.workspace), user, [getId(this)], null, entries);
+      }
+      return this.save();
+    };
+
+    _MapSchema.methods.addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+      let _this = this;
+      return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null).then(function() {
+        return _this.populate({
+                  path: 'nodes',
+                  match: {status:'EXISTING'}
+                }).execPopulate();
+      });
+    };
+
+    _MapSchema.methods.duplicateNode = function(actor, duplicatedNodeId, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      const Analysis = require('./analysis-schema')(conn);
+
+      let _this = this;
+      return Node.findById(duplicatedNodeId).exec()
+        .then(function(duplicatedNode) {
+          if (duplicatedNode.analysis) {
+            return duplicatedNode.analysis;
+          }
+          return new Analysis({
+            workspace: duplicatedNode.workspace
+          }).save().then(function(analysis){
+            duplicatedNode.analysis = analysis;
+            return duplicatedNode.save().then(function(){
+              return analysis;
+            });
+          });
+        })
+        .then(function(analysis) {
+          console.log(analysis);
+          return _this.__addNode(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, null, getId(analysis)).then(function() {
+            return _this.populate({
+              path: 'nodes',
+              match: {
+                status: 'EXISTING'
+              }
+            }).execPopulate();
           });
         });
     };
 
-    _MapSchema.methods.getAvailableSubmaps = function() {
-      var WardleyMap = require('./map-schema')(conn);
-      var _this = this;
-      return WardleyMap.find({
-        workspace: _this.workspace,
-        archived: false,
-        timesliceId: _this.timesliceId,
-        isSubmap: true
-      }).exec();
-    };
+    _MapSchema.methods.__addNode = function(actor, name, evolution, visibility, type, workspaceId, description, inertia, responsiblePerson, constraint, submap, analysis) {
+        const Node = require('./node-schema')(conn);
+        const Workspace = require('./workspace-schema')(conn);
 
-    _MapSchema.methods.getSubmapUsage = function() {
-      var WardleyMap = require('./map-schema')(conn);
-      var Node = require('./node-schema')(conn);
-      var _this = this;
+        const _this = this;
 
-      return Node.find({
-          type: 'SUBMAP',
-          submapID: _this._id
-        }).select('parentMap').exec()
-        .then(function(listOfNodes) {
-          var ids = [];
-          listOfNodes.forEach(item => ids.push(item.parentMap));
-          return ids;
-        })
-        .then(function(listOfMapIds) {
-          return WardleyMap
-            .find({
-              archived: false,
-              _id: {
-                $in: listOfMapIds
-              },
-              workspace: _this.workspace
+        return new Node({
+                name: name,
+                evolution: evolution,
+                visibility: [{
+                  value : visibility,
+                  map: [_this._id]
+                }],
+                type: type,
+                workspace: workspaceId,
+                parentMap: [_this._id],
+                description: description,
+                inertia: inertia,
+                responsiblePerson: responsiblePerson,
+                constraint : constraint,
+                submapID : submap,
+                status: 'EXISTING',
+                analysis:analysis
             })
-            .populate('nodes')
-            .select('name _id isSubmap')
-            .exec();
+            .save()
+            .then(function(node) {
+              History.log(getId(_this.workspace), actor, [getId(_this)], [node._id], [
+                ['nodes', 'ADD', getId(_this), null],
+                ['node.name', 'SET', node.name, null]
+              ]);
+              return node;
+            });
+    };
+
+    _MapSchema.methods.referenceNode = function(actor, nodeId, visibility, dependencies) {
+      const Node = require('./node-schema')(conn);
+      const Workspace = require('./workspace-schema')(conn);
+      const WardleyMap = require('./map-schema')(conn);
+
+      const _this = this;
+      const timeSliceId = _this.timesliceId;
+
+      nodeId = getId(nodeId);
+
+      return Node.findOneAndUpdate({
+          _id: nodeId
+        }, {
+          $addToSet: {
+            visibility: {
+              value: visibility,
+              map: _this._id
+            },
+            parentMap: _this._id
+          }
+        }, {
+            safe: true,
+            new: true
+          }).exec()
+        .then(function(node) {
+          History.log(getId(node.workspace), actor, [getId(_this)], [node._id, nodeId], [
+            ['node.dependencies', 'ADD', getId(nodeId), null],
+          ]);
+          return WardleyMap.findById(getId(_this)).populate({
+            path: 'nodes',
+            match: {
+              status: 'EXISTING'
+            }
+          }).exec();
         });
     };
 
-    _MapSchema.methods.formASubmap = function(params) {
-        var WardleyMap = require('./map-schema')(conn);
-        var Node = require('./node-schema')(conn);
-        var _this = this;
+    _MapSchema.methods.changeNode = function(actor, workspaceId, name, evolution, visibility, width, type, desiredNodeId, description, inertia, responsiblePerson, constraint) {
+      var _this = this;
+      var Node = require('./node-schema')(conn);
+      const WardleyMap = require('./map-schema')(conn);
+      let changes = [];
 
-        if(!_this.populated('workspace')){
-          throw new Error('this map must have populated workspace before forming a submap');
+      desiredNodeId = getId(desiredNodeId);
+      let query = {
+        _id: desiredNodeId,
+        workspace: workspaceId
+      };
+      let updateOrder = {
+        $set: {
+
         }
+      };
+      let select = {};
 
-        //create structures
-        var submapID = new ObjectId();
-        var submap = new WardleyMap({
-            _id: submapID,
-            name: params.submapName,
-            isSubmap: true,
-            workspace: _this.workspace,
-            timesliceId: _this.timesliceId,
-            archived: false,
-            responsiblePerson: params.responsiblePerson,
-            previous : null,
-            next : []
-        });
+      if (name) {
+        updateOrder.$set.name = name;
+        changes.push(['node.name', 'SET', name, null]);
+      }
+      if (evolution) {
+        updateOrder.$set.evolution = evolution;
+        changes.push(['node.evolution', 'SET', evolution, null]);
+      }
+      if (width) {
+        updateOrder.$set.width = width;
+        changes.push(['node.width', 'SET', width, null]);
+      }
+      if (type) {
+        updateOrder.$set.type = type;
+        changes.push(['node.type', 'SET', type, null]);
+      }
+      if (description) {
+        updateOrder.$set.description = description;
+        changes.push(['node.description', 'SET', description, null]);
+      }
+      if (inertia) {
+        updateOrder.$set.inertia = inertia;
+        changes.push(['node.inertia', 'SET', inertia, null]);
+      }
+      if (responsiblePerson) {
+        updateOrder.$set.responsiblePerson = responsiblePerson;
+        changes.push(['node.responsiblePerson', 'SET', responsiblePerson, null]);
+      }
+      if (constraint) {
+        updateOrder.$set.constraint = constraint;
+        changes.push(['node.constraint', 'SET', constraint, null]);
+      }
+      if (visibility) {
+        /**
+         * First of all, we are updating a single entry in the array,
+         * so we must do the search for the array object, otherwise the $
+         * operator will not work.
+         */
+        query['visibility.map'] = _this._id;
 
-        var submapNodeID = new ObjectId();
-        var submapNode = new Node({
-            _id: submapNodeID,
-            name: params.submapName,
-            workspace: _this.workspace,
-            parentMap: _this,
-            type: 'SUBMAP',
-            submapID: submapID,
-            next : [],
-            previous : null
-        });
-
-        var promises = [];
-        promises.push(_this.workspace.insertMapIdAt(submap, _this.timesliceId));
-        _this.nodes.push(submapNode);
-
-        // at this point we have placeholders for the submap and the new node
-        // all properly plugged in  into the workspace and parent map
-
-
-        // move comments
-        // iterate over existing comments, and if on the list to transfer, do the transfer
-        // position is not affected
-        for (var ii = _this.comments.length - 1; ii > -1; ii--) {
-            for (var jj = 0; jj < params.listOfCommentsToSubmap.length; jj++) {
-                if (params.listOfCommentsToSubmap[jj] === '' + _this.comments[ii]._id) {
-                    submap.comments.push(_this.comments.splice(ii, 1)[0]);
-                }
+        /**
+         * Now, let's set the value for all visibility parameters. It's a very
+         * broad operator, so in the next step we will narrow it down.
+         */
+        updateOrder.$set['visibility.$.value'] = visibility;
+        /**
+         * Ensure that only one visibility entry is selected for the change.
+         */
+        select = {
+          select: {
+            'visibility': {
+              $elemMatch: {
+                map: _this._id //visiblity should be changed only for current map
+              }
             }
+          }
+        };
+        changes.push(['node.visibility', 'SET', visibility, null]);
+      }
+
+      return Node.findOneAndUpdate(query,
+        updateOrder,
+        select
+      ).exec().then(function() {
+        if (changes.length > 0) {
+          History.log(workspaceId, actor, [getId(_this)], [desiredNodeId], changes);
         }
+        return WardleyMap.findById(getId(_this)).populate({
+          path: 'nodes',
+          match: {
+            status: 'EXISTING'
+          }
+        }).exec();
+      });
+      };
 
-        // the most wicked part of code
-        // move nodes and fix connections
-        var nodesToSave = [];
-        var transferredNodes = [];
+    /**
+     * Removes the node from the current map. If it was a last reference,
+     * it removes the node from the workspace.
+     */
+    _MapSchema.methods.removeNode = function(actor, nodeId) {
+      var _this = this;
+      nodeId = getId(nodeId);
+      let mapId = getId(_this);
+      const Workspace = require('./workspace-schema')(conn);
+      const Node = require('./node-schema')(conn);
 
-        for (var i = _this.nodes.length - 1; i >= 0; i--) {
-            var index = params.listOfNodesToSubmap.indexOf('' + _this.nodes[i]._id);
-            if (index === -1) { // node not on the list to transfer
-                var notTransferredNode = _this.nodes[i];
-                // if a node from the parent map depends on a node just transfered to the submap
-                // it is necessary to replace that dependency
-                for (var j = notTransferredNode.outboundDependencies.length - 1; j >= 0; j--) {
-                    if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.outboundDependencies[j]) > -1) {
-                        notTransferredNode.outboundDependencies.set(j, submapNode);
-                        // transfer the info about the connection
 
-                        notTransferredNode.transferDependencyData(notTransferredNode.outboundDependencies[j], submapNodeID);
+      // // first, clean up users depending on a removed node (within map only)
+      // for (let i = 0; i < this.users.length; i++) {
+      //   let selectedUser = this.users[i];
+      //   for (let j = selectedUser.associatedNeeds.length - 1; j >= 0; j--) {
+      //     if ('' + selectedUser.associatedNeeds[j] === '' + nodeId) {
+      //       selectedUser.associatedNeeds.splice(j, 1);
+      //       this.markModified('users');
+      //     }
+      //   }
+      // }
 
-                        nodesToSave.push(notTransferredNode);
-                    }
-                }
+      // fourthly, node prev & next TODO: think about how it should be handled
 
-                // if a transferred node depends on non-transfered
-                // make the submap node depend on non-transfered
-                for (var jjj = notTransferredNode.inboundDependencies.length - 1; jjj >= 0; jjj--) {
-                    if (params.listOfNodesToSubmap.indexOf('' + notTransferredNode.inboundDependencies[jjj]) > -1) {
-                        notTransferredNode.inboundDependencies.set(jjj, submapNode);
-
-                        // transfer the info about the connection
-                        notTransferredNode.transferDependencyData(notTransferredNode.inboundDependencies[jjj], submapNodeID);
-
-                        nodesToSave.push(notTransferredNode);
-                    }
-                }
-            } else {
-
-                var transferredNode = _this.nodes.splice(i, 1)[0];
-                transferredNode.parentMap = submap._id; // transfer the node
-                submap.nodes.push(transferredNode);
-                transferredNodes.push(transferredNode);
-
-                // if a transfered node depends on a non-transferred node
-                for (var k = transferredNode.outboundDependencies.length - 1; k >= 0; k--) {
-                    if (params.listOfNodesToSubmap.indexOf('' + transferredNode.outboundDependencies[k]) === -1) {
-                        var dependencyAlreadyEstablished = false;
-                        submapNode.outboundDependencies.push(transferredNode.outboundDependencies[k]); // the submap node will replace the transfered node
-
-                        // transfer the info about the connection, both must be saved later
-                        submapNode.stealDependencyData(transferredNode, transferredNode.outboundDependencies[k]);
-
-                        transferredNode.outboundDependencies.splice(k, 1); // and the node will loose that connection
-                    }
-                }
-
-                // if a transfered node is required by non-transfered node
-                for (var kk = transferredNode.inboundDependencies.length - 1; kk >= 0; kk--) {
-                    if (params.listOfNodesToSubmap.indexOf('' + transferredNode.inboundDependencies[kk]) === -1) {
-                        submapNode.inboundDependencies.push(transferredNode.inboundDependencies[kk]);
-
-                        // steal the info about the connection, both must be saved later
-                        submapNode.stealDependencyData(transferredNode, transferredNode.inboundDependencies[kk]);
-
-                        transferredNode.inboundDependencies.splice(kk, 1);
-                    }
-                }
+      // thirdly, handle other nodes depending on this one (if there are any)
+      return Node.update({
+          parentMap: mapId,
+          workspace : _this.workspace,
+          'dependencies.target': nodeId,
+          'dependencies.visibleOn': mapId
+        }, {
+          $pull: {
+            dependencies: {
+              target: nodeId,
+              visibleOn: mapId
             }
-        }
+          }
+        }, {
+          safe: true
+        }).exec()
+        // and handle this node depending on others
+        .then(function() {
+          return Node.findById(nodeId).exec()
+            .then(function(node) {
+              for (let i = node.dependencies.length - 1; i >= 0; i--) {
+                for (let j = node.dependencies[i].visibleOn.length; j >= 0; j--) {
+                  if (mapId.equals(node.dependencies[i].visibleOn[j])) {
+                    node.dependencies[i].visibleOn.splice(j, 1);
+                    break;
+                  }
+                }
+                if (node.dependencies[i].visibleOn.length === 0) {
+                  //remove dependency that is nowhere visible
+                  node.dependencies.splice(i, 1);
+                  break;
+                }
+              }
+              return node.save();
+            });
+        })
+        .then(function() {
+          //fifthly, remove parent map (node has been removed from it, so reference is no longer mandatory)
+          return Node.findOneAndUpdate({
+            _id: nodeId
+          }, {
+            $pull: {
+              parentMap: _this._id,
+              visibility: {
+                map: _this._id
+              }
+            }
+          }, {
+            safe: true,
+            new: true //return modified doc
+          }).exec();
+        }).then(function(node) {
+          // here, the node has been updated and no longer points to the parent map
+          // or the workspace
 
-        // calculate position of the submap node
-        submapNode.x = params.coords ? params.coords.x : calculateMean(transferredNodes, 'x');
-        submapNode.y = params.coords ? params.coords.y : calculateMean(transferredNodes, 'y');
-
-        removeDuplicatesDependencies(nodesToSave);
-
-        var totalNodesToSave = nodesToSave.concat(transferredNodes);
-
-        for (var z = 0; z < totalNodesToSave.length; z++) {
-            promises.push(totalNodesToSave[z].save());
-        }
-
-        removeDuplicatesDependencies([submapNode]);
-        promises.push(submapNode.save());
-        promises.push(submap.save());
-        promises.push(_this.save());
-        return q.allSettled(promises).then(function(results){
-          return results[results.length-1].value;
+          // it is, however, necessary, to remove the node if it has no parent map
+          // as it is no longer referenced by any of those
+          return Node.findOneAndRemove({
+            _id: nodeId,
+            parentMap: {
+              $size: 0
+            }
+          }).exec();
+        }).then(function(removedNode) {
+          if (!removedNode) {
+            // node has not been removed, meaning something else is using it,
+            // so it has to stay in the workspace
+            return null;
+          }
+          //otherwise, remove it from the workspace
+          return Workspace.findOneAndUpdate({
+            _id: _this.workspace,
+            'nodes': nodeId
+          }, {
+            $pull: {
+              'nodes': nodeId
+            }
+          }, {
+            safe: true,
+            new: true //return modified doc
+          }).exec();
+        }).then(function(modifiedWorkspace) {
+          //save the map
+          History.log(getId(_this.workspace), actor, [getId(_this)], [nodeId], [
+            ['map.nodes', 'REMOVE', getId(nodeId), null],
+          ]);
+          return _this.save().then(function(map){
+            return map.populate({
+              path: 'nodes',
+              match: {
+                status: 'EXISTING'
+              }
+            }).execPopulate();
+          });
         });
     };
 
@@ -710,80 +632,6 @@ module.exports = function(conn) {
       return mapExport(this);
     };
 
-    /*
-    * This method is to clean up the state after removing a map, that is:
-    *  - remove nodes belonging to the map
-    *  - remove all references if removing a map that is a submap
-    * TODO: if map is being saved, ensure the workspace has the timeslice existing
-    */
-    _MapSchema.pre('save', function(next) {
-      modelLogger.trace('pre save on', this._id, this.archived, this.nodes.length);
-      var beingArchived = this.archived;
-      if (!beingArchived) {
-        modelLogger.trace('not being archived', this._id, this.isSubmap);
-        // not being removed, so we are not processing anything any further
-        return next();
-      }
-      var promises = [];
-      var Node = require('./node-schema')(conn);
-      // remove all nodes (we may have components pointing out to other submaps)
-      for (var i = 0; i < this.nodes.length; i++) {
-        promises.push(
-          Node.findById(this.nodes[i]._id || this.nodes[i]).exec().then(function(node) {
-            if(node){
-                return node.remove();
-            }
-          }));
-      }
-
-      var WardleyMap = require('./map-schema')(conn);
-      var _this = this;
-      if (this.previous) {
-        promises.push(WardleyMap.findOne({
-            _id: _this.previous
-          }).exec()
-          .then(function(map) {
-            map.next.pull(_this._id);
-            return map.save();
-          }));
-      }
-      if (this.next && this.next.length > 0) {
-        for (let i = 0; i < this.next.length; i++) {
-          promises.push(WardleyMap.findOne({
-              _id: _this.next[i]
-            }).exec()
-            .then(function(map) {
-              map.previous = null;
-              return map.save();
-            }));
-        }
-      }
-
-      // if we are not a submap, then this is the end
-      if (!this.isSubmap) {
-        return q.allSettled(promises).then(function(r) {
-          next();
-        });
-      }
-      // otherwise it is necessary to find every Node that uses this map and delete it.
-      Node.find({
-        submapID: new ObjectId(this._id),
-        type: 'SUBMAP'
-      }).exec(function(err, results) {
-        for (var j = 0; j < results.length; j++) {
-          modelLogger.trace('removing submap node', results[j]._id, results[j].name);
-          promises.push(results[j].remove());
-        }
-        q.all(promises)
-          .then(function(results) {
-            next();
-          }, function(err) {
-            modelLogger.error(err);
-            next(err);
-          });
-      });
-    });
-
-    wardleyMap[conn] = conn.model('WardleyMap', _MapSchema);
-    return wardleyMap[conn];
+    wardleyMap[conn.name] = conn.model('WardleyMap', _MapSchema);
+    return wardleyMap[conn.name];
 };
