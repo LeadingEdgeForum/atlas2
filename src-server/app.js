@@ -59,6 +59,8 @@ if (debug){
   try{
     var webpack = require('webpack');
     var config = require('../webpack.config');
+    config.devtool =  'source-map';
+    config.mode = 'development';
     var compiler = webpack(config);
     app.webpack_middleware = require('webpack-dev-middleware')(compiler);
     app.use(app.webpack_middleware);
@@ -70,7 +72,8 @@ if (debug){
 
 var config = {
     userProvider : {
-      type:'stormpath'
+        type : 'passport',
+        strategy : 'anonymous'
     }
 };
 
