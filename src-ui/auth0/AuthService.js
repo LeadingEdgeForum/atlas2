@@ -15,7 +15,7 @@ export default class AuthService extends Store {
 
         let mustAcceptTerms = false;
         let languageDictionary = {
-            title : 'Welcome to Atlas'
+            title : 'Welcome to the Mapping Tool'
             /*
             ,
             signUpTerms : "I agree to <a href=\"/tos\" target=\"_new\">Terms of Service</a>."
