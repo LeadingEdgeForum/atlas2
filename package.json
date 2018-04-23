@@ -16,7 +16,7 @@
     "blob": "0.0.4",
     "body-parser": "^1.15.2",
     "bootstrap": "^4.0.0",
-    "cfenv": "1.0.x",
+    "cfenv": "~1.1.0",
     "cookie-parser": "^1.4.3",
     "express": "^4.14.0",
     "express-jwt": "^5.1.0",
