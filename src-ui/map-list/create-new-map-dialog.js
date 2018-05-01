@@ -55,6 +55,7 @@ var CreateNewMapDialog = createReactClass({
 
   _submit: function(event) {
     event.stopPropagation();
+    this.state.isSubmitDisabled = true;
     this.internalState.workspaceID = this.props.workspaceID;
     Actions.submitNewMapDialog(this.internalState);
     this.internalState = {};
@@ -71,6 +72,7 @@ var CreateNewMapDialog = createReactClass({
 
   render: function() {
     var show = this.state.open;
+    var isSubmitDisabled = this.state.isSubmitDisabled;
     var summary = this._summary();
     return (
       <div>
@@ -104,7 +106,7 @@ var CreateNewMapDialog = createReactClass({
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create a new map</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit} disabled={isSubmitDisabled}>Create a new map</Button>
           </Modal.Footer>
         </Modal>
       </div>
