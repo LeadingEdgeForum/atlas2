@@ -91,7 +91,7 @@
   },
   "repository": {},
   "engines": {
-    "node": "8.x",
+    "node": "10",
     "npm": "3.x"
   }
 }
