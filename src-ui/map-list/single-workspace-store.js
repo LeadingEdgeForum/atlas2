@@ -299,6 +299,7 @@ export default class SingleWorkspaceStore extends Store {
         data: data,
         success: function(data) {
           this.fetchSingleWorkspaceInfo(); // create new map should return map, so we have to refetch workspace here
+          this.newMapDialog.isSubmitDisabled = false;
           this.newMapDialog.open = false;
           this.emitChange();
           this.io.emit('workspace', {

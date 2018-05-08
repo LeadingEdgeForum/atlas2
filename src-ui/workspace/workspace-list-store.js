@@ -90,6 +90,7 @@ export default class WorkspaceListStore extends Store {
       data: data,
       success: function(data) {
         this.newWorkspaceDialog.open = false;
+        this.newWorkspaceDialog.isSubmitDisabled = false;
         this.updateWorkspaces();
       }.bind(this)
     });

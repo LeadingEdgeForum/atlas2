@@ -40,7 +40,9 @@ var CreateNewWorkspaceDialog = createReactClass({
     Actions.closeNewWorkspaceDialog();
     this.internalState = {};
   },
-  _submit: function() {
+  _submit: function(event) {
+    event.stopPropagation();
+    this.state.isSubmitDisabled = true;
     Actions.submitNewWorkspaceDialog(this.internalState);
   },
 
@@ -49,6 +51,7 @@ var CreateNewWorkspaceDialog = createReactClass({
   },
   render: function() {
     var show = this.state.open;
+    var isSubmitDisabled = this.state.isSubmitDisabled;
     return (
       <div>
         <Modal show={show} onHide={this._close}>
@@ -101,7 +104,7 @@ var CreateNewWorkspaceDialog = createReactClass({
           </Modal.Body>
           <Modal.Footer>
             <Button type="reset" onClick={this._close}>Cancel</Button>
-            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit}>Create</Button>
+            <Button type="submit" bsStyle="primary" value="Create" onClick={this._submit} disabled={isSubmitDisabled}>Create</Button>
           </Modal.Footer>
         </Modal>
       </div>
