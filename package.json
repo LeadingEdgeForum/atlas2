@@ -73,7 +73,7 @@
     "babel-register": "^6.26.0",
     "babel-runtime": "^6.9.2",
     "imports-loader": "^0.8.0",
-    "mocha": ">=4.1.0",
+    "mocha": "5.1.1",
     "script-loader": "^0.7.0",
     "selenium-standalone": "6.14.0",
     "should": "13.2.1",
