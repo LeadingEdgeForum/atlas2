@@ -31,7 +31,7 @@
     "jwt-decode": "^2.2.0",
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
-    "log4js": "2.5.3",
+    "log4js": "2.10.0",
     "mongoose": "5.0.17",
     "morgan": "^1.7.0",
     "passport": "^0.4.0",
