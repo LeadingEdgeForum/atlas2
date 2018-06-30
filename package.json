@@ -39,7 +39,7 @@
     "passport-ldapauth": "^2.0.0",
     "passport-local": "^1.0.0",
     "path": "*",
-    "phantom": "^4.0.0",
+    "phantom": "^6.0.2",
     "phantom-pool": "^1.2.2",
     "prop-types": "^15.6.0",
     "q": "*",
