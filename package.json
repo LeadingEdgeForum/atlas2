@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "async": "2.6.0",
-    "atob": "^2.0.3",
+    "atob": "2.1.1",
     "auth0-lock": "11.6.1",
     "babel-polyfill": "^6.26.0",
     "blob": "0.0.4",
