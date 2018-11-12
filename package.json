@@ -23,7 +23,7 @@
     "express-jwt-authz": "^1.0.0",
     "express-session": "^1.15.1",
     "flux": "*",
-    "globals": "11.4.0",
+    "globals": "11.9.0",
     "history": "^4.4.0",
     "jquery": "^3.3.0",
     "jsplumb": "2.6.8",
