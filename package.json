@@ -81,7 +81,7 @@
     "wdio-concise-reporter": "^0.1.2",
     "wdio-dot-reporter": "0.0.9",
     "wdio-mocha-framework": "^0.5.12",
-    "wdio-selenium-standalone-service": "0.0.10",
+    "wdio-selenium-standalone-service": "0.0.12",
     "wdio-spec-reporter": "^0.1.2",
     "wdio-webpack-service": "^1.0.1",
     "webdriverio": "^4.10.2",
