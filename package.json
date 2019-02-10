@@ -41,7 +41,7 @@
     "path": "*",
     "phantom": "^4.0.0",
     "phantom-pool": "^1.2.2",
-    "prop-types": "^15.6.0",
+    "prop-types": "^15.7.0",
     "q": "*",
     "query-string": "^6.0.0",
     "react": "^16.2.0",
