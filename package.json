@@ -43,7 +43,7 @@
     "phantom-pool": "^1.2.2",
     "prop-types": "^15.6.0",
     "q": "*",
-    "query-string": "^6.0.0",
+    "query-string": "^6.6.0",
     "react": "^16.2.0",
     "react-autosuggest": "^9.3.2",
     "react-bootstrap": "^0.32.1",
