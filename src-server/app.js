@@ -1,5 +1,5 @@
 //#!/bin/env node
-/* Copyright 2017 Krzysztof Daniel
+/* Copyright 2017,2019 Krzysztof Daniel
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -142,8 +142,8 @@ app.get('/fonts/glyphicons-halflings-regular.woff2', function(req, res) {
     res.sendFile(path.join(__dirname, BUILD_UI_PATH + '/fonts/glyphicons-halflings-regular.woff2'));
 });
 
-app.get('/img/LEF_logo.png', function(req, res) {
-    res.sendFile(path.join(__dirname, BUILD_UI_PATH + '/img/LEF_logo.png'));
+app.get('/img/LEF-Logo.svg', function(req, res) {
+    res.sendFile(path.join(__dirname, BUILD_UI_PATH + '/img/LEF-Logo.svg'));
 });
 
 app.get('/img/human-figure.svg', function(req, res) {

@@ -29,7 +29,7 @@ export default class AuthService extends Store {
                 }
             },
             theme : {
-                logo : '/img/LEF_logo.png',
+                logo : '/img/LEF-Logo.svg',
                 primaryColor : '#00789b'
             },
             autoclose : true,

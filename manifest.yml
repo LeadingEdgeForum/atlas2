@@ -5,11 +5,10 @@ applications:
   domain: eu-gb.mybluemix.net
   name: main
   host: main
-  disk_quota: 512M
+  disk_quota: 1024M
   timeout: 60
   services:
   - mongo-for-atlas
   - performance-monitoring-auto
   - atlas2-stormpath-credentials
   buildpack: sdk-for-nodejs
-  

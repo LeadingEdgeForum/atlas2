@@ -35,7 +35,7 @@ export default class AtlasNavbar extends React.Component {
         <NavbarHeader>
           <NavbarBrand>
             <Link to="/">
-              <img src="/img/LEF_logo.png" alt="Home" style={logoStyle}></img>
+              <img src="/img/LEF-Logo.svg" alt="Home" style={logoStyle}></img>
             </Link>
           </NavbarBrand>
           <NavbarToggle/>

@@ -6,3 +6,4 @@ src-server/workspace/logs/wardleymaps.log
 tos-content-custom.json
 
 package-lock.json
+/.metadata/

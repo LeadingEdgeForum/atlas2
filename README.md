@@ -11,7 +11,7 @@ The tool is running live [here](https://atlas2.wardleymaps.com).
 To test it out locally, you may run `docker-compose up` and visit http://localhost:6001.
 
 # Licence
-The code is licenced under the [Apache Licence 2.0](https://github.com/LeadingEdgeForum/atlas2/blob/master/LICENSE) , except the LEF logo (atlas2/build-ui/img/LEF_logo.png).
+The code is licenced under the [Apache Licence 2.0](https://github.com/LeadingEdgeForum/atlas2/blob/master/LICENSE) , except the LEF logo (atlas2/build-ui/img/LEF-Logo.svg).
 
 
 # Contributing
