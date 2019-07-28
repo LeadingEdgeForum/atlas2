@@ -56,7 +56,7 @@
     "react-router-dom": "4.3.0-rc.1",
     "react-stepzilla": "^4.6.3",
     "react-twitter-widgets": "^1.2.0",
-    "sanitize-filename": "^1.6.1",
+    "sanitize-filename": "^1.6.2",
     "sendgrid": "5.2.3",
     "socket.io": "2.1.0",
     "socket.io-client": "2.1.4",
