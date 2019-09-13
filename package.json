@@ -24,7 +24,7 @@
     "express-session": "^1.15.1",
     "flux": "*",
     "globals": "11.4.0",
-    "history": "^4.4.0",
+    "history": "^4.10.1",
     "jquery": "^3.3.0",
     "jsplumb": "2.6.8",
     "jwks-rsa": "^1.1.1",
