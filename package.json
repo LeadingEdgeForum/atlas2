@@ -44,7 +44,7 @@
     "prop-types": "^15.6.0",
     "q": "*",
     "query-string": "^6.0.0",
-    "react": "^16.2.0",
+    "react": "^16.10.1",
     "react-autosuggest": "^9.3.2",
     "react-bootstrap": "^0.32.1",
     "react-bootstrap-slider": "^2.0.0",
