@@ -60,7 +60,7 @@
     "sendgrid": "5.2.3",
     "socket.io": "2.1.0",
     "socket.io-client": "2.1.4",
-    "underscore": "*",
+    "underscore": ">=1.10.1",
     "woopra": "1.0.2"
   },
   "devDependencies": {
