@@ -19,7 +19,7 @@
     "cfenv": "~1.1.0",
     "cookie-parser": "^1.4.3",
     "express": "^4.14.0",
-    "express-jwt": "^5.1.0",
+    "express-jwt": "^5.3.2",
     "express-jwt-authz": "^1.0.0",
     "express-session": "^1.15.1",
     "flux": "*",
