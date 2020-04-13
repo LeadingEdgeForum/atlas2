@@ -27,7 +27,7 @@
     "history": "^4.4.0",
     "jquery": "^3.3.0",
     "jsplumb": "2.6.8",
-    "jwks-rsa": "^1.1.1",
+    "jwks-rsa": "^1.8.0",
     "jwt-decode": "^2.2.0",
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
