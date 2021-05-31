@@ -1,3 +1,13 @@
+# :warning:	:warning:	:warning:	This project is no longer maintained :warning:	:warning:	:warning:	 
+
+Folks, 
+
+after a seven-years-long adventure with Atlas2, my priorities have changed so significantly I am no longer able to maintain Atlas2 properly.
+
+However, I am not leaving you without any tooling support. The wonderful community experiments with different ways of Wardley Maps creation and management, and I am sure you will find a tool that suits your needs [here](https://list.wardleymaps.com/#apps).
+
+Thank you so much for your ongoing support and patience!
+
 # Atlas2
 
 [![Greenkeeper badge](https://badges.greenkeeper.io/LeadingEdgeForum/atlas2.svg)](https://greenkeeper.io/)
