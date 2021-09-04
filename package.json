@@ -32,7 +32,7 @@
     "key-mirror-nested": "^1.2.4",
     "keymirror": "*",
     "log4js": "2.5.3",
-    "mongoose": "5.0.17",
+    "mongoose": "5.0.18",
     "morgan": "^1.7.0",
     "passport": "^0.4.0",
     "passport-google-oauth20": "^1.0.0",
