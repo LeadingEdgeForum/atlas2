@@ -13,7 +13,7 @@
     "atob": "^2.0.3",
     "auth0-lock": "11.6.1",
     "babel-polyfill": "^6.26.0",
-    "blob": "0.0.4",
+    "blob": "0.0.5",
     "body-parser": "^1.15.2",
     "bootstrap": "^4.0.0",
     "cfenv": "~1.1.0",
