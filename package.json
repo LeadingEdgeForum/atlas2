@@ -58,7 +58,7 @@
     "react-twitter-widgets": "^1.2.0",
     "sanitize-filename": "^1.6.1",
     "sendgrid": "5.2.3",
-    "socket.io": "2.1.0",
+    "socket.io": "2.1.1",
     "socket.io-client": "2.1.4",
     "underscore": "*",
     "woopra": "1.0.2"
