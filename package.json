@@ -79,7 +79,7 @@
     "should": "13.2.1",
     "supertest": "*",
     "wdio-concise-reporter": "^0.1.2",
-    "wdio-dot-reporter": "0.0.9",
+    "wdio-dot-reporter": "5.0.0-alpha.7",
     "wdio-mocha-framework": "^0.5.12",
     "wdio-selenium-standalone-service": "0.0.10",
     "wdio-spec-reporter": "^0.1.2",
